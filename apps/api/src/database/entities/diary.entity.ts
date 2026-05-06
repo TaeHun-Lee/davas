@@ -1,0 +1,55 @@
+import { DiaryVisibility } from '@davas/shared';
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { CommentEntity } from './comment.entity';
+import { MediaEntity } from './media.entity';
+import { UserEntity } from './user.entity';
+
+@Entity({ name: 'diaries' })
+@Index(['userId', 'watchedDate'])
+@Index(['mediaId', 'visibility'])
+export class DiaryEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
+
+  @Column({ name: 'user_id', type: 'uuid' })
+  userId!: string;
+
+  @ManyToOne(() => UserEntity, (user) => user.diaries, { onDelete: 'CASCADE' })
+  user!: UserEntity;
+
+  @Column({ name: 'media_id', type: 'uuid' })
+  mediaId!: string;
+
+  @ManyToOne(() => MediaEntity, (media) => media.diaries, { onDelete: 'CASCADE' })
+  media!: MediaEntity;
+
+  @Column({ type: 'varchar', length: 120 })
+  title!: string;
+
+  @Column({ type: 'text' })
+  content!: string;
+
+  @Column({ name: 'watched_date', type: 'date' })
+  watchedDate!: string;
+
+  @Column({ type: 'decimal', precision: 2, scale: 1 })
+  rating!: string;
+
+  @Column({ type: 'varchar', length: 20, default: 'PUBLIC' })
+  visibility!: DiaryVisibility;
+
+  @Column({ name: 'has_spoiler', type: 'boolean', default: false })
+  hasSpoiler!: boolean;
+
+  @OneToMany(() => CommentEntity, (comment) => comment.diary)
+  comments!: CommentEntity[];
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt!: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt!: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt!: Date | null;
+}

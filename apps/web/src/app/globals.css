@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #252b33;
+  background: #eef1f5;
+}
+
+body {
+  min-height: 100vh;
+  background: #eef1f5;
+}
