@@ -101,7 +101,7 @@ describe('Davas explore screen design', () => {
     assert.match(mediaApiSource, /export async function selectMedia/);
     assert.match(mediaApiSource, /\/media\/selections/);
     assert.match(mediaApiSource, /method: 'POST'/);
-    assert.match(mediaApiSource, /JSON\.stringify\(selection\)/);
+    assert.match(mediaApiSource, /JSON\.stringify\(toMediaSelectionPayload\(selection\)\)/);
     assert.match(exploreDashboardSource, /selectMedia/);
     assert.match(exploreDashboardSource, /selectedMedia/);
     assert.match(mediaSearchResultsSource, /onSelect/);
@@ -294,24 +294,30 @@ describe('Davas explore screen design', () => {
     assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*grid-cols-\[0\.9fr_1\.1fr\]/);
     assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*gap-2\.5/);
     assert.match(todayRecommendationSource, /<button[^\n]*다이어리 쓰기/);
-    assert.match(todayRecommendationSource, /gap-1\.5 whitespace-nowrap rounded-full bg-\[#2f7eea\] px-3 text-\[11px\]/);
+    assert.match(todayRecommendationSource, /gap-1\.5 whitespace-nowrap rounded-full bg-\[#2f7eea\] px-3\.5 text-\[12px\]/);
     assert.match(todayRecommendationSource, /carousel-indicator mt-2/);
     assert.doesNotMatch(todayRecommendationSource, /carousel-indicator mt-3\.5/);
   });
 
-  it('aligns today recommendation CTA contents and keeps them away from the card edge', () => {
-    assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*pb-1/);
+  it('aligns today recommendation CTA contents and keeps them away from the card edge on mobile', () => {
+    assert.match(todayRecommendationSource, /max-\[430px\]:grid-cols-1/);
+    assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*mt-4[^\n]*pb-2/);
+    assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*max-\[430px\]:grid-cols-2/);
     assert.match(todayRecommendationSource, /data-design="today-detail-button"/);
     assert.match(todayRecommendationSource, /data-design="today-diary-button"/);
-    assert.match(todayRecommendationSource, /today-diary-button[^\n]*inline-flex/);
-    assert.match(todayRecommendationSource, /today-diary-button[^\n]*leading-none/);
-    assert.match(todayRecommendationSource, /today-diary-button-icon[^\n]*grid[^\n]*place-items-center/);
-    assert.match(todayRecommendationSource, /<PencilIcon className="block" \/>/);
+    assert.match(todayRecommendationSource, /today-detail-button[^\n]*h-\[38px\][^\n]*items-center/);
+    assert.match(todayRecommendationSource, /today-diary-button[^\n]*inline-flex[^\n]*h-\[38px\][^\n]*items-center/);
+    assert.match(todayRecommendationSource, /today-diary-button[^\n]*leading-\[1\]/);
+    assert.match(todayRecommendationSource, /today-diary-button-icon[^\n]*grid[^\n]*size-\[15px\][^\n]*place-items-center/);
+    assert.match(todayRecommendationSource, /<PencilIcon className="block size-\[15px\]" \/>/);
     assert.doesNotMatch(todayRecommendationSource, /today-recommendation-actions[^\n]*pt-4"/);
   });
 
   it('opens the detail modal from every explore recommendation movie and drama card', () => {
-    assert.match(todayRecommendationSource, /data-design="today-detail-button"[^\n]*onClick=\{\(\) => onSelect\?\.\(entry\)\}/);
+    assert.match(mediaApiSource, /function toMediaSelectionPayload/);
+    assert.match(mediaApiSource, /body: JSON\.stringify\(toMediaSelectionPayload\(selection\)\)/);
+    assert.doesNotMatch(mediaApiSource, /body: JSON\.stringify\(selection\)/);
+    assert.match(todayRecommendationSource, /data-design="today-detail-button"[^\n]*onClick=\{\(\) => void onSelect\?\.\(entry\)\}/);
     assert.match(mediaPosterRowSource, /aria-label=\{`\$\{item\.title\} 상세 보기`\}/);
     assert.match(mediaPosterRowSource, /onClick=\{\(\) => onSelect\(item\.sourceItem!\)\}/);
     assert.match(genreRecommendationSource, /aria-label=\{`\$\{item\.title\} 상세 보기`\}/);

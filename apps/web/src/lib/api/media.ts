@@ -136,6 +136,22 @@ export async function getPersonCredits(personId: string, { language = 'ko-KR' }:
   return (await response.json()) as PersonCreditsResponse;
 }
 
+function toMediaSelectionPayload(selection: MediaSearchResult): MediaSearchResult {
+  return {
+    externalProvider: selection.externalProvider,
+    externalId: selection.externalId,
+    mediaType: selection.mediaType,
+    title: selection.title,
+    originalTitle: selection.originalTitle,
+    overview: selection.overview,
+    posterUrl: selection.posterUrl,
+    backdropUrl: selection.backdropUrl,
+    releaseDate: selection.releaseDate,
+    genreIds: selection.genreIds,
+    country: selection.country,
+  };
+}
+
 export async function selectMedia(selection: MediaSearchResult) {
   const response = await fetch(`${getApiBaseUrl()}/media/selections`, {
     method: 'POST',
@@ -143,7 +159,7 @@ export async function selectMedia(selection: MediaSearchResult) {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(selection),
+    body: JSON.stringify(toMediaSelectionPayload(selection)),
   });
 
   if (!response.ok) {
