@@ -49,6 +49,10 @@ export type RecommendationQuery = {
   region?: string;
 };
 
+export type RandomGenreRecommendationQuery = RecommendationQuery & {
+  seed?: string;
+};
+
 @Injectable()
 export class RecommendationsService {
   constructor(private readonly tmdbClient: TmdbClient) {}
@@ -76,6 +80,35 @@ export class RecommendationsService {
       throw new NotFoundException('Recommendation genre preset not found');
     }
 
+    return this.loadGenrePreset(preset, query);
+  }
+
+  async randomGenreRecommendations(query: RandomGenreRecommendationQuery = {}) {
+    const preset = this.pickGenrePreset(query.seed);
+    return this.loadGenrePreset(preset, query);
+  }
+
+  async today(query: RecommendationQuery = {}): Promise<{ item: MediaRecommendationItem }> {
+    const trending = await this.trending({ ...query, limit: 1 });
+    const item = trending.items[0];
+    if (!item) {
+      throw new NotFoundException('Today recommendation not found');
+    }
+
+    return { item: { ...item, reason: 'today:trending' } };
+  }
+
+  async todayCarousel(query: RecommendationQuery = {}): Promise<{ items: MediaRecommendationItem[] }> {
+    const trending = await this.trending({ ...query, limit: query.limit ?? 3 });
+    const items = trending.items.map((item) => ({ ...item, reason: 'today:carousel' }));
+    if (items.length === 0) {
+      throw new NotFoundException('Today recommendation not found');
+    }
+
+    return { items };
+  }
+
+  private async loadGenrePreset(preset: GenrePreset, query: RecommendationQuery = {}) {
     const limit = this.limit(query.limit);
     const response = await this.tmdbClient.discover({
       mediaType: preset.mediaType,
@@ -96,14 +129,16 @@ export class RecommendationsService {
     };
   }
 
-  async today(query: RecommendationQuery = {}): Promise<{ item: MediaRecommendationItem }> {
-    const trending = await this.trending({ ...query, limit: 1 });
-    const item = trending.items[0];
-    if (!item) {
-      throw new NotFoundException('Today recommendation not found');
+  private pickGenrePreset(seed?: string) {
+    const seededPreset = seed ? GENRE_PRESETS.find((preset) => preset.id === seed) : undefined;
+    if (seededPreset) {
+      return seededPreset;
     }
 
-    return { item: { ...item, reason: 'today:trending' } };
+    const seedValue = seed
+      ? Array.from(seed).reduce((total, character) => total + character.charCodeAt(0), 0)
+      : Math.floor(Math.random() * GENRE_PRESETS.length);
+    return GENRE_PRESETS[seedValue % GENRE_PRESETS.length];
   }
 
   private limit(value?: number) {

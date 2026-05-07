@@ -128,4 +128,50 @@ describe('RecommendationsService', () => {
     assert.equal(result.item.title, '인터스텔라');
     assert.equal(result.item.reason, 'today:trending');
   });
+
+  it('returns three today recommendation carousel items from trending results', async () => {
+    const tmdbClient = new FakeTmdbClient();
+    tmdbClient.trending = async (input) => {
+      tmdbClient.trendingCalls.push(input);
+      return {
+        page: input.page,
+        totalPages: 1,
+        items: Array.from({ length: 5 }, (_, index) => ({
+          externalProvider: 'TMDB' as const,
+          externalId: `today-${index + 1}`,
+          mediaType: 'MOVIE' as const,
+          title: `오늘의 추천 ${index + 1}`,
+          originalTitle: `Today ${index + 1}`,
+          overview: '오늘의 추천 캐러셀 항목.',
+          posterUrl: `https://image.tmdb.org/t/p/w500/today-${index + 1}.jpg`,
+          backdropUrl: `https://image.tmdb.org/t/p/w780/today-${index + 1}.jpg`,
+          releaseDate: '2024-01-01',
+          genreIds: [18],
+          country: 'KR',
+          voteAverage: 8,
+          voteCount: 1000,
+          popularity: 100 - index,
+          reason: 'trending',
+        })),
+      };
+    };
+    const service = new RecommendationsService(tmdbClient as never);
+
+    const result = await service.todayCarousel({ limit: 3 });
+
+    assert.equal(result.items.length, 3);
+    assert.deepEqual(result.items.map((item) => item.reason), ['today:carousel', 'today:carousel', 'today:carousel']);
+    assert.deepEqual(tmdbClient.trendingCalls[0], { period: 'day', page: 1, language: 'ko-KR' });
+  });
+
+  it('loads a random genre recommendation preset through discover without always using the first preset', async () => {
+    const tmdbClient = new FakeTmdbClient();
+    const service = new RecommendationsService(tmdbClient as never);
+
+    const result = await service.randomGenreRecommendations({ seed: 'immersive-thriller', limit: 1 });
+
+    assert.equal(result.preset.id, 'immersive-thriller');
+    assert.equal(result.items[0].reason, 'genre:immersive-thriller');
+    assert.deepEqual(tmdbClient.discoverCalls[0].withGenres, [53, 9648]);
+  });
 });

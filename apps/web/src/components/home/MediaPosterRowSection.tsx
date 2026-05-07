@@ -16,6 +16,8 @@ export type MediaPosterRowSectionProps = {
   items: MediaPosterItem[];
   itemClassName?: string;
   posterClassName?: string;
+  actionLabel?: string;
+  onAction?: () => void;
   onSelect?: (item: MediaSearchResult) => void;
 };
 
@@ -24,11 +26,13 @@ export function MediaPosterRowSection({
   items,
   itemClassName = 'w-[70px]',
   posterClassName = 'h-[104px] w-[70px]',
+  actionLabel,
+  onAction,
   onSelect,
 }: MediaPosterRowSectionProps) {
   return (
     <>
-      <SectionTitle title={title} />
+      <SectionTitle title={title} actionLabel={actionLabel} onAction={onAction} />
       <section className="-mx-4 overflow-x-auto px-4 pb-1 min-[390px]:-mx-5 min-[390px]:px-5 [scrollbar-width:none]">
         <div className="flex gap-3">
           {items.map((item) => {

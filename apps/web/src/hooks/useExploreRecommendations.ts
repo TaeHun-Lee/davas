@@ -20,15 +20,23 @@ export type ExploreRecommendationsState = {
   status: RecommendationStatus;
   trendingItems: MediaRecommendationItem[];
   genreTiles: GenreRecommendationTile[];
-  todayItem?: MediaRecommendationItem;
+  todayItems: MediaRecommendationItem[];
 };
 
 const initialState: ExploreRecommendationsState = {
   status: 'idle',
   trendingItems: [],
   genreTiles: [],
-  todayItem: undefined,
+  todayItems: [],
 };
+
+export function pickRandomGenrePresets(presets: GenreRecommendationPreset[], count = 2) {
+  return [...presets]
+    .map((preset) => ({ preset, score: Math.random() }))
+    .sort((left, right) => left.score - right.score)
+    .slice(0, count)
+    .map(({ preset }) => preset);
+}
 
 export function useExploreRecommendations() {
   const [recommendations, setRecommendations] = useState<ExploreRecommendationsState>(initialState);
@@ -41,14 +49,15 @@ export function useExploreRecommendations() {
 
       try {
         const [trending, presets, today] = await Promise.all([
-          getTrendingRecommendations(),
+          getTrendingRecommendations({ limit: 20 }),
           getGenreRecommendationPresets(),
-          getTodayRecommendation(),
+          getTodayRecommendation({ limit: 3 }),
         ]);
 
+        const randomPresets = pickRandomGenrePresets(presets.items, 2);
         const genreResponses = await Promise.all(
-          presets.items.slice(0, 2).map(async (preset) => {
-            const response = await getGenreRecommendations(preset.id);
+          randomPresets.map(async (preset) => {
+            const response = await getGenreRecommendations(preset.id, { limit: 4 });
             return {
               ...preset,
               items: response.items,
@@ -64,7 +73,7 @@ export function useExploreRecommendations() {
           status: 'ready',
           trendingItems: trending.items,
           genreTiles: genreResponses,
-          todayItem: today.item,
+          todayItems: today.items,
         });
       } catch {
         if (!isActive) {

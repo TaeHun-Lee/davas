@@ -28,7 +28,7 @@ export type GenreRecommendationsResponse = RecommendationListResponse & {
 };
 
 export type TodayRecommendationResponse = {
-  item: MediaRecommendationItem;
+  items: MediaRecommendationItem[];
 };
 
 function getApiBaseUrl() {
@@ -50,8 +50,9 @@ async function fetchRecommendation<T>(path: string) {
   return (await response.json()) as T;
 }
 
-export async function getTrendingRecommendations({ page = 1, language = 'ko-KR' }: { page?: number; language?: string } = {}) {
+export async function getTrendingRecommendations({ limit = 10, page = 1, language = 'ko-KR' }: { limit?: number; page?: number; language?: string } = {}) {
   const params = new URLSearchParams();
+  params.set('limit', String(limit));
   params.set('page', String(page));
   params.set('language', language);
 
@@ -62,17 +63,31 @@ export async function getGenreRecommendationPresets() {
   return fetchRecommendation<GenreRecommendationPresetsResponse>('/recommendations/genres');
 }
 
-export async function getGenreRecommendations(presetId: string, { page = 1, language = 'ko-KR' }: { page?: number; language?: string } = {}) {
+export async function getGenreRecommendations(presetId: string, { limit = 4, page = 1, language = 'ko-KR' }: { limit?: number; page?: number; language?: string } = {}) {
   const params = new URLSearchParams();
+  params.set('limit', String(limit));
   params.set('page', String(page));
   params.set('language', language);
 
   return fetchRecommendation<GenreRecommendationsResponse>(`/recommendations/genres/${presetId}?${params.toString()}`);
 }
 
-export async function getTodayRecommendation({ language = 'ko-KR' }: { language?: string } = {}) {
+export async function getRandomGenreRecommendations({ seed, limit = 4, page = 1, language = 'ko-KR' }: { seed?: string; limit?: number; page?: number; language?: string } = {}) {
   const params = new URLSearchParams();
+  if (seed) {
+    params.set('seed', seed);
+  }
+  params.set('limit', String(limit));
+  params.set('page', String(page));
   params.set('language', language);
 
-  return fetchRecommendation<TodayRecommendationResponse>(`/recommendations/today?${params.toString()}`);
+  return fetchRecommendation<GenreRecommendationsResponse>(`/recommendations/genres/random?${params.toString()}`);
+}
+
+export async function getTodayRecommendation({ limit = 3, language = 'ko-KR' }: { limit?: number; language?: string } = {}) {
+  const params = new URLSearchParams();
+  params.set('limit', String(limit));
+  params.set('language', language);
+
+  return fetchRecommendation<TodayRecommendationResponse>(`/recommendations/today/carousel?${params.toString()}`);
 }

@@ -36,4 +36,15 @@ describe('Recommendations API contract', () => {
     assert.match(controllerSource, /@Get\('today'\)/);
     assert.match(controllerSource, /recommendationsService\.today/);
   });
+
+  it('exposes multi-item today and random genre endpoints for the explore carousel', () => {
+    const controllerSource = maybeSource('recommendations/recommendations.controller.ts');
+    const serviceSource = maybeSource('recommendations/recommendations.service.ts');
+
+    assert.match(controllerSource, /@Get\('today\/carousel'\)/);
+    assert.match(controllerSource, /recommendationsService\.todayCarousel/);
+    assert.match(controllerSource, /@Get\('genres\/random'\)/);
+    assert.match(controllerSource, /recommendationsService\.randomGenreRecommendations/);
+    assert.match(serviceSource, /Promise<\{ items: MediaRecommendationItem\[\] \}>/);
+  });
 });

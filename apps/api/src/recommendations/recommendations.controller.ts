@@ -17,12 +17,24 @@ export class RecommendationsController {
     return this.recommendationsService.genrePresets();
   }
 
+  @Get('genres/random')
+  randomGenreRecommendations(
+    @Query() query: { seed?: string; page?: number; limit?: number; language?: string; region?: string },
+  ) {
+    return this.recommendationsService.randomGenreRecommendations(query);
+  }
+
   @Get('genres/:presetId')
   genreRecommendations(
     @Param('presetId') presetId: string,
     @Query() query: { page?: number; limit?: number; language?: string; region?: string },
   ) {
     return this.recommendationsService.genreRecommendations(presetId, query);
+  }
+
+  @Get('today/carousel')
+  todayCarousel(@Query() query: { limit?: number; language?: string; region?: string }) {
+    return this.recommendationsService.todayCarousel(query);
   }
 
   @Get('today')

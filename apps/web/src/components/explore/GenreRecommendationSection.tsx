@@ -1,4 +1,5 @@
 import type { MediaRecommendationItem } from '../../lib/api/recommendations';
+import { MoviePosterVisual } from '../home/MoviePosterVisual';
 
 export type GenreRecommendationTile = {
   id: string;
@@ -24,18 +25,28 @@ export function GenreRecommendationSection({ tiles = defaultGenreTiles, onSelect
   return (
     <section className="card-surface mt-6 rounded-[24px] p-4">
       <h2 className="text-[16px] font-extrabold leading-[22px] tracking-[-0.02em] text-[#1f2a44]">장르별 추천</h2>
-      <div className="mt-3 grid grid-cols-2 gap-3">
+      <div className="mt-3 space-y-4">
         {genreTiles.map((tile, index) => {
-          const featuredItem = tile.items[0];
           const gradient = tile.gradient ?? (index % 2 === 0 ? 'from-[#1f2937] via-[#526173] to-[#c08b5e]' : 'from-[#0f172a] via-[#1e3a5f] to-[#a6c8e7]');
 
           return (
-            <article key={tile.id} className={`relative h-[118px] overflow-hidden rounded-[20px] bg-gradient-to-br ${gradient} p-3 shadow-[0_12px_24px_rgba(17,35,64,0.14)]`}>
-              {featuredItem?.backdropUrl ? <img src={featuredItem.backdropUrl} alt="" className="absolute inset-0 h-full w-full object-cover object-center" /> : null}
-              <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(6,13,28,0.72),transparent_58%)]" />
-              <h3 className="relative z-10 mt-9 max-w-[112px] text-[14px] font-extrabold leading-[18px] text-white drop-shadow">{tile.label}</h3>
-              <p className="relative z-10 mt-1 line-clamp-1 text-[10px] font-bold text-white/80">{featuredItem?.title ?? tile.description}</p>
-              <button type="button" onClick={() => featuredItem && onSelect?.(featuredItem)} className="absolute bottom-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-[18px] font-black text-[#216bd8]">›</button>
+            <article key={tile.id} className={`overflow-hidden rounded-[20px] bg-gradient-to-br ${gradient} p-3 shadow-[0_12px_24px_rgba(17,35,64,0.14)]`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="text-[14px] font-extrabold leading-[18px] text-white drop-shadow">{tile.label}</h3>
+                  <p className="mt-1 line-clamp-1 text-[10px] font-bold text-white/80">{tile.description}</p>
+                </div>
+                <span className="rounded-full bg-white/20 px-2 py-1 text-[10px] font-extrabold text-white">랜덤</span>
+              </div>
+              <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+                {tile.items.map((item) => (
+                  <button key={`${tile.id}-${item.externalId}`} type="button" onClick={() => onSelect?.(item)} className="w-[62px] shrink-0 text-left">
+                    <MoviePosterVisual gradient="from-white/20 via-white/10 to-white/5" imageUrl={item.posterUrl} className="h-[92px] w-[62px] rounded-[13px] shadow-[0_8px_16px_rgba(0,0,0,0.18)]" />
+                    <span className="mt-1.5 block line-clamp-2 text-[10px] font-extrabold leading-[13px] text-white">{item.title}</span>
+                  </button>
+                ))}
+                {tile.items.length === 0 ? <p className="rounded-[14px] bg-white/15 px-3 py-4 text-[11px] font-bold text-white/80">추천 작품을 불러오는 중이에요.</p> : null}
+              </div>
             </article>
           );
         })}

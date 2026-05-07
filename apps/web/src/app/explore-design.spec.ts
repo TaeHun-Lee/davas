@@ -234,11 +234,11 @@ describe('Davas explore screen design', () => {
     assert.match(exploreDashboardSource, /useExploreRecommendations/);
     assert.match(exploreDashboardSource, /recommendations\.trendingItems/);
     assert.match(exploreDashboardSource, /recommendations\.genreTiles/);
-    assert.match(exploreDashboardSource, /recommendations\.todayItem/);
+    assert.match(exploreDashboardSource, /recommendations\.todayItems/);
     assert.match(exploreDashboardSource, /handleRecommendationSelect/);
     assert.match(exploreDashboardSource, /selectMedia\(item\)/);
     assert.match(exploreDashboardSource, /getMediaDetail\(media\.id\)/);
-    assert.match(todayRecommendationSource, /item\?: MediaRecommendationItem/);
+    assert.match(todayRecommendationSource, /items\?: MediaRecommendationItem\[\]/);
     assert.match(todayRecommendationSource, /onSelect\?: \(item: MediaRecommendationItem\) => void/);
     assert.match(todayRecommendationSource, /backdropUrl/);
     assert.match(genreRecommendationSource, /tiles: GenreRecommendationTile\[\]/);
@@ -246,6 +246,43 @@ describe('Davas explore screen design', () => {
     assert.match(mediaPosterRowSource, /sourceItem\?: MediaSearchResult/);
     assert.match(mediaPosterRowSource, /onSelect\?: \(item: MediaSearchResult\) => void/);
     assert.doesNotMatch(exploreDashboardSource, /const popularWorks/);
+  });
+
+  it('uses three today recommendation items as a real carousel instead of a static hero', () => {
+    assert.match(recommendationsApiSource, /items: MediaRecommendationItem\[\]/);
+    assert.match(recommendationsApiSource, /limit\?: number/);
+    assert.match(recommendationsApiSource, /params\.set\('limit', String\(limit\)\)/);
+    assert.match(useExploreRecommendationsSource, /todayItems: MediaRecommendationItem\[\]/);
+    assert.match(useExploreRecommendationsSource, /getTodayRecommendation\(\{ limit: 3/);
+    assert.match(todayRecommendationSource, /items\?: MediaRecommendationItem\[\]/);
+    assert.match(todayRecommendationSource, /useState\(0\)/);
+    assert.match(todayRecommendationSource, /activeIndex/);
+    assert.match(todayRecommendationSource, /setActiveIndex/);
+    assert.match(todayRecommendationSource, /carousel-indicator/);
+    assert.match(todayRecommendationSource, /items\.map/);
+    assert.doesNotMatch(todayRecommendationSource, /item\?: MediaRecommendationItem/);
+  });
+
+  it('randomizes genre recommendation presets and renders multiple works per genre', () => {
+    assert.match(recommendationsApiSource, /getRandomGenreRecommendations/);
+    assert.match(recommendationsApiSource, /\/recommendations\/genres\/random/);
+    assert.match(useExploreRecommendationsSource, /pickRandomGenrePresets/);
+    assert.match(useExploreRecommendationsSource, /Math\.random/);
+    assert.doesNotMatch(useExploreRecommendationsSource, /presets\.items\.slice\(0, 2\)/);
+    assert.match(useExploreRecommendationsSource, /getGenreRecommendations\(preset\.id, \{ limit: 4/);
+    assert.match(genreRecommendationSource, /tile\.items\.map/);
+    assert.doesNotMatch(genreRecommendationSource, /const featuredItem = tile\.items\[0\]/);
+  });
+
+  it('provides an expand/collapse 전체 보기 interaction for popular trending works', () => {
+    assert.match(recommendationsApiSource, /getTrendingRecommendations\(\{ limit = 10/);
+    assert.match(exploreDashboardSource, /showAllTrending/);
+    assert.match(exploreDashboardSource, /setShowAllTrending/);
+    assert.match(exploreDashboardSource, /visibleTrendingItems/);
+    assert.match(exploreDashboardSource, /전체 보기/);
+    assert.match(exploreDashboardSource, /접기/);
+    assert.match(mediaPosterRowSource, /actionLabel\?: string/);
+    assert.match(mediaPosterRowSource, /onAction\?: \(\) => void/);
   });
 
   it('renders popular works, genre recommendation tiles, and quick shortcuts through reusable sections', () => {

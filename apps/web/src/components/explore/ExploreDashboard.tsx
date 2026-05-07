@@ -42,7 +42,10 @@ export function ExploreDashboard() {
   const search = useMediaSearch(searchQuery);
   const peopleSearch = usePeopleSearch(searchQuery);
   const recommendations = useExploreRecommendations();
+  const [showAllTrending, setShowAllTrending] = useState(false);
   const isSearchMode = searchQuery.trim().length >= 2;
+  const trendingPosterItems = recommendations.trendingItems.map(recommendationToPosterItem);
+  const visibleTrendingItems = showAllTrending ? trendingPosterItems : trendingPosterItems.slice(0, 5);
 
   async function handleSelectMedia(item: MediaSearchResult) {
     setIsSelectingMedia(true);
@@ -122,13 +125,15 @@ export function ExploreDashboard() {
         <>
           {recommendations.status === 'error' ? <div className="card-surface rounded-[20px] p-4 text-[13px] font-bold text-[#8b96a8]">추천을 불러오지 못했어요. 잠시 후 다시 시도해주세요.</div> : null}
 
-          <TodayRecommendationSection item={recommendations.todayItem} onSelect={handleRecommendationSelect} />
+          <TodayRecommendationSection items={recommendations.todayItems} onSelect={handleRecommendationSelect} />
 
           <MediaPosterRowSection
             title="지금 많이 찾는 작품"
-            items={recommendations.trendingItems.map(recommendationToPosterItem)}
+            items={visibleTrendingItems}
             itemClassName="w-[72px]"
             posterClassName="h-[108px] w-[72px] rounded-[15px]"
+            actionLabel={showAllTrending ? '접기' : '전체 보기'}
+            onAction={() => setShowAllTrending((value) => !value)}
             onSelect={(item) => void handleRecommendationSelect(item as MediaRecommendationItem)}
           />
 
