@@ -5,6 +5,8 @@ import { MediaService } from './media.service';
 class FakeTmdbClient {
   calls: Array<{ query: string; type: 'movie' | 'tv' | 'multi'; page: number }> = [];
   detailCalls: Array<{ externalId: string; mediaType: 'MOVIE' | 'TV'; language?: string }> = [];
+  peopleCalls: Array<{ query: string; page: number; language: string }> = [];
+  creditCalls: Array<{ personId: string; language: string }> = [];
 
   async detail(input: { externalId: string; mediaType: 'MOVIE' | 'TV'; language?: string }) {
     this.detailCalls.push(input);
@@ -53,6 +55,25 @@ class FakeTmdbClient {
           country: 'US',
         },
       ],
+    };
+  }
+
+
+  async searchPeople(input: { query: string; page: number; language: string }) {
+    this.peopleCalls.push(input);
+    return {
+      query: input.query,
+      page: input.page,
+      totalPages: 1,
+      items: [{ id: '20738', name: '송강호', profileUrl: null, knownForDepartment: 'Acting', knownFor: [] }],
+    };
+  }
+
+  async personCredits(input: { personId: string; language: string }) {
+    this.creditCalls.push(input);
+    return {
+      personId: input.personId,
+      items: [{ externalProvider: 'TMDB' as const, externalId: '496243', mediaType: 'MOVIE' as const, title: '기생충' }],
     };
   }
 }
@@ -117,5 +138,26 @@ describe('MediaService search', () => {
     await service.search({ query: '  Arrival  ' });
 
     assert.deepEqual(tmdbClient.calls[0], { query: 'Arrival', type: 'multi', page: 1, language: 'ko-KR', region: 'KR' });
+  });
+
+
+  it('searches actor candidates with a trimmed query and Korean defaults', async () => {
+    const tmdbClient = new FakeTmdbClient();
+    const service = new MediaService(tmdbClient as never);
+
+    const result = await service.searchPeople({ q: '  송강호  ', page: 2 });
+
+    assert.equal(result.items[0].name, '송강호');
+    assert.deepEqual(tmdbClient.peopleCalls[0], { query: '송강호', page: 2, language: 'ko-KR' });
+  });
+
+  it('loads combined movie and tv credits for a selected actor', async () => {
+    const tmdbClient = new FakeTmdbClient();
+    const service = new MediaService(tmdbClient as never);
+
+    const result = await service.findPersonCredits('20738');
+
+    assert.equal(result.items[0].title, '기생충');
+    assert.deepEqual(tmdbClient.creditCalls[0], { personId: '20738', language: 'ko-KR' });
   });
 });

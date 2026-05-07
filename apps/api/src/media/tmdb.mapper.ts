@@ -2,7 +2,7 @@ import type { MediaType } from '@davas/shared';
 
 export type TmdbSearchResult = {
   id: number;
-  media_type?: 'movie' | 'tv';
+  media_type?: 'movie' | 'tv' | 'person';
   title?: string;
   name?: string;
   original_title?: string;
@@ -14,6 +14,9 @@ export type TmdbSearchResult = {
   first_air_date?: string;
   genre_ids?: number[];
   origin_country?: string[];
+  vote_average?: number | null;
+  vote_count?: number | null;
+  popularity?: number | null;
 };
 
 export type DavasMediaSearchItem = {
@@ -28,6 +31,13 @@ export type DavasMediaSearchItem = {
   releaseDate: string | null;
   genreIds: number[];
   country: string | null;
+};
+
+export type MediaRecommendationItem = DavasMediaSearchItem & {
+  voteAverage: number | null;
+  voteCount: number | null;
+  popularity: number | null;
+  reason: string;
 };
 
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
@@ -54,5 +64,15 @@ export function mapTmdbSearchResult(result: TmdbSearchResult): DavasMediaSearchI
     releaseDate: releaseDate || null,
     genreIds: result.genre_ids ?? [],
     country: result.origin_country?.[0] ?? null,
+  };
+}
+
+export function mapTmdbRecommendationResult(result: TmdbSearchResult, reason: string): MediaRecommendationItem {
+  return {
+    ...mapTmdbSearchResult(result),
+    voteAverage: typeof result.vote_average === 'number' ? result.vote_average : null,
+    voteCount: typeof result.vote_count === 'number' ? result.vote_count : null,
+    popularity: typeof result.popularity === 'number' ? result.popularity : null,
+    reason,
   };
 }

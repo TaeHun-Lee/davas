@@ -23,6 +23,16 @@ export class MediaController {
     return this.mediaSelectionService.select(selection);
   }
 
+  @Get('people/search')
+  searchPeople(@Query() query: { q?: string; query?: string; page?: number; language?: string }) {
+    return this.mediaService.searchPeople(query);
+  }
+
+  @Get('people/:personId/credits')
+  findPersonCredits(@Param('personId') personId: string, @Query('language') language?: string) {
+    return this.mediaService.findPersonCredits(personId, language ?? 'ko-KR');
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.mediaService.findDetail(id);

@@ -24,4 +24,20 @@ describe('Media selection API contract', () => {
     assert.match(dtoSource, /posterUrl/);
     assert.match(dtoSource, /genreIds/);
   });
+
+  it('exposes actor search and actor credits before the catch-all media detail route', () => {
+    assert.match(controllerSource, /@Get\('people\/search'\)/);
+    assert.match(controllerSource, /@Get\('people\/:personId\/credits'\)/);
+    assert.match(controllerSource, /mediaService\.searchPeople/);
+    assert.match(controllerSource, /mediaService\.findPersonCredits/);
+
+    assert.ok(
+      controllerSource.indexOf("@Get('people/search')") < controllerSource.indexOf("@Get(':id')"),
+      'people search route must be declared before @Get(:id)',
+    );
+    assert.ok(
+      controllerSource.indexOf("@Get('people/:personId/credits')") < controllerSource.indexOf("@Get(':id')"),
+      'person credits route must be declared before @Get(:id)',
+    );
+  });
 });

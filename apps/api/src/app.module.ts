@@ -7,6 +7,7 @@ import { createTypeOrmOptions } from './database/typeorm.config';
 import { DiariesModule } from './diaries/diaries.module';
 import { HealthController } from './health.controller';
 import { MediaModule } from './media/media.module';
+import { RecommendationsModule } from './recommendations/recommendations.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -16,6 +17,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     UsersModule,
     MediaModule,
+    RecommendationsModule,
     DiariesModule,
     CommentsModule,
   ],

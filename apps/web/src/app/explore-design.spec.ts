@@ -12,11 +12,21 @@ const tabBarSource = source('../components/layout/BottomTabBar.tsx');
 const mediaPosterRowSource = source('../components/home/MediaPosterRowSection.tsx');
 const favoriteMoviesSource = source('../components/home/FavoriteMoviesSection.tsx');
 const mediaApiSource = source('../lib/api/media.ts');
+const recommendationsApiSource = source('../lib/api/recommendations.ts');
+const useExploreRecommendationsSource = source('../hooks/useExploreRecommendations.ts');
 const mediaSearchResultsSource = source('../components/media/MediaSearchResults.tsx');
+const personSearchResultsSource = source('../components/media/PersonSearchResults.tsx');
+const personCreditResultsSource = source('../components/media/PersonCreditResults.tsx');
 const mediaDetailModalSource = source('../components/media/MediaDetailModal.tsx');
 const mediaDetailSectionsSource = source('../components/media/media-detail-sections.tsx');
 const mediaGenreSource = source('../components/media/media-genres.ts');
 const useMediaSearchSource = source('../hooks/useMediaSearch.ts');
+const usePeopleSearchSource = source('../hooks/usePeopleSearch.ts');
+const exploreSearchBarSource = source('../components/explore/ExploreSearchBar.tsx');
+const exploreFilterChipsSource = source('../components/explore/ExploreFilterChips.tsx');
+const todayRecommendationSource = source('../components/explore/TodayRecommendationSection.tsx');
+const genreRecommendationSource = source('../components/explore/GenreRecommendationSection.tsx');
+const exploreShortcutGridSource = source('../components/explore/ExploreShortcutGrid.tsx');
 
 describe('Davas explore screen design', () => {
   it('routes /explore to the designed explore dashboard instead of a placeholder', () => {
@@ -30,13 +40,13 @@ describe('Davas explore screen design', () => {
     assert.match(exploreDashboardSource, /useMediaSearch/);
     assert.match(exploreDashboardSource, /value=\{searchQuery\}/);
     assert.match(exploreDashboardSource, /onChange=\{/);
-    assert.match(exploreDashboardSource, /영화, 드라마, 배우를 검색해보세요/);
+    assert.match(exploreSearchBarSource, /영화, 드라마, 배우를 검색해보세요/);
     for (const chip of ['전체', '영화', '드라마', '배우', '감독', '장르', '평점순']) {
-      assert.match(exploreDashboardSource, new RegExp(chip));
+      assert.match(exploreFilterChipsSource, new RegExp(chip));
     }
-    assert.match(exploreDashboardSource, /explore-filter-row/);
-    assert.match(exploreDashboardSource, /bg-\[#216bd8\]/);
-    assert.match(exploreDashboardSource, /rounded-full/);
+    assert.match(exploreFilterChipsSource, /explore-filter-row/);
+    assert.match(exploreFilterChipsSource, /bg-\[#216bd8\]/);
+    assert.match(exploreFilterChipsSource, /rounded-full/);
   });
 
   it('calls the backend media search API with Korean and English capable query params', () => {
@@ -50,6 +60,41 @@ describe('Davas explore screen design', () => {
     assert.match(mediaSearchResultsSource, /검색 결과/);
     assert.match(mediaSearchResultsSource, /검색 중/);
     assert.match(mediaSearchResultsSource, /검색 결과가 없어요/);
+  });
+
+  it('calls backend person search and credits APIs without exposing TMDB to the browser', () => {
+    assert.match(mediaApiSource, /export type PersonSearchResult/);
+    assert.match(mediaApiSource, /export type PersonSearchResponse/);
+    assert.match(mediaApiSource, /export type PersonCreditsResponse/);
+    assert.match(mediaApiSource, /export async function searchPeople/);
+    assert.match(mediaApiSource, /export async function getPersonCredits/);
+    assert.match(mediaApiSource, /\/media\/people\/search/);
+    assert.match(mediaApiSource, /\/media\/people\/\$\{personId\}\/credits/);
+    assert.doesNotMatch(mediaApiSource, /api\.themoviedb\.org/);
+    assert.match(usePeopleSearchSource, /export function usePeopleSearch/);
+    assert.match(usePeopleSearchSource, /searchPeople/);
+    assert.match(usePeopleSearchSource, /getPersonCredits/);
+    assert.match(usePeopleSearchSource, /selectedPerson/);
+  });
+
+  it('renders separate actor candidates and actor credit results before selecting a work', () => {
+    assert.match(personSearchResultsSource, /export function PersonSearchResults/);
+    assert.match(personSearchResultsSource, /배우 검색 결과/);
+    assert.match(personSearchResultsSource, /출연작 보기/);
+    assert.match(personSearchResultsSource, /knownFor/);
+    assert.match(personCreditResultsSource, /export function PersonCreditResults/);
+    assert.match(personCreditResultsSource, /출연 작품/);
+    assert.match(personCreditResultsSource, /작품 선택/);
+    assert.match(personCreditResultsSource, /onSelect/);
+    assert.match(exploreDashboardSource, /usePeopleSearch/);
+    assert.match(exploreDashboardSource, /PersonSearchResults/);
+    assert.match(exploreDashboardSource, /PersonCreditResults/);
+    assert.match(exploreDashboardSource, /handlePersonSelect/);
+    assert.match(exploreDashboardSource, /handleCreditSelect/);
+    assert.match(exploreDashboardSource, /selectMedia\(item\)/);
+    assert.match(exploreDashboardSource, /getMediaDetail\(media\.id\)/);
+    assert.doesNotMatch(exploreDashboardSource, /function PersonSearchResults/);
+    assert.doesNotMatch(exploreDashboardSource, /function PersonCreditResults/);
   });
 
   it('lets search result cards select and persist a TMDB result through the backend API', () => {
@@ -135,31 +180,93 @@ describe('Davas explore screen design', () => {
     assert.match(mediaDetailSectionsSource, /currentRating = 0/);
   });
 
-  it('renders the today recommendation hero card from the supplied design', () => {
-    assert.match(exploreDashboardSource, /오늘의 추천/);
-    assert.match(exploreDashboardSource, /푸른 밤의 기록/);
-    assert.match(exploreDashboardSource, /드라마 · 2023/);
-    assert.match(exploreDashboardSource, /잊고 있던 꿈을 다시 마주하게 된 한 사람의 이야기\./);
-    assert.match(exploreDashboardSource, /상세 보기/);
-    assert.match(exploreDashboardSource, /다이어리 쓰기/);
-    assert.match(exploreDashboardSource, /today-recommendation-card/);
-    assert.match(exploreDashboardSource, /recommendation-still/);
-    assert.match(exploreDashboardSource, /carousel-indicator/);
+  it('extracts reusable explore search and filter controls', () => {
+    assert.match(exploreSearchBarSource, /export function ExploreSearchBar/);
+    assert.match(exploreSearchBarSource, /SearchIcon/);
+    assert.match(exploreSearchBarSource, /영화, 드라마, 배우를 검색해보세요/);
+    assert.match(exploreFilterChipsSource, /export function ExploreFilterChips/);
+    assert.match(exploreFilterChipsSource, /explore-filter-row/);
+    assert.match(exploreFilterChipsSource, /filters\.map/);
+    assert.match(exploreDashboardSource, /ExploreSearchBar/);
+    assert.match(exploreDashboardSource, /ExploreFilterChips/);
+    assert.doesNotMatch(exploreDashboardSource, /function SearchIcon/);
+    assert.doesNotMatch(exploreDashboardSource, /filters\.map/);
   });
 
-  it('renders popular works, genre recommendation tiles, and quick shortcuts', () => {
+  it('renders the today recommendation hero card from a reusable component', () => {
+    assert.match(todayRecommendationSource, /export function TodayRecommendationSection/);
+    assert.match(todayRecommendationSource, /오늘의 추천/);
+    assert.match(todayRecommendationSource, /푸른 밤의 기록/);
+    assert.match(todayRecommendationSource, /드라마 · 2023/);
+    assert.match(todayRecommendationSource, /잊고 있던 꿈을 다시 마주하게 된 한 사람의 이야기\./);
+    assert.match(todayRecommendationSource, /상세 보기/);
+    assert.match(todayRecommendationSource, /다이어리 쓰기/);
+    assert.match(todayRecommendationSource, /today-recommendation-card/);
+    assert.match(todayRecommendationSource, /today-recommendation-actions/);
+    assert.match(todayRecommendationSource, /whitespace-nowrap/);
+    assert.match(todayRecommendationSource, /shrink-0/);
+    assert.match(todayRecommendationSource, /RecommendationStill/);
+    assert.match(todayRecommendationSource, /PencilIcon/);
+    assert.match(todayRecommendationSource, /carousel-indicator/);
+    assert.match(exploreDashboardSource, /TodayRecommendationSection/);
+    assert.doesNotMatch(exploreDashboardSource, /function RecommendationStill/);
+    assert.doesNotMatch(exploreDashboardSource, /function PencilIcon/);
+  });
+
+  it('fetches explore recommendations through backend recommendation APIs', () => {
+    assert.match(recommendationsApiSource, /export type MediaRecommendationItem/);
+    assert.match(recommendationsApiSource, /export async function getTrendingRecommendations/);
+    assert.match(recommendationsApiSource, /export async function getGenreRecommendationPresets/);
+    assert.match(recommendationsApiSource, /export async function getGenreRecommendations/);
+    assert.match(recommendationsApiSource, /export async function getTodayRecommendation/);
+    assert.match(recommendationsApiSource, /\/recommendations\/trending/);
+    assert.match(recommendationsApiSource, /\/recommendations\/genres/);
+    assert.match(recommendationsApiSource, /\/recommendations\/today/);
+    assert.match(recommendationsApiSource, /credentials: 'include'/);
+    assert.doesNotMatch(recommendationsApiSource, /api\.themoviedb\.org/);
+    assert.match(useExploreRecommendationsSource, /export function useExploreRecommendations/);
+    assert.match(useExploreRecommendationsSource, /getTrendingRecommendations/);
+    assert.match(useExploreRecommendationsSource, /getGenreRecommendations/);
+    assert.match(useExploreRecommendationsSource, /getTodayRecommendation/);
+  });
+
+  it('renders popular, genre, and today sections from live recommendation state with reusable selection flow', () => {
+    assert.match(exploreDashboardSource, /useExploreRecommendations/);
+    assert.match(exploreDashboardSource, /recommendations\.trendingItems/);
+    assert.match(exploreDashboardSource, /recommendations\.genreTiles/);
+    assert.match(exploreDashboardSource, /recommendations\.todayItem/);
+    assert.match(exploreDashboardSource, /handleRecommendationSelect/);
+    assert.match(exploreDashboardSource, /selectMedia\(item\)/);
+    assert.match(exploreDashboardSource, /getMediaDetail\(media\.id\)/);
+    assert.match(todayRecommendationSource, /item\?: MediaRecommendationItem/);
+    assert.match(todayRecommendationSource, /onSelect\?: \(item: MediaRecommendationItem\) => void/);
+    assert.match(todayRecommendationSource, /backdropUrl/);
+    assert.match(genreRecommendationSource, /tiles: GenreRecommendationTile\[\]/);
+    assert.match(genreRecommendationSource, /onSelect\?: \(item: MediaRecommendationItem\) => void/);
+    assert.match(mediaPosterRowSource, /sourceItem\?: MediaSearchResult/);
+    assert.match(mediaPosterRowSource, /onSelect\?: \(item: MediaSearchResult\) => void/);
+    assert.doesNotMatch(exploreDashboardSource, /const popularWorks/);
+  });
+
+  it('renders popular works, genre recommendation tiles, and quick shortcuts through reusable sections', () => {
     assert.match(exploreDashboardSource, /지금 많이 찾는 작품/);
-    for (const title of ['저 먼 우주에서', '비 오는 오후', '파도 너머로', '침묵의 문', '그 해의 여름']) {
-      assert.match(exploreDashboardSource, new RegExp(title));
-    }
-    assert.match(exploreDashboardSource, /장르별 추천/);
-    assert.match(exploreDashboardSource, /비 오는 날 보기 좋은 영화/);
-    assert.match(exploreDashboardSource, /몰입감 높은 스릴러/);
-    assert.match(exploreDashboardSource, /탐색 바로가기/);
+    assert.match(genreRecommendationSource, /export function GenreRecommendationSection/);
+    assert.match(genreRecommendationSource, /장르별 추천/);
+    assert.match(genreRecommendationSource, /genreTiles\.map/);
+    assert.match(genreRecommendationSource, /비 오는 날 보기 좋은 영화/);
+    assert.match(genreRecommendationSource, /몰입감 높은 스릴러/);
+    assert.match(exploreShortcutGridSource, /export function ExploreShortcutGrid/);
+    assert.match(exploreShortcutGridSource, /탐색 바로가기/);
+    assert.match(exploreShortcutGridSource, /quick-explore-grid/);
+    assert.match(exploreShortcutGridSource, /shortcuts\.map/);
     for (const shortcut of ['인기작', '신작', '평점순', '배우', '감독', '장르']) {
-      assert.match(exploreDashboardSource, new RegExp(shortcut));
+      assert.match(exploreShortcutGridSource, new RegExp(shortcut));
     }
-    assert.match(exploreDashboardSource, /quick-explore-grid/);
+    assert.match(exploreDashboardSource, /GenreRecommendationSection/);
+    assert.match(exploreDashboardSource, /ExploreShortcutGrid/);
+    assert.doesNotMatch(exploreDashboardSource, /genreTiles\.map/);
+    assert.doesNotMatch(exploreDashboardSource, /shortcuts\.map/);
+    assert.doesNotMatch(exploreDashboardSource, /function ShortcutIcon/);
   });
 
   it('reuses the shared media poster row for popular works instead of an inline duplicate', () => {

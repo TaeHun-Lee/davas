@@ -51,6 +51,19 @@ export class MediaService {
     });
   }
 
+  async searchPeople(query: { q?: string; query?: string; page?: number; language?: string }) {
+    const normalizedQuery = (query.query ?? query.q ?? '').trim();
+    return this.tmdbClient.searchPeople({
+      query: normalizedQuery,
+      page: query.page ?? 1,
+      language: query.language ?? 'ko-KR',
+    });
+  }
+
+  async findPersonCredits(personId: string, language = 'ko-KR') {
+    return this.tmdbClient.personCredits({ personId, language });
+  }
+
   async findDetail(id: string): Promise<MediaDetailResponse> {
     const media = await this.mediaRepository?.findOne({ where: { id } });
     if (!media) {

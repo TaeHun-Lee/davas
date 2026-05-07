@@ -2,7 +2,13 @@ import { Inject, Injectable, Optional, ServiceUnavailableException } from '@nest
 import { ConfigService } from '@nestjs/config';
 import type { MediaType } from '@davas/shared';
 import { mapTmdbDetail, TmdbDetailPayload, TmdbMediaDetail } from './tmdb-detail.mapper';
-import { DavasMediaSearchItem, mapTmdbSearchResult, TmdbSearchResult } from './tmdb.mapper';
+import {
+  DavasMediaSearchItem,
+  mapTmdbRecommendationResult,
+  mapTmdbSearchResult,
+  MediaRecommendationItem,
+  TmdbSearchResult,
+} from './tmdb.mapper';
 
 export type MediaSearchType = 'movie' | 'tv' | 'multi';
 
@@ -28,6 +34,68 @@ export type MediaSearchResponse = {
   query: string;
   page: number;
   totalPages: number;
+  items: DavasMediaSearchItem[];
+};
+
+export type TrendingRecommendationsInput = {
+  period: 'day' | 'week';
+  page: number;
+  language?: string;
+};
+
+export type DiscoverRecommendationsInput = {
+  mediaType: 'movie' | 'tv';
+  page: number;
+  language?: string;
+  region?: string;
+  withGenres: number[];
+  sortBy: string;
+  voteCountGte: number;
+  reason: string;
+};
+
+export type RecommendationResponse = {
+  page: number;
+  totalPages: number;
+  items: MediaRecommendationItem[];
+};
+
+type TmdbPersonSearchResult = {
+  id: number;
+  name?: string;
+  profile_path?: string | null;
+  known_for_department?: string;
+  known_for?: TmdbSearchResult[];
+};
+
+export type PersonSearchInput = {
+  query: string;
+  page: number;
+  language?: string;
+};
+
+export type DavasPersonSearchItem = {
+  id: string;
+  name: string;
+  profileUrl: string | null;
+  knownForDepartment: string;
+  knownFor: DavasMediaSearchItem[];
+};
+
+export type PersonSearchResponse = {
+  query: string;
+  page: number;
+  totalPages: number;
+  items: DavasPersonSearchItem[];
+};
+
+export type PersonCreditsInput = {
+  personId: string;
+  language?: string;
+};
+
+export type PersonCreditsResponse = {
+  personId: string;
   items: DavasMediaSearchItem[];
 };
 
@@ -84,6 +152,132 @@ export class TmdbClient {
     };
   }
 
+  async trending({ period, page, language = 'ko-KR' }: TrendingRecommendationsInput): Promise<RecommendationResponse> {
+    if (!this.apiKey) {
+      throw new ServiceUnavailableException('TMDB_API_KEY is not configured');
+    }
+
+    const url = new URL(`${this.baseUrl}/trending/all/${period}`);
+    url.searchParams.set('api_key', this.apiKey);
+    url.searchParams.set('page', String(page));
+    url.searchParams.set('language', language);
+
+    const response = await this.fetcher(url);
+    if (!response.ok) {
+      throw new ServiceUnavailableException(`TMDB trending failed with status ${response.status}`);
+    }
+
+    const payload = (await response.json()) as { page?: number; total_pages?: number; results?: TmdbSearchResult[] };
+
+    return {
+      page: payload.page ?? page,
+      totalPages: payload.total_pages ?? 1,
+      items: (payload.results ?? [])
+        .filter((result) => this.isSupportedResult(result, 'multi'))
+        .map((result) => mapTmdbRecommendationResult(result, 'trending')),
+    };
+  }
+
+  async discover({
+    mediaType,
+    page,
+    language = 'ko-KR',
+    region = 'KR',
+    withGenres,
+    sortBy,
+    voteCountGte,
+    reason,
+  }: DiscoverRecommendationsInput): Promise<RecommendationResponse> {
+    if (!this.apiKey) {
+      throw new ServiceUnavailableException('TMDB_API_KEY is not configured');
+    }
+
+    const url = new URL(`${this.baseUrl}/discover/${mediaType}`);
+    url.searchParams.set('api_key', this.apiKey);
+    url.searchParams.set('page', String(page));
+    url.searchParams.set('language', language);
+    url.searchParams.set('region', region);
+    url.searchParams.set('with_genres', withGenres.join(','));
+    url.searchParams.set('sort_by', sortBy);
+    url.searchParams.set('vote_count.gte', String(voteCountGte));
+    url.searchParams.set('include_adult', 'false');
+
+    const response = await this.fetcher(url);
+    if (!response.ok) {
+      throw new ServiceUnavailableException(`TMDB discover failed with status ${response.status}`);
+    }
+
+    const payload = (await response.json()) as { page?: number; total_pages?: number; results?: TmdbSearchResult[] };
+
+    return {
+      page: payload.page ?? page,
+      totalPages: payload.total_pages ?? 1,
+      items: (payload.results ?? [])
+        .map((result) => this.withMediaType(result, mediaType))
+        .map((result) => mapTmdbRecommendationResult(result, reason)),
+    };
+  }
+
+  async searchPeople({ query, page, language = 'ko-KR' }: PersonSearchInput): Promise<PersonSearchResponse> {
+    if (!this.apiKey) {
+      throw new ServiceUnavailableException('TMDB_API_KEY is not configured');
+    }
+
+    const url = new URL(`${this.baseUrl}/search/person`);
+    url.searchParams.set('api_key', this.apiKey);
+    url.searchParams.set('query', query);
+    url.searchParams.set('page', String(page));
+    url.searchParams.set('language', language);
+    url.searchParams.set('include_adult', 'false');
+
+    const response = await this.fetcher(url);
+    if (!response.ok) {
+      throw new ServiceUnavailableException(`TMDB person search failed with status ${response.status}`);
+    }
+
+    const payload = (await response.json()) as { page?: number; total_pages?: number; results?: TmdbPersonSearchResult[] };
+
+    return {
+      query,
+      page: payload.page ?? page,
+      totalPages: payload.total_pages ?? 1,
+      items: (payload.results ?? []).map((person) => ({
+        id: String(person.id),
+        name: person.name ?? '',
+        profileUrl: imageUrl('w500', person.profile_path),
+        knownForDepartment: person.known_for_department ?? '',
+        knownFor: (person.known_for ?? [])
+          .filter((result) => this.isSupportedResult(result, 'multi'))
+          .map((result) => mapTmdbSearchResult(result)),
+      })),
+    };
+  }
+
+  async personCredits({ personId, language = 'ko-KR' }: PersonCreditsInput): Promise<PersonCreditsResponse> {
+    if (!this.apiKey) {
+      throw new ServiceUnavailableException('TMDB_API_KEY is not configured');
+    }
+
+    const url = new URL(`${this.baseUrl}/person/${personId}/combined_credits`);
+    url.searchParams.set('api_key', this.apiKey);
+    url.searchParams.set('language', language);
+
+    const response = await this.fetcher(url);
+    if (!response.ok) {
+      throw new ServiceUnavailableException(`TMDB person credits failed with status ${response.status}`);
+    }
+
+    const payload = (await response.json()) as { cast?: TmdbSearchResult[]; crew?: TmdbSearchResult[] };
+    const credits = [...(payload.cast ?? []), ...(payload.crew ?? [])];
+
+    return {
+      personId,
+      items: credits
+        .filter((result) => this.isSupportedResult(result, 'multi'))
+        .map((result) => mapTmdbSearchResult(result)),
+    };
+  }
+
   async detail({ externalId, mediaType, language = 'ko-KR' }: MediaDetailInput): Promise<TmdbMediaDetail> {
     if (!this.apiKey) {
       throw new ServiceUnavailableException('TMDB_API_KEY is not configured');
@@ -121,4 +315,8 @@ export class TmdbClient {
     }
     return result;
   }
+}
+
+function imageUrl(size: 'w500' | 'w780', path?: string | null): string | null {
+  return path ? `https://image.tmdb.org/t/p/${size}${path}` : null;
 }
