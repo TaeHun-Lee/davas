@@ -2,20 +2,51 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
-const pageSource = readFileSync(new URL('./page.tsx', import.meta.url), 'utf8');
+const loginPageSource = readFileSync(new URL('./login/page.tsx', import.meta.url), 'utf8');
+const signupPageSource = readFileSync(new URL('./signup/page.tsx', import.meta.url), 'utf8');
+const homePageSource = readFileSync(new URL('./page.tsx', import.meta.url), 'utf8');
+const authUiSource = readFileSync(new URL('../components/auth/AuthUi.tsx', import.meta.url), 'utf8');
+const landingSource = readFileSync(new URL('../components/auth/AuthenticatedLanding.tsx', import.meta.url), 'utf8');
+const middlewareSource = readFileSync(new URL('../middleware.ts', import.meta.url), 'utf8');
 
-describe('Davas auth page copy', () => {
-  it('uses the requested login heading and subheading', () => {
-    assert.match(pageSource, /환영합니다/);
-    assert.match(pageSource, /영화와 드라마를 보고 다이어리를 작성해보세요\./);
-    assert.doesNotMatch(pageSource, /다시 오신 것을 환영합니다/);
-    assert.doesNotMatch(pageSource, /영화와 드라마 다이어리를\s*계속 작성하려면 로그인하세요/);
+describe('Davas separated auth routes', () => {
+  it('routes /login to only the login screen with requested copy', () => {
+    assert.match(loginPageSource, /LoginPage/);
+    assert.doesNotMatch(loginPageSource, /SignupCard/);
+    assert.match(authUiSource, /환영합니다/);
+    assert.match(authUiSource, /영화와 드라마를 보고 다이어리를 작성해보세요\./);
+    assert.doesNotMatch(authUiSource, /다시 오신 것을 환영합니다/);
   });
 
-  it('renders sign-up without preferred genre selection', () => {
-    assert.match(pageSource, /계정을 만들어보세요/);
-    assert.match(pageSource, /회원가입/);
-    assert.doesNotMatch(pageSource, /선호 장르/);
-    assert.doesNotMatch(pageSource, /드라마.*로맨스.*스릴러/s);
+  it('routes /signup to only the signup screen without preferred genres', () => {
+    assert.match(signupPageSource, /SignupPage/);
+    assert.doesNotMatch(signupPageSource, /LoginCard/);
+    assert.match(authUiSource, /계정을 만들어보세요/);
+    assert.doesNotMatch(authUiSource, /선호 장르/);
+  });
+
+  it('uses the saved Davas logo image instead of a hand-drawn inline logo', () => {
+    assert.match(authUiSource, /\/images\/davas-logo\.jpg/);
+    assert.doesNotMatch(authUiSource, /function DavasLogo\(\).*filmstrip/s);
+  });
+
+  it('keeps the root page as a protected temporary landing page', () => {
+    assert.match(homePageSource, /AuthenticatedLanding/);
+    assert.doesNotMatch(homePageSource, /redirect\('\/login'\)/);
+  });
+
+  it('protects the main page with middleware and verifies auth state on landing', () => {
+    assert.match(middlewareSource, /davas_access_token/);
+    assert.match(middlewareSource, /pathname === '\/'/);
+    assert.match(middlewareSource, /\/login/);
+    assert.match(landingSource, /\/auth\/me/);
+    assert.match(landingSource, /router\.replace\('\/login'\)/);
+  });
+
+  it('submits login and signup forms to the backend with credentials', () => {
+    assert.match(authUiSource, /\/auth\/login/);
+    assert.match(authUiSource, /\/auth\/signup/);
+    assert.match(authUiSource, /credentials: 'include'/);
+    assert.match(authUiSource, /router\.push\('\/'\)/);
   });
 });

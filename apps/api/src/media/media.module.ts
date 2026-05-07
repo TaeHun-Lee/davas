@@ -1,5 +1,10 @@
 import { Module } from '@nestjs/common';
 import { MediaController } from './media.controller';
+import { MediaService } from './media.service';
+import { TmdbClient } from './tmdb.client';
 
-@Module({ controllers: [MediaController] })
+@Module({
+  controllers: [MediaController],
+  providers: [MediaService, TmdbClient],
+})
 export class MediaModule {}

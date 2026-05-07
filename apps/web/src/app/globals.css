@@ -1,13 +1,38 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  color: #252b33;
-  background: #eef1f5;
+  color: #1f2a44;
+  background: #f6f8fc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #f6f8fc;
+  overflow-x: hidden;
 }
 
 body {
   min-height: 100vh;
-  background: #eef1f5;
+  margin: 0;
+  background: #f6f8fc;
+  overflow-x: hidden;
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  letter-spacing: -0.018em;
+  font-feature-settings: 'kern';
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer components {
+  .card-surface {
+    @apply bg-white shadow-[0_10px_26px_rgba(31,65,114,0.075)] ring-1 ring-[#edf1f7]/80;
+  }
 }
