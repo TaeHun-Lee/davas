@@ -27,6 +27,7 @@ const exploreFilterChipsSource = source('../components/explore/ExploreFilterChip
 const todayRecommendationSource = source('../components/explore/TodayRecommendationSection.tsx');
 const genreRecommendationSource = source('../components/explore/GenreRecommendationSection.tsx');
 const exploreShortcutGridSource = source('../components/explore/ExploreShortcutGrid.tsx');
+const mediaDetailLoadingIndicatorSource = source('../components/media/MediaDetailLoadingIndicator.tsx');
 
 describe('Davas explore screen design', () => {
   it('routes /explore to the designed explore dashboard instead of a placeholder', () => {
@@ -193,20 +194,20 @@ describe('Davas explore screen design', () => {
     assert.doesNotMatch(exploreDashboardSource, /filters\.map/);
   });
 
-  it('renders the today recommendation hero card from a reusable component', () => {
+  it('renders the today recommendation hero card from a reusable component without a diary CTA', () => {
     assert.match(todayRecommendationSource, /export function TodayRecommendationSection/);
     assert.match(todayRecommendationSource, /오늘의 추천/);
     assert.match(todayRecommendationSource, /푸른 밤의 기록/);
     assert.match(todayRecommendationSource, /드라마 · 2023/);
     assert.match(todayRecommendationSource, /잊고 있던 꿈을 다시 마주하게 된 한 사람의 이야기\./);
     assert.match(todayRecommendationSource, /상세 보기/);
-    assert.match(todayRecommendationSource, /다이어리 쓰기/);
+    assert.doesNotMatch(todayRecommendationSource, /다이어리 쓰기/);
     assert.match(todayRecommendationSource, /today-recommendation-card/);
     assert.match(todayRecommendationSource, /today-recommendation-actions/);
     assert.match(todayRecommendationSource, /whitespace-nowrap/);
-    assert.match(todayRecommendationSource, /shrink-0/);
     assert.match(todayRecommendationSource, /RecommendationStill/);
-    assert.match(todayRecommendationSource, /PencilIcon/);
+    assert.doesNotMatch(todayRecommendationSource, /PencilIcon/);
+    assert.doesNotMatch(todayRecommendationSource, /today-diary-button/);
     assert.match(todayRecommendationSource, /carousel-indicator/);
     assert.match(exploreDashboardSource, /TodayRecommendationSection/);
     assert.doesNotMatch(exploreDashboardSource, /function RecommendationStill/);
@@ -287,34 +288,44 @@ describe('Davas explore screen design', () => {
     assert.match(exploreDashboardSource, /onViewAll=\{\(\) => setShowAllToday\(\(value\) => !value\)\}/);
   });
 
-  it('tightens the today recommendation card so the image and controls feel balanced on mobile', () => {
+  it('keeps today recommendation CTA as a single detail action on mobile', () => {
     assert.match(todayRecommendationSource, /recommendation-still[^\n]*h-full/);
     assert.match(todayRecommendationSource, /recommendation-still[^\n]*min-h-\[168px\]/);
     assert.match(todayRecommendationSource, /items-stretch/);
     assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*grid-cols-1/);
     assert.doesNotMatch(todayRecommendationSource, /today-recommendation-actions[^\n]*grid-cols-\[0\.9fr_1\.1fr\]/);
-    assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*gap-2/);
-    assert.match(todayRecommendationSource, /<button[^\n]*다이어리 쓰기/);
-    assert.match(todayRecommendationSource, /gap-1\.5 whitespace-nowrap rounded-full bg-\[#2f7eea\] px-3 text-\[11px\]/);
+    assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*gap-0/);
+    assert.doesNotMatch(todayRecommendationSource, /<button[^\n]*다이어리 쓰기/);
+    assert.doesNotMatch(todayRecommendationSource, /today-diary-button[^\n]*bg-\[#2f7eea\]/);
     assert.match(todayRecommendationSource, /carousel-indicator mt-2/);
     assert.doesNotMatch(todayRecommendationSource, /carousel-indicator mt-3\.5/);
   });
 
-  it('aligns today recommendation CTA contents without squeezing the diary button on mobile', () => {
+  it('aligns the remaining today recommendation detail CTA without a diary button', () => {
     assert.match(todayRecommendationSource, /max-\[430px\]:grid-cols-1/);
     assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*mt-3[^\n]*pb-2/);
     assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*pr-2/);
     assert.doesNotMatch(todayRecommendationSource, /today-recommendation-actions[^\n]*max-\[430px\]:grid-cols-2/);
     assert.match(todayRecommendationSource, /data-design="today-detail-button"/);
-    assert.match(todayRecommendationSource, /data-design="today-diary-button"/);
-    assert.match(todayRecommendationSource, /today-detail-button[^\n]*h-\[34px\][^\n]*w-full[^\n]*items-center/);
-    assert.match(todayRecommendationSource, /today-diary-button[^\n]*inline-flex[^\n]*h-\[36px\][^\n]*w-full[^\n]*items-center/);
-    assert.match(todayRecommendationSource, /today-diary-button[^\n]*gap-1\.5[^\n]*px-3/);
-    assert.match(todayRecommendationSource, /today-diary-button[^\n]*leading-\[14px\]/);
-    assert.match(todayRecommendationSource, /today-diary-button-icon[^\n]*grid[^\n]*size-\[14px\][^\n]*place-items-center/);
-    assert.match(todayRecommendationSource, /<PencilIcon className="block size-\[14px\]" \/>/);
-    assert.match(todayRecommendationSource, /<span className="block leading-\[14px\] whitespace-nowrap">다이어리 쓰기<\/span>/);
+    assert.doesNotMatch(todayRecommendationSource, /data-design="today-diary-button"/);
+    assert.match(todayRecommendationSource, /today-detail-button[^\n]*h-\[36px\][^\n]*w-full[^\n]*items-center/);
+    assert.doesNotMatch(todayRecommendationSource, /today-diary-button/);
+    assert.doesNotMatch(todayRecommendationSource, /today-diary-button-icon/);
+    assert.doesNotMatch(todayRecommendationSource, /<PencilIcon/);
+    assert.doesNotMatch(todayRecommendationSource, /다이어리 쓰기/);
     assert.doesNotMatch(todayRecommendationSource, /today-recommendation-actions[^\n]*pt-4"/);
+  });
+
+  it('shows selected media loading as an animated indicator instead of bottom-page text', () => {
+    assert.match(mediaDetailLoadingIndicatorSource, /export function MediaDetailLoadingIndicator/);
+    assert.match(mediaDetailLoadingIndicatorSource, /role="status"/);
+    assert.match(mediaDetailLoadingIndicatorSource, /aria-label="상세 정보를 불러오는 중"/);
+    assert.match(mediaDetailLoadingIndicatorSource, /animate-spin/);
+    assert.match(mediaDetailLoadingIndicatorSource, /fixed inset-0/);
+    assert.doesNotMatch(mediaDetailLoadingIndicatorSource, /불러오고 있어요/);
+    assert.match(exploreDashboardSource, /MediaDetailLoadingIndicator/);
+    assert.match(exploreDashboardSource, /isSelectingMedia \? <MediaDetailLoadingIndicator \/> : null/);
+    assert.doesNotMatch(exploreDashboardSource, /선택한 작품의 상세 정보를 불러오고 있어요/);
   });
 
   it('opens the detail modal from every explore recommendation movie and drama card', () => {

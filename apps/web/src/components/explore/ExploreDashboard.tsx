@@ -8,6 +8,7 @@ import { GenreRecommendationSection } from './GenreRecommendationSection';
 import { TodayRecommendationSection } from './TodayRecommendationSection';
 import { MediaPosterItem, MediaPosterRowSection } from '../home/MediaPosterRowSection';
 import { AppShell } from '../layout/AppShell';
+import { MediaDetailLoadingIndicator } from '../media/MediaDetailLoadingIndicator';
 import { MediaDetailModal } from '../media/MediaDetailModal';
 import { MediaSearchResults } from '../media/MediaSearchResults';
 import { PersonCreditResults } from '../media/PersonCreditResults';
@@ -119,7 +120,7 @@ export function ExploreDashboard() {
           onSelect={handleCreditSelect}
         />
       ) : null}
-      {isSelectingMedia ? <div className="card-surface mt-4 rounded-[20px] p-4 text-[13px] font-bold text-[#8b96a8]">선택한 작품의 상세 정보를 불러오고 있어요...</div> : null}
+      {isSelectingMedia ? <MediaDetailLoadingIndicator /> : null}
       <MediaDetailModal media={selectedMedia} isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} />
 
       {!isSearchMode ? (
