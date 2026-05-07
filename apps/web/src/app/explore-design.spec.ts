@@ -263,6 +263,28 @@ describe('Davas explore screen design', () => {
     assert.doesNotMatch(todayRecommendationSource, /item\?: MediaRecommendationItem/);
   });
 
+  it('adds translucent carousel controls, smooth slide animation, and a functional today 전체 보기 action', () => {
+    assert.match(todayRecommendationSource, /onViewAll\?: \(\) => void/);
+    assert.match(todayRecommendationSource, /actionLabel="전체 보기 ›"/);
+    assert.match(todayRecommendationSource, /onAction=\{onViewAll\}/);
+    assert.match(todayRecommendationSource, /today-carousel-viewport/);
+    assert.match(todayRecommendationSource, /today-carousel-track/);
+    assert.match(todayRecommendationSource, /transition-transform/);
+    assert.match(todayRecommendationSource, /duration-500/);
+    assert.match(todayRecommendationSource, /translateX\(-\$\{activeIndex \* 100\}%\)/);
+    assert.match(todayRecommendationSource, /today-carousel-control/);
+    assert.match(todayRecommendationSource, /bg-white\/70/);
+    assert.match(todayRecommendationSource, /backdrop-blur/);
+    assert.match(todayRecommendationSource, /aria-label="이전 추천 보기"/);
+    assert.match(todayRecommendationSource, /aria-label="다음 추천 보기"/);
+    assert.match(todayRecommendationSource, /setActiveIndex\(\(index\) => \(index - 1 \+ carouselItems\.length\) % carouselItems\.length\)/);
+    assert.match(todayRecommendationSource, /setActiveIndex\(\(index\) => \(index \+ 1\) % carouselItems\.length\)/);
+    assert.match(exploreDashboardSource, /showAllToday/);
+    assert.match(exploreDashboardSource, /setShowAllToday/);
+    assert.match(exploreDashboardSource, /today-overview-list/);
+    assert.match(exploreDashboardSource, /onViewAll=\{\(\) => setShowAllToday\(\(value\) => !value\)\}/);
+  });
+
   it('randomizes genre recommendation presets and renders multiple works per genre', () => {
     assert.match(recommendationsApiSource, /getRandomGenreRecommendations/);
     assert.match(recommendationsApiSource, /\/recommendations\/genres\/random/);

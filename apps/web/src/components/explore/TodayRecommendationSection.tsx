@@ -13,6 +13,14 @@ function PencilIcon() {
   );
 }
 
+function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={direction === 'left' ? 'rotate-180' : ''}>
+      <path d="m6.2 3.6 4.1 4.4-4.1 4.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function RecommendationStill({ backdropUrl }: { backdropUrl?: string | null }) {
   return (
     <div data-design="recommendation-still" className="relative h-[132px] overflow-hidden rounded-[18px] bg-gradient-to-br from-[#0b1630] via-[#1e4f82] to-[#d99a66] shadow-[0_14px_28px_rgba(20,45,83,0.16)]">
@@ -42,38 +50,77 @@ const fallbackRecommendation = {
   backdropUrl: null,
 } as MediaRecommendationItem;
 
+function getRecommendationMeta(item: MediaRecommendationItem) {
+  if (item === fallbackRecommendation) {
+    return '드라마 · 2023';
+  }
+
+  const releaseYear = item.releaseDate?.slice(0, 4) ?? '연도 미상';
+  const mediaType = item.mediaType === 'TV' ? 'TV' : '영화';
+  return `${mediaType} · ${releaseYear}`;
+}
+
 export type TodayRecommendationSectionProps = {
   items?: MediaRecommendationItem[];
   onSelect?: (item: MediaRecommendationItem) => void;
+  onViewAll?: () => void;
 };
 
-export function TodayRecommendationSection({ items = [], onSelect }: TodayRecommendationSectionProps) {
+export function TodayRecommendationSection({ items = [], onSelect, onViewAll }: TodayRecommendationSectionProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const liveItems = items.map((entry) => entry);
   const carouselItems = liveItems.length > 0 ? liveItems : [fallbackRecommendation];
   const activeItem = carouselItems[Math.min(activeIndex, carouselItems.length - 1)] ?? fallbackRecommendation;
-  const releaseYear = activeItem.releaseDate?.slice(0, 4) ?? '연도 미상';
-  const mediaType = activeItem.mediaType === 'TV' ? 'TV' : '영화';
-  const fallbackMeta = '드라마 · 2023';
-  const meta = activeItem === fallbackRecommendation ? fallbackMeta : `${mediaType} · ${releaseYear}`;
-  const overview = activeItem.overview || '작품 소개를 준비하고 있어요.';
 
   return (
     <>
-      <SectionTitle title="오늘의 추천" />
-      <section data-design="today-recommendation-card" className="today-recommendation-card card-surface rounded-[24px] p-4 shadow-[0_14px_32px_rgba(31,65,114,0.09)]">
-        <div className="grid grid-cols-2 gap-3 max-[374px]:grid-cols-1">
-          <RecommendationStill backdropUrl={activeItem.backdropUrl} />
-          <div className="flex min-w-0 flex-col py-1 max-[374px]:py-0">
-            <h1 className="line-clamp-2 text-[20px] font-black leading-[25px] tracking-[-0.035em] text-[#172947]">{activeItem.title}</h1>
-            <p className="mt-1.5 text-[12px] font-bold leading-[16px] text-[#8b96a8]">{meta}</p>
-            <p className="mt-3 line-clamp-3 text-[12px] font-semibold leading-[18px] text-[#747f91]">{overview}</p>
-            <div className="today-recommendation-actions mt-auto grid grid-cols-2 gap-2 pt-4">
-              <button type="button" onClick={() => onSelect?.(activeItem)} className="flex h-[34px] min-w-0 items-center justify-center whitespace-nowrap rounded-full border border-[#e8eef6] bg-white px-2.5 text-[11px] font-extrabold text-[#536179] shadow-[0_5px_12px_rgba(31,65,114,0.05)]">상세 보기 ›</button>
-              <button type="button" onClick={() => onSelect?.(activeItem)} className="flex h-[34px] min-w-0 items-center justify-center gap-0.5 whitespace-nowrap rounded-full bg-[#2f7eea] px-1.5 text-[10px] font-extrabold text-white shadow-[0_8px_18px_rgba(47,126,234,0.26)]"><span className="shrink-0"><PencilIcon /></span><span className="whitespace-nowrap">다이어리 쓰기</span></button>
-            </div>
+      <SectionTitle title="오늘의 추천" actionLabel="전체 보기 ›" onAction={onViewAll} />
+      <section data-design="today-recommendation-card" className="today-recommendation-card card-surface relative rounded-[24px] p-4 shadow-[0_14px_32px_rgba(31,65,114,0.09)]">
+        <div className="today-carousel-viewport overflow-hidden rounded-[20px]">
+          <div className="today-carousel-track flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${activeIndex * 100}%)` }}>
+            {carouselItems.map((entry, index) => {
+              const overview = entry.overview || '작품 소개를 준비하고 있어요.';
+              return (
+                <div key={`${entry.externalId ?? entry.title}-${index}`} className="w-full shrink-0">
+                  <div className="grid grid-cols-2 gap-3 max-[374px]:grid-cols-1">
+                    <RecommendationStill backdropUrl={entry.backdropUrl} />
+                    <div className="flex min-w-0 flex-col py-1 max-[374px]:py-0">
+                      <h1 className="line-clamp-2 text-[20px] font-black leading-[25px] tracking-[-0.035em] text-[#172947]">{entry.title}</h1>
+                      <p className="mt-1.5 text-[12px] font-bold leading-[16px] text-[#8b96a8]">{getRecommendationMeta(entry)}</p>
+                      <p className="mt-3 line-clamp-3 text-[12px] font-semibold leading-[18px] text-[#747f91]">{overview}</p>
+                      <div className="today-recommendation-actions mt-auto grid grid-cols-2 gap-2 pt-4">
+                        <button type="button" onClick={() => onSelect?.(entry)} className="flex h-[34px] min-w-0 items-center justify-center whitespace-nowrap rounded-full border border-[#e8eef6] bg-white px-2.5 text-[11px] font-extrabold text-[#536179] shadow-[0_5px_12px_rgba(31,65,114,0.05)]">상세 보기 ›</button>
+                        <button type="button" onClick={() => onSelect?.(entry)} className="flex h-[34px] min-w-0 items-center justify-center gap-0.5 whitespace-nowrap rounded-full bg-[#2f7eea] px-1.5 text-[10px] font-extrabold text-white shadow-[0_8px_18px_rgba(47,126,234,0.26)]"><span className="shrink-0"><PencilIcon /></span><span className="whitespace-nowrap">다이어리 쓰기</span></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
+
+        {carouselItems.length > 1 ? (
+          <>
+            <button
+              type="button"
+              aria-label="이전 추천 보기"
+              onClick={() => setActiveIndex((index) => (index - 1 + carouselItems.length) % carouselItems.length)}
+              className="today-carousel-control absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/70 text-[#25324a] shadow-[0_8px_18px_rgba(28,45,74,0.16)] backdrop-blur transition hover:bg-white/90"
+            >
+              <ChevronIcon direction="left" />
+            </button>
+            <button
+              type="button"
+              aria-label="다음 추천 보기"
+              onClick={() => setActiveIndex((index) => (index + 1) % carouselItems.length)}
+              className="today-carousel-control absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/70 text-[#25324a] shadow-[0_8px_18px_rgba(28,45,74,0.16)] backdrop-blur transition hover:bg-white/90"
+            >
+              <ChevronIcon direction="right" />
+            </button>
+          </>
+        ) : null}
+
         <div className="carousel-indicator mt-3.5 flex justify-center gap-[5px]">
           {carouselItems.map((entry, index) => (
             <button
@@ -81,7 +128,7 @@ export function TodayRecommendationSection({ items = [], onSelect }: TodayRecomm
               type="button"
               aria-label={`${index + 1}번째 추천 보기`}
               onClick={() => setActiveIndex(index)}
-              className={index === activeIndex ? 'h-[5px] w-[22px] rounded-full bg-[#2f7eea]' : 'h-[5px] w-[5px] rounded-full bg-[#dbe5f3]'}
+              className={index === activeIndex ? 'h-[5px] w-[22px] rounded-full bg-[#2f7eea] transition-all duration-300' : 'h-[5px] w-[5px] rounded-full bg-[#dbe5f3] transition-all duration-300'}
             />
           ))}
         </div>

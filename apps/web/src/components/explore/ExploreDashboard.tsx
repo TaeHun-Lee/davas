@@ -43,6 +43,7 @@ export function ExploreDashboard() {
   const peopleSearch = usePeopleSearch(searchQuery);
   const recommendations = useExploreRecommendations();
   const [showAllTrending, setShowAllTrending] = useState(false);
+  const [showAllToday, setShowAllToday] = useState(false);
   const isSearchMode = searchQuery.trim().length >= 2;
   const trendingPosterItems = recommendations.trendingItems.map(recommendationToPosterItem);
   const visibleTrendingItems = showAllTrending ? trendingPosterItems : trendingPosterItems.slice(0, 5);
@@ -125,7 +126,32 @@ export function ExploreDashboard() {
         <>
           {recommendations.status === 'error' ? <div className="card-surface rounded-[20px] p-4 text-[13px] font-bold text-[#8b96a8]">추천을 불러오지 못했어요. 잠시 후 다시 시도해주세요.</div> : null}
 
-          <TodayRecommendationSection items={recommendations.todayItems} onSelect={handleRecommendationSelect} />
+          <TodayRecommendationSection items={recommendations.todayItems} onSelect={handleRecommendationSelect} onViewAll={() => setShowAllToday((value) => !value)} />
+
+          {showAllToday ? (
+            <div className="today-overview-list card-surface mt-3 rounded-[20px] p-3 shadow-[0_10px_24px_rgba(31,65,114,0.07)]">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-[13px] font-extrabold text-[#1f2a44]">오늘의 추천 전체</p>
+                <button type="button" onClick={() => setShowAllToday(false)} className="text-[11px] font-bold text-[#8d98aa]">접기</button>
+              </div>
+              <div className="space-y-2">
+                {recommendations.todayItems.map((item) => (
+                  <button
+                    key={`${item.externalId}-${item.title}`}
+                    type="button"
+                    onClick={() => void handleRecommendationSelect(item)}
+                    className="flex w-full items-center justify-between gap-3 rounded-[16px] bg-[#f7faff] px-3 py-2 text-left transition hover:bg-[#eef5ff]"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate text-[12px] font-extrabold text-[#172947]">{item.title}</span>
+                      <span className="mt-0.5 block text-[10px] font-bold text-[#8b96a8]">{item.mediaType === 'TV' ? 'TV' : '영화'} · {item.releaseDate?.slice(0, 4) ?? '연도 미상'}</span>
+                    </span>
+                    <span className="shrink-0 text-[11px] font-extrabold text-[#2f7eea]">상세 보기 ›</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <MediaPosterRowSection
             title="지금 많이 찾는 작품"
