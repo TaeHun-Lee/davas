@@ -4,9 +4,9 @@ import { useState } from 'react';
 import type { MediaRecommendationItem } from '../../lib/api/recommendations';
 import { SectionTitle } from '../home/SectionTitle';
 
-function PencilIcon() {
+function PencilIcon({ className = '' }: { className?: string }) {
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true" className={className}>
       <path d="M3.1 11.6 2.6 14l2.4-.5 7.2-7.2-1.9-1.9-7.2 7.2Z" stroke="white" strokeWidth="1.6" strokeLinejoin="round" />
       <path d="m9.5 5.2 1.9 1.9" stroke="white" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
@@ -88,9 +88,9 @@ export function TodayRecommendationSection({ items = [], onSelect, onViewAll }: 
                       <h1 className="line-clamp-2 text-[20px] font-black leading-[25px] tracking-[-0.035em] text-[#172947]">{entry.title}</h1>
                       <p className="mt-1.5 text-[12px] font-bold leading-[16px] text-[#8b96a8]">{getRecommendationMeta(entry)}</p>
                       <p className="mt-3 line-clamp-3 text-[12px] font-semibold leading-[18px] text-[#747f91]">{overview}</p>
-                      <div className="today-recommendation-actions mt-auto grid grid-cols-[0.9fr_1.1fr] gap-2.5 pt-4">
-                        <button type="button" onClick={() => onSelect?.(entry)} className="flex h-[34px] min-w-0 items-center justify-center whitespace-nowrap rounded-full border border-[#e8eef6] bg-white px-2.5 text-[11px] font-extrabold text-[#536179] shadow-[0_5px_12px_rgba(31,65,114,0.05)]">상세 보기 ›</button>
-                        <button type="button" onClick={() => onSelect?.(entry)} className="flex h-[34px] min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#2f7eea] px-3 text-[11px] font-extrabold text-white shadow-[0_8px_18px_rgba(47,126,234,0.26)]"><span className="shrink-0"><PencilIcon /></span><span className="whitespace-nowrap">다이어리 쓰기</span></button>
+                      <div className="today-recommendation-actions mt-auto grid grid-cols-[0.9fr_1.1fr] gap-2.5 pt-3 pb-1">
+                        <button data-design="today-detail-button" type="button" onClick={() => onSelect?.(entry)} className="flex h-[34px] min-w-0 items-center justify-center whitespace-nowrap rounded-full border border-[#e8eef6] bg-white px-2.5 text-[11px] font-extrabold leading-none text-[#536179] shadow-[0_5px_12px_rgba(31,65,114,0.05)]">상세 보기 ›</button>
+                        <button data-design="today-diary-button" type="button" onClick={() => onSelect?.(entry)} className="today-diary-button inline-flex h-[34px] min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#2f7eea] px-3 text-[11px] font-extrabold leading-none text-white shadow-[0_8px_18px_rgba(47,126,234,0.26)]"><span className="today-diary-button-icon grid shrink-0 place-items-center"><PencilIcon className="block" /></span><span className="whitespace-nowrap">다이어리 쓰기</span></button>
                       </div>
                     </div>
                   </div>

@@ -299,6 +299,28 @@ describe('Davas explore screen design', () => {
     assert.doesNotMatch(todayRecommendationSource, /carousel-indicator mt-3\.5/);
   });
 
+  it('aligns today recommendation CTA contents and keeps them away from the card edge', () => {
+    assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*pb-1/);
+    assert.match(todayRecommendationSource, /data-design="today-detail-button"/);
+    assert.match(todayRecommendationSource, /data-design="today-diary-button"/);
+    assert.match(todayRecommendationSource, /today-diary-button[^\n]*inline-flex/);
+    assert.match(todayRecommendationSource, /today-diary-button[^\n]*leading-none/);
+    assert.match(todayRecommendationSource, /today-diary-button-icon[^\n]*grid[^\n]*place-items-center/);
+    assert.match(todayRecommendationSource, /<PencilIcon className="block" \/>/);
+    assert.doesNotMatch(todayRecommendationSource, /today-recommendation-actions[^\n]*pt-4"/);
+  });
+
+  it('opens the detail modal from every explore recommendation movie and drama card', () => {
+    assert.match(todayRecommendationSource, /data-design="today-detail-button"[^\n]*onClick=\{\(\) => onSelect\?\.\(entry\)\}/);
+    assert.match(mediaPosterRowSource, /aria-label=\{`\$\{item\.title\} 상세 보기`\}/);
+    assert.match(mediaPosterRowSource, /onClick=\{\(\) => onSelect\(item\.sourceItem!\)\}/);
+    assert.match(genreRecommendationSource, /aria-label=\{`\$\{item\.title\} 상세 보기`\}/);
+    assert.match(genreRecommendationSource, /onClick=\{\(\) => onSelect\?\.\(item\)\}/);
+    assert.match(exploreDashboardSource, /onSelect=\{handleRecommendationSelect\}/);
+    assert.match(exploreDashboardSource, /onSelect=\{\(item\) => void handleRecommendationSelect\(item as MediaRecommendationItem\)\}/);
+    assert.match(exploreDashboardSource, /setIsDetailModalOpen\(true\)/);
+  });
+
   it('randomizes genre recommendation presets and renders multiple works per genre', () => {
     assert.match(recommendationsApiSource, /getRandomGenreRecommendations/);
     assert.match(recommendationsApiSource, /\/recommendations\/genres\/random/);

@@ -48,7 +48,7 @@ export function MediaPosterRowSection({
             return (
               <article key={`${item.title}-${item.meta}`} className={`${itemClassName} shrink-0`}>
                 {item.sourceItem && onSelect ? (
-                  <button type="button" className="block w-full text-left" onClick={() => onSelect(item.sourceItem!)}>
+                  <button type="button" aria-label={`${item.title} 상세 보기`} className="block w-full text-left" onClick={() => onSelect(item.sourceItem!)}>
                     {card}
                   </button>
                 ) : (

@@ -39,7 +39,7 @@ export function GenreRecommendationSection({ tiles = defaultGenreTiles, onSelect
               </div>
               <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
                 {tile.items.map((item) => (
-                  <button key={`${tile.id}-${item.externalId}`} type="button" onClick={() => onSelect?.(item)} className="w-[62px] shrink-0 text-left">
+                  <button key={`${tile.id}-${item.externalId}`} type="button" aria-label={`${item.title} 상세 보기`} onClick={() => onSelect?.(item)} className="w-[62px] shrink-0 text-left">
                     <MoviePosterVisual gradient="from-white/20 via-white/10 to-white/5" imageUrl={item.posterUrl} className="h-[92px] w-[62px] rounded-[13px] shadow-[0_8px_16px_rgba(0,0,0,0.18)]" />
                     <span className="mt-1.5 block line-clamp-2 text-[10px] font-extrabold leading-[13px] text-white">{item.title}</span>
                   </button>
