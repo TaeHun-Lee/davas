@@ -84,7 +84,7 @@ describe('Davas explore screen design', () => {
     assert.match(mediaDetailModalSource, /리뷰·다이어리 작성/);
     assert.match(mediaDetailModalSource, /찜하기/);
     assert.match(mediaDetailModalSource, /시놉시스/);
-    assert.match(mediaDetailModalSource, /TMDB 상세 정보/);
+    assert.doesNotMatch(mediaDetailModalSource, /TMDB 상세 정보/);
     assert.doesNotMatch(mediaDetailModalSource, /꿈과 현실, 장면과 감상이 겹치는 순간/);
     assert.match(mediaDetailSectionsSource, /스틸 컷/);
     assert.match(mediaDetailSectionsSource, /기본 정보/);
@@ -123,14 +123,16 @@ describe('Davas explore screen design', () => {
     assert.match(mediaDetailSectionsSource, /media\.stillCuts/);
   });
 
-  it('replaces the fake brief-plot card with real detail metadata from TMDB detail', () => {
-    assert.doesNotMatch(mediaDetailModalSource, /간략한 줄거리/);
-    assert.doesNotMatch(mediaDetailModalSource, /별도의 간략한 줄거리 데이터를 제공하지 않아/);
-    assert.match(mediaDetailModalSource, /TMDB 상세 정보/);
-    assert.match(mediaDetailModalSource, /numberOfEpisodes/);
-    assert.match(mediaDetailModalSource, /certification/);
-    assert.match(mediaDetailSectionsSource, /media\.director/);
-    assert.match(mediaDetailSectionsSource, /media\.runtime/);
+  it('keeps the detail modal focused on a single synopsis card and no default diary rating', () => {
+    assert.doesNotMatch(mediaDetailModalSource, /line-clamp-4/);
+    assert.doesNotMatch(mediaDetailModalSource, /border-\[18px\] border-\[#e8f0f8\]/);
+    assert.doesNotMatch(mediaDetailModalSource, /pointer-events-none absolute right-2 top-\[56px\]/);
+    assert.doesNotMatch(mediaDetailModalSource, /TMDB 상세 정보/);
+    assert.match(mediaDetailModalSource, /<DetailInfoCard title="시놉시스">\{overview\}<\/DetailInfoCard>/);
+    assert.match(mediaDetailSectionsSource, /showChevron = false/);
+    assert.doesNotMatch(mediaDetailSectionsSource, /<span className="text-\[#ff5a52\]">★<\/span><span className="text-\[#ff5a52\]">★/);
+    assert.match(mediaDetailSectionsSource, /Array\.from\(\{ length: 5 \}/);
+    assert.match(mediaDetailSectionsSource, /currentRating = 0/);
   });
 
   it('renders the today recommendation hero card from the supplied design', () => {

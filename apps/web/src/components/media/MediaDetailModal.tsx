@@ -41,18 +41,6 @@ function fallbackOverview(media: MediaDetail) {
   return media.overview || '작품 소개가 아직 준비되지 않았어요. 다이어리를 작성하며 나만의 감상을 남겨보세요.';
 }
 
-function detailMetadata(media: MediaDetail) {
-  const entries = [
-    media.certification ? `관람등급 ${media.certification}` : null,
-    media.numberOfEpisodes ? `총 ${media.numberOfEpisodes}화` : null,
-    media.numberOfSeasons ? `${media.numberOfSeasons}개 시즌` : null,
-    media.director ? `${media.mediaType === 'TV' ? '크리에이터' : '감독'} ${media.director}` : null,
-    media.tmdbVoteCount ? `TMDB 평가 ${media.tmdbVoteCount.toLocaleString()}명` : null,
-  ].filter(Boolean);
-
-  return entries.length > 0 ? entries.join(' · ') : 'TMDB 상세 데이터가 준비되는 대로 작품 정보를 더 채워갈게요.';
-}
-
 export function MediaDetailModal({ media, isOpen, onClose }: { media: MediaDetail | null; isOpen: boolean; onClose: () => void }) {
   useEffect(() => {
     if (!isOpen) return;
@@ -80,7 +68,6 @@ export function MediaDetailModal({ media, isOpen, onClose }: { media: MediaDetai
   return (
     <div className="fixed inset-0 z-[80] flex justify-center overflow-hidden bg-[#172947]/35 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={detailTitle} data-design="media-detail-modal">
       <div className="relative h-dvh w-full max-w-[430px] overflow-x-hidden overflow-y-auto bg-[#f8fafd] px-4 pb-28 pt-4 shadow-[0_0_40px_rgba(15,23,42,0.18)] min-[390px]:px-5">
-        <div className="pointer-events-none absolute right-2 top-[56px] h-40 w-40 rounded-full border-[18px] border-[#e8f0f8]/70" />
         <header className="sticky top-0 z-10 -mx-4 flex h-[54px] items-center justify-between bg-[#f8fafd]/95 px-4 backdrop-blur min-[390px]:-mx-5 min-[390px]:px-5">
           <IconButton label="상세 닫기" onClick={onClose}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m12.5 5-5 5 5 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -104,7 +91,6 @@ export function MediaDetailModal({ media, isOpen, onClose }: { media: MediaDetai
               <strong className="text-[20px] font-black leading-none text-[#1f4e82]">{tmdbRating ?? '-'}</strong>
               <span className="text-[11px] font-bold text-[#9aa6b8]">(TMDB{media.tmdbVoteCount ? ` · ${media.tmdbVoteCount.toLocaleString()}명` : ''})</span>
             </div>
-            <p className="mt-3 line-clamp-4 text-[12px] font-semibold leading-[18px] text-[#59677d]">{overview}</p>
           </div>
         </section>
 
@@ -119,7 +105,6 @@ export function MediaDetailModal({ media, isOpen, onClose }: { media: MediaDetai
 
         <div className="mt-5 space-y-3">
           <DetailInfoCard title="시놉시스">{overview}</DetailInfoCard>
-          <DetailInfoCard title="TMDB 상세 정보">{detailMetadata(media)}</DetailInfoCard>
         </div>
 
         <StillCutStrip media={media} />
