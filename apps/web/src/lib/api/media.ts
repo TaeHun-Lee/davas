@@ -32,6 +32,9 @@ export type MediaDetail = Omit<SelectedMedia, 'genreIds'> & {
   tmdbRating: number | null;
   tmdbVoteCount: number | null;
   director: string | null;
+  creators: string[];
+  numberOfEpisodes: number | null;
+  numberOfSeasons: number | null;
   cast: string[];
   stillCuts: string[];
   certification: string | null;

@@ -8,6 +8,7 @@ export type TmdbCreditPerson = {
   name?: string;
   job?: string;
   order?: number;
+  department?: string;
 };
 
 export type TmdbReleaseDateItem = {
@@ -27,6 +28,10 @@ export type TmdbDetailPayload = {
   first_air_date?: string;
   runtime?: number | null;
   episode_run_time?: number[];
+  last_episode_to_air?: { runtime?: number | null } | null;
+  number_of_episodes?: number;
+  number_of_seasons?: number;
+  created_by?: Array<{ name?: string }>;
   genres?: Array<{ id: number; name: string }>;
   production_countries?: Array<{ iso_3166_1: string; name: string }>;
   origin_country?: string[];
@@ -67,6 +72,9 @@ export type TmdbMediaDetail = {
   tmdbRating: number | null;
   tmdbVoteCount: number | null;
   director: string | null;
+  creators: string[];
+  numberOfEpisodes: number | null;
+  numberOfSeasons: number | null;
   cast: string[];
   stillCuts: string[];
   certification: string | null;
@@ -79,7 +87,7 @@ function imageUrl(size: 'w500' | 'w780', path?: string | null): string | null {
 }
 
 function firstRuntime(payload: TmdbDetailPayload, mediaType: MediaType) {
-  return mediaType === 'TV' ? payload.episode_run_time?.[0] ?? null : payload.runtime ?? null;
+  return mediaType === 'TV' ? payload.episode_run_time?.[0] ?? payload.last_episode_to_air?.runtime ?? null : payload.runtime ?? null;
 }
 
 function koreanCertification(payload: TmdbDetailPayload, mediaType: MediaType) {
@@ -97,7 +105,8 @@ export function mapTmdbDetail(payload: TmdbDetailPayload, mediaType: MediaType):
   const originalTitle = isTv ? payload.original_name : payload.original_title;
   const releaseDate = isTv ? payload.first_air_date : payload.release_date;
   const countries = payload.production_countries?.map((country) => country.name).filter(Boolean) ?? payload.origin_country ?? [];
-  const director = payload.credits?.crew?.find((person) => person.job === 'Director')?.name ?? null;
+  const creators = (payload.created_by ?? []).map((person) => person.name).filter((name): name is string => Boolean(name));
+  const director = isTv ? creators[0] ?? null : payload.credits?.crew?.find((person) => person.job === 'Director')?.name ?? null;
   const cast = (payload.credits?.cast ?? [])
     .slice()
     .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
@@ -127,6 +136,9 @@ export function mapTmdbDetail(payload: TmdbDetailPayload, mediaType: MediaType):
     tmdbRating: typeof payload.vote_average === 'number' ? payload.vote_average : null,
     tmdbVoteCount: typeof payload.vote_count === 'number' ? payload.vote_count : null,
     director,
+    creators,
+    numberOfEpisodes: payload.number_of_episodes ?? null,
+    numberOfSeasons: payload.number_of_seasons ?? null,
     cast,
     stillCuts,
     certification: koreanCertification(payload, mediaType),

@@ -24,6 +24,9 @@ export type MediaDetailResponse = {
   tmdbRating: number | null;
   tmdbVoteCount: number | null;
   director: string | null;
+  creators: string[];
+  numberOfEpisodes: number | null;
+  numberOfSeasons: number | null;
   cast: string[];
   stillCuts: string[];
   certification: string | null;
@@ -83,6 +86,9 @@ export class MediaService {
       tmdbRating: detail.tmdbRating,
       tmdbVoteCount: detail.tmdbVoteCount,
       director: detail.director,
+      creators: detail.creators,
+      numberOfEpisodes: detail.numberOfEpisodes,
+      numberOfSeasons: detail.numberOfSeasons,
       cast: detail.cast,
       stillCuts: detail.stillCuts,
       certification: detail.certification,
@@ -109,6 +115,9 @@ export class MediaService {
       tmdbRating: null,
       tmdbVoteCount: null,
       director: null,
+      creators: [],
+      numberOfEpisodes: null,
+      numberOfSeasons: null,
       cast: [],
       stillCuts: [],
       certification: null,

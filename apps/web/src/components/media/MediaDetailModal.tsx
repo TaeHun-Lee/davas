@@ -41,6 +41,18 @@ function fallbackOverview(media: MediaDetail) {
   return media.overview || '작품 소개가 아직 준비되지 않았어요. 다이어리를 작성하며 나만의 감상을 남겨보세요.';
 }
 
+function detailMetadata(media: MediaDetail) {
+  const entries = [
+    media.certification ? `관람등급 ${media.certification}` : null,
+    media.numberOfEpisodes ? `총 ${media.numberOfEpisodes}화` : null,
+    media.numberOfSeasons ? `${media.numberOfSeasons}개 시즌` : null,
+    media.director ? `${media.mediaType === 'TV' ? '크리에이터' : '감독'} ${media.director}` : null,
+    media.tmdbVoteCount ? `TMDB 평가 ${media.tmdbVoteCount.toLocaleString()}명` : null,
+  ].filter(Boolean);
+
+  return entries.length > 0 ? entries.join(' · ') : 'TMDB 상세 데이터가 준비되는 대로 작품 정보를 더 채워갈게요.';
+}
+
 export function MediaDetailModal({ media, isOpen, onClose }: { media: MediaDetail | null; isOpen: boolean; onClose: () => void }) {
   useEffect(() => {
     if (!isOpen) return;
@@ -107,7 +119,7 @@ export function MediaDetailModal({ media, isOpen, onClose }: { media: MediaDetai
 
         <div className="mt-5 space-y-3">
           <DetailInfoCard title="시놉시스">{overview}</DetailInfoCard>
-          <DetailInfoCard title="간략한 줄거리">TMDB에서 별도의 간략한 줄거리 데이터를 제공하지 않아 현재는 공식 시놉시스만 표시하고 있어요.</DetailInfoCard>
+          <DetailInfoCard title="TMDB 상세 정보">{detailMetadata(media)}</DetailInfoCard>
         </div>
 
         <StillCutStrip media={media} />

@@ -40,11 +40,12 @@ export function BasicInfoGrid({ media }: { media: MediaDetail }) {
   const runtimeText = media.runtime ? `${media.runtime}분` : '정보 준비 중';
   const countries = media.countries?.length ? media.countries.join(', ') : media.country ?? '정보 준비 중';
   const cast = media.cast?.length ? media.cast.slice(0, 4).join(', ') : '정보 준비 중';
+  const directorLabel = media.mediaType === 'TV' ? '크리에이터' : '감독';
   return (
     <section className="rounded-[20px] bg-white p-4 shadow-[0_10px_24px_rgba(31,65,114,0.07)] ring-1 ring-[#edf2f8]">
       <h3 className="text-[15px] font-black leading-[20px] tracking-[-0.025em] text-[#1f4e82]">기본 정보</h3>
       <dl className="mt-3 space-y-2 text-[11px] leading-[16px]">
-        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">감독</dt><dd className="font-semibold text-[#6e7889]">{media.director ?? '정보 준비 중'}</dd></div>
+        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">{directorLabel}</dt><dd className="font-semibold text-[#6e7889]">{media.director ?? '정보 준비 중'}</dd></div>
         <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">출연</dt><dd className="font-semibold text-[#6e7889]">{cast}</dd></div>
         <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">개봉일</dt><dd className="font-semibold text-[#6e7889]">{media.releaseDate ?? '정보 준비 중'}</dd></div>
         <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">러닝타임</dt><dd className="font-semibold text-[#6e7889]">{runtimeText}</dd></div>
