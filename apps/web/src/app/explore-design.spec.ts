@@ -12,6 +12,9 @@ const tabBarSource = source('../components/layout/BottomTabBar.tsx');
 const mediaPosterRowSource = source('../components/home/MediaPosterRowSection.tsx');
 const favoriteMoviesSource = source('../components/home/FavoriteMoviesSection.tsx');
 const mediaApiSource = source('../lib/api/media.ts');
+const mediaSearchResultsSource = source('../components/media/MediaSearchResults.tsx');
+const selectedMediaPanelSource = source('../components/media/SelectedMediaPanel.tsx');
+const useMediaSearchSource = source('../hooks/useMediaSearch.ts');
 
 describe('Davas explore screen design', () => {
   it('routes /explore to the designed explore dashboard instead of a placeholder', () => {
@@ -40,9 +43,35 @@ describe('Davas explore screen design', () => {
     assert.match(mediaApiSource, /params\.set\('language', language\)/);
     assert.match(mediaApiSource, /ko-KR/);
     assert.match(mediaApiSource, /credentials: 'include'/);
-    assert.match(exploreDashboardSource, /검색 결과/);
-    assert.match(exploreDashboardSource, /검색 중/);
-    assert.match(exploreDashboardSource, /검색 결과가 없어요/);
+    assert.match(useMediaSearchSource, /export function useMediaSearch/);
+    assert.match(useMediaSearchSource, /searchMedia/);
+    assert.match(mediaSearchResultsSource, /검색 결과/);
+    assert.match(mediaSearchResultsSource, /검색 중/);
+    assert.match(mediaSearchResultsSource, /검색 결과가 없어요/);
+  });
+
+  it('lets search result cards select and persist a TMDB result through the backend API', () => {
+    assert.match(mediaApiSource, /export async function selectMedia/);
+    assert.match(mediaApiSource, /\/media\/selections/);
+    assert.match(mediaApiSource, /method: 'POST'/);
+    assert.match(mediaApiSource, /JSON\.stringify\(selection\)/);
+    assert.match(exploreDashboardSource, /selectMedia/);
+    assert.match(exploreDashboardSource, /selectedMedia/);
+    assert.match(mediaSearchResultsSource, /onSelect/);
+    assert.match(mediaSearchResultsSource, /type="button"/);
+    assert.match(mediaSearchResultsSource, /검색 결과 선택/);
+  });
+
+  it('extracts reusable media search results and selected media panel components', () => {
+    assert.match(mediaSearchResultsSource, /export function MediaSearchResults/);
+    assert.match(mediaSearchResultsSource, /SearchResultPoster/);
+    assert.match(selectedMediaPanelSource, /export function SelectedMediaPanel/);
+    assert.match(selectedMediaPanelSource, /다이어리 쓰기/);
+    assert.match(selectedMediaPanelSource, /상세 정보/);
+    assert.match(exploreDashboardSource, /MediaSearchResults/);
+    assert.match(exploreDashboardSource, /SelectedMediaPanel/);
+    assert.doesNotMatch(exploreDashboardSource, /function MediaSearchResults/);
+    assert.doesNotMatch(exploreDashboardSource, /function SearchResultPoster/);
   });
 
   it('renders the today recommendation hero card from the supplied design', () => {

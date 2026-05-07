@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { searchMedia, type MediaSearchResult } from '../../lib/api/media';
-import { AppShell } from '../layout/AppShell';
+import { useState } from 'react';
 import { MediaPosterItem, MediaPosterRowSection } from '../home/MediaPosterRowSection';
 import { SectionTitle } from '../home/SectionTitle';
+import { AppShell } from '../layout/AppShell';
+import { MediaSearchResults } from '../media/MediaSearchResults';
+import { SelectedMediaPanel } from '../media/SelectedMediaPanel';
+import { selectMedia, type MediaSearchResult, type SelectedMedia } from '../../lib/api/media';
+import { useMediaSearch } from '../../hooks/useMediaSearch';
 
 type GenreTile = {
   title: string;
@@ -42,42 +45,6 @@ const shortcuts: Shortcut[] = [
   { label: '감독', icon: 'director', tone: 'blue' },
   { label: '장르', icon: 'genre', tone: 'blue' },
 ];
-
-function useMediaSearch(query: string) {
-  const [items, setItems] = useState<MediaSearchResult[]>([]);
-  const [status, setStatus] = useState<'idle' | 'searching' | 'results' | 'empty' | 'error'>('idle');
-
-  useEffect(() => {
-    const trimmedQuery = query.trim();
-    if (trimmedQuery.length < 2) {
-      setItems([]);
-      setStatus('idle');
-      return;
-    }
-
-    let isActive = true;
-    setStatus('searching');
-    const timeout = window.setTimeout(async () => {
-      try {
-        const result = await searchMedia({ query: trimmedQuery, language: 'ko-KR' });
-        if (!isActive) return;
-        setItems(result.items);
-        setStatus(result.items.length > 0 ? 'results' : 'empty');
-      } catch {
-        if (!isActive) return;
-        setItems([]);
-        setStatus('error');
-      }
-    }, 300);
-
-    return () => {
-      isActive = false;
-      window.clearTimeout(timeout);
-    };
-  }, [query]);
-
-  return { items, status };
-}
 
 function SearchIcon() {
   return (
@@ -134,47 +101,22 @@ function ShortcutIcon({ icon, tone }: { icon: Shortcut['icon']; tone: ShortcutTo
   );
 }
 
-function SearchResultPoster({ item }: { item: MediaSearchResult }) {
-  if (item.posterUrl) {
-    return <img src={item.posterUrl} alt={`${item.title} 포스터`} className="h-[92px] w-[62px] shrink-0 rounded-[12px] object-cover shadow-[0_8px_16px_rgba(21,38,69,0.12)]" />;
-  }
-
-  return <div className="h-[92px] w-[62px] shrink-0 rounded-[12px] bg-gradient-to-br from-[#dbe7f8] to-[#9fb9df] shadow-[0_8px_16px_rgba(21,38,69,0.12)]" />;
-}
-
-function MediaSearchResults({ items, status, query }: { items: MediaSearchResult[]; status: ReturnType<typeof useMediaSearch>['status']; query: string }) {
-  if (query.trim().length < 2) {
-    return null;
-  }
-
-  return (
-    <section className="mt-5">
-      <h2 className="text-[16px] font-extrabold leading-[22px] tracking-[-0.02em] text-[#1f2a44]">검색 결과</h2>
-      {status === 'searching' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#8b96a8]">검색 중...</div> : null}
-      {status === 'empty' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#8b96a8]">검색 결과가 없어요</div> : null}
-      {status === 'error' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#ef4444]">검색을 불러오지 못했어요. TMDB API 설정을 확인해주세요.</div> : null}
-      {status === 'results' ? (
-        <div className="mt-3 space-y-3">
-          {items.map((item) => (
-            <article key={`${item.externalProvider}-${item.externalId}`} className="card-surface flex gap-3 rounded-[18px] p-3">
-              <SearchResultPoster item={item} />
-              <div className="min-w-0 flex-1">
-                <h3 className="truncate text-[15px] font-extrabold leading-[20px] text-[#1f2a44]">{item.title}</h3>
-                <p className="mt-1 text-[11px] font-bold text-[#8b96a8]">{item.mediaType === 'TV' ? '드라마' : '영화'} · {item.releaseDate?.slice(0, 4) ?? '연도 미상'}</p>
-                <p className="mt-2 line-clamp-2 text-[11px] font-semibold leading-[17px] text-[#788395]">{item.overview || '작품 소개가 아직 준비되지 않았어요.'}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      ) : null}
-    </section>
-  );
-}
-
 export function ExploreDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMedia, setSelectedMedia] = useState<SelectedMedia | null>(null);
+  const [isSelectingMedia, setIsSelectingMedia] = useState(false);
   const search = useMediaSearch(searchQuery);
   const isSearchMode = searchQuery.trim().length >= 2;
+
+  async function handleSelectMedia(item: MediaSearchResult) {
+    setIsSelectingMedia(true);
+    try {
+      const media = await selectMedia(item);
+      setSelectedMedia(media);
+    } finally {
+      setIsSelectingMedia(false);
+    }
+  }
 
   return (
     <AppShell>
@@ -183,7 +125,10 @@ export function ExploreDashboard() {
           <SearchIcon />
           <input
             value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
+            onChange={(event) => {
+              setSearchQuery(event.target.value);
+              setSelectedMedia(null);
+            }}
             placeholder="영화, 드라마, 배우를 검색해보세요"
             className="min-w-0 flex-1 bg-transparent text-[13px] font-semibold leading-[18px] text-[#1f2a44] placeholder:text-[#9aa6b8] focus:outline-none"
           />
@@ -205,7 +150,8 @@ export function ExploreDashboard() {
         </div>
       </section>
 
-      {isSearchMode ? <MediaSearchResults items={search.items} status={search.status} query={searchQuery} /> : null}
+      {isSearchMode ? <MediaSearchResults items={search.items} status={search.status} query={searchQuery} onSelect={handleSelectMedia} /> : null}
+      {isSearchMode ? <SelectedMediaPanel media={selectedMedia} isSaving={isSelectingMedia} /> : null}
 
       {!isSearchMode ? (
         <>

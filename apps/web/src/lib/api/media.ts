@@ -19,6 +19,11 @@ export type MediaSearchResponse = {
   items: MediaSearchResult[];
 };
 
+export type SelectedMedia = MediaSearchResult & {
+  id: string;
+  genres?: string[];
+};
+
 function getApiBaseUrl() {
   if (typeof window === 'undefined') {
     return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api';
@@ -52,4 +57,21 @@ export async function searchMedia({
   }
 
   return (await response.json()) as MediaSearchResponse;
+}
+
+export async function selectMedia(selection: MediaSearchResult) {
+  const response = await fetch(`${getApiBaseUrl()}/media/selections`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(selection),
+  });
+
+  if (!response.ok) {
+    throw new Error('media selection failed');
+  }
+
+  return (await response.json()) as SelectedMedia;
 }
