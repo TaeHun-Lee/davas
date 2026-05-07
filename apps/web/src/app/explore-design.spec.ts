@@ -287,6 +287,18 @@ describe('Davas explore screen design', () => {
     assert.match(exploreDashboardSource, /onViewAll=\{\(\) => setShowAllToday\(\(value\) => !value\)\}/);
   });
 
+  it('tightens the today recommendation card so the image and controls feel balanced on mobile', () => {
+    assert.match(todayRecommendationSource, /recommendation-still[^\n]*h-full/);
+    assert.match(todayRecommendationSource, /recommendation-still[^\n]*min-h-\[168px\]/);
+    assert.match(todayRecommendationSource, /items-stretch/);
+    assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*grid-cols-\[0\.9fr_1\.1fr\]/);
+    assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*gap-2\.5/);
+    assert.match(todayRecommendationSource, /<button[^\n]*다이어리 쓰기/);
+    assert.match(todayRecommendationSource, /gap-1\.5 whitespace-nowrap rounded-full bg-\[#2f7eea\] px-3 text-\[11px\]/);
+    assert.match(todayRecommendationSource, /carousel-indicator mt-2/);
+    assert.doesNotMatch(todayRecommendationSource, /carousel-indicator mt-3\.5/);
+  });
+
   it('randomizes genre recommendation presets and renders multiple works per genre', () => {
     assert.match(recommendationsApiSource, /getRandomGenreRecommendations/);
     assert.match(recommendationsApiSource, /\/recommendations\/genres\/random/);

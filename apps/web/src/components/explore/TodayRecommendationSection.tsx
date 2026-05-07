@@ -23,7 +23,7 @@ function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
 
 function RecommendationStill({ backdropUrl }: { backdropUrl?: string | null }) {
   return (
-    <div data-design="recommendation-still" className="relative h-[132px] overflow-hidden rounded-[18px] bg-gradient-to-br from-[#0b1630] via-[#1e4f82] to-[#d99a66] shadow-[0_14px_28px_rgba(20,45,83,0.16)]">
+    <div data-design="recommendation-still" className="relative h-full min-h-[168px] overflow-hidden rounded-[18px] bg-gradient-to-br from-[#0b1630] via-[#1e4f82] to-[#d99a66] shadow-[0_14px_28px_rgba(20,45,83,0.16)]">
       {backdropUrl ? <img src={backdropUrl} alt="" className="absolute inset-0 h-full w-full object-cover object-center" /> : null}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.34),transparent_18%),radial-gradient(circle_at_70%_8%,rgba(255,255,255,0.55),transparent_8%),linear-gradient(to_top,rgba(7,15,31,0.72),transparent_58%)]" />
       {!backdropUrl ? (
@@ -82,15 +82,15 @@ export function TodayRecommendationSection({ items = [], onSelect, onViewAll }: 
               const overview = entry.overview || '작품 소개를 준비하고 있어요.';
               return (
                 <div key={`${entry.externalId ?? entry.title}-${index}`} className="w-full shrink-0">
-                  <div className="grid grid-cols-2 gap-3 max-[374px]:grid-cols-1">
+                  <div className="grid grid-cols-2 items-stretch gap-3 max-[374px]:grid-cols-1">
                     <RecommendationStill backdropUrl={entry.backdropUrl} />
                     <div className="flex min-w-0 flex-col py-1 max-[374px]:py-0">
                       <h1 className="line-clamp-2 text-[20px] font-black leading-[25px] tracking-[-0.035em] text-[#172947]">{entry.title}</h1>
                       <p className="mt-1.5 text-[12px] font-bold leading-[16px] text-[#8b96a8]">{getRecommendationMeta(entry)}</p>
                       <p className="mt-3 line-clamp-3 text-[12px] font-semibold leading-[18px] text-[#747f91]">{overview}</p>
-                      <div className="today-recommendation-actions mt-auto grid grid-cols-2 gap-2 pt-4">
+                      <div className="today-recommendation-actions mt-auto grid grid-cols-[0.9fr_1.1fr] gap-2.5 pt-4">
                         <button type="button" onClick={() => onSelect?.(entry)} className="flex h-[34px] min-w-0 items-center justify-center whitespace-nowrap rounded-full border border-[#e8eef6] bg-white px-2.5 text-[11px] font-extrabold text-[#536179] shadow-[0_5px_12px_rgba(31,65,114,0.05)]">상세 보기 ›</button>
-                        <button type="button" onClick={() => onSelect?.(entry)} className="flex h-[34px] min-w-0 items-center justify-center gap-0.5 whitespace-nowrap rounded-full bg-[#2f7eea] px-1.5 text-[10px] font-extrabold text-white shadow-[0_8px_18px_rgba(47,126,234,0.26)]"><span className="shrink-0"><PencilIcon /></span><span className="whitespace-nowrap">다이어리 쓰기</span></button>
+                        <button type="button" onClick={() => onSelect?.(entry)} className="flex h-[34px] min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#2f7eea] px-3 text-[11px] font-extrabold text-white shadow-[0_8px_18px_rgba(47,126,234,0.26)]"><span className="shrink-0"><PencilIcon /></span><span className="whitespace-nowrap">다이어리 쓰기</span></button>
                       </div>
                     </div>
                   </div>
@@ -121,7 +121,7 @@ export function TodayRecommendationSection({ items = [], onSelect, onViewAll }: 
           </>
         ) : null}
 
-        <div className="carousel-indicator mt-3.5 flex justify-center gap-[5px]">
+        <div className="carousel-indicator mt-2 flex justify-center gap-[5px]">
           {carouselItems.map((entry, index) => (
             <button
               key={`${entry.externalId ?? entry.title}-${index}`}
