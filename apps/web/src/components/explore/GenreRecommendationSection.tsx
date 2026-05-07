@@ -31,12 +31,11 @@ export function GenreRecommendationSection({ tiles = defaultGenreTiles, onSelect
 
           return (
             <article key={tile.id} className={`overflow-hidden rounded-[20px] bg-gradient-to-br ${gradient} p-3 shadow-[0_12px_24px_rgba(17,35,64,0.14)]`}>
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
                 <div className="min-w-0">
                   <h3 className="text-[14px] font-extrabold leading-[18px] text-white drop-shadow">{tile.label}</h3>
                   <p className="mt-1 line-clamp-1 text-[10px] font-bold text-white/80">{tile.description}</p>
                 </div>
-                <span className="rounded-full bg-white/20 px-2 py-1 text-[10px] font-extrabold text-white">랜덤</span>
               </div>
               <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
                 {tile.items.map((item) => (

@@ -106,7 +106,7 @@ export function TodayRecommendationSection({ items = [], onSelect, onViewAll }: 
               type="button"
               aria-label="이전 추천 보기"
               onClick={() => setActiveIndex((index) => (index - 1 + carouselItems.length) % carouselItems.length)}
-              className="today-carousel-control absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/70 text-[#25324a] shadow-[0_8px_18px_rgba(28,45,74,0.16)] backdrop-blur transition hover:bg-white/90"
+              className="today-carousel-control today-carousel-arrow-only absolute left-0 top-1/2 flex h-10 w-6 -translate-y-1/2 items-center justify-center text-white/90 drop-shadow-[0_2px_5px_rgba(7,15,31,0.45)] transition hover:text-white"
             >
               <ChevronIcon direction="left" />
             </button>
@@ -114,7 +114,7 @@ export function TodayRecommendationSection({ items = [], onSelect, onViewAll }: 
               type="button"
               aria-label="다음 추천 보기"
               onClick={() => setActiveIndex((index) => (index + 1) % carouselItems.length)}
-              className="today-carousel-control absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/70 text-[#25324a] shadow-[0_8px_18px_rgba(28,45,74,0.16)] backdrop-blur transition hover:bg-white/90"
+              className="today-carousel-control today-carousel-arrow-only absolute right-0 top-1/2 flex h-10 w-6 -translate-y-1/2 items-center justify-center text-white/90 drop-shadow-[0_2px_5px_rgba(7,15,31,0.45)] transition hover:text-white"
             >
               <ChevronIcon direction="right" />
             </button>

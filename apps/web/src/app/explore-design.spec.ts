@@ -263,7 +263,7 @@ describe('Davas explore screen design', () => {
     assert.doesNotMatch(todayRecommendationSource, /item\?: MediaRecommendationItem/);
   });
 
-  it('adds translucent carousel controls, smooth slide animation, and a functional today 전체 보기 action', () => {
+  it('adds arrow-only carousel controls, smooth slide animation, and a functional today 전체 보기 action', () => {
     assert.match(todayRecommendationSource, /onViewAll\?: \(\) => void/);
     assert.match(todayRecommendationSource, /actionLabel="전체 보기 ›"/);
     assert.match(todayRecommendationSource, /onAction=\{onViewAll\}/);
@@ -273,8 +273,10 @@ describe('Davas explore screen design', () => {
     assert.match(todayRecommendationSource, /duration-500/);
     assert.match(todayRecommendationSource, /translateX\(-\$\{activeIndex \* 100\}%\)/);
     assert.match(todayRecommendationSource, /today-carousel-control/);
-    assert.match(todayRecommendationSource, /bg-white\/70/);
-    assert.match(todayRecommendationSource, /backdrop-blur/);
+    assert.match(todayRecommendationSource, /today-carousel-arrow-only/);
+    assert.doesNotMatch(todayRecommendationSource, /today-carousel-control[^\n]*rounded-full/);
+    assert.doesNotMatch(todayRecommendationSource, /today-carousel-control[^\n]*bg-white\/70/);
+    assert.doesNotMatch(todayRecommendationSource, /today-carousel-control[^\n]*backdrop-blur/);
     assert.match(todayRecommendationSource, /aria-label="이전 추천 보기"/);
     assert.match(todayRecommendationSource, /aria-label="다음 추천 보기"/);
     assert.match(todayRecommendationSource, /setActiveIndex\(\(index\) => \(index - 1 \+ carouselItems\.length\) % carouselItems\.length\)/);
@@ -294,6 +296,7 @@ describe('Davas explore screen design', () => {
     assert.match(useExploreRecommendationsSource, /getGenreRecommendations\(preset\.id, \{ limit: 4/);
     assert.match(genreRecommendationSource, /tile\.items\.map/);
     assert.doesNotMatch(genreRecommendationSource, /const featuredItem = tile\.items\[0\]/);
+    assert.doesNotMatch(genreRecommendationSource, /랜덤/);
   });
 
   it('provides an expand/collapse 전체 보기 interaction for popular trending works', () => {
