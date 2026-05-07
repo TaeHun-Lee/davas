@@ -15,6 +15,7 @@ const mediaApiSource = source('../lib/api/media.ts');
 const mediaSearchResultsSource = source('../components/media/MediaSearchResults.tsx');
 const mediaDetailModalSource = source('../components/media/MediaDetailModal.tsx');
 const mediaDetailSectionsSource = source('../components/media/media-detail-sections.tsx');
+const mediaGenreSource = source('../components/media/media-genres.ts');
 const useMediaSearchSource = source('../hooks/useMediaSearch.ts');
 
 describe('Davas explore screen design', () => {
@@ -83,16 +84,30 @@ describe('Davas explore screen design', () => {
     assert.match(mediaDetailModalSource, /리뷰·다이어리 작성/);
     assert.match(mediaDetailModalSource, /찜하기/);
     assert.match(mediaDetailModalSource, /시놉시스/);
-    assert.match(mediaDetailModalSource, /간략한 줄거리/);
+    assert.match(mediaDetailModalSource, /TMDB에서 별도의 간략한 줄거리 데이터를 제공하지 않아/);
+    assert.doesNotMatch(mediaDetailModalSource, /꿈과 현실, 장면과 감상이 겹치는 순간/);
     assert.match(mediaDetailSectionsSource, /스틸 컷/);
     assert.match(mediaDetailSectionsSource, /기본 정보/);
     assert.match(mediaDetailSectionsSource, /나의 별점/);
     assert.match(mediaDetailModalSource, /bg-\[#ff5a52\]/);
     assert.match(mediaDetailModalSource, /fixed inset-0/);
+    assert.match(mediaDetailModalSource, /overflow-x-hidden/);
+    assert.doesNotMatch(mediaDetailModalSource, /right-\[-36px\]/);
     assert.match(mediaDetailSectionsSource, /export function DetailInfoCard/);
     assert.match(mediaDetailSectionsSource, /export function StillCutStrip/);
     assert.match(exploreDashboardSource, /isDetailModalOpen/);
     assert.match(exploreDashboardSource, /onClose=\{/);
+  });
+
+  it('uses real TMDB search fields conservatively instead of fabricating detail data', () => {
+    assert.match(mediaGenreSource, /18: '드라마'/);
+    assert.match(mediaGenreSource, /28: '액션'/);
+    assert.match(mediaGenreSource, /export function getTmdbGenreNames/);
+    assert.match(mediaDetailModalSource, /getTmdbGenreNames/);
+    assert.doesNotMatch(mediaDetailModalSource, /media\.genres\?\.length \? media\.genres/);
+    assert.match(mediaDetailSectionsSource, /const stills = \[media\.backdropUrl\]\.filter\(Boolean\)/);
+    assert.doesNotMatch(mediaDetailSectionsSource, /media\.posterUrl, media\.backdropUrl/);
+    assert.match(mediaDetailSectionsSource, /별도 스틸컷 API 연결 후 표시됩니다/);
   });
 
   it('renders the today recommendation hero card from the supplied design', () => {

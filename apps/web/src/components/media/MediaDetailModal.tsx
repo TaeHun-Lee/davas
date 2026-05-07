@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import type { SelectedMedia } from '../../lib/api/media';
 import { BasicInfoGrid, DetailInfoCard, MyRatingCard, StillCutStrip } from './media-detail-sections';
+import { getTmdbGenreNames } from './media-genres';
 
 function IconButton({ label, children, onClick }: { label: string; children: React.ReactNode; onClick?: () => void }) {
   return (
@@ -14,17 +15,18 @@ function IconButton({ label, children, onClick }: { label: string; children: Rea
 
 function Poster({ media }: { media: SelectedMedia }) {
   if (media.posterUrl) {
-    return <img src={media.posterUrl} alt={`${media.title} 포스터`} className="h-[170px] w-[114px] shrink-0 rounded-[16px] object-cover shadow-[0_16px_28px_rgba(21,38,69,0.18)]" />;
+    return <img src={media.posterUrl} alt={`${media.title} 포스터`} className="h-[158px] w-[106px] shrink-0 rounded-[16px] object-cover shadow-[0_16px_28px_rgba(21,38,69,0.18)] min-[390px]:h-[170px] min-[390px]:w-[114px]" />;
   }
 
-  return <div className="h-[170px] w-[114px] shrink-0 rounded-[16px] bg-gradient-to-br from-[#0b1630] via-[#1e4f82] to-[#d99a66] shadow-[0_16px_28px_rgba(21,38,69,0.18)]" />;
+  return <div className="h-[158px] w-[106px] shrink-0 rounded-[16px] bg-gradient-to-br from-[#0b1630] via-[#1e4f82] to-[#d99a66] shadow-[0_16px_28px_rgba(21,38,69,0.18)] min-[390px]:h-[170px] min-[390px]:w-[114px]" />;
 }
 
 function GenreTags({ media }: { media: SelectedMedia }) {
-  const tags = (media.genres?.length ? media.genres : media.mediaType === 'TV' ? ['드라마'] : ['영화']).slice(0, 3);
+  const tags = getTmdbGenreNames({ genreIds: media.genreIds ?? media.genres, mediaType: media.mediaType }).slice(0, 3);
+  const fallbackTags = tags.length > 0 ? tags : [media.mediaType === 'TV' ? '드라마' : '영화'];
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
-      {tags.map((tag) => (
+      {fallbackTags.map((tag) => (
         <span key={tag} className="rounded-full bg-[#eef6ff] px-2.5 py-1 text-[10px] font-extrabold text-[#2a5b8a]">{tag}</span>
       ))}
     </div>
@@ -62,10 +64,10 @@ export function MediaDetailModal({ media, isOpen, onClose }: { media: SelectedMe
   const overview = fallbackOverview(media);
 
   return (
-    <div className="fixed inset-0 z-[80] flex justify-center bg-[#172947]/35 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={detailTitle} data-design="media-detail-modal">
-      <div className="relative h-dvh w-full max-w-[430px] overflow-y-auto bg-[#f8fafd] px-5 pb-28 pt-4 shadow-[0_0_40px_rgba(15,23,42,0.18)]">
-        <div className="pointer-events-none absolute right-[-36px] top-[56px] h-40 w-40 rounded-full border-[18px] border-[#e8f0f8]/70" />
-        <header className="sticky top-0 z-10 -mx-5 flex h-[54px] items-center justify-between bg-[#f8fafd]/95 px-5 backdrop-blur">
+    <div className="fixed inset-0 z-[80] flex justify-center overflow-hidden bg-[#172947]/35 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={detailTitle} data-design="media-detail-modal">
+      <div className="relative h-dvh w-full max-w-[430px] overflow-x-hidden overflow-y-auto bg-[#f8fafd] px-4 pb-28 pt-4 shadow-[0_0_40px_rgba(15,23,42,0.18)] min-[390px]:px-5">
+        <div className="pointer-events-none absolute right-2 top-[56px] h-40 w-40 rounded-full border-[18px] border-[#e8f0f8]/70" />
+        <header className="sticky top-0 z-10 -mx-4 flex h-[54px] items-center justify-between bg-[#f8fafd]/95 px-4 backdrop-blur min-[390px]:-mx-5 min-[390px]:px-5">
           <IconButton label="상세 닫기" onClick={onClose}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m12.5 5-5 5 5 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </IconButton>
@@ -76,7 +78,7 @@ export function MediaDetailModal({ media, isOpen, onClose }: { media: SelectedMe
           </div>
         </header>
 
-        <section className="relative z-[1] mt-4 flex gap-4">
+        <section className="relative z-[1] mt-4 flex gap-3 min-[390px]:gap-4">
           <Poster media={media} />
           <div className="min-w-0 flex-1 pt-1">
             <h1 className="line-clamp-2 text-[24px] font-black leading-[29px] tracking-[-0.045em] text-[#1f4e82]">{media.title}</h1>
@@ -92,7 +94,7 @@ export function MediaDetailModal({ media, isOpen, onClose }: { media: SelectedMe
           </div>
         </section>
 
-        <div className="mt-5 grid grid-cols-[1.25fr_0.75fr] gap-2.5">
+        <div className="mt-5 grid grid-cols-1 gap-2.5 min-[375px]:grid-cols-[1.25fr_0.75fr]">
           <a href={`/diary/new?mediaId=${media.id}`} className="flex h-[50px] items-center justify-center gap-2 rounded-[16px] bg-[#ff5a52] text-[13px] font-black text-white shadow-[0_12px_22px_rgba(255,90,82,0.28)]">
             <span aria-hidden="true">✎</span> 리뷰·다이어리 작성
           </a>
@@ -103,7 +105,7 @@ export function MediaDetailModal({ media, isOpen, onClose }: { media: SelectedMe
 
         <div className="mt-5 space-y-3">
           <DetailInfoCard title="시놉시스">{overview}</DetailInfoCard>
-          <DetailInfoCard title="간략한 줄거리">꿈과 현실, 장면과 감상이 겹치는 순간을 기록해보세요. 이 작품을 선택하면 나만의 다이어리에서 더 자세한 감상평을 남길 수 있어요.</DetailInfoCard>
+          <DetailInfoCard title="간략한 줄거리">TMDB에서 별도의 간략한 줄거리 데이터를 제공하지 않아 현재는 공식 시놉시스만 표시하고 있어요.</DetailInfoCard>
         </div>
 
         <StillCutStrip media={media} />

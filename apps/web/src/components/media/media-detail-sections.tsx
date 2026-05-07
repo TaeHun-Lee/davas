@@ -13,8 +13,7 @@ export function DetailInfoCard({ title, children }: { title: string; children: R
 }
 
 export function StillCutStrip({ media }: { media: SelectedMedia }) {
-  const stills = [media.backdropUrl, media.posterUrl, media.backdropUrl].filter(Boolean) as string[];
-  const fallbackGradients = ['from-[#0b1630] via-[#1e4f82] to-[#d99a66]', 'from-[#1f2937] via-[#526173] to-[#c08b5e]', 'from-[#0f172a] via-[#1e3a5f] to-[#a6c8e7]'];
+  const stills = [media.backdropUrl].filter(Boolean) as string[];
 
   return (
     <section className="mt-5">
@@ -22,15 +21,15 @@ export function StillCutStrip({ media }: { media: SelectedMedia }) {
         <h3 className="text-[16px] font-black leading-[22px] tracking-[-0.025em] text-[#1f4e82]">스틸 컷</h3>
         <button type="button" className="text-[12px] font-extrabold text-[#7d889a]">더보기 &gt;</button>
       </div>
-      <div className="mt-3 grid grid-cols-3 gap-2.5">
-        {fallbackGradients.map((gradient, index) => (
-          stills[index] ? (
-            <img key={index} src={stills[index]} alt={`${media.title} 스틸 컷 ${index + 1}`} className="h-[76px] min-w-0 rounded-[14px] object-cover shadow-[0_8px_18px_rgba(21,38,69,0.10)]" />
-          ) : (
-            <div key={index} className={`h-[76px] rounded-[14px] bg-gradient-to-br ${gradient} shadow-[0_8px_18px_rgba(21,38,69,0.10)]`} />
-          )
-        ))}
-      </div>
+      {stills.length > 0 ? (
+        <div className="mt-3 grid grid-cols-1 gap-2.5">
+          <img src={stills[0]} alt={`${media.title} 대표 이미지`} className="h-[128px] w-full rounded-[16px] object-cover shadow-[0_8px_18px_rgba(21,38,69,0.10)]" />
+        </div>
+      ) : (
+        <div className="mt-3 rounded-[16px] bg-white p-4 text-[12px] font-bold leading-[18px] text-[#7a8596] shadow-[0_8px_18px_rgba(21,38,69,0.07)] ring-1 ring-[#edf2f8]">
+          TMDB 검색 결과에는 별도 스틸컷이 포함되지 않아요. 별도 스틸컷 API 연결 후 표시됩니다.
+        </div>
+      )}
     </section>
   );
 }

@@ -73,5 +73,10 @@ export async function selectMedia(selection: MediaSearchResult) {
     throw new Error('media selection failed');
   }
 
-  return (await response.json()) as SelectedMedia;
+  const selected = (await response.json()) as SelectedMedia;
+  return {
+    ...selection,
+    ...selected,
+    genreIds: selection.genreIds,
+  } as SelectedMedia;
 }
