@@ -1,4 +1,4 @@
-import type { SelectedMedia } from '../../lib/api/media';
+import type { MediaDetail } from '../../lib/api/media';
 
 export function DetailInfoCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -12,8 +12,8 @@ export function DetailInfoCard({ title, children }: { title: string; children: R
   );
 }
 
-export function StillCutStrip({ media }: { media: SelectedMedia }) {
-  const stills = [media.backdropUrl].filter(Boolean) as string[];
+export function StillCutStrip({ media }: { media: MediaDetail }) {
+  const stills = media.stillCuts?.length ? media.stillCuts : ([media.backdropUrl].filter(Boolean) as string[]);
 
   return (
     <section className="mt-5">
@@ -22,8 +22,10 @@ export function StillCutStrip({ media }: { media: SelectedMedia }) {
         <button type="button" className="text-[12px] font-extrabold text-[#7d889a]">더보기 &gt;</button>
       </div>
       {stills.length > 0 ? (
-        <div className="mt-3 grid grid-cols-1 gap-2.5">
-          <img src={stills[0]} alt={`${media.title} 대표 이미지`} className="h-[128px] w-full rounded-[16px] object-cover shadow-[0_8px_18px_rgba(21,38,69,0.10)]" />
+        <div className="mt-3 grid grid-cols-3 gap-2.5 max-[374px]:grid-cols-2">
+          {stills.slice(0, 6).map((still, index) => (
+            <img key={still} src={still} alt={`${media.title} 스틸 컷 ${index + 1}`} className="h-[92px] w-full rounded-[16px] object-cover shadow-[0_8px_18px_rgba(21,38,69,0.10)]" />
+          ))}
         </div>
       ) : (
         <div className="mt-3 rounded-[16px] bg-white p-4 text-[12px] font-bold leading-[18px] text-[#7a8596] shadow-[0_8px_18px_rgba(21,38,69,0.07)] ring-1 ring-[#edf2f8]">
@@ -34,17 +36,19 @@ export function StillCutStrip({ media }: { media: SelectedMedia }) {
   );
 }
 
-export function BasicInfoGrid({ media }: { media: SelectedMedia }) {
-  const year = media.releaseDate?.slice(0, 4) ?? '연도 미상';
+export function BasicInfoGrid({ media }: { media: MediaDetail }) {
+  const runtimeText = media.runtime ? `${media.runtime}분` : '정보 준비 중';
+  const countries = media.countries?.length ? media.countries.join(', ') : media.country ?? '정보 준비 중';
+  const cast = media.cast?.length ? media.cast.slice(0, 4).join(', ') : '정보 준비 중';
   return (
     <section className="rounded-[20px] bg-white p-4 shadow-[0_10px_24px_rgba(31,65,114,0.07)] ring-1 ring-[#edf2f8]">
       <h3 className="text-[15px] font-black leading-[20px] tracking-[-0.025em] text-[#1f4e82]">기본 정보</h3>
       <dl className="mt-3 space-y-2 text-[11px] leading-[16px]">
-        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">감독</dt><dd className="font-semibold text-[#6e7889]">정보 준비 중</dd></div>
-        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">출연</dt><dd className="font-semibold text-[#6e7889]">정보 준비 중</dd></div>
-        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">개봉일</dt><dd className="font-semibold text-[#6e7889]">{media.releaseDate ?? year}</dd></div>
-        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">러닝타임</dt><dd className="font-semibold text-[#6e7889]">정보 준비 중</dd></div>
-        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">국가</dt><dd className="font-semibold text-[#6e7889]">{media.country ?? '정보 준비 중'}</dd></div>
+        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">감독</dt><dd className="font-semibold text-[#6e7889]">{media.director ?? '정보 준비 중'}</dd></div>
+        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">출연</dt><dd className="font-semibold text-[#6e7889]">{cast}</dd></div>
+        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">개봉일</dt><dd className="font-semibold text-[#6e7889]">{media.releaseDate ?? '정보 준비 중'}</dd></div>
+        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">러닝타임</dt><dd className="font-semibold text-[#6e7889]">{runtimeText}</dd></div>
+        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">국가</dt><dd className="font-semibold text-[#6e7889]">{countries}</dd></div>
       </dl>
     </section>
   );

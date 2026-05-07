@@ -25,6 +25,6 @@ export class MediaController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return { id, message: 'media detail endpoint contract ready' };
+    return this.mediaService.findDetail(id);
   }
 }

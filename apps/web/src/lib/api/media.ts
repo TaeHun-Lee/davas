@@ -24,6 +24,20 @@ export type SelectedMedia = MediaSearchResult & {
   genres?: string[];
 };
 
+export type MediaDetail = Omit<SelectedMedia, 'genreIds'> & {
+  tagline: string | null;
+  runtime: number | null;
+  genres: string[];
+  countries: string[];
+  tmdbRating: number | null;
+  tmdbVoteCount: number | null;
+  director: string | null;
+  cast: string[];
+  stillCuts: string[];
+  certification: string | null;
+  genreIds?: number[];
+};
+
 function getApiBaseUrl() {
   if (typeof window === 'undefined') {
     return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api';
@@ -79,4 +93,16 @@ export async function selectMedia(selection: MediaSearchResult) {
     ...selected,
     genreIds: selection.genreIds,
   } as SelectedMedia;
+}
+
+export async function getMediaDetail(id: string) {
+  const response = await fetch(`${getApiBaseUrl()}/media/${id}`, {
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error('media detail failed');
+  }
+
+  return (await response.json()) as MediaDetail;
 }

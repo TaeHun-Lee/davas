@@ -3,6 +3,35 @@ import { describe, it } from 'node:test';
 import { TmdbClient } from './tmdb.client';
 
 describe('TmdbClient search', () => {
+  it('fetches movie detail with credits, images, and release dates appended', async () => {
+    const requestedUrls: string[] = [];
+    const client = new TmdbClient(undefined, {
+      apiKey: 'test-key',
+      fetcher: async (url) => {
+        requestedUrls.push(String(url));
+        return new Response(JSON.stringify({
+          id: 1124566,
+          title: '센티멘탈 밸류',
+          runtime: 133,
+          genres: [{ id: 18, name: '드라마' }],
+          credits: { cast: [], crew: [{ name: 'Joachim Trier', job: 'Director' }] },
+          images: { backdrops: [{ file_path: '/still.jpg' }] },
+          release_dates: { results: [{ iso_3166_1: 'KR', release_dates: [{ certification: '15' }] }] },
+        }), { status: 200 });
+      },
+    });
+
+    const detail = await client.detail({ externalId: '1124566', mediaType: 'MOVIE', language: 'ko-KR' });
+
+    const url = new URL(requestedUrls[0]);
+    assert.equal(url.pathname, '/3/movie/1124566');
+    assert.equal(url.searchParams.get('append_to_response'), 'credits,images,release_dates');
+    assert.equal(detail.runtime, 133);
+    assert.equal(detail.director, 'Joachim Trier');
+    assert.deepEqual(detail.stillCuts, ['https://image.tmdb.org/t/p/w780/still.jpg']);
+    assert.equal(detail.certification, '15');
+  });
+
   it('supports Korean search by URL-encoding the query and requesting Korean localized results', async () => {
     const requestedUrls: string[] = [];
     const client = new TmdbClient(undefined, {

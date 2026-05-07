@@ -1,5 +1,7 @@
 import { Inject, Injectable, Optional, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { MediaType } from '@davas/shared';
+import { mapTmdbDetail, TmdbDetailPayload, TmdbMediaDetail } from './tmdb-detail.mapper';
 import { DavasMediaSearchItem, mapTmdbSearchResult, TmdbSearchResult } from './tmdb.mapper';
 
 export type MediaSearchType = 'movie' | 'tv' | 'multi';
@@ -27,6 +29,12 @@ export type MediaSearchResponse = {
   page: number;
   totalPages: number;
   items: DavasMediaSearchItem[];
+};
+
+export type MediaDetailInput = {
+  externalId: string;
+  mediaType: MediaType;
+  language?: string;
 };
 
 @Injectable()
@@ -74,6 +82,27 @@ export class TmdbClient {
       totalPages: payload.total_pages ?? 1,
       items: normalizedResults,
     };
+  }
+
+  async detail({ externalId, mediaType, language = 'ko-KR' }: MediaDetailInput): Promise<TmdbMediaDetail> {
+    if (!this.apiKey) {
+      throw new ServiceUnavailableException('TMDB_API_KEY is not configured');
+    }
+
+    const resource = mediaType === 'TV' ? 'tv' : 'movie';
+    const appendToResponse = mediaType === 'TV' ? 'credits,images,content_ratings' : 'credits,images,release_dates';
+    const url = new URL(`${this.baseUrl}/${resource}/${externalId}`);
+    url.searchParams.set('api_key', this.apiKey);
+    url.searchParams.set('language', language);
+    url.searchParams.set('append_to_response', appendToResponse);
+    url.searchParams.set('include_image_language', `${language.slice(0, 2)},en,null`);
+
+    const response = await this.fetcher(url);
+    if (!response.ok) {
+      throw new ServiceUnavailableException(`TMDB detail failed with status ${response.status}`);
+    }
+
+    return mapTmdbDetail((await response.json()) as TmdbDetailPayload, mediaType);
   }
 
   private isSupportedResult(result: TmdbSearchResult, type: MediaSearchType) {

@@ -6,7 +6,7 @@ import { SectionTitle } from '../home/SectionTitle';
 import { AppShell } from '../layout/AppShell';
 import { MediaDetailModal } from '../media/MediaDetailModal';
 import { MediaSearchResults } from '../media/MediaSearchResults';
-import { selectMedia, type MediaSearchResult, type SelectedMedia } from '../../lib/api/media';
+import { getMediaDetail, selectMedia, type MediaDetail, type MediaSearchResult } from '../../lib/api/media';
 import { useMediaSearch } from '../../hooks/useMediaSearch';
 
 type GenreTile = {
@@ -103,7 +103,7 @@ function ShortcutIcon({ icon, tone }: { icon: Shortcut['icon']; tone: ShortcutTo
 
 export function ExploreDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMedia, setSelectedMedia] = useState<SelectedMedia | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<MediaDetail | null>(null);
   const [isSelectingMedia, setIsSelectingMedia] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const search = useMediaSearch(searchQuery);
@@ -113,7 +113,8 @@ export function ExploreDashboard() {
     setIsSelectingMedia(true);
     try {
       const media = await selectMedia(item);
-      setSelectedMedia(media);
+      const detail = await getMediaDetail(media.id);
+      setSelectedMedia(detail);
       setIsDetailModalOpen(true);
     } finally {
       setIsSelectingMedia(false);
@@ -154,7 +155,7 @@ export function ExploreDashboard() {
       </section>
 
       {isSearchMode ? <MediaSearchResults items={search.items} status={search.status} query={searchQuery} onSelect={handleSelectMedia} /> : null}
-      {isSelectingMedia ? <div className="card-surface mt-4 rounded-[20px] p-4 text-[13px] font-bold text-[#8b96a8]">선택한 작품을 저장하고 있어요...</div> : null}
+      {isSelectingMedia ? <div className="card-surface mt-4 rounded-[20px] p-4 text-[13px] font-bold text-[#8b96a8]">선택한 작품의 상세 정보를 불러오고 있어요...</div> : null}
       <MediaDetailModal media={selectedMedia} isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} />
 
       {!isSearchMode ? (

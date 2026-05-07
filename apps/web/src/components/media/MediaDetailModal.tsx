@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from 'react';
-import type { SelectedMedia } from '../../lib/api/media';
+import type { MediaDetail } from '../../lib/api/media';
 import { BasicInfoGrid, DetailInfoCard, MyRatingCard, StillCutStrip } from './media-detail-sections';
 import { getTmdbGenreNames } from './media-genres';
 
@@ -13,7 +13,7 @@ function IconButton({ label, children, onClick }: { label: string; children: Rea
   );
 }
 
-function Poster({ media }: { media: SelectedMedia }) {
+function Poster({ media }: { media: MediaDetail }) {
   if (media.posterUrl) {
     return <img src={media.posterUrl} alt={`${media.title} 포스터`} className="h-[158px] w-[106px] shrink-0 rounded-[16px] object-cover shadow-[0_16px_28px_rgba(21,38,69,0.18)] min-[390px]:h-[170px] min-[390px]:w-[114px]" />;
   }
@@ -21,8 +21,8 @@ function Poster({ media }: { media: SelectedMedia }) {
   return <div className="h-[158px] w-[106px] shrink-0 rounded-[16px] bg-gradient-to-br from-[#0b1630] via-[#1e4f82] to-[#d99a66] shadow-[0_16px_28px_rgba(21,38,69,0.18)] min-[390px]:h-[170px] min-[390px]:w-[114px]" />;
 }
 
-function GenreTags({ media }: { media: SelectedMedia }) {
-  const tags = getTmdbGenreNames({ genreIds: media.genreIds ?? media.genres, mediaType: media.mediaType }).slice(0, 3);
+function GenreTags({ media }: { media: MediaDetail }) {
+  const tags = (media.genres?.length ? media.genres : getTmdbGenreNames({ genreIds: media.genreIds ?? [], mediaType: media.mediaType })).slice(0, 3);
   const fallbackTags = tags.length > 0 ? tags : [media.mediaType === 'TV' ? '드라마' : '영화'];
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -37,11 +37,11 @@ function StarIcon() {
   return <span className="text-[17px] leading-none text-[#ff5a52]">★</span>;
 }
 
-function fallbackOverview(media: SelectedMedia) {
+function fallbackOverview(media: MediaDetail) {
   return media.overview || '작품 소개가 아직 준비되지 않았어요. 다이어리를 작성하며 나만의 감상을 남겨보세요.';
 }
 
-export function MediaDetailModal({ media, isOpen, onClose }: { media: SelectedMedia | null; isOpen: boolean; onClose: () => void }) {
+export function MediaDetailModal({ media, isOpen, onClose }: { media: MediaDetail | null; isOpen: boolean; onClose: () => void }) {
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -61,7 +61,9 @@ export function MediaDetailModal({ media, isOpen, onClose }: { media: SelectedMe
 
   const detailTitle = media.mediaType === 'TV' ? '드라마 상세' : '영화 상세';
   const year = media.releaseDate?.slice(0, 4) ?? '연도 미상';
+  const runtimeText = media.runtime ? `${media.runtime}분` : '러닝타임 준비 중';
   const overview = fallbackOverview(media);
+  const tmdbRating = media.tmdbRating == null ? null : (media.tmdbRating / 2).toFixed(1);
 
   return (
     <div className="fixed inset-0 z-[80] flex justify-center overflow-hidden bg-[#172947]/35 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={detailTitle} data-design="media-detail-modal">
@@ -83,12 +85,12 @@ export function MediaDetailModal({ media, isOpen, onClose }: { media: SelectedMe
           <div className="min-w-0 flex-1 pt-1">
             <h1 className="line-clamp-2 text-[24px] font-black leading-[29px] tracking-[-0.045em] text-[#1f4e82]">{media.title}</h1>
             <p className="mt-1 truncate text-[13px] font-bold leading-[18px] text-[#8a94a6]">{media.originalTitle || media.title}</p>
-            <p className="mt-2 text-[12px] font-extrabold leading-[17px] text-[#6e7889]">{year} · 러닝타임 준비 중</p>
+            <p className="mt-2 text-[12px] font-extrabold leading-[17px] text-[#6e7889]">{year} · {runtimeText}</p>
             <GenreTags media={media} />
             <div className="mt-3 flex items-center gap-1.5">
               <StarIcon />
-              <strong className="text-[20px] font-black leading-none text-[#1f4e82]">4.6</strong>
-              <span className="text-[11px] font-bold text-[#9aa6b8]">(TMDB)</span>
+              <strong className="text-[20px] font-black leading-none text-[#1f4e82]">{tmdbRating ?? '-'}</strong>
+              <span className="text-[11px] font-bold text-[#9aa6b8]">(TMDB{media.tmdbVoteCount ? ` · ${media.tmdbVoteCount.toLocaleString()}명` : ''})</span>
             </div>
             <p className="mt-3 line-clamp-4 text-[12px] font-semibold leading-[18px] text-[#59677d]">{overview}</p>
           </div>

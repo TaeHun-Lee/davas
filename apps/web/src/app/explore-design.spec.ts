@@ -104,10 +104,23 @@ describe('Davas explore screen design', () => {
     assert.match(mediaGenreSource, /28: '액션'/);
     assert.match(mediaGenreSource, /export function getTmdbGenreNames/);
     assert.match(mediaDetailModalSource, /getTmdbGenreNames/);
-    assert.doesNotMatch(mediaDetailModalSource, /media\.genres\?\.length \? media\.genres/);
-    assert.match(mediaDetailSectionsSource, /const stills = \[media\.backdropUrl\]\.filter\(Boolean\)/);
+    assert.match(mediaDetailModalSource, /media\.genres\?\.length/);
+    assert.match(mediaDetailSectionsSource, /media\.stillCuts\?\.length/);
     assert.doesNotMatch(mediaDetailSectionsSource, /media\.posterUrl, media\.backdropUrl/);
     assert.match(mediaDetailSectionsSource, /별도 스틸컷 API 연결 후 표시됩니다/);
+  });
+
+  it('loads selected media detail from the backend before showing the modal', () => {
+    assert.match(mediaApiSource, /export type MediaDetail/);
+    assert.match(mediaApiSource, /export async function getMediaDetail/);
+    assert.match(mediaApiSource, /\/media\/\$\{id\}/);
+    assert.match(exploreDashboardSource, /getMediaDetail/);
+    assert.match(exploreDashboardSource, /setSelectedMedia\(detail\)/);
+    assert.match(mediaDetailModalSource, /media\.runtime/);
+    assert.match(mediaDetailModalSource, /media\.tmdbRating/);
+    assert.match(mediaDetailSectionsSource, /media\.director/);
+    assert.match(mediaDetailSectionsSource, /media\.cast/);
+    assert.match(mediaDetailSectionsSource, /media\.stillCuts/);
   });
 
   it('renders the today recommendation hero card from the supplied design', () => {
