@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { MediaPosterItem, MediaPosterRowSection } from '../home/MediaPosterRowSection';
 import { SectionTitle } from '../home/SectionTitle';
 import { AppShell } from '../layout/AppShell';
+import { MediaDetailModal } from '../media/MediaDetailModal';
 import { MediaSearchResults } from '../media/MediaSearchResults';
-import { SelectedMediaPanel } from '../media/SelectedMediaPanel';
 import { selectMedia, type MediaSearchResult, type SelectedMedia } from '../../lib/api/media';
 import { useMediaSearch } from '../../hooks/useMediaSearch';
 
@@ -105,6 +105,7 @@ export function ExploreDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<SelectedMedia | null>(null);
   const [isSelectingMedia, setIsSelectingMedia] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const search = useMediaSearch(searchQuery);
   const isSearchMode = searchQuery.trim().length >= 2;
 
@@ -113,6 +114,7 @@ export function ExploreDashboard() {
     try {
       const media = await selectMedia(item);
       setSelectedMedia(media);
+      setIsDetailModalOpen(true);
     } finally {
       setIsSelectingMedia(false);
     }
@@ -128,6 +130,7 @@ export function ExploreDashboard() {
             onChange={(event) => {
               setSearchQuery(event.target.value);
               setSelectedMedia(null);
+              setIsDetailModalOpen(false);
             }}
             placeholder="영화, 드라마, 배우를 검색해보세요"
             className="min-w-0 flex-1 bg-transparent text-[13px] font-semibold leading-[18px] text-[#1f2a44] placeholder:text-[#9aa6b8] focus:outline-none"
@@ -151,7 +154,8 @@ export function ExploreDashboard() {
       </section>
 
       {isSearchMode ? <MediaSearchResults items={search.items} status={search.status} query={searchQuery} onSelect={handleSelectMedia} /> : null}
-      {isSearchMode ? <SelectedMediaPanel media={selectedMedia} isSaving={isSelectingMedia} /> : null}
+      {isSelectingMedia ? <div className="card-surface mt-4 rounded-[20px] p-4 text-[13px] font-bold text-[#8b96a8]">선택한 작품을 저장하고 있어요...</div> : null}
+      <MediaDetailModal media={selectedMedia} isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} />
 
       {!isSearchMode ? (
         <>

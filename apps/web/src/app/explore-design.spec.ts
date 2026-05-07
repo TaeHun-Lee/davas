@@ -13,7 +13,8 @@ const mediaPosterRowSource = source('../components/home/MediaPosterRowSection.ts
 const favoriteMoviesSource = source('../components/home/FavoriteMoviesSection.tsx');
 const mediaApiSource = source('../lib/api/media.ts');
 const mediaSearchResultsSource = source('../components/media/MediaSearchResults.tsx');
-const selectedMediaPanelSource = source('../components/media/SelectedMediaPanel.tsx');
+const mediaDetailModalSource = source('../components/media/MediaDetailModal.tsx');
+const mediaDetailSectionsSource = source('../components/media/media-detail-sections.tsx');
 const useMediaSearchSource = source('../hooks/useMediaSearch.ts');
 
 describe('Davas explore screen design', () => {
@@ -65,13 +66,33 @@ describe('Davas explore screen design', () => {
   it('extracts reusable media search results and selected media panel components', () => {
     assert.match(mediaSearchResultsSource, /export function MediaSearchResults/);
     assert.match(mediaSearchResultsSource, /SearchResultPoster/);
-    assert.match(selectedMediaPanelSource, /export function SelectedMediaPanel/);
-    assert.match(selectedMediaPanelSource, /다이어리 쓰기/);
-    assert.match(selectedMediaPanelSource, /상세 정보/);
     assert.match(exploreDashboardSource, /MediaSearchResults/);
-    assert.match(exploreDashboardSource, /SelectedMediaPanel/);
+    assert.match(exploreDashboardSource, /MediaDetailModal/);
+    assert.doesNotMatch(exploreDashboardSource, /SelectedMediaPanel/);
     assert.doesNotMatch(exploreDashboardSource, /function MediaSearchResults/);
     assert.doesNotMatch(exploreDashboardSource, /function SearchResultPoster/);
+  });
+
+  it('opens selected media in a reusable detail modal matching the supplied movie-detail design', () => {
+    assert.match(mediaDetailModalSource, /export function MediaDetailModal/);
+    assert.match(mediaDetailModalSource, /role="dialog"/);
+    assert.match(mediaDetailModalSource, /aria-modal="true"/);
+    assert.match(mediaDetailModalSource, /data-design="media-detail-modal"/);
+    assert.match(mediaDetailModalSource, /영화 상세|드라마 상세/);
+    assert.match(mediaDetailModalSource, /posterUrl/);
+    assert.match(mediaDetailModalSource, /리뷰·다이어리 작성/);
+    assert.match(mediaDetailModalSource, /찜하기/);
+    assert.match(mediaDetailModalSource, /시놉시스/);
+    assert.match(mediaDetailModalSource, /간략한 줄거리/);
+    assert.match(mediaDetailSectionsSource, /스틸 컷/);
+    assert.match(mediaDetailSectionsSource, /기본 정보/);
+    assert.match(mediaDetailSectionsSource, /나의 별점/);
+    assert.match(mediaDetailModalSource, /bg-\[#ff5a52\]/);
+    assert.match(mediaDetailModalSource, /fixed inset-0/);
+    assert.match(mediaDetailSectionsSource, /export function DetailInfoCard/);
+    assert.match(mediaDetailSectionsSource, /export function StillCutStrip/);
+    assert.match(exploreDashboardSource, /isDetailModalOpen/);
+    assert.match(exploreDashboardSource, /onClose=\{/);
   });
 
   it('renders the today recommendation hero card from the supplied design', () => {
