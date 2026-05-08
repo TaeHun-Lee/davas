@@ -46,15 +46,16 @@ export function validateDiaryCompose({ rating, watchedDate, effectiveTitle, cont
 
 export function mapMediaDetailToDiaryMedia(media: MediaDetail): DiaryComposeMedia {
   const { genres, releaseDate } = media;
-  const genreLabel = genres.slice(0, 2).join(' · ');
-  const year = releaseDate?.slice(0, 4);
-  const meta = [genreLabel, year].filter(Boolean).join(' · ');
+  const year = releaseDate?.slice(0, 4) ?? '연도 미상';
+  const runtimeText = media.runtime ? `${media.runtime}분` : '러닝타임 준비 중';
+  const fallbackGenre = media.mediaType === 'TV' ? '드라마' : '영화';
 
   return {
     id: media.id,
     title: media.title,
     originalTitle: media.originalTitle,
     posterUrl: media.posterUrl,
-    meta: meta || (media.mediaType === 'TV' ? '드라마' : '영화'),
+    meta: `${year} · ${runtimeText}`,
+    genres: genres.slice(0, 3).length > 0 ? genres.slice(0, 3) : [fallbackGenre],
   };
 }

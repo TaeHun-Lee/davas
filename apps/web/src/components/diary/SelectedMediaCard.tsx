@@ -4,6 +4,7 @@ export type DiaryComposeMedia = {
   originalTitle?: string | null;
   posterUrl?: string | null;
   meta: string;
+  genres: string[];
 };
 
 function PosterPlaceholder() {
@@ -26,7 +27,13 @@ export function SelectedMediaCard({ media }: { media: DiaryComposeMedia }) {
         <h2 className="truncate text-[21px] font-black leading-[28px] tracking-[-0.04em] text-[#2f6fb4]">{media.title}</h2>
         <p className="mt-1 truncate text-[13px] font-bold text-[#8996aa]">{media.originalTitle}</p>
         <p className="mt-3 text-[12px] font-extrabold text-[#728095]">{media.meta}</p>
-        <span className="mt-4 inline-flex rounded-full bg-[#eef5ff] px-3 py-1.5 text-[11px] font-extrabold text-[#2f7eea]">선택한 작품</span>
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {media.genres.map((genre) => (
+            <span key={genre} className="inline-flex rounded-full bg-[#eef5ff] px-3 py-1.5 text-[11px] font-extrabold text-[#2f7eea]">
+              {genre}
+            </span>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -37,5 +44,6 @@ export const mockDiaryMedia: DiaryComposeMedia = {
   title: '인셉션',
   originalTitle: 'Inception',
   posterUrl: null,
-  meta: 'SF · 스릴러 · 2010',
+  meta: '2010 · 148분',
+  genres: ['SF', '스릴러'],
 };

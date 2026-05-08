@@ -50,7 +50,7 @@ describe('Davas diary compose screen design', () => {
     assert.match(composeScreenSource, /작품 정보를 불러오지 못했어요/);
     assert.match(utilsSource, /export function mapMediaDetailToDiaryMedia/);
     assert.match(utilsSource, /MediaDetail/);
-    assert.match(utilsSource, /genres\.slice\(0, 2\)\.join\(' · '\)/);
+    assert.match(utilsSource, /genres\.slice\(0, 3\)/);
     assert.match(utilsSource, /releaseDate\?\.slice\(0, 4\)/);
   });
 
@@ -58,11 +58,22 @@ describe('Davas diary compose screen design', () => {
     assert.match(headerSource, /리뷰 다이어리 작성/);
     assert.match(headerSource, /임시저장/);
     assert.match(headerSource, /aria-label="뒤로 가기"/);
-    assert.match(selectedMediaCardSource, /선택한 작품/);
     assert.match(selectedMediaCardSource, /인셉션/);
     assert.match(selectedMediaCardSource, /Inception/);
-    assert.match(selectedMediaCardSource, /SF · 스릴러 · 2010/);
+    assert.match(selectedMediaCardSource, /2010 · 148분/);
     assert.match(selectedMediaCardSource, /posterUrl/);
+  });
+
+  it('moves selected media genres into pill tags while keeping meta to year and runtime', () => {
+    assert.match(selectedMediaCardSource, /genres: string\[\]/);
+    assert.match(selectedMediaCardSource, /media\.genres\.map/);
+    assert.match(selectedMediaCardSource, /rounded-full bg-\[\#eef5ff\]/);
+    assert.doesNotMatch(selectedMediaCardSource, /선택한 작품/);
+    assert.doesNotMatch(selectedMediaCardSource, /meta: 'SF · 스릴러 · 2010'/);
+    assert.match(utilsSource, /const year = releaseDate\?\.slice\(0, 4\) \?\? '연도 미상'/);
+    assert.match(utilsSource, /const runtimeText = media\.runtime \? `\$\{media\.runtime\}분` : '러닝타임 준비 중'/);
+    assert.match(utilsSource, /meta: `\$\{year\} · \$\{runtimeText\}`/);
+    assert.match(utilsSource, /genres: genres\.slice\(0, 3\)/);
   });
 
   it('supports 0.1-step rating with pointer drag and default zero rating', () => {
