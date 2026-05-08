@@ -42,7 +42,7 @@ function fallbackOverview(media: MediaDetail) {
   return media.overview || '작품 소개가 아직 준비되지 않았어요. 다이어리를 작성하며 나만의 감상을 남겨보세요.';
 }
 
-export function MediaDetailModal({ media, isOpen, onClose }: { media: MediaDetail | null; isOpen: boolean; onClose: () => void }) {
+export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: MediaDetail | null; isOpen: boolean; onClose: () => void; returnTo?: string }) {
   const router = useRouter();
 
   useEffect(() => {
@@ -67,6 +67,7 @@ export function MediaDetailModal({ media, isOpen, onClose }: { media: MediaDetai
   const runtimeText = media.runtime ? `${media.runtime}분` : '러닝타임 준비 중';
   const overview = fallbackOverview(media);
   const tmdbRating = media.tmdbRating == null ? null : (media.tmdbRating / 2).toFixed(1);
+  const diaryUrl = `/diary/new?mediaId=${encodeURIComponent(media.id)}&returnTo=${encodeURIComponent(returnTo ?? `/explore?detail=${media.id}`)}`;
 
   return (
     <div className="fixed inset-0 z-[80] flex justify-center overflow-hidden bg-[#172947]/35 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={detailTitle} data-design="media-detail-modal">
@@ -98,7 +99,7 @@ export function MediaDetailModal({ media, isOpen, onClose }: { media: MediaDetai
         </section>
 
         <div className="mt-5 grid grid-cols-1 gap-2.5 min-[375px]:grid-cols-[1.25fr_0.75fr]">
-          <button type="button" onClick={() => router.push(`/diary/new?mediaId=${encodeURIComponent(media.id)}`)} className="flex h-[50px] items-center justify-center gap-2 rounded-[16px] bg-[#ff5a52] text-[13px] font-black text-white shadow-[0_12px_22px_rgba(255,90,82,0.28)]">
+          <button type="button" onClick={() => router.push(diaryUrl)} className="flex h-[50px] items-center justify-center gap-2 rounded-[16px] bg-[#ff5a52] text-[13px] font-black text-white shadow-[0_12px_22px_rgba(255,90,82,0.28)]">
             <span aria-hidden="true">✎</span> 리뷰·다이어리 작성
           </button>
           <button type="button" className="flex h-[50px] items-center justify-center gap-1.5 rounded-[16px] bg-white text-[13px] font-black text-[#1f4e82] shadow-[0_10px_22px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8]">

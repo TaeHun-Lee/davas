@@ -32,6 +32,8 @@ const mediaDetailLoadingIndicatorSource = source('../components/media/MediaDetai
 describe('Davas explore screen design', () => {
   it('routes /explore to the designed explore dashboard instead of a placeholder', () => {
     assert.match(explorePageSource, /ExploreDashboard/);
+    assert.match(explorePageSource, /Suspense/);
+    assert.match(explorePageSource, /<Suspense fallback=\{null\}>/);
     assert.doesNotMatch(explorePageSource, /PlaceholderPage/);
     assert.match(exploreDashboardSource, /AppShell/);
   });
@@ -194,6 +196,25 @@ describe('Davas explore screen design', () => {
     assert.match(mediaDetailSectionsSource, /export function StillCutStrip/);
     assert.match(exploreDashboardSource, /isDetailModalOpen/);
     assert.match(exploreDashboardSource, /onClose=\{/);
+  });
+
+  it('keeps the media detail modal addressable in the URL and restores explore when closed or back is pressed', () => {
+    assert.match(exploreDashboardSource, /useSearchParams/);
+    assert.match(exploreDashboardSource, /const detailMediaId = searchParams\.get\('detail'\)/);
+    assert.match(exploreDashboardSource, /openMediaDetail\(detail\)/);
+    assert.match(exploreDashboardSource, /params\.set\('detail', detail\.id\)/);
+    assert.match(exploreDashboardSource, /router\.push\(`\/explore\?\$\{params\.toString\(\)\}`\)/);
+    assert.match(exploreDashboardSource, /params\.delete\('detail'\)/);
+    assert.match(exploreDashboardSource, /router\.replace\(nextUrl\)/);
+    assert.match(exploreDashboardSource, /getMediaDetail\(detailMediaId\)/);
+    assert.match(exploreDashboardSource, /setIsDetailModalOpen\(Boolean\(detailMediaId\)\)/);
+  });
+
+  it('passes the current detail route as returnTo when starting a diary from the modal', () => {
+    assert.match(mediaDetailModalSource, /returnTo\?: string/);
+    assert.match(mediaDetailModalSource, /const diaryUrl = `\/diary\/new\?mediaId=\$\{encodeURIComponent\(media\.id\)\}&returnTo=\$\{encodeURIComponent\(returnTo \?\? `\/explore\?detail=\$\{media\.id\}`\)\}`/);
+    assert.match(mediaDetailModalSource, /router\.push\(diaryUrl\)/);
+    assert.match(exploreDashboardSource, /returnTo=\{`\/explore\?detail=\$\{selectedMedia\.id\}`\}/);
   });
 
   it('uses real TMDB search fields conservatively instead of fabricating detail data', () => {

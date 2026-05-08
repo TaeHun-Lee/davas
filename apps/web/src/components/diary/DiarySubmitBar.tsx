@@ -1,6 +1,6 @@
 export function DiarySubmitBar({ disabled, isSubmitting, onSubmit }: { disabled: boolean; isSubmitting: boolean; onSubmit: () => void }) {
   return (
-    <div className="sticky bottom-0 -mx-5 bg-gradient-to-t from-[#f5f8fc] via-[#f5f8fc]/95 to-transparent px-5 pb-5 pt-4">
+    <div className="fixed bottom-0 left-1/2 z-30 w-full max-w-[430px] -translate-x-1/2 bg-gradient-to-t from-[#f8fafd] via-[#f8fafd]/95 to-transparent px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4">
       <button
         type="button"
         disabled={disabled || isSubmitting}

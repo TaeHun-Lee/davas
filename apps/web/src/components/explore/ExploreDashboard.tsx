@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ExploreFilterChips, type ExploreFilter } from './ExploreFilterChips';
 import { ExploreSearchBar } from './ExploreSearchBar';
 import { ExploreShortcutGrid } from './ExploreShortcutGrid';
@@ -36,6 +37,9 @@ function recommendationToPosterItem(item: MediaRecommendationItem): MediaPosterI
 }
 
 export function ExploreDashboard() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const detailMediaId = searchParams.get('detail');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<MediaDetail | null>(null);
   const [isSelectingMedia, setIsSelectingMedia] = useState(false);
@@ -60,13 +64,59 @@ export function ExploreDashboard() {
   const trendingPosterItems = recommendations.trendingItems.map(recommendationToPosterItem);
   const visibleTrendingItems = showAllTrending ? trendingPosterItems : trendingPosterItems.slice(0, 5);
 
+  function openMediaDetail(detail: MediaDetail) {
+    setSelectedMedia(detail);
+    setIsDetailModalOpen(true);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (params.get('detail') === detail.id) return;
+    params.set('detail', detail.id);
+    router.push(`/explore?${params.toString()}`);
+  }
+
+  function handleCloseDetail() {
+    setIsDetailModalOpen(false);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('detail');
+    const nextQuery = params.toString();
+    const nextUrl = nextQuery ? `/explore?${nextQuery}` : '/explore';
+    router.replace(nextUrl);
+  }
+
+  useEffect(() => {
+    if (!detailMediaId) {
+      setIsDetailModalOpen(Boolean(detailMediaId));
+      setSelectedMedia(null);
+      return;
+    }
+
+    if (selectedMedia?.id === detailMediaId) {
+      setIsDetailModalOpen(true);
+      return;
+    }
+
+    let cancelled = false;
+    setIsSelectingMedia(true);
+    getMediaDetail(detailMediaId)
+      .then((detail) => {
+        if (cancelled) return;
+        openMediaDetail(detail);
+      })
+      .finally(() => {
+        if (!cancelled) setIsSelectingMedia(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [detailMediaId]);
+
   async function handleSelectMedia(item: MediaSearchResult) {
     setIsSelectingMedia(true);
     try {
       const media = await selectMedia(item);
       const detail = await getMediaDetail(media.id);
-      setSelectedMedia(detail);
-      setIsDetailModalOpen(true);
+      openMediaDetail(detail);
     } finally {
       setIsSelectingMedia(false);
     }
@@ -77,8 +127,7 @@ export function ExploreDashboard() {
     try {
       const media = await selectMedia(item);
       const detail = await getMediaDetail(media.id);
-      setSelectedMedia(detail);
-      setIsDetailModalOpen(true);
+      openMediaDetail(detail);
     } finally {
       setIsSelectingMedia(false);
     }
@@ -93,8 +142,7 @@ export function ExploreDashboard() {
     try {
       const media = await selectMedia(item);
       const detail = await getMediaDetail(media.id);
-      setSelectedMedia(detail);
-      setIsDetailModalOpen(true);
+      openMediaDetail(detail);
     } finally {
       setIsSelectingMedia(false);
     }
@@ -133,7 +181,14 @@ export function ExploreDashboard() {
         />
       ) : null}
       {isSelectingMedia ? <MediaDetailLoadingIndicator /> : null}
-      <MediaDetailModal media={selectedMedia} isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} />
+      {selectedMedia ? (
+        <MediaDetailModal
+          media={selectedMedia}
+          isOpen={isDetailModalOpen}
+          onClose={handleCloseDetail}
+          returnTo={`/explore?detail=${selectedMedia.id}`}
+        />
+      ) : null}
 
       {!isSearchMode ? (
         <>

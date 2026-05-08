@@ -39,6 +39,28 @@ describe('Davas diary compose screen design', () => {
     assert.match(composeScreenSource, /DiarySubmitBar/);
   });
 
+  it('preserves returnTo from the detail modal and uses it for the compose back action', () => {
+    assert.match(diaryNewPageSource, /returnTo\?: string \| string\[\]/);
+    assert.match(diaryNewPageSource, /const returnTo = Array\.isArray\(params\?\.returnTo\) \? params\.returnTo\[0\] : params\?\.returnTo/);
+    assert.match(diaryNewPageSource, /returnTo=\{returnTo\}/);
+    assert.match(composeScreenSource, /returnTo\?: string/);
+    assert.match(composeScreenSource, /function handleBack\(\)/);
+    assert.match(composeScreenSource, /if \(returnTo\) router\.push\(returnTo\)/);
+    assert.match(composeScreenSource, /router\.back\(\)/);
+    assert.match(composeScreenSource, /<DiaryComposeHeader onBack=\{handleBack\}/);
+  });
+
+  it('uses a mobile panel shell and a safe sticky submit bar without horizontal overflow', () => {
+    assert.match(composeScreenSource, /data-design="diary-compose-shell"/);
+    assert.match(composeScreenSource, /max-w-\[430px\]/);
+    assert.match(composeScreenSource, /overflow-x-hidden/);
+    assert.match(composeScreenSource, /min-h-dvh/);
+    assert.match(submitBarSource, /safe-area-inset-bottom/);
+    assert.match(submitBarSource, /max-w-\[430px\]/);
+    assert.match(submitBarSource, /left-1\/2/);
+    assert.doesNotMatch(submitBarSource, /-mx-5/);
+  });
+
   it('loads selected media from mediaId query while keeping mock fallback for standalone preview', () => {
     assert.match(mediaApiSource, /export async function getMediaDetail/);
     assert.match(composeScreenSource, /mediaId\?: string/);
@@ -160,9 +182,11 @@ describe('Davas diary compose screen design', () => {
     assert.match(composeScreenSource, /!isSubmitting/);
   });
 
-  it('links the media detail modal diary CTA to the compose route with the selected media id', () => {
+  it('links the media detail modal diary CTA to the compose route with the selected media id and returnTo', () => {
     assert.match(mediaDetailModalSource, /useRouter/);
-    assert.match(mediaDetailModalSource, /router\.push\(`\/diary\/new\?mediaId=\$\{encodeURIComponent\(media\.id\)\}`\)/);
+    assert.match(mediaDetailModalSource, /returnTo\?: string/);
+    assert.match(mediaDetailModalSource, /const diaryUrl = `\/diary\/new\?mediaId=\$\{encodeURIComponent\(media\.id\)\}&returnTo=\$\{encodeURIComponent/);
+    assert.match(mediaDetailModalSource, /router\.push\(diaryUrl\)/);
     assert.match(mediaDetailModalSource, /리뷰·다이어리 작성/);
     assert.doesNotMatch(mediaDetailModalSource, /href=\{`\/diary\/new\?mediaId=\$\{media\.id\}`\}/);
   });

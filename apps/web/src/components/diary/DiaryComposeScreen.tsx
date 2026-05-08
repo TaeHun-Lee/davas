@@ -17,9 +17,10 @@ import { mapMediaDetailToDiaryMedia, todayIsoDate, validateDiaryCompose } from '
 
 type DiaryComposeScreenProps = {
   mediaId?: string;
+  returnTo?: string;
 };
 
-export function DiaryComposeScreen({ mediaId }: DiaryComposeScreenProps) {
+export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProps) {
   const router = useRouter();
   const [selectedMedia, setSelectedMedia] = useState<DiaryComposeMedia>(mockDiaryMedia);
   const [mediaStatus, setMediaStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(mediaId ? 'loading' : 'idle');
@@ -69,6 +70,12 @@ export function DiaryComposeScreen({ mediaId }: DiaryComposeScreenProps) {
   });
   const canSubmit = isValidDraft && !isSubmitting && mediaStatus !== 'loading' && mediaStatus !== 'error';
 
+  function handleBack() {
+    if (returnTo) router.push(returnTo);
+    else if (window.history.length > 1) router.back();
+    else router.push('/explore');
+  }
+
   async function handleSubmit() {
     if (!canSubmit) return;
 
@@ -95,9 +102,10 @@ export function DiaryComposeScreen({ mediaId }: DiaryComposeScreenProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f8fc] px-5 pb-2 text-[#1f2a44]">
-      <DiaryComposeHeader />
-      <div className="mx-auto flex w-full max-w-[430px] flex-col gap-4 pt-4">
+    <main className="flex min-h-screen justify-center overflow-x-hidden bg-[#172947]/35 text-[#1f2a44] backdrop-blur-sm">
+      <section data-design="diary-compose-shell" className="min-h-dvh w-full max-w-[430px] overflow-x-hidden bg-[#f8fafd] px-5 pb-28 shadow-[0_0_40px_rgba(15,23,42,0.18)]">
+        <DiaryComposeHeader onBack={handleBack} />
+        <div className="mx-auto flex w-full max-w-[430px] flex-col gap-4 pt-4">
         {mediaStatus === 'loading' ? (
           <p className="rounded-[20px] bg-white px-4 py-3 text-center text-[13px] font-bold text-[#728095] shadow-[0_12px_28px_rgba(31,65,114,0.08)]">
             작품 정보를 불러오고 있어요...
@@ -126,7 +134,8 @@ export function DiaryComposeScreen({ mediaId }: DiaryComposeScreenProps) {
           tags={tags}
         />
         <DiaryPhotoAttachmentSection />
-      </div>
+        </div>
+      </section>
       <DiarySubmitBar disabled={!canSubmit} isSubmitting={isSubmitting} onSubmit={handleSubmit} />
     </main>
   );
