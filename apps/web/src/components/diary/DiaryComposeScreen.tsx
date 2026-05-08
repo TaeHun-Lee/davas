@@ -11,7 +11,7 @@ import { DiaryTitleField } from './DiaryTitleField';
 import { RatingInputCard } from './RatingInputCard';
 import { type DiaryComposeMedia, SelectedMediaCard, mockDiaryMedia } from './SelectedMediaCard';
 import { WatchedDateField } from './WatchedDateField';
-import { mapMediaDetailToDiaryMedia, todayIsoDate } from './diary-compose-utils';
+import { mapMediaDetailToDiaryMedia, todayIsoDate, validateDiaryCompose } from './diary-compose-utils';
 
 type DiaryComposeScreenProps = {
   mediaId?: string;
@@ -57,7 +57,13 @@ export function DiaryComposeScreen({ mediaId }: DiaryComposeScreenProps) {
   }, [mediaId]);
 
   const effectiveTitle = title.trim() || selectedMedia.title;
-  const canSubmit = rating > 0 && content.length <= 3000 && mediaStatus !== 'loading' && mediaStatus !== 'error';
+  const isValidDraft = validateDiaryCompose({
+    rating,
+    watchedDate,
+    effectiveTitle,
+    content,
+  });
+  const canSubmit = isValidDraft && mediaStatus !== 'loading' && mediaStatus !== 'error';
 
   function handleSubmit() {
     void {

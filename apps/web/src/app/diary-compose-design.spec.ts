@@ -96,10 +96,24 @@ describe('Davas diary compose screen design', () => {
 
   it('keeps optional content and falls back empty diary title to the movie title', () => {
     assert.match(composeScreenSource, /const effectiveTitle = title\.trim\(\) \|\| selectedMedia\.title/);
-    assert.match(composeScreenSource, /content\.length <= 3000/);
+    assert.match(utilsSource, /content\.length <= 3000/);
     assert.doesNotMatch(composeScreenSource, /content\.trim\(\)\.length > 0/);
     assert.match(composeScreenSource, /containsSpoiler/);
     assert.match(composeScreenSource, /visibility/);
     assert.match(composeScreenSource, /tags/);
+  });
+
+  it('centralizes submit validation while allowing zero rating and optional content', () => {
+    assert.match(utilsSource, /export function isValidDateInput/);
+    assert.match(utilsSource, /export function validateDiaryCompose/);
+    assert.match(utilsSource, /rating >= 0/);
+    assert.match(utilsSource, /rating <= 5/);
+    assert.match(utilsSource, /content\.length <= 3000/);
+    assert.match(utilsSource, /effectiveTitle\.trim\(\)\.length > 0/);
+    assert.match(utilsSource, /isValidDateInput\(watchedDate\)/);
+    assert.match(composeScreenSource, /validateDiaryCompose\(\{/);
+    assert.doesNotMatch(composeScreenSource, /rating > 0/);
+    assert.match(composeScreenSource, /mediaStatus !== 'loading'/);
+    assert.match(composeScreenSource, /mediaStatus !== 'error'/);
   });
 });
