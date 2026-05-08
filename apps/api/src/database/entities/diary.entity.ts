@@ -1,5 +1,5 @@
 import { DiaryVisibility } from '@davas/shared';
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { CommentEntity } from './comment.entity';
 import { MediaEntity } from './media.entity';
 import { UserEntity } from './user.entity';
@@ -15,12 +15,14 @@ export class DiaryEntity {
   userId!: string;
 
   @ManyToOne(() => UserEntity, (user) => user.diaries, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
   user!: UserEntity;
 
   @Column({ name: 'media_id', type: 'uuid' })
   mediaId!: string;
 
   @ManyToOne(() => MediaEntity, (media) => media.diaries, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'media_id' })
   media!: MediaEntity;
 
   @Column({ type: 'varchar', length: 120 })

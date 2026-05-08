@@ -18,6 +18,7 @@ const controllerSource = source('diaries.controller.ts');
 const moduleSource = source('diaries.module.ts');
 const serviceSource = source('diaries-dashboard.service.ts');
 const authControllerSource = apiSource('auth/auth.controller.ts');
+const diaryEntitySource = apiSource('database/entities/diary.entity.ts');
 
 type FakeRepository = {
   find: (options?: unknown) => Promise<DiaryEntity[]>;
@@ -107,6 +108,14 @@ describe('Diaries dashboard API contract', () => {
       order: { watchedDate: 'DESC', createdAt: 'DESC' },
       take: 50,
     });
+  });
+
+  it('joins diary rows to their selected media through persisted snake_case foreign keys for poster thumbnails', () => {
+    assert.match(diaryEntitySource, /import \{[^}]*JoinColumn[^}]*\} from 'typeorm'/);
+    assert.match(diaryEntitySource, /@JoinColumn\(\{ name: 'user_id' \}\)\s*\n\s*user!: UserEntity/);
+    assert.match(diaryEntitySource, /@JoinColumn\(\{ name: 'media_id' \}\)\s*\n\s*media!: MediaEntity/);
+    assert.match(serviceSource, /relations: \{ media: true \}/);
+    assert.match(serviceSource, /posterUrl: diary\.media\?\.posterUrl \?\? null/);
   });
 
   it('uses the same auth cookie as the login flow so created diaries appear on my diary dashboard', () => {
