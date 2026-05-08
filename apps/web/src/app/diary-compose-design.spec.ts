@@ -18,10 +18,13 @@ const optionRowSource = source('../components/diary/DiaryOptionRow.tsx');
 const photoAttachmentSource = source('../components/diary/DiaryPhotoAttachmentSection.tsx');
 const submitBarSource = source('../components/diary/DiarySubmitBar.tsx');
 const utilsSource = source('../components/diary/diary-compose-utils.ts');
+const mediaApiSource = source('../lib/api/media.ts');
 
 describe('Davas diary compose screen design', () => {
   it('routes /diary/new to the diary compose screen shell', () => {
     assert.match(diaryNewPageSource, /DiaryComposeScreen/);
+    assert.match(diaryNewPageSource, /searchParams/);
+    assert.match(diaryNewPageSource, /mediaId=\{mediaId\}/);
     assert.match(composeScreenSource, /export function DiaryComposeScreen/);
     assert.match(composeScreenSource, /DiaryComposeHeader/);
     assert.match(composeScreenSource, /SelectedMediaCard/);
@@ -32,6 +35,21 @@ describe('Davas diary compose screen design', () => {
     assert.match(composeScreenSource, /DiaryOptionRow/);
     assert.match(composeScreenSource, /DiaryPhotoAttachmentSection/);
     assert.match(composeScreenSource, /DiarySubmitBar/);
+  });
+
+  it('loads selected media from mediaId query while keeping mock fallback for standalone preview', () => {
+    assert.match(mediaApiSource, /export async function getMediaDetail/);
+    assert.match(composeScreenSource, /mediaId\?: string/);
+    assert.match(composeScreenSource, /getMediaDetail\(mediaId\)/);
+    assert.match(composeScreenSource, /useEffect/);
+    assert.match(composeScreenSource, /setSelectedMedia\(mapMediaDetailToDiaryMedia\(detail\)\)/);
+    assert.match(composeScreenSource, /const \[selectedMedia, setSelectedMedia\] = useState<DiaryComposeMedia>\(mockDiaryMedia\)/);
+    assert.match(composeScreenSource, /작품 정보를 불러오고 있어요/);
+    assert.match(composeScreenSource, /작품 정보를 불러오지 못했어요/);
+    assert.match(utilsSource, /export function mapMediaDetailToDiaryMedia/);
+    assert.match(utilsSource, /MediaDetail/);
+    assert.match(utilsSource, /genres\.slice\(0, 2\)\.join\(' · '\)/);
+    assert.match(utilsSource, /releaseDate\?\.slice\(0, 4\)/);
   });
 
   it('matches the supplied diary compose header and selected media card', () => {
