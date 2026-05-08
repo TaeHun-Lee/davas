@@ -56,3 +56,30 @@ export function filterDiaryItems(items: DiaryListItemView[], query: string, tab:
 
   return [...filteredItems].sort((a, b) => Number(new Date(b.watchedDate)) - Number(new Date(a.watchedDate)));
 }
+
+export function setDiaryDashboardQueryParam(
+  searchParams: URLSearchParams | ReadonlyURLSearchParamsLike,
+  { q, tab }: { q: string; tab: DiaryFilterTab },
+) {
+  const params = new URLSearchParams(searchParams.toString());
+  const trimmedQuery = q.trim();
+
+  if (trimmedQuery) {
+    params.set('q', trimmedQuery);
+  } else {
+    params.delete('q');
+  }
+
+  if (tab === '전체') {
+    params.delete('tab');
+  } else {
+    params.set('tab', tab);
+  }
+
+  const queryString = params.toString();
+  return queryString ? `/diary?${queryString}` : '/diary';
+}
+
+type ReadonlyURLSearchParamsLike = {
+  toString(): string;
+};

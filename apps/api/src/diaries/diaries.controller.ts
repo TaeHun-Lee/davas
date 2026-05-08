@@ -1,11 +1,14 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { DiariesDashboardService } from './diaries-dashboard.service';
 import { CreateDiaryDto } from './dto/create-diary.dto';
 import { UpdateDiaryDto } from './dto/update-diary.dto';
 
 @ApiTags('Diaries')
 @Controller('diaries')
 export class DiariesController {
+  constructor(private readonly diariesDashboardService: DiariesDashboardService) {}
+
   @Post()
   create(@Body() dto: CreateDiaryDto) {
     return { message: 'create diary endpoint contract ready', diary: dto };
@@ -19,6 +22,11 @@ export class DiariesController {
   @Get('me')
   myDiaries() {
     return { items: [] };
+  }
+
+  @Get('dashboard')
+  dashboard() {
+    return this.diariesDashboardService.getDashboard();
   }
 
   @Get(':id')

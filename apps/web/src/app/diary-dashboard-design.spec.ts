@@ -13,6 +13,7 @@ function optionalSource(path: string) {
 
 const diaryPageSource = source('./diary/page.tsx');
 const diaryDashboardSource = optionalSource('../components/diary/DiaryDashboard.tsx');
+const diaryApiSource = optionalSource('../lib/api/diaries.ts');
 const diarySearchBarSource = optionalSource('../components/diary/DiarySearchBar.tsx');
 const diaryFilterTabsSource = optionalSource('../components/diary/DiaryFilterTabs.tsx');
 const diarySummarySectionSource = optionalSource('../components/diary/DiarySummarySection.tsx');
@@ -83,5 +84,27 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryUtilsSource, /export function getDiaryCalendarDays/);
     assert.match(diaryMonthlyCalendarSource, /getDiaryCalendarDays/);
     assert.doesNotMatch(diaryMonthlyCalendarSource, /new Date\([^)]*\)\.getDay\(\)/);
+  });
+
+  it('supports Slice 2 client-side diary search, tab state, and empty results', () => {
+    assert.match(diaryDashboardSource, /useSearchParams/);
+    assert.match(diaryDashboardSource, /useRouter/);
+    assert.match(diaryDashboardSource, /setDiaryDashboardQueryParam/);
+    assert.match(diaryDashboardSource, /activeTab/);
+    assert.match(diaryDashboardSource, /filterDiaryItems/);
+    assert.match(diaryRecentListSource, /검색 결과가 없어요/);
+    assert.match(diaryRecentListSource, /다른 제목이나 작품명으로 다시 검색해보세요/);
+  });
+
+  it('loads Slice 3 diary dashboard data through the backend API with safe fallback states', () => {
+    assert.match(diaryPageSource, /Suspense/);
+    assert.match(diaryPageSource, /<Suspense fallback=\{null\}>/);
+    assert.match(diaryApiSource, /export async function getDiaryDashboard/);
+    assert.match(diaryApiSource, /\/diaries\/dashboard/);
+    assert.match(diaryDashboardSource, /getDiaryDashboard/);
+    assert.match(diaryDashboardSource, /DiaryDashboardStatus/);
+    assert.match(diaryDashboardSource, /useEffect/);
+    assert.match(diaryDashboardSource, /다이어리 데이터를 불러오지 못했어요/);
+    assert.doesNotMatch(diaryDashboardSource, /const data = dashboard \? dashboard : fixtureDiaryDashboard/);
   });
 });

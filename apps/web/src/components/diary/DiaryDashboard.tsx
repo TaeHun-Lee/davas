@@ -1,89 +1,92 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { getDiaryDashboard } from '../../lib/api/diaries';
 import { DiaryFilterTabs } from './DiaryFilterTabs';
 import { DiaryInsightGrid } from './DiaryInsightGrid';
 import { DiaryRecentListSection } from './DiaryRecentListSection';
 import { DiarySearchBar } from './DiarySearchBar';
 import { DiarySummarySection } from './DiarySummarySection';
 import { NewDiaryFloatingButton } from './NewDiaryFloatingButton';
-import { filterDiaryItems } from './diary-dashboard-utils';
-import type { DiaryFilterTab, DiaryGenreRatio, DiaryListItemView, DiarySummary } from './diary-dashboard-types';
+import { fixtureDiaryDashboard } from './diary-dashboard-fixtures';
+import { filterDiaryItems, setDiaryDashboardQueryParam } from './diary-dashboard-utils';
+import type { DiaryDashboardView, DiaryFilterTab } from './diary-dashboard-types';
 
-const summary: DiarySummary = {
-  totalCount: 48,
-  monthlyCount: 6,
-  averageRating: 4.32,
-  topGenre: { name: 'SF', count: 12 },
-};
+export type DiaryDashboardStatus = 'loading' | 'ready' | 'error';
 
-const calendarMarkers = [
-  { day: 3, count: 1 },
-  { day: 8, count: 2 },
-  { day: 12, count: 1 },
-  { day: 18, count: 1 },
-  { day: 22, count: 2 },
-  { day: 27, count: 1 },
-];
+const filterTabs = new Set<DiaryFilterTab>(['전체', '최근', '평점순', '캘린더']);
 
-const genreRatios: DiaryGenreRatio[] = [
-  { genre: 'SF', count: 12, percentage: 25, iconKind: 'sf' },
-  { genre: '드라마', count: 10, percentage: 21, iconKind: 'drama' },
-  { genre: '스릴러', count: 8, percentage: 17, iconKind: 'thriller' },
-  { genre: '액션', count: 7, percentage: 15, iconKind: 'action' },
-  { genre: '기타', count: 11, percentage: 22, iconKind: 'etc' },
-];
-
-const recentDiaries: DiaryListItemView[] = [
-  {
-    id: 'diary-1',
-    mediaId: 'mock-interstellar',
-    mediaTitle: '인터스텔라',
-    diaryTitle: '우리는 답을 찾을 것이다',
-    watchedDate: '2026.05.18',
-    rating: 4.8,
-    contentPreview: '다시 봐도 압도적인 우주와 가족의 감정선이 긴 여운을 남겼다. 기록을 이어 쓰고 싶은 작품.',
-    posterUrl: '/images/mock/interstellar-poster.jpg',
-    posterGradient: 'from-[#1c355d] via-[#4977a5] to-[#dde7ee]',
-    genreNames: ['SF', '드라마'],
-    isBookmarked: true,
-  },
-  {
-    id: 'diary-2',
-    mediaId: 'mock-inception',
-    mediaTitle: '인셉션',
-    diaryTitle: '꿈의 층위를 따라간 밤',
-    watchedDate: '2026.05.12',
-    rating: 4.5,
-    contentPreview: '복잡한 구조보다 인물들이 붙잡고 있는 후회와 선택이 더 크게 느껴졌다.',
-    posterGradient: 'from-[#172033] via-[#315a80] to-[#8fb8d8]',
-    genreNames: ['SF', '스릴러'],
-  },
-  {
-    id: 'diary-3',
-    mediaId: 'mock-shawshank',
-    mediaTitle: '쇼생크 탈출',
-    diaryTitle: '희망은 좋은 것',
-    watchedDate: '2026.05.03',
-    rating: 4.9,
-    contentPreview: '익숙한 명작이지만 볼 때마다 다른 장면이 마음에 남는다. 오늘은 마지막 바다 장면.',
-    posterGradient: 'from-[#46342d] via-[#8d7058] to-[#ead2a9]',
-    genreNames: ['드라마'],
-    isBookmarked: true,
-  },
-];
+function toFilterTab(value: string | null): DiaryFilterTab {
+  return filterTabs.has(value as DiaryFilterTab) ? (value as DiaryFilterTab) : '전체';
+}
 
 export function DiaryDashboard() {
-  const [query, setQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<DiaryFilterTab>('전체');
-  const visibleDiaries = useMemo(() => filterDiaryItems(recentDiaries, query, activeTab), [query, activeTab]);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [dashboard, setDashboard] = useState<DiaryDashboardView>(fixtureDiaryDashboard);
+  const [status, setStatus] = useState<DiaryDashboardStatus>('loading');
+  const [query, setQuery] = useState(searchParams.get('q') ?? '');
+  const [activeTab, setActiveTab] = useState<DiaryFilterTab>(toFilterTab(searchParams.get('tab')));
+
+  useEffect(() => {
+    let mounted = true;
+
+    getDiaryDashboard()
+      .then((nextDashboard) => {
+        if (!mounted) return;
+        setDashboard(nextDashboard);
+        setStatus('ready');
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setStatus('error');
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const nextQuery = searchParams.get('q') ?? '';
+    const nextTab = toFilterTab(searchParams.get('tab'));
+    setQuery(nextQuery);
+    setActiveTab(nextTab);
+  }, [searchParams]);
+
+  const visibleDiaries = useMemo(
+    () => filterDiaryItems(dashboard.recentItems, query, activeTab),
+    [dashboard.recentItems, query, activeTab],
+  );
+
+  const handleQueryChange = (nextQuery: string) => {
+    setQuery(nextQuery);
+    router.replace(setDiaryDashboardQueryParam(searchParams, { q: nextQuery, tab: activeTab }), { scroll: false });
+  };
+
+  const handleTabChange = (nextTab: DiaryFilterTab) => {
+    setActiveTab(nextTab);
+    router.replace(setDiaryDashboardQueryParam(searchParams, { q: query, tab: nextTab }), { scroll: false });
+  };
 
   return (
     <div className="overflow-x-hidden pb-8" data-design="diary-dashboard">
-      <DiarySearchBar value={query} onChange={setQuery} />
-      <DiaryFilterTabs activeTab={activeTab} onChange={setActiveTab} />
-      <DiarySummarySection summary={summary} />
-      <DiaryInsightGrid year={2026} month={5} selectedDay={18} calendarMarkers={calendarMarkers} genreRatios={genreRatios} />
+      <DiarySearchBar value={query} onChange={handleQueryChange} />
+      <DiaryFilterTabs activeTab={activeTab} onChange={handleTabChange} />
+      {status === 'error' ? (
+        <div className="mb-4 rounded-[24px] bg-white px-5 py-4 text-[13px] font-bold text-[#e85b6a] shadow-[0_14px_34px_rgba(31,42,68,0.07)]">
+          다이어리 데이터를 불러오지 못했어요. 임시 데이터로 화면을 보여드릴게요.
+        </div>
+      ) : null}
+      <DiarySummarySection summary={dashboard.summary} />
+      <DiaryInsightGrid
+        year={dashboard.calendar.year}
+        month={dashboard.calendar.month}
+        selectedDay={dashboard.calendar.selectedDay}
+        calendarMarkers={dashboard.calendar.markers}
+        genreRatios={dashboard.genreRatios}
+      />
       <DiaryRecentListSection items={visibleDiaries} />
       <NewDiaryFloatingButton />
     </div>

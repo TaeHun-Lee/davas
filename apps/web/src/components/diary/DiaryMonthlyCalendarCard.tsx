@@ -4,7 +4,7 @@ import type { DiaryCalendarMarker } from './diary-dashboard-types';
 type DiaryMonthlyCalendarCardProps = {
   year: number;
   month: number;
-  selectedDay: number;
+  selectedDay?: number;
   markers: DiaryCalendarMarker[];
 };
 

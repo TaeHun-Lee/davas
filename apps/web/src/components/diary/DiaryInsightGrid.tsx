@@ -5,7 +5,7 @@ import { DiaryMonthlyCalendarCard } from './DiaryMonthlyCalendarCard';
 type DiaryInsightGridProps = {
   year: number;
   month: number;
-  selectedDay: number;
+  selectedDay?: number;
   calendarMarkers: DiaryCalendarMarker[];
   genreRatios: DiaryGenreRatio[];
 };

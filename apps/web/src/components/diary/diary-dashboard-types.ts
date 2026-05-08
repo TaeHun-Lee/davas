@@ -28,6 +28,13 @@ export type DiaryCalendarDay = {
   entryCount: number;
 };
 
+export type DiaryDashboardCalendar = {
+  year: number;
+  month: number;
+  selectedDay?: number;
+  markers: DiaryCalendarMarker[];
+};
+
 export type DiaryListItemView = {
   id: string;
   mediaId: string;
@@ -40,4 +47,11 @@ export type DiaryListItemView = {
   posterGradient: string;
   genreNames: string[];
   isBookmarked?: boolean;
+};
+
+export type DiaryDashboardView = {
+  summary: DiarySummary;
+  calendar: DiaryDashboardCalendar;
+  genreRatios: DiaryGenreRatio[];
+  recentItems: DiaryListItemView[];
 };

@@ -9,6 +9,8 @@ export type CreateDiaryPayload = {
   tags: string[];
 };
 
+import type { DiaryDashboardView } from '../../components/diary/diary-dashboard-types';
+
 export type CreatedDiaryResponse = {
   message?: string;
   diary?: CreateDiaryPayload;
@@ -20,6 +22,18 @@ function getApiBaseUrl() {
     return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api';
   }
   return `${window.location.protocol}//${window.location.hostname}:4000/api`;
+}
+
+export async function getDiaryDashboard() {
+  const response = await fetch(`${getApiBaseUrl()}/diaries/dashboard`, {
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error('diary dashboard failed');
+  }
+
+  return (await response.json()) as DiaryDashboardView;
 }
 
 export async function createDiary(payload: CreateDiaryPayload) {
