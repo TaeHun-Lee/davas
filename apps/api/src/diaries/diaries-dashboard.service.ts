@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DiaryEntity } from '../database/entities/diary.entity';
+import { CreateDiaryDto } from './dto/create-diary.dto';
 
 const DEFAULT_POSTER_GRADIENT = 'from-[#e9eef7] via-[#f6f8fc] to-[#dfe8f5]';
 const GENRE_ICON_KINDS = ['sf', 'drama', 'thriller', 'action', 'etc'] as const;
@@ -62,8 +63,24 @@ export class DiariesDashboardService {
     private readonly diaries: Repository<DiaryEntity>,
   ) {}
 
-  async getDashboard() {
+  async createDiary(userId: string, dto: CreateDiaryDto) {
+    const diary = this.diaries.create({
+      userId,
+      mediaId: dto.mediaId,
+      title: dto.title,
+      content: dto.content ?? '',
+      watchedDate: dto.watchedDate,
+      rating: dto.rating.toFixed(1),
+      visibility: dto.visibility,
+      hasSpoiler: dto.hasSpoiler,
+    });
+
+    return this.diaries.save(diary);
+  }
+
+  async getDashboard(userId: string) {
     const diaries = await this.diaries.find({
+      where: { userId },
       relations: { media: true },
       order: { watchedDate: 'DESC', createdAt: 'DESC' },
       take: 50,

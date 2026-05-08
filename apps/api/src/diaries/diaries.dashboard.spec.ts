@@ -15,7 +15,9 @@ const moduleSource = source('diaries.module.ts');
 const serviceSource = source('diaries-dashboard.service.ts');
 
 type FakeRepository = {
-  find: () => Promise<DiaryEntity[]>;
+  find: (options?: unknown) => Promise<DiaryEntity[]>;
+  create?: (input: Partial<DiaryEntity>) => DiaryEntity;
+  save?: (input: DiaryEntity) => Promise<DiaryEntity>;
 };
 
 function makeDiary(overrides: Partial<DiaryEntity> = {}): DiaryEntity {
@@ -46,7 +48,7 @@ describe('Diaries dashboard API contract', () => {
   it('registers GET /api/diaries/dashboard before dynamic diary detail routes', () => {
     assert.match(controllerSource, /@Get\('dashboard'\)/);
     assert.ok(controllerSource.indexOf("@Get('dashboard')") < controllerSource.indexOf("@Get(':id')"));
-    assert.match(controllerSource, /dashboard\(\)/);
+    assert.match(controllerSource, /dashboard\(@Req\(\) request: AuthenticatedRequest\)/);
     assert.match(controllerSource, /DiariesDashboardService/);
     assert.match(moduleSource, /DiariesDashboardService/);
   });
@@ -59,7 +61,7 @@ describe('Diaries dashboard API contract', () => {
     const repository: FakeRepository = { find: async () => [makeDiary()] };
     const service = new DiariesDashboardService(repository as never);
     const controller = new DiariesController(service);
-    const dashboard = await controller.dashboard();
+    const dashboard = await controller.dashboard({ user: { id: 'user-1' } } as never);
 
     assert.equal(dashboard.summary.totalCount, 1);
     assert.equal(dashboard.summary.averageRating, 4.5);
@@ -72,7 +74,7 @@ describe('Diaries dashboard API contract', () => {
 
   it('returns an empty live dashboard when the user has no diary rows', async () => {
     const repository: FakeRepository = { find: async () => [] };
-    const dashboard = await new DiariesDashboardService(repository as never).getDashboard();
+    const dashboard = await new DiariesDashboardService(repository as never).getDashboard('user-1');
 
     assert.equal(dashboard.summary.totalCount, 0);
     assert.equal(dashboard.summary.monthlyCount, 0);
@@ -81,5 +83,63 @@ describe('Diaries dashboard API contract', () => {
     assert.deepEqual(dashboard.genreRatios, []);
     assert.deepEqual(dashboard.recentItems, []);
     assert.deepEqual(dashboard.calendar.markers, []);
+  });
+
+  it('scopes the live dashboard query to the authenticated user instead of all diaries', async () => {
+    let findOptions: unknown;
+    const repository: FakeRepository = {
+      find: async (options) => {
+        findOptions = options;
+        return [];
+      },
+    };
+
+    await new DiariesDashboardService(repository as never).getDashboard('user-42');
+
+    assert.deepEqual(findOptions, {
+      where: { userId: 'user-42' },
+      relations: { media: true },
+      order: { watchedDate: 'DESC', createdAt: 'DESC' },
+      take: 50,
+    });
+  });
+
+  it('persists a new diary for the authenticated user instead of echoing a contract stub', async () => {
+    const created = makeDiary({ id: 'created-diary', userId: 'user-9', mediaId: 'media-9' });
+    let createInput: Partial<DiaryEntity> | undefined;
+    const repository: FakeRepository = {
+      find: async () => [],
+      create: (input) => {
+        createInput = input;
+        return created;
+      },
+      save: async (input) => input,
+    };
+    const service = new DiariesDashboardService(repository as never);
+    const controller = new DiariesController(service);
+
+    const result = await controller.create({ user: { id: 'user-9' } } as never, {
+      mediaId: 'media-9',
+      title: '실사용 기록',
+      content: '사용자가 직접 작성한 내용',
+      watchedDate: '2026-05-08',
+      rating: 4.2,
+      visibility: 'PRIVATE',
+      hasSpoiler: true,
+      tags: [],
+    });
+
+    assert.deepEqual(createInput, {
+      userId: 'user-9',
+      mediaId: 'media-9',
+      title: '실사용 기록',
+      content: '사용자가 직접 작성한 내용',
+      watchedDate: '2026-05-08',
+      rating: '4.2',
+      visibility: 'PRIVATE',
+      hasSpoiler: true,
+    });
+    assert.equal(result.diary.id, 'created-diary');
+    assert.doesNotMatch(controllerSource, /create diary endpoint contract ready/);
   });
 });

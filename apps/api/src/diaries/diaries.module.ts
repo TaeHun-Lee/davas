@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from '../auth/auth.module';
 import { DiaryEntity } from '../database/entities/diary.entity';
 import { DiariesDashboardService } from './diaries-dashboard.service';
 import { DiariesController } from './diaries.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DiaryEntity])],
+  imports: [AuthModule, TypeOrmModule.forFeature([DiaryEntity])],
   controllers: [DiariesController],
   providers: [DiariesDashboardService],
 })
