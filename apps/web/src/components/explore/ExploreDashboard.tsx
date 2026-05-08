@@ -106,6 +106,7 @@ export function ExploreDashboard() {
         value={searchQuery}
         onChange={(value) => {
           setSearchQuery(value);
+          setActiveExploreFilter('전체');
           setSelectedMedia(null);
           setIsDetailModalOpen(false);
         }}

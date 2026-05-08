@@ -1,5 +1,6 @@
 import type { MediaSearchResult } from '../../lib/api/media';
 import type { MediaSearchStatus } from '../../hooks/useMediaSearch';
+import { getTmdbGenreNames } from './media-genres';
 
 function SearchResultPoster({ item }: { item: MediaSearchResult }) {
   if (item.posterUrl) {
@@ -32,22 +33,28 @@ export function MediaSearchResults({
       {status === 'error' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#ef4444]">검색을 불러오지 못했어요. TMDB API 설정을 확인해주세요.</div> : null}
       {status === 'results' ? (
         <div className="mt-3 space-y-3">
-          {items.map((item) => (
-            <button
-              key={`${item.externalProvider}-${item.externalId}`}
-              type="button"
-              aria-label={`${item.title} 검색 결과 선택`}
-              onClick={() => onSelect(item)}
-              className="card-surface flex w-full gap-3 rounded-[18px] p-3 text-left transition active:scale-[0.99]"
-            >
-              <SearchResultPoster item={item} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[15px] font-extrabold leading-[20px] text-[#1f2a44]">{item.title}</span>
-                <span className="mt-1 block text-[11px] font-bold text-[#8b96a8]">{item.mediaType === 'TV' ? '드라마' : '영화'} · {item.releaseDate?.slice(0, 4) ?? '연도 미상'}</span>
-                <span className="mt-2 block line-clamp-2 text-[11px] font-semibold leading-[17px] text-[#788395]">{item.overview || '작품 소개가 아직 준비되지 않았어요.'}</span>
-              </span>
-            </button>
-          ))}
+          {items.map((item) => {
+            const releaseYear = item.releaseDate?.slice(0, 4) ?? '연도 미상';
+            const genreNames = getTmdbGenreNames({ genreIds: item.genreIds, mediaType: item.mediaType });
+            const genreText = genreNames.slice(0, 2).join(' · ');
+            const mediaMeta = [item.mediaType === 'TV' ? '드라마' : '영화', releaseYear, genreText].filter(Boolean).join(' · ');
+            return (
+              <button
+                key={`${item.externalProvider}-${item.externalId}`}
+                type="button"
+                aria-label={`${item.title} 검색 결과 선택`}
+                onClick={() => onSelect(item)}
+                className="card-surface flex w-full gap-3 rounded-[18px] p-3 text-left transition active:scale-[0.99]"
+              >
+                <SearchResultPoster item={item} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[15px] font-extrabold leading-[20px] text-[#1f2a44]">{item.title}</span>
+                  <span className="mt-1 block text-[11px] font-bold text-[#8b96a8]">{mediaMeta}</span>
+                  <span className="mt-2 block line-clamp-2 text-[11px] font-semibold leading-[17px] text-[#788395]">{item.overview || '작품 소개가 아직 준비되지 않았어요.'}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
       ) : null}
     </section>

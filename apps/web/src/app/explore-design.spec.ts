@@ -58,7 +58,11 @@ describe('Davas explore screen design', () => {
     assert.match(exploreFilterChipsSource, /activeFilter: ExploreFilter/);
     assert.match(exploreFilterChipsSource, /onChange: \(filter: ExploreFilter\) => void/);
     assert.match(exploreFilterChipsSource, /aria-pressed=\{filter === activeFilter\}/);
+    assert.match(exploreFilterChipsSource, /aria-label=\{`\$\{filter\} 필터`\}/);
+    assert.match(exploreFilterChipsSource, /data-active=\{filter === activeFilter\}/);
     assert.match(exploreFilterChipsSource, /onClick=\{\(\) => onChange\(filter\)\}/);
+    assert.match(exploreFilterChipsSource, /ring-\[3px\] ring-\[#d8e8ff\]/);
+    assert.match(exploreDashboardSource, /setActiveExploreFilter\('전체'\)/);
   });
 
   it('filters explore search result sections with the active tag chip', () => {
@@ -79,6 +83,19 @@ describe('Davas explore screen design', () => {
     assert.match(exploreDashboardSource, /status=\{filteredMediaSearchStatus\}/);
     assert.match(exploreDashboardSource, /showPeopleSearchResults \? \(/);
     assert.match(exploreDashboardSource, /showCreditResults \? \(/);
+  });
+
+  it('improves search result card metadata and people labels', () => {
+    assert.match(mediaSearchResultsSource, /getTmdbGenreNames/);
+    assert.match(mediaSearchResultsSource, /const genreNames = getTmdbGenreNames\(\{ genreIds: item\.genreIds, mediaType: item\.mediaType \}\)/);
+    assert.match(mediaSearchResultsSource, /const mediaMeta = \[item\.mediaType === 'TV' \? '드라마' : '영화', releaseYear, genreText\]/);
+    assert.match(mediaSearchResultsSource, /genreNames\.slice\(0, 2\)\.join\(' · '\)/);
+    assert.match(personSearchResultsSource, /function getDepartmentLabel/);
+    assert.match(personSearchResultsSource, /Acting: '배우'/);
+    assert.match(personSearchResultsSource, /Directing: '감독'/);
+    assert.match(personSearchResultsSource, /Writing: '작가'/);
+    assert.match(personSearchResultsSource, /대표작 ·/);
+    assert.doesNotMatch(personSearchResultsSource, /knownFor ·/);
   });
 
   it('calls the backend media search API with Korean and English capable query params', () => {

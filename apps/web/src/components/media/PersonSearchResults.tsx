@@ -13,14 +13,25 @@ function PersonProfileImage({ person }: { person: PersonSearchResult }) {
   );
 }
 
+function getDepartmentLabel(department?: string | null) {
+  const labels: Record<string, string> = {
+    Acting: '배우',
+    Directing: '감독',
+    Writing: '작가',
+    Production: '제작',
+  };
+
+  return department ? labels[department] ?? department : '직군 정보 없음';
+}
+
 function KnownForText({ person }: { person: PersonSearchResult }) {
   const knownFor = person.knownFor.map((work) => work.title).filter(Boolean).slice(0, 3);
 
   if (knownFor.length === 0) {
-    return <span className="mt-1.5 block text-[11px] font-semibold leading-[16px] text-[#97a2b3]">대표 출연작 정보가 아직 없어요.</span>;
+    return <span className="mt-1.5 block text-[11px] font-semibold leading-[16px] text-[#97a2b3]">대표작 정보가 아직 없어요.</span>;
   }
 
-  return <span className="mt-1.5 block line-clamp-1 text-[11px] font-semibold leading-[16px] text-[#788395]">knownFor · {knownFor.join(', ')}</span>;
+  return <span className="mt-1.5 block line-clamp-1 text-[11px] font-semibold leading-[16px] text-[#788395]">대표작 · {knownFor.join(', ')}</span>;
 }
 
 export function PersonSearchResults({
@@ -66,7 +77,7 @@ export function PersonSearchResults({
                 <PersonProfileImage person={person} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] font-extrabold leading-[20px] text-[#1f2a44]">{person.name}</span>
-                  <span className="mt-1 block text-[11px] font-bold text-[#8b96a8]">{person.knownForDepartment ?? 'Acting'}</span>
+                  <span className="mt-1 block text-[11px] font-bold text-[#8b96a8]">{getDepartmentLabel(person.knownForDepartment)}</span>
                   <KnownForText person={person} />
                 </span>
                 <span className="shrink-0 rounded-full bg-[#edf5ff] px-3 py-2 text-[11px] font-extrabold text-[#216bd8]">작품 보기</span>
