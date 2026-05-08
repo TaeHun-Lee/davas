@@ -24,6 +24,7 @@ const diaryRecentListSource = optionalSource('../components/diary/DiaryRecentLis
 const diaryListItemSource = optionalSource('../components/diary/DiaryListItem.tsx');
 const newDiaryFloatingButtonSource = optionalSource('../components/diary/NewDiaryFloatingButton.tsx');
 const diaryUtilsSource = optionalSource('../components/diary/diary-dashboard-utils.ts');
+const appShellSource = optionalSource('../components/layout/AppShell.tsx');
 
 describe('Davas diary dashboard design', () => {
   it('routes /diary to the designed diary dashboard instead of a placeholder', () => {
@@ -67,6 +68,15 @@ describe('Davas diary dashboard design', () => {
     assert.match(newDiaryFloatingButtonSource, /새 다이어리/);
   });
 
+  it('keeps the diary dashboard inside the shared mobile app shell with header and bottom tab bar', () => {
+    assert.match(diaryDashboardSource, /import \{ AppShell \} from '\.\.\/layout\/AppShell'/);
+    assert.match(diaryDashboardSource, /<AppShell>/);
+    assert.match(diaryDashboardSource, /<\/AppShell>/);
+    assert.match(appShellSource, /max-w-\[430px\]/);
+    assert.match(appShellSource, /<DavasHeader \/>/);
+    assert.match(appShellSource, /<BottomTabBar \/>/);
+  });
+
   it('keeps the diary dashboard mobile-safe and accessible', () => {
     assert.match(diaryDashboardSource, /overflow-x-hidden/);
     assert.match(diaryListItemSource, /min-w-0/);
@@ -78,6 +88,8 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryMonthlyCalendarSource, /aria-selected=\{day\.selected\}/);
     assert.match(newDiaryFloatingButtonSource, /fixed inset-x-0 bottom-\[92px\]/);
     assert.match(newDiaryFloatingButtonSource, /max-w-\[430px\]/);
+    assert.match(newDiaryFloatingButtonSource, /justify-center/);
+    assert.doesNotMatch(newDiaryFloatingButtonSource, /ml-auto/);
   });
 
   it('uses diary dashboard utilities for calendar state instead of inline date math', () => {
