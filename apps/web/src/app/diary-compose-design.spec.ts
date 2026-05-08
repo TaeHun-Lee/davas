@@ -81,8 +81,9 @@ describe('Davas diary compose screen design', () => {
     assert.match(selectedMediaCardSource, /isLoading\?: boolean/);
     assert.match(selectedMediaCardSource, /data-design="selected-media-placeholder"/);
     assert.match(selectedMediaCardSource, /aria-label="선택한 작품을 불러오는 중"/);
-    assert.match(composeScreenSource, /const mediaCard = selectedMedia \? selectedMedia : mockDiaryMedia/);
-    assert.match(composeScreenSource, /<SelectedMediaCard media=\{mediaCard\} isLoading=\{mediaStatus === 'loading' && Boolean\(mediaId\)\}/);
+    assert.doesNotMatch(composeScreenSource, /const mediaCard = selectedMedia \? selectedMedia : mockDiaryMedia/);
+    assert.match(composeScreenSource, /<SelectedMediaCard media=\{selectedMedia\} isLoading=\{mediaStatus === 'loading' && Boolean\(mediaId\)\}/);
+    assert.match(selectedMediaCardSource, /media: DiaryComposeMedia \| null/);
     assert.match(composeScreenSource, /fallbackTitle=\{selectedMedia\?\.title \?\? ''\}/);
     assert.doesNotMatch(selectedMediaCardSource, /<span className="text-\[15px\][^>]*>인셉션<\/span>/);
   });

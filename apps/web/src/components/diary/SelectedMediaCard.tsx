@@ -30,8 +30,8 @@ function SelectedMediaLoadingPlaceholder() {
   );
 }
 
-export function SelectedMediaCard({ media, isLoading = false }: { media: DiaryComposeMedia; isLoading?: boolean }) {
-  if (isLoading) {
+export function SelectedMediaCard({ media, isLoading = false }: { media: DiaryComposeMedia | null; isLoading?: boolean }) {
+  if (isLoading || !media) {
     return <SelectedMediaLoadingPlaceholder />;
   }
 

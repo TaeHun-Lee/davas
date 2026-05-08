@@ -102,7 +102,6 @@ export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProp
     }
   }
 
-  const mediaCard = selectedMedia ? selectedMedia : mockDiaryMedia;
 
   return (
     <main className="flex min-h-screen justify-center overflow-x-hidden bg-[#172947]/35 text-[#1f2a44] backdrop-blur-sm">
@@ -119,7 +118,7 @@ export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProp
             작품 정보를 불러오지 못했어요. 다시 선택해주세요.
           </p>
         ) : null}
-        <SelectedMediaCard media={mediaCard} isLoading={mediaStatus === 'loading' && Boolean(mediaId)} />
+        <SelectedMediaCard media={selectedMedia} isLoading={mediaStatus === 'loading' && Boolean(mediaId)} />
         <RatingInputCard value={rating} onChange={setRating} />
         <WatchedDateField value={watchedDate} onChange={setWatchedDate} />
         <DiaryTitleField value={title} fallbackTitle={selectedMedia?.title ?? ''} onChange={setTitle} />
