@@ -21,6 +21,11 @@ function toFilterTab(value: string | null): DiaryFilterTab {
   return filterTabs.has(value as DiaryFilterTab) ? (value as DiaryFilterTab) : '전체';
 }
 
+function toCalendarDay(value: string | null) {
+  const day = Number(value);
+  return Number.isInteger(day) && day >= 1 && day <= 31 ? day : undefined;
+}
+
 export function DiaryDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,6 +33,9 @@ export function DiaryDashboard() {
   const [status, setStatus] = useState<DiaryDashboardStatus>('loading');
   const [query, setQuery] = useState(searchParams.get('q') ?? '');
   const [activeTab, setActiveTab] = useState<DiaryFilterTab>(toFilterTab(searchParams.get('tab')));
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<number | undefined>(
+    toCalendarDay(searchParams.get('day')),
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -51,23 +59,38 @@ export function DiaryDashboard() {
   useEffect(() => {
     const nextQuery = searchParams.get('q') ?? '';
     const nextTab = toFilterTab(searchParams.get('tab'));
+    const nextDay = toCalendarDay(searchParams.get('day'));
     setQuery(nextQuery);
     setActiveTab(nextTab);
+    setSelectedCalendarDay(nextDay);
   }, [searchParams]);
 
   const visibleDiaries = useMemo(
-    () => filterDiaryItems(dashboard.recentItems, query, activeTab),
-    [dashboard.recentItems, query, activeTab],
+    () => filterDiaryItems(dashboard.recentItems, query, activeTab, selectedCalendarDay),
+    [dashboard.recentItems, query, activeTab, selectedCalendarDay],
   );
+
+  const selectedCalendarDescription = activeTab === '캘린더' && selectedCalendarDay
+    ? `${dashboard.calendar.month}월 ${selectedCalendarDay}일에 작성한 기록만 모아봤어요.`
+    : undefined;
 
   const handleQueryChange = (nextQuery: string) => {
     setQuery(nextQuery);
-    router.replace(setDiaryDashboardQueryParam(searchParams, { q: nextQuery, tab: activeTab }), { scroll: false });
+    router.replace(setDiaryDashboardQueryParam(searchParams, { q: nextQuery, tab: activeTab, day: selectedCalendarDay }), {
+      scroll: false,
+    });
   };
 
   const handleTabChange = (nextTab: DiaryFilterTab) => {
     setActiveTab(nextTab);
-    router.replace(setDiaryDashboardQueryParam(searchParams, { q: query, tab: nextTab }), { scroll: false });
+    const nextDay = nextTab === '캘린더' ? selectedCalendarDay : undefined;
+    router.replace(setDiaryDashboardQueryParam(searchParams, { q: query, tab: nextTab, day: nextDay }), { scroll: false });
+  };
+
+  const handleCalendarDaySelect = (nextDay: number) => {
+    setActiveTab('캘린더');
+    setSelectedCalendarDay(nextDay);
+    router.replace(setDiaryDashboardQueryParam(searchParams, { q: query, tab: '캘린더', day: nextDay }), { scroll: false });
   };
 
   return (
@@ -83,11 +106,16 @@ export function DiaryDashboard() {
       <DiaryInsightGrid
         year={dashboard.calendar.year}
         month={dashboard.calendar.month}
-        selectedDay={dashboard.calendar.selectedDay}
+        selectedDay={selectedCalendarDay ?? dashboard.calendar.selectedDay}
         calendarMarkers={dashboard.calendar.markers}
         genreRatios={dashboard.genreRatios}
+        onDaySelect={handleCalendarDaySelect}
       />
-      <DiaryRecentListSection items={visibleDiaries} />
+      <DiaryRecentListSection
+        items={visibleDiaries}
+        title={activeTab === '캘린더' && selectedCalendarDay ? `${selectedCalendarDay}일 다이어리` : '최근 작성한 다이어리'}
+        description={selectedCalendarDescription}
+      />
       <NewDiaryFloatingButton />
     </div>
   );

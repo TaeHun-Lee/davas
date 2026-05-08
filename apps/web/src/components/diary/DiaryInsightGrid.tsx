@@ -8,12 +8,13 @@ type DiaryInsightGridProps = {
   selectedDay?: number;
   calendarMarkers: DiaryCalendarMarker[];
   genreRatios: DiaryGenreRatio[];
+  onDaySelect?: (day: number) => void;
 };
 
-export function DiaryInsightGrid({ year, month, selectedDay, calendarMarkers, genreRatios }: DiaryInsightGridProps) {
+export function DiaryInsightGrid({ year, month, selectedDay, calendarMarkers, genreRatios, onDaySelect }: DiaryInsightGridProps) {
   return (
     <section className="mt-5 grid grid-cols-1 gap-4 min-[390px]:grid-cols-2" aria-label="다이어리 통계">
-      <DiaryMonthlyCalendarCard year={year} month={month} selectedDay={selectedDay} markers={calendarMarkers} />
+      <DiaryMonthlyCalendarCard year={year} month={month} selectedDay={selectedDay} markers={calendarMarkers} onDaySelect={onDaySelect} />
       <DiaryGenreRatioCard items={genreRatios} />
     </section>
   );

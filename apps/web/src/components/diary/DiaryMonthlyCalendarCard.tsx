@@ -6,11 +6,12 @@ type DiaryMonthlyCalendarCardProps = {
   month: number;
   selectedDay?: number;
   markers: DiaryCalendarMarker[];
+  onDaySelect?: (day: number) => void;
 };
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 
-export function DiaryMonthlyCalendarCard({ year, month, selectedDay, markers }: DiaryMonthlyCalendarCardProps) {
+export function DiaryMonthlyCalendarCard({ year, month, selectedDay, markers, onDaySelect }: DiaryMonthlyCalendarCardProps) {
   const days = getDiaryCalendarDays({ year, month, selectedDay, markers });
 
   return (
@@ -29,6 +30,8 @@ export function DiaryMonthlyCalendarCard({ year, month, selectedDay, markers }: 
           <button
             key={day.key}
             type="button"
+            disabled={!day.currentMonth}
+            onClick={() => day.currentMonth && onDaySelect?.(day.day)}
             aria-selected={day.selected}
             aria-label={`${day.day}일 기록 ${day.entryCount}개`}
             className={

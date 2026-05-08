@@ -39,7 +39,7 @@ export function getDiaryCalendarDays({
   });
 }
 
-export function filterDiaryItems(items: DiaryListItemView[], query: string, tab: DiaryFilterTab) {
+export function filterDiaryItems(items: DiaryListItemView[], query: string, tab: DiaryFilterTab, selectedDay?: number) {
   const normalizedQuery = query.trim().toLocaleLowerCase('ko-KR');
   const filteredItems = normalizedQuery
     ? items.filter((item) =>
@@ -50,16 +50,25 @@ export function filterDiaryItems(items: DiaryListItemView[], query: string, tab:
       )
     : items;
 
+  const calendarItems = tab === '캘린더' && selectedDay
+    ? filteredItems.filter((item) => getWatchedDay(item.watchedDate) === selectedDay)
+    : filteredItems;
+
   if (tab === '평점순') {
-    return [...filteredItems].sort((a, b) => b.rating - a.rating);
+    return [...calendarItems].sort((a, b) => b.rating - a.rating);
   }
 
-  return [...filteredItems].sort((a, b) => Number(new Date(b.watchedDate)) - Number(new Date(a.watchedDate)));
+  return [...calendarItems].sort((a, b) => Number(new Date(b.watchedDate)) - Number(new Date(a.watchedDate)));
+}
+
+function getWatchedDay(watchedDate: string) {
+  const day = Number(watchedDate.trim().split(/[.-]/).at(-1));
+  return Number.isFinite(day) ? day : undefined;
 }
 
 export function setDiaryDashboardQueryParam(
   searchParams: URLSearchParams | ReadonlyURLSearchParamsLike,
-  { q, tab }: { q: string; tab: DiaryFilterTab },
+  { q, tab, day }: { q: string; tab: DiaryFilterTab; day?: number },
 ) {
   const params = new URLSearchParams(searchParams.toString());
   const trimmedQuery = q.trim();
@@ -74,6 +83,12 @@ export function setDiaryDashboardQueryParam(
     params.delete('tab');
   } else {
     params.set('tab', tab);
+  }
+
+  if (tab === '캘린더' && day) {
+    params.set('day', String(day));
+  } else {
+    params.delete('day');
   }
 
   const queryString = params.toString();

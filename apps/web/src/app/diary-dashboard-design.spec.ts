@@ -107,4 +107,20 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryDashboardSource, /다이어리 데이터를 불러오지 못했어요/);
     assert.doesNotMatch(diaryDashboardSource, /const data = dashboard \? dashboard : fixtureDiaryDashboard/);
   });
+
+  it('supports Slice 4 calendar-day drilldown with URL state and filtered diary results', () => {
+    assert.match(diaryDashboardSource, /selectedCalendarDay/);
+    assert.match(diaryDashboardSource, /toCalendarDay\(searchParams\.get\('day'\)\)/);
+    assert.match(diaryDashboardSource, /handleCalendarDaySelect/);
+    assert.match(diaryDashboardSource, /setDiaryDashboardQueryParam\(searchParams, \{ q: query, tab: '캘린더', day: nextDay \}\)/);
+    assert.match(diaryDashboardSource, /filterDiaryItems\(dashboard\.recentItems, query, activeTab, selectedCalendarDay\)/);
+    assert.match(diaryInsightGridSource, /onDaySelect/);
+    assert.match(diaryMonthlyCalendarSource, /onDaySelect\?: \(day: number\) => void/);
+    assert.match(diaryMonthlyCalendarSource, /disabled=\{!day\.currentMonth\}/);
+    assert.match(diaryUtilsSource, /selectedDay\?: number/);
+    assert.match(diaryUtilsSource, /tab === '캘린더' && selectedDay/);
+    assert.match(diaryUtilsSource, /params\.set\('day', String\(day\)\)/);
+    assert.match(diaryUtilsSource, /params\.delete\('day'\)/);
+    assert.match(diaryRecentListSource, /description\?: string/);
+  });
 });

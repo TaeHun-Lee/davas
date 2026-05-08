@@ -4,13 +4,16 @@ import { DiaryListItem } from './DiaryListItem';
 
 type DiaryRecentListSectionProps = {
   items: DiaryListItemView[];
+  title?: string;
+  description?: string;
 };
 
-export function DiaryRecentListSection({ items }: DiaryRecentListSectionProps) {
+export function DiaryRecentListSection({ items, title = '최근 작성한 다이어리', description }: DiaryRecentListSectionProps) {
   return (
     <section className="pb-24" aria-labelledby="recent-diaries-title">
-      <SectionTitle title="최근 작성한 다이어리" actionLabel="더보기 ›" />
-      <h2 id="recent-diaries-title" className="sr-only">최근 작성한 다이어리</h2>
+      <SectionTitle title={title} actionLabel="더보기 ›" />
+      <h2 id="recent-diaries-title" className="sr-only">{title}</h2>
+      {description ? <p className="mb-3 text-[12px] font-semibold text-[#8a95a5]">{description}</p> : null}
       {items.length > 0 ? (
         <div className="space-y-3">
           {items.map((item) => (
