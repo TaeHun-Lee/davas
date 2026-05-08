@@ -9,13 +9,32 @@ export type DiaryComposeMedia = {
 
 function PosterPlaceholder() {
   return (
-    <div className="flex h-[126px] w-[86px] shrink-0 items-end overflow-hidden rounded-[16px] bg-gradient-to-br from-[#07111f] via-[#194c85] to-[#8ba9d6] p-2 shadow-[0_12px_22px_rgba(21,38,69,0.18)]">
-      <span className="text-[15px] font-black text-[#ff5a52]">인셉션</span>
-    </div>
+    <div className="h-[126px] w-[86px] shrink-0 overflow-hidden rounded-[16px] bg-gradient-to-br from-[#07111f] via-[#194c85] to-[#8ba9d6] shadow-[0_12px_22px_rgba(21,38,69,0.18)]" />
   );
 }
 
-export function SelectedMediaCard({ media }: { media: DiaryComposeMedia }) {
+function SelectedMediaLoadingPlaceholder() {
+  return (
+    <section data-design="selected-media-placeholder" aria-label="선택한 작품을 불러오는 중" className="card-surface flex gap-4 rounded-[24px] p-4 shadow-[0_14px_32px_rgba(31,65,114,0.09)]">
+      <PosterPlaceholder />
+      <div className="min-w-0 flex-1 py-1" aria-hidden="true">
+        <div className="h-7 w-3/4 rounded-full bg-[#edf3fb]" />
+        <div className="mt-3 h-4 w-1/2 rounded-full bg-[#f2f6fb]" />
+        <div className="mt-5 h-3 w-2/3 rounded-full bg-[#eef4fb]" />
+        <div className="mt-5 flex gap-1.5">
+          <span className="h-7 w-14 rounded-full bg-[#eef5ff]" />
+          <span className="h-7 w-16 rounded-full bg-[#eef5ff]" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function SelectedMediaCard({ media, isLoading = false }: { media: DiaryComposeMedia; isLoading?: boolean }) {
+  if (isLoading) {
+    return <SelectedMediaLoadingPlaceholder />;
+  }
+
   return (
     <section className="card-surface flex gap-4 rounded-[24px] p-4 shadow-[0_14px_32px_rgba(31,65,114,0.09)]">
       {media.posterUrl ? (

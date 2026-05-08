@@ -67,13 +67,24 @@ describe('Davas diary compose screen design', () => {
     assert.match(composeScreenSource, /getMediaDetail\(mediaId\)/);
     assert.match(composeScreenSource, /useEffect/);
     assert.match(composeScreenSource, /setSelectedMedia\(mapMediaDetailToDiaryMedia\(detail\)\)/);
-    assert.match(composeScreenSource, /const \[selectedMedia, setSelectedMedia\] = useState<DiaryComposeMedia>\(mockDiaryMedia\)/);
+    assert.match(composeScreenSource, /const initialSelectedMedia = mediaId \? null : mockDiaryMedia/);
+    assert.match(composeScreenSource, /useState<DiaryComposeMedia \| null>\(initialSelectedMedia\)/);
     assert.match(composeScreenSource, /작품 정보를 불러오고 있어요/);
     assert.match(composeScreenSource, /작품 정보를 불러오지 못했어요/);
     assert.match(utilsSource, /export function mapMediaDetailToDiaryMedia/);
     assert.match(utilsSource, /MediaDetail/);
     assert.match(utilsSource, /genres\.slice\(0, 3\)/);
     assert.match(utilsSource, /releaseDate\?\.slice\(0, 4\)/);
+  });
+
+  it('shows only a text-free media placeholder while a mediaId detail is loading', () => {
+    assert.match(selectedMediaCardSource, /isLoading\?: boolean/);
+    assert.match(selectedMediaCardSource, /data-design="selected-media-placeholder"/);
+    assert.match(selectedMediaCardSource, /aria-label="선택한 작품을 불러오는 중"/);
+    assert.match(composeScreenSource, /const mediaCard = selectedMedia \? selectedMedia : mockDiaryMedia/);
+    assert.match(composeScreenSource, /<SelectedMediaCard media=\{mediaCard\} isLoading=\{mediaStatus === 'loading' && Boolean\(mediaId\)\}/);
+    assert.match(composeScreenSource, /fallbackTitle=\{selectedMedia\?\.title \?\? ''\}/);
+    assert.doesNotMatch(selectedMediaCardSource, /<span className="text-\[15px\][^>]*>인셉션<\/span>/);
   });
 
   it('matches the supplied diary compose header and selected media card', () => {
@@ -90,7 +101,7 @@ describe('Davas diary compose screen design', () => {
     assert.match(selectedMediaCardSource, /genres: string\[\]/);
     assert.match(selectedMediaCardSource, /media\.genres\.map/);
     assert.match(selectedMediaCardSource, /rounded-full bg-\[\#eef5ff\]/);
-    assert.doesNotMatch(selectedMediaCardSource, /선택한 작품/);
+    assert.doesNotMatch(selectedMediaCardSource, /<h[1-6][^>]*>선택한 작품/);
     assert.doesNotMatch(selectedMediaCardSource, /meta: 'SF · 스릴러 · 2010'/);
     assert.match(utilsSource, /const year = releaseDate\?\.slice\(0, 4\) \?\? '연도 미상'/);
     assert.match(utilsSource, /const runtimeText = media\.runtime \? `\$\{media\.runtime\}분` : '러닝타임 준비 중'/);
@@ -140,7 +151,7 @@ describe('Davas diary compose screen design', () => {
   });
 
   it('keeps optional content and falls back empty diary title to the movie title', () => {
-    assert.match(composeScreenSource, /const effectiveTitle = title\.trim\(\) \|\| selectedMedia\.title/);
+    assert.match(composeScreenSource, /const effectiveTitle = title\.trim\(\) \|\| selectedMedia\?\.title \|\| ''/);
     assert.match(utilsSource, /content\.length <= 3000/);
     assert.doesNotMatch(composeScreenSource, /content\.trim\(\)\.length > 0/);
     assert.match(composeScreenSource, /containsSpoiler/);

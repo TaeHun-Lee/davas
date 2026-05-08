@@ -22,7 +22,8 @@ type DiaryComposeScreenProps = {
 
 export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProps) {
   const router = useRouter();
-  const [selectedMedia, setSelectedMedia] = useState<DiaryComposeMedia>(mockDiaryMedia);
+  const initialSelectedMedia = mediaId ? null : mockDiaryMedia;
+  const [selectedMedia, setSelectedMedia] = useState<DiaryComposeMedia | null>(initialSelectedMedia);
   const [mediaStatus, setMediaStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(mediaId ? 'loading' : 'idle');
   const [rating, setRating] = useState(0);
   const [watchedDate, setWatchedDate] = useState(todayIsoDate());
@@ -61,7 +62,7 @@ export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProp
     };
   }, [mediaId]);
 
-  const effectiveTitle = title.trim() || selectedMedia.title;
+  const effectiveTitle = title.trim() || selectedMedia?.title || '';
   const isValidDraft = validateDiaryCompose({
     rating,
     watchedDate,
@@ -77,7 +78,7 @@ export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProp
   }
 
   async function handleSubmit() {
-    if (!canSubmit) return;
+    if (!canSubmit || !selectedMedia) return;
 
     setIsSubmitting(true);
     setSubmitError('');
@@ -101,6 +102,8 @@ export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProp
     }
   }
 
+  const mediaCard = selectedMedia ? selectedMedia : mockDiaryMedia;
+
   return (
     <main className="flex min-h-screen justify-center overflow-x-hidden bg-[#172947]/35 text-[#1f2a44] backdrop-blur-sm">
       <section data-design="diary-compose-shell" className="min-h-dvh w-full max-w-[430px] overflow-x-hidden bg-[#f8fafd] px-5 pb-28 shadow-[0_0_40px_rgba(15,23,42,0.18)]">
@@ -116,10 +119,10 @@ export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProp
             작품 정보를 불러오지 못했어요. 다시 선택해주세요.
           </p>
         ) : null}
-        <SelectedMediaCard media={selectedMedia} />
+        <SelectedMediaCard media={mediaCard} isLoading={mediaStatus === 'loading' && Boolean(mediaId)} />
         <RatingInputCard value={rating} onChange={setRating} />
         <WatchedDateField value={watchedDate} onChange={setWatchedDate} />
-        <DiaryTitleField value={title} fallbackTitle={selectedMedia.title} onChange={setTitle} />
+        <DiaryTitleField value={title} fallbackTitle={selectedMedia?.title ?? ''} onChange={setTitle} />
         <DiaryContentField value={content} onChange={setContent} />
         {submitError ? (
           <p className="rounded-[18px] bg-white px-4 py-3 text-center text-[13px] font-bold text-[#ff5a52] shadow-[0_12px_28px_rgba(31,65,114,0.08)]">

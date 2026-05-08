@@ -33,19 +33,25 @@ function RecommendationStill({ backdropUrl }: { backdropUrl?: string | null }) {
   );
 }
 
-const fallbackRecommendation = {
-  title: '푸른 밤의 기록',
-  releaseDate: '2023-01-01',
-  mediaType: 'MOVIE',
-  overview: '잊고 있던 꿈을 다시 마주하게 된 한 사람의 이야기.',
-  backdropUrl: null,
-} as MediaRecommendationItem;
+function TodayRecommendationPlaceholder() {
+  return (
+    <div data-design="today-recommendation-placeholder" aria-label="오늘의 추천을 불러오는 중" className="grid grid-cols-2 items-stretch gap-3 max-[430px]:grid-cols-1 max-[430px]:gap-4">
+      <RecommendationStill />
+      <div className="flex min-w-0 flex-col justify-center py-1 max-[430px]:py-0" aria-hidden="true">
+        <div className="h-6 w-3/4 rounded-full bg-[#edf3fb]" />
+        <div className="mt-3 h-3 w-1/2 rounded-full bg-[#edf3fb]" />
+        <div className="mt-5 space-y-2">
+          <div className="h-3 w-full rounded-full bg-[#f2f6fb]" />
+          <div className="h-3 w-5/6 rounded-full bg-[#f2f6fb]" />
+          <div className="h-3 w-2/3 rounded-full bg-[#f2f6fb]" />
+        </div>
+        <div className="mt-5 h-9 w-full rounded-full bg-[#f4f7fb]" />
+      </div>
+    </div>
+  );
+}
 
 function getRecommendationMeta(item: MediaRecommendationItem) {
-  if (item === fallbackRecommendation) {
-    return '드라마 · 2023';
-  }
-
   const releaseYear = item.releaseDate?.slice(0, 4) ?? '연도 미상';
   const mediaType = item.mediaType === 'TV' ? 'TV' : '영화';
   return `${mediaType} · ${releaseYear}`;
@@ -60,14 +66,16 @@ export type TodayRecommendationSectionProps = {
 export function TodayRecommendationSection({ items = [], onSelect, onViewAll }: TodayRecommendationSectionProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const liveItems = items.map((entry) => entry);
-  const carouselItems = liveItems.length > 0 ? liveItems : [fallbackRecommendation];
-  const activeItem = carouselItems[Math.min(activeIndex, carouselItems.length - 1)] ?? fallbackRecommendation;
+  const carouselItems = liveItems;
 
   return (
     <>
       <SectionTitle title="오늘의 추천" actionLabel="전체 보기 ›" onAction={onViewAll} />
       <section data-design="today-recommendation-card" className="today-recommendation-card card-surface relative rounded-[24px] p-4 shadow-[0_14px_32px_rgba(31,65,114,0.09)]">
         <div className="today-carousel-viewport overflow-hidden rounded-[20px]">
+          {carouselItems.length === 0 ? (
+            <TodayRecommendationPlaceholder />
+          ) : (
           <div className="today-carousel-track flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${activeIndex * 100}%)` }}>
             {carouselItems.map((entry, index) => {
               const overview = entry.overview || '작품 소개를 준비하고 있어요.';
@@ -88,6 +96,7 @@ export function TodayRecommendationSection({ items = [], onSelect, onViewAll }: 
               );
             })}
           </div>
+          )}
         </div>
 
         {carouselItems.length > 1 ? (

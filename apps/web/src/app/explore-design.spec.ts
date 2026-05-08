@@ -269,9 +269,9 @@ describe('Davas explore screen design', () => {
   it('renders the today recommendation hero card from a reusable component without a diary CTA', () => {
     assert.match(todayRecommendationSource, /export function TodayRecommendationSection/);
     assert.match(todayRecommendationSource, /오늘의 추천/);
-    assert.match(todayRecommendationSource, /푸른 밤의 기록/);
-    assert.match(todayRecommendationSource, /드라마 · 2023/);
-    assert.match(todayRecommendationSource, /잊고 있던 꿈을 다시 마주하게 된 한 사람의 이야기\./);
+    assert.doesNotMatch(todayRecommendationSource, /푸른 밤의 기록/);
+    assert.doesNotMatch(todayRecommendationSource, /드라마 · 2023/);
+    assert.doesNotMatch(todayRecommendationSource, /잊고 있던 꿈을 다시 마주하게 된 한 사람의 이야기\./);
     assert.match(todayRecommendationSource, /상세 보기/);
     assert.doesNotMatch(todayRecommendationSource, /다이어리 쓰기/);
     assert.match(todayRecommendationSource, /today-recommendation-card/);
@@ -284,6 +284,20 @@ describe('Davas explore screen design', () => {
     assert.match(exploreDashboardSource, /TodayRecommendationSection/);
     assert.doesNotMatch(exploreDashboardSource, /function RecommendationStill/);
     assert.doesNotMatch(exploreDashboardSource, /function PencilIcon/);
+  });
+
+  it('keeps explore recommendation loading placeholders text-free until live data is ready', () => {
+    for (const mockedText of ['푸른 밤의 기록', '비 오는 날 보기 좋은 영화', '몰입감 높은 스릴러', '차분한 밤에 어울리는 작품', '긴장감 있는 이야기']) {
+      assert.doesNotMatch(todayRecommendationSource, new RegExp(mockedText));
+      assert.doesNotMatch(genreRecommendationSource, new RegExp(mockedText));
+    }
+    assert.match(todayRecommendationSource, /data-design="today-recommendation-placeholder"/);
+    assert.match(todayRecommendationSource, /aria-label="오늘의 추천을 불러오는 중"/);
+    assert.match(todayRecommendationSource, /carouselItems\.length === 0/);
+    assert.match(genreRecommendationSource, /data-design="genre-recommendation-placeholder"/);
+    assert.match(genreRecommendationSource, /aria-label="장르 추천을 불러오는 중"/);
+    assert.match(genreRecommendationSource, /placeholderGenreTiles/);
+    assert.doesNotMatch(genreRecommendationSource, /defaultGenreTiles/);
   });
 
   it('fetches explore recommendations through backend recommendation APIs', () => {
@@ -314,7 +328,7 @@ describe('Davas explore screen design', () => {
     assert.match(todayRecommendationSource, /items\?: MediaRecommendationItem\[\]/);
     assert.match(todayRecommendationSource, /onSelect\?: \(item: MediaRecommendationItem\) => void/);
     assert.match(todayRecommendationSource, /backdropUrl/);
-    assert.match(genreRecommendationSource, /tiles: GenreRecommendationTile\[\]/);
+    assert.match(genreRecommendationSource, /tiles\?: GenreRecommendationTile\[\]/);
     assert.match(genreRecommendationSource, /onSelect\?: \(item: MediaRecommendationItem\) => void/);
     assert.match(mediaPosterRowSource, /sourceItem\?: MediaSearchResult/);
     assert.match(mediaPosterRowSource, /onSelect\?: \(item: MediaSearchResult\) => void/);
@@ -442,8 +456,9 @@ describe('Davas explore screen design', () => {
     assert.match(genreRecommendationSource, /export function GenreRecommendationSection/);
     assert.match(genreRecommendationSource, /장르별 추천/);
     assert.match(genreRecommendationSource, /genreTiles\.map/);
-    assert.match(genreRecommendationSource, /비 오는 날 보기 좋은 영화/);
-    assert.match(genreRecommendationSource, /몰입감 높은 스릴러/);
+    assert.match(genreRecommendationSource, /placeholderGenreTiles/);
+    assert.doesNotMatch(genreRecommendationSource, /비 오는 날 보기 좋은 영화/);
+    assert.doesNotMatch(genreRecommendationSource, /몰입감 높은 스릴러/);
     assert.match(exploreShortcutGridSource, /export function ExploreShortcutGrid/);
     assert.match(exploreShortcutGridSource, /탐색 바로가기/);
     assert.match(exploreShortcutGridSource, /quick-explore-grid/);
