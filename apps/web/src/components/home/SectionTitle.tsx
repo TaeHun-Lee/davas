@@ -2,15 +2,18 @@ export type SectionTitleProps = {
   title: string;
   actionLabel?: string;
   onAction?: () => void;
+  showAction?: boolean;
 };
 
-export function SectionTitle({ title, actionLabel = '전체 보기 ›', onAction }: SectionTitleProps) {
+export function SectionTitle({ title, actionLabel = '전체 보기 ›', onAction, showAction = true }: SectionTitleProps) {
   return (
     <div className="mb-3 mt-6 flex items-center justify-between">
       <h2 className="text-[16px] font-extrabold leading-[22px] tracking-[-0.02em] text-[#1f2a44]">{title}</h2>
-      <button type="button" onClick={onAction} className="text-[12px] font-bold leading-[16px] text-[#8d98aa]">
-        {actionLabel}
-      </button>
+      {showAction ? (
+        <button type="button" onClick={onAction} className="text-[12px] font-bold leading-[16px] text-[#8d98aa]">
+          {actionLabel}
+        </button>
+      ) : null}
     </div>
   );
 }

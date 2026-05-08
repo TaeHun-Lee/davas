@@ -10,9 +10,14 @@ function source(path: string) {
   return readFileSync(join(process.cwd(), 'src/diaries', path), 'utf8');
 }
 
+function apiSource(path: string) {
+  return readFileSync(join(process.cwd(), 'src', path), 'utf8');
+}
+
 const controllerSource = source('diaries.controller.ts');
 const moduleSource = source('diaries.module.ts');
 const serviceSource = source('diaries-dashboard.service.ts');
+const authControllerSource = apiSource('auth/auth.controller.ts');
 
 type FakeRepository = {
   find: (options?: unknown) => Promise<DiaryEntity[]>;
@@ -102,6 +107,15 @@ describe('Diaries dashboard API contract', () => {
       order: { watchedDate: 'DESC', createdAt: 'DESC' },
       take: 50,
     });
+  });
+
+  it('uses the same auth cookie as the login flow so created diaries appear on my diary dashboard', () => {
+    const authCookieName = authControllerSource.match(/const ACCESS_TOKEN_COOKIE\s*=\s*'([^']+)'/)?.[1];
+    const diaryCookieName = controllerSource.match(/const ACCESS_TOKEN_COOKIE\s*=\s*'([^']+)'/)?.[1];
+
+    assert.ok(authCookieName);
+    assert.equal(diaryCookieName, authCookieName);
+    assert.match(controllerSource, /this\.auth\?\.findMe\(accessToken\)/);
   });
 
   it('persists a new diary for the authenticated user instead of echoing a contract stub', async () => {

@@ -22,6 +22,7 @@ const diaryMonthlyCalendarSource = optionalSource('../components/diary/DiaryMont
 const diaryGenreRatioSource = optionalSource('../components/diary/DiaryGenreRatioCard.tsx');
 const diaryRecentListSource = optionalSource('../components/diary/DiaryRecentListSection.tsx');
 const diaryListItemSource = optionalSource('../components/diary/DiaryListItem.tsx');
+const sectionTitleSource = optionalSource('../components/home/SectionTitle.tsx');
 const newDiaryFloatingButtonSource = optionalSource('../components/diary/NewDiaryFloatingButton.tsx');
 const diaryFixtureSource = optionalSource('../components/diary/diary-dashboard-fixtures.ts');
 const diaryUtilsSource = optionalSource('../components/diary/diary-dashboard-utils.ts');
@@ -97,6 +98,12 @@ describe('Davas diary dashboard design', () => {
     assert.doesNotMatch(diaryDashboardSource, /<NewDiaryFloatingButton \/>/);
     assert.doesNotMatch(newDiaryFloatingButtonSource, /href="\/diary\/new"/);
     assert.doesNotMatch(newDiaryFloatingButtonSource, /새 다이어리/);
+  });
+
+  it('removes view-all actions from diary summary and recent diary sections', () => {
+    assert.match(sectionTitleSource, /showAction\?: boolean/);
+    assert.match(diarySummarySectionSource, /<SectionTitle title="나의 다이어리 요약" showAction=\{false\} \/>/);
+    assert.match(diaryRecentListSource, /<SectionTitle title=\{title\} showAction=\{false\} \/>/);
   });
 
   it('uses only live diary data and removes mock-only dashboard UI affordances', () => {

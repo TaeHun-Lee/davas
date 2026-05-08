@@ -19,7 +19,7 @@ export function DiaryRecentListSection({
 }: DiaryRecentListSectionProps) {
   return (
     <section className="pb-24" aria-labelledby="recent-diaries-title">
-      <SectionTitle title={title} />
+      <SectionTitle title={title} showAction={false} />
       <h2 id="recent-diaries-title" className="sr-only">{title}</h2>
       {description ? <p className="mb-3 text-[12px] font-semibold text-[#8a95a5]">{description}</p> : null}
       {items.length > 0 ? (

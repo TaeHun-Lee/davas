@@ -6,7 +6,7 @@ import { DiariesDashboardService } from './diaries-dashboard.service';
 import { CreateDiaryDto } from './dto/create-diary.dto';
 import { UpdateDiaryDto } from './dto/update-diary.dto';
 
-const ACCESS_TOKEN_COOKIE = 'davas_...oken';
+const ACCESS_TOKEN_COOKIE = 'davas_access_token';
 
 type AuthenticatedRequest = Request & {
   user?: { id: string };
