@@ -1,0 +1,87 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { describe, it } from 'node:test';
+
+function source(path: string) {
+  return readFileSync(new URL(path, import.meta.url), 'utf8');
+}
+
+const diaryNewPageSource = source('./diary/new/page.tsx');
+const composeScreenSource = source('../components/diary/DiaryComposeScreen.tsx');
+const headerSource = source('../components/diary/DiaryComposeHeader.tsx');
+const selectedMediaCardSource = source('../components/diary/SelectedMediaCard.tsx');
+const ratingInputSource = source('../components/diary/RatingInputCard.tsx');
+const watchedDateSource = source('../components/diary/WatchedDateField.tsx');
+const titleFieldSource = source('../components/diary/DiaryTitleField.tsx');
+const contentFieldSource = source('../components/diary/DiaryContentField.tsx');
+const optionRowSource = source('../components/diary/DiaryOptionRow.tsx');
+const photoAttachmentSource = source('../components/diary/DiaryPhotoAttachmentSection.tsx');
+const submitBarSource = source('../components/diary/DiarySubmitBar.tsx');
+const utilsSource = source('../components/diary/diary-compose-utils.ts');
+
+describe('Davas diary compose screen design', () => {
+  it('routes /diary/new to the diary compose screen shell', () => {
+    assert.match(diaryNewPageSource, /DiaryComposeScreen/);
+    assert.match(composeScreenSource, /export function DiaryComposeScreen/);
+    assert.match(composeScreenSource, /DiaryComposeHeader/);
+    assert.match(composeScreenSource, /SelectedMediaCard/);
+    assert.match(composeScreenSource, /RatingInputCard/);
+    assert.match(composeScreenSource, /WatchedDateField/);
+    assert.match(composeScreenSource, /DiaryTitleField/);
+    assert.match(composeScreenSource, /DiaryContentField/);
+    assert.match(composeScreenSource, /DiaryOptionRow/);
+    assert.match(composeScreenSource, /DiaryPhotoAttachmentSection/);
+    assert.match(composeScreenSource, /DiarySubmitBar/);
+  });
+
+  it('matches the supplied diary compose header and selected media card', () => {
+    assert.match(headerSource, /리뷰 다이어리 작성/);
+    assert.match(headerSource, /임시저장/);
+    assert.match(headerSource, /aria-label="뒤로 가기"/);
+    assert.match(selectedMediaCardSource, /선택한 작품/);
+    assert.match(selectedMediaCardSource, /인셉션/);
+    assert.match(selectedMediaCardSource, /Inception/);
+    assert.match(selectedMediaCardSource, /SF · 스릴러 · 2010/);
+    assert.match(selectedMediaCardSource, /posterUrl/);
+  });
+
+  it('supports 0.1-step rating with pointer drag and default zero rating', () => {
+    assert.match(composeScreenSource, /useState\(0\)/);
+    assert.match(ratingInputSource, /나의 별점/);
+    assert.match(ratingInputSource, /step=\{0\.1\}/);
+    assert.match(ratingInputSource, /onPointerDown/);
+    assert.match(ratingInputSource, /onPointerMove/);
+    assert.match(ratingInputSource, /setPointerCapture/);
+    assert.match(utilsSource, /export function clampRating/);
+    assert.match(utilsSource, /export function ratingFromPointer/);
+    assert.match(utilsSource, /Math\.round\([^)]*10\) \/ 10/);
+    assert.match(ratingInputSource, /clampedValue\.toFixed\(1\)/);
+  });
+
+  it('renders date, title, content, options, photo attachment, and submit CTA', () => {
+    assert.match(watchedDateSource, /관람 날짜/);
+    assert.match(watchedDateSource, /type="date"/);
+    assert.match(watchedDateSource, /CalendarIcon/);
+    assert.match(titleFieldSource, /다이어리 제목/);
+    assert.match(titleFieldSource, /placeholder=\{fallbackTitle\}/);
+    assert.match(contentFieldSource, /감상 기록/);
+    assert.match(contentFieldSource, /maxLength=\{3000\}/);
+    assert.match(contentFieldSource, /3000/);
+    assert.match(optionRowSource, /스포일러 포함/);
+    assert.match(optionRowSource, /공개/);
+    assert.match(optionRowSource, /태그 추가/);
+    assert.match(photoAttachmentSource, /사진 첨부/);
+    assert.match(photoAttachmentSource, /감상 순간을 사진으로 함께 남겨보세요/);
+    assert.match(photoAttachmentSource, /JPG, PNG/);
+    assert.match(submitBarSource, /작성 완료/);
+  });
+
+  it('keeps optional content and falls back empty diary title to the movie title', () => {
+    assert.match(composeScreenSource, /const effectiveTitle = title\.trim\(\) \|\| selectedMedia\.title/);
+    assert.match(composeScreenSource, /content\.length <= 3000/);
+    assert.doesNotMatch(composeScreenSource, /content\.trim\(\)\.length > 0/);
+    assert.match(composeScreenSource, /containsSpoiler/);
+    assert.match(composeScreenSource, /visibility/);
+    assert.match(composeScreenSource, /tags/);
+  });
+});
