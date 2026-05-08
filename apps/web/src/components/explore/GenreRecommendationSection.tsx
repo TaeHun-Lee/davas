@@ -28,17 +28,7 @@ export function GenreRecommendationSection({ tiles = [], onSelect }: GenreRecomm
       <div className="mt-3 space-y-4">
         {genreTiles.length === 0
           ? placeholderGenreTiles.map((tile) => (
-              <article key={tile.id} data-design="genre-recommendation-placeholder" aria-label="장르 추천을 불러오는 중" className={`overflow-hidden rounded-[20px] bg-gradient-to-br ${tile.gradient} p-3 shadow-[0_12px_24px_rgba(17,35,64,0.14)]`}>
-                <div className="space-y-2" aria-hidden="true">
-                  <div className="h-4 w-2/3 rounded-full bg-white/35" />
-                  <div className="h-3 w-1/2 rounded-full bg-white/25" />
-                </div>
-                <div className="mt-3 flex gap-2 overflow-hidden pb-1" aria-hidden="true">
-                  {[0, 1, 2].map((index) => (
-                    <div key={index} className="h-[92px] w-[62px] shrink-0 rounded-[13px] bg-white/20 shadow-[0_8px_16px_rgba(0,0,0,0.12)]" />
-                  ))}
-                </div>
-              </article>
+              <article key={tile.id} data-design="genre-recommendation-placeholder" aria-label="장르 추천을 불러오는 중" className={`min-h-[132px] overflow-hidden rounded-[20px] bg-gradient-to-br ${tile.gradient} p-3 shadow-[0_12px_24px_rgba(17,35,64,0.14)]`} />
             ))
           : genreTiles.map((tile, index) => {
               const gradient = tile.gradient ?? (index % 2 === 0 ? 'from-[#1f2937] via-[#526173] to-[#c08b5e]' : 'from-[#0f172a] via-[#1e3a5f] to-[#a6c8e7]');

@@ -286,7 +286,7 @@ describe('Davas explore screen design', () => {
     assert.doesNotMatch(exploreDashboardSource, /function PencilIcon/);
   });
 
-  it('keeps explore recommendation loading placeholders text-free until live data is ready', () => {
+  it('keeps explore recommendation loading placeholders text-free and shape-free until live data is ready', () => {
     for (const mockedText of ['푸른 밤의 기록', '비 오는 날 보기 좋은 영화', '몰입감 높은 스릴러', '차분한 밤에 어울리는 작품', '긴장감 있는 이야기']) {
       assert.doesNotMatch(todayRecommendationSource, new RegExp(mockedText));
       assert.doesNotMatch(genreRecommendationSource, new RegExp(mockedText));
@@ -294,10 +294,21 @@ describe('Davas explore screen design', () => {
     assert.match(todayRecommendationSource, /data-design="today-recommendation-placeholder"/);
     assert.match(todayRecommendationSource, /aria-label="오늘의 추천을 불러오는 중"/);
     assert.match(todayRecommendationSource, /carouselItems\.length === 0/);
+    assert.match(todayRecommendationSource, /data-design="recommendation-still-placeholder"/);
+    assert.doesNotMatch(todayRecommendationSource, /h-5 w-2 rounded-t/);
+    assert.doesNotMatch(todayRecommendationSource, /h-8 w-2\.5 rounded-t/);
+    assert.doesNotMatch(todayRecommendationSource, /bottom-5 right-8 h-12 w-8 rounded-full/);
     assert.match(genreRecommendationSource, /data-design="genre-recommendation-placeholder"/);
     assert.match(genreRecommendationSource, /aria-label="장르 추천을 불러오는 중"/);
     assert.match(genreRecommendationSource, /placeholderGenreTiles/);
     assert.doesNotMatch(genreRecommendationSource, /defaultGenreTiles/);
+
+    const genrePlaceholderSource = genreRecommendationSource.slice(
+      genreRecommendationSource.indexOf('placeholderGenreTiles.map'),
+      genreRecommendationSource.indexOf(': genreTiles.map'),
+    );
+    assert.doesNotMatch(genrePlaceholderSource, /h-4 w-2\/3 rounded-full/);
+    assert.doesNotMatch(genrePlaceholderSource, /h-\[92px\] w-\[62px\]/);
   });
 
   it('fetches explore recommendations through backend recommendation APIs', () => {

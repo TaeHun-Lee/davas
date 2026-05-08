@@ -13,22 +13,18 @@ function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
 }
 
 function RecommendationStill({ backdropUrl }: { backdropUrl?: string | null }) {
+  if (!backdropUrl) {
+    return (
+      <div data-design="recommendation-still-placeholder" className="relative h-full min-h-[168px] overflow-hidden rounded-[18px] bg-gradient-to-br from-[#0b1630] via-[#1e4f82] to-[#d99a66] shadow-[0_14px_28px_rgba(20,45,83,0.16)]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.34),transparent_18%),radial-gradient(circle_at_70%_8%,rgba(255,255,255,0.55),transparent_8%),linear-gradient(to_top,rgba(7,15,31,0.72),transparent_58%)]" />
+      </div>
+    );
+  }
+
   return (
     <div data-design="recommendation-still" className="relative h-full min-h-[168px] overflow-hidden rounded-[18px] bg-gradient-to-br from-[#0b1630] via-[#1e4f82] to-[#d99a66] shadow-[0_14px_28px_rgba(20,45,83,0.16)]">
-      {backdropUrl ? <img src={backdropUrl} alt="" className="absolute inset-0 h-full w-full object-cover object-center" /> : null}
+      <img src={backdropUrl} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.34),transparent_18%),radial-gradient(circle_at_70%_8%,rgba(255,255,255,0.55),transparent_8%),linear-gradient(to_top,rgba(7,15,31,0.72),transparent_58%)]" />
-      {!backdropUrl ? (
-        <>
-          <div className="absolute bottom-0 left-0 right-0 flex h-12 items-end gap-1.5 px-3 pb-3 opacity-75">
-            <span className="h-5 w-2 rounded-t bg-[#f2c77e]" />
-            <span className="h-8 w-2.5 rounded-t bg-[#d6e7ff]" />
-            <span className="h-6 w-2 rounded-t bg-[#f5b46b]" />
-            <span className="h-10 w-3 rounded-t bg-[#a8c5e8]" />
-            <span className="h-7 w-2.5 rounded-t bg-[#ffd79c]" />
-          </div>
-          <div className="absolute bottom-5 right-8 h-12 w-8 rounded-full bg-[#17223c] shadow-[0_0_0_8px_rgba(255,255,255,0.08)]" />
-        </>
-      ) : null}
     </div>
   );
 }
