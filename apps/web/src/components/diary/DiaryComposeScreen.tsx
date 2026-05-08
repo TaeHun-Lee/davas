@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createDiary } from '../../lib/api/diaries';
 import { getMediaDetail } from '../../lib/api/media';
+import { MediaDetailLoadingIndicator } from '../media/MediaDetailLoadingIndicator';
 import { DiaryComposeHeader } from './DiaryComposeHeader';
 import { DiaryContentField } from './DiaryContentField';
 import { DiaryOptionRow } from './DiaryOptionRow';
@@ -108,11 +109,7 @@ export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProp
       <section data-design="diary-compose-shell" className="min-h-dvh w-full max-w-[430px] overflow-x-hidden bg-[#f8fafd] px-5 pb-28 shadow-[0_0_40px_rgba(15,23,42,0.18)]">
         <DiaryComposeHeader onBack={handleBack} />
         <div className="mx-auto flex w-full max-w-[430px] flex-col gap-4 pt-4">
-        {mediaStatus === 'loading' ? (
-          <p className="rounded-[20px] bg-white px-4 py-3 text-center text-[13px] font-bold text-[#728095] shadow-[0_12px_28px_rgba(31,65,114,0.08)]">
-            작품 정보를 불러오고 있어요...
-          </p>
-        ) : null}
+        {mediaStatus === 'loading' && Boolean(mediaId) ? <MediaDetailLoadingIndicator /> : null}
         {mediaStatus === 'error' ? (
           <p className="rounded-[20px] bg-white px-4 py-3 text-center text-[13px] font-bold text-[#ff5a52] shadow-[0_12px_28px_rgba(31,65,114,0.08)]">
             작품 정보를 불러오지 못했어요. 다시 선택해주세요.

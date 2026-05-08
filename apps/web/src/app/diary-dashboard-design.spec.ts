@@ -40,7 +40,6 @@ describe('Davas diary dashboard design', () => {
       'DiarySummarySection',
       'DiaryInsightGrid',
       'DiaryRecentListSection',
-      'NewDiaryFloatingButton',
     ]) {
       assert.match(diaryDashboardSource, new RegExp(componentName));
     }
@@ -64,8 +63,16 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryMonthlyCalendarSource, /이번 달 기록 캘린더/);
     assert.match(diaryGenreRatioSource, /장르별 기록 비율/);
     assert.match(diaryRecentListSource, /최근 작성한 다이어리/);
-    assert.match(newDiaryFloatingButtonSource, /href="\/diary\/new"/);
-    assert.match(newDiaryFloatingButtonSource, /새 다이어리/);
+    assert.doesNotMatch(diaryDashboardSource, /NewDiaryFloatingButton/);
+    assert.doesNotMatch(diaryDashboardSource, /새 다이어리/);
+  });
+
+  it('keeps the diary search bar focused on text search without a right drawer icon', () => {
+    assert.match(diarySearchBarSource, /type="search"/);
+    assert.match(diarySearchBarSource, /다이어리 제목이나 영화 제목으로 검색해보세요/);
+    assert.doesNotMatch(diarySearchBarSource, /다이어리 상세 필터/);
+    assert.doesNotMatch(diarySearchBarSource, /☰/);
+    assert.doesNotMatch(diarySearchBarSource, /<button[^>]*aria-label="다이어리 상세 필터"/);
   });
 
   it('keeps the diary dashboard inside the shared mobile app shell with header and bottom tab bar', () => {
@@ -86,10 +93,9 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryGenreRatioSource, /role="progressbar"/);
     assert.match(diaryGenreRatioSource, /aria-valuenow=\{item\.percentage\}/);
     assert.match(diaryMonthlyCalendarSource, /aria-selected=\{day\.selected\}/);
-    assert.match(newDiaryFloatingButtonSource, /fixed inset-x-0 bottom-\[92px\]/);
-    assert.match(newDiaryFloatingButtonSource, /max-w-\[430px\]/);
-    assert.match(newDiaryFloatingButtonSource, /justify-center/);
-    assert.doesNotMatch(newDiaryFloatingButtonSource, /ml-auto/);
+    assert.doesNotMatch(diaryDashboardSource, /<NewDiaryFloatingButton \/>/);
+    assert.doesNotMatch(newDiaryFloatingButtonSource, /href="\/diary\/new"/);
+    assert.doesNotMatch(newDiaryFloatingButtonSource, /새 다이어리/);
   });
 
   it('uses diary dashboard utilities for calendar state instead of inline date math', () => {

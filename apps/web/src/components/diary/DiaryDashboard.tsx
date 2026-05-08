@@ -9,7 +9,6 @@ import { DiaryInsightGrid } from './DiaryInsightGrid';
 import { DiaryRecentListSection } from './DiaryRecentListSection';
 import { DiarySearchBar } from './DiarySearchBar';
 import { DiarySummarySection } from './DiarySummarySection';
-import { NewDiaryFloatingButton } from './NewDiaryFloatingButton';
 import { fixtureDiaryDashboard } from './diary-dashboard-fixtures';
 import { filterDiaryItems, setDiaryDashboardQueryParam } from './diary-dashboard-utils';
 import type { DiaryDashboardView, DiaryFilterTab } from './diary-dashboard-types';
@@ -118,7 +117,6 @@ export function DiaryDashboard() {
           title={activeTab === '캘린더' && selectedCalendarDay ? `${selectedCalendarDay}일 다이어리` : '최근 작성한 다이어리'}
           description={selectedCalendarDescription}
         />
-        <NewDiaryFloatingButton />
       </div>
     </AppShell>
   );

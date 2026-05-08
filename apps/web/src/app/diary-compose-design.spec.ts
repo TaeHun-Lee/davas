@@ -21,6 +21,7 @@ const utilsSource = source('../components/diary/diary-compose-utils.ts');
 const mediaApiSource = source('../lib/api/media.ts');
 const diariesApiSource = source('../lib/api/diaries.ts');
 const mediaDetailModalSource = source('../components/media/MediaDetailModal.tsx');
+const mediaDetailLoadingIndicatorSource = source('../components/media/MediaDetailLoadingIndicator.tsx');
 
 describe('Davas diary compose screen design', () => {
   it('routes /diary/new to the diary compose screen shell', () => {
@@ -69,7 +70,8 @@ describe('Davas diary compose screen design', () => {
     assert.match(composeScreenSource, /setSelectedMedia\(mapMediaDetailToDiaryMedia\(detail\)\)/);
     assert.match(composeScreenSource, /const initialSelectedMedia = mediaId \? null : mockDiaryMedia/);
     assert.match(composeScreenSource, /useState<DiaryComposeMedia \| null>\(initialSelectedMedia\)/);
-    assert.match(composeScreenSource, /작품 정보를 불러오고 있어요/);
+    assert.match(composeScreenSource, /MediaDetailLoadingIndicator/);
+    assert.doesNotMatch(composeScreenSource, /작품 정보를 불러오고 있어요/);
     assert.match(composeScreenSource, /작품 정보를 불러오지 못했어요/);
     assert.match(utilsSource, /export function mapMediaDetailToDiaryMedia/);
     assert.match(utilsSource, /MediaDetail/);
@@ -81,6 +83,8 @@ describe('Davas diary compose screen design', () => {
     assert.match(selectedMediaCardSource, /isLoading\?: boolean/);
     assert.match(selectedMediaCardSource, /data-design="selected-media-placeholder"/);
     assert.match(selectedMediaCardSource, /aria-label="선택한 작품을 불러오는 중"/);
+    assert.match(mediaDetailLoadingIndicatorSource, /animate-spin/);
+    assert.match(composeScreenSource, /mediaStatus === 'loading' && Boolean\(mediaId\) \? <MediaDetailLoadingIndicator \/> : null/);
     assert.doesNotMatch(composeScreenSource, /const mediaCard = selectedMedia \? selectedMedia : mockDiaryMedia/);
     assert.match(composeScreenSource, /<SelectedMediaCard media=\{selectedMedia\} isLoading=\{mediaStatus === 'loading' && Boolean\(mediaId\)\}/);
     assert.match(selectedMediaCardSource, /media: DiaryComposeMedia \| null/);

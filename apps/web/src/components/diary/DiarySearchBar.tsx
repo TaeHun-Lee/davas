@@ -16,9 +16,6 @@ export function DiarySearchBar({ value, onChange }: DiarySearchBarProps) {
         placeholder="다이어리 제목이나 영화 제목으로 검색해보세요"
         className="min-w-0 flex-1 bg-transparent text-[13px] font-semibold text-[#1f2a44] outline-none placeholder:text-[#a2acba]"
       />
-      <button type="button" aria-label="다이어리 상세 필터" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#eef5ff] text-[#216bd8]">
-        ☰
-      </button>
     </label>
   );
 }
