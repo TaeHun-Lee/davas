@@ -26,22 +26,22 @@ export function DiaryOptionRow({
   tags: string[];
 }) {
   return (
-    <section className="grid grid-cols-3 gap-2">
-      <button type="button" onClick={onToggleSpoiler} className="flex items-center justify-center gap-2 rounded-[18px] bg-white px-2 py-3 text-[11px] font-extrabold text-[#59677d] shadow-[0_10px_22px_rgba(31,65,114,0.06)]">
+    <section className="grid grid-cols-2 gap-2">
+      <button type="button" onClick={onToggleSpoiler} className="flex min-w-0 items-center justify-start gap-2 rounded-[18px] bg-white px-3 py-3 text-[11px] font-extrabold text-[#59677d] shadow-[0_10px_22px_rgba(31,65,114,0.06)]">
         <SpoilerIcon />
-        스포일러 포함
-        <span className={`ml-auto h-5 w-9 rounded-full p-0.5 transition ${containsSpoiler ? 'bg-[#ff5a52]' : 'bg-[#d8e0ec]'}`}>
-          <span className={`block size-4 rounded-full bg-white transition ${containsSpoiler ? 'translate-x-4' : ''}`} />
+        <span className="whitespace-nowrap">스포일러 포함</span>
+        <span className={`ml-auto h-5 w-9 shrink-0 overflow-hidden rounded-full p-0.5 transition ${containsSpoiler ? 'bg-[#ff5a52]' : 'bg-[#d8e0ec]'}`}>
+          <span className={`block size-4 rounded-full bg-white transition ${containsSpoiler ? 'translate-x-[14px]' : ''}`} />
         </span>
       </button>
-      <label className="flex items-center justify-center gap-2 rounded-[18px] bg-white px-2 py-3 text-[11px] font-extrabold text-[#59677d] shadow-[0_10px_22px_rgba(31,65,114,0.06)]">
+      <label className="flex min-w-0 items-center justify-center gap-2 rounded-[18px] bg-white px-3 py-3 text-[11px] font-extrabold text-[#59677d] shadow-[0_10px_22px_rgba(31,65,114,0.06)]">
         <GlobeIcon />
-        <select value={visibility} onChange={(event) => onChangeVisibility(event.target.value as 'PUBLIC' | 'PRIVATE')} className="bg-transparent font-extrabold outline-none">
+        <select value={visibility} onChange={(event) => onChangeVisibility(event.target.value as 'PUBLIC' | 'PRIVATE')} className="min-w-0 bg-transparent font-extrabold outline-none">
           <option value="PUBLIC">공개</option>
           <option value="PRIVATE">비공개</option>
         </select>
       </label>
-      <button type="button" className="flex items-center justify-center gap-2 rounded-[18px] bg-white px-2 py-3 text-[11px] font-extrabold text-[#59677d] shadow-[0_10px_22px_rgba(31,65,114,0.06)]">
+      <button type="button" className="col-span-2 flex min-w-0 items-center justify-center gap-2 rounded-[18px] bg-white px-3 py-3 text-[11px] font-extrabold text-[#59677d] shadow-[0_10px_22px_rgba(31,65,114,0.06)]">
         <TagIcon />
         {tags.length > 0 ? `${tags.length}개 태그` : '태그 추가'}
         <span aria-hidden="true">⌄</span>

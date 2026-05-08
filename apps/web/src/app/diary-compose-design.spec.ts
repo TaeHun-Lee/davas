@@ -96,6 +96,16 @@ describe('Davas diary compose screen design', () => {
     assert.match(submitBarSource, /작성 완료/);
   });
 
+  it('wraps diary option controls to keep spoiler switch within its pill on mobile', () => {
+    assert.match(optionRowSource, /grid-cols-2/);
+    assert.match(optionRowSource, /col-span-2/);
+    assert.match(optionRowSource, /min-w-0/);
+    assert.match(optionRowSource, /whitespace-nowrap/);
+    assert.match(optionRowSource, /shrink-0/);
+    assert.match(optionRowSource, /overflow-hidden/);
+    assert.match(optionRowSource, /translate-x-\[14px\]/);
+  });
+
   it('keeps optional content and falls back empty diary title to the movie title', () => {
     assert.match(composeScreenSource, /const effectiveTitle = title\.trim\(\) \|\| selectedMedia\.title/);
     assert.match(utilsSource, /content\.length <= 3000/);
