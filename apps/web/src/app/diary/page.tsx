@@ -1,5 +1,5 @@
-import { PlaceholderPage } from '../../components/layout/PlaceholderPage';
+import { DiaryDashboard } from '../../components/diary/DiaryDashboard';
 
 export default function DiaryPage() {
-  return <PlaceholderPage title="다이어리" description="내 감상 기록 목록과 작성 화면을 준비 중입니다." />;
+  return <DiaryDashboard />;
 }
