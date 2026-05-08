@@ -48,6 +48,8 @@ describe('Davas explore screen design', () => {
     assert.match(exploreFilterChipsSource, /explore-filter-row/);
     assert.match(exploreFilterChipsSource, /bg-\[#216bd8\]/);
     assert.match(exploreFilterChipsSource, /rounded-full/);
+    assert.match(exploreDashboardSource, /isSearchMode \? <ExploreFilterChips \/> : null/);
+    assert.doesNotMatch(exploreDashboardSource, /\n\s*<ExploreFilterChips \/>\n\s*\{isSearchMode \?/);
   });
 
   it('calls the backend media search API with Korean and English capable query params', () => {

@@ -100,7 +100,7 @@ export function ExploreDashboard() {
         }}
       />
 
-      <ExploreFilterChips />
+      {isSearchMode ? <ExploreFilterChips /> : null}
 
       {isSearchMode ? <MediaSearchResults items={search.items} status={search.status} query={searchQuery} onSelect={handleSelectMedia} /> : null}
       {isSearchMode ? (
