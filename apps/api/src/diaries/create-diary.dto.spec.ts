@@ -21,6 +21,23 @@ describe('CreateDiaryDto', () => {
     assert.equal(errors.length, 0);
   });
 
+  it('accepts optional content and tags from the compose screen contract', async () => {
+    const dto = plainToInstance(CreateDiaryDto, {
+      mediaId: 'media_1',
+      title: '제목만 남긴 다이어리',
+      content: '',
+      watchedDate: '2026-05-05',
+      rating: 0,
+      visibility: 'PRIVATE',
+      hasSpoiler: true,
+      tags: ['극장', '재관람'],
+    });
+
+    const errors = await validate(dto);
+
+    assert.equal(errors.length, 0);
+  });
+
   it('rejects ratings outside 0 to 5 range', async () => {
     const dto = plainToInstance(CreateDiaryDto, {
       mediaId: 'media_1',

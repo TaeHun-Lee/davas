@@ -19,6 +19,8 @@ const photoAttachmentSource = source('../components/diary/DiaryPhotoAttachmentSe
 const submitBarSource = source('../components/diary/DiarySubmitBar.tsx');
 const utilsSource = source('../components/diary/diary-compose-utils.ts');
 const mediaApiSource = source('../lib/api/media.ts');
+const diariesApiSource = source('../lib/api/diaries.ts');
+const mediaDetailModalSource = source('../components/media/MediaDetailModal.tsx');
 
 describe('Davas diary compose screen design', () => {
   it('routes /diary/new to the diary compose screen shell', () => {
@@ -115,5 +117,32 @@ describe('Davas diary compose screen design', () => {
     assert.doesNotMatch(composeScreenSource, /rating > 0/);
     assert.match(composeScreenSource, /mediaStatus !== 'loading'/);
     assert.match(composeScreenSource, /mediaStatus !== 'error'/);
+  });
+
+  it('submits the validated diary draft through the diaries API and redirects after creation', () => {
+    assert.match(diariesApiSource, /export type CreateDiaryPayload/);
+    assert.match(diariesApiSource, /export async function createDiary/);
+    assert.match(diariesApiSource, /fetch\(`\$\{getApiBaseUrl\(\)\}\/diaries`/);
+    assert.match(diariesApiSource, /method: 'POST'/);
+    assert.match(diariesApiSource, /credentials: 'include'/);
+    assert.match(diariesApiSource, /JSON\.stringify\(payload\)/);
+    assert.match(composeScreenSource, /import \{ createDiary/);
+    assert.match(composeScreenSource, /useRouter/);
+    assert.match(composeScreenSource, /const \[isSubmitting, setIsSubmitting\] = useState\(false\)/);
+    assert.match(composeScreenSource, /const \[submitError, setSubmitError\]/);
+    assert.match(composeScreenSource, /await createDiary\(\{/);
+    assert.match(composeScreenSource, /mediaId: selectedMedia\.id/);
+    assert.match(composeScreenSource, /hasSpoiler: containsSpoiler/);
+    assert.match(composeScreenSource, /content: content\.trim\(\)/);
+    assert.match(composeScreenSource, /router\.push\('\/diary'\)/);
+    assert.match(composeScreenSource, /다이어리를 저장하지 못했어요/);
+    assert.match(composeScreenSource, /!isSubmitting/);
+  });
+
+  it('links the media detail modal diary CTA to the compose route with the selected media id', () => {
+    assert.match(mediaDetailModalSource, /useRouter/);
+    assert.match(mediaDetailModalSource, /router\.push\(`\/diary\/new\?mediaId=\$\{encodeURIComponent\(media\.id\)\}`\)/);
+    assert.match(mediaDetailModalSource, /리뷰·다이어리 작성/);
+    assert.doesNotMatch(mediaDetailModalSource, /href=\{`\/diary\/new\?mediaId=\$\{media\.id\}`\}/);
   });
 });

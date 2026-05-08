@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import type { MediaDetail } from '../../lib/api/media';
 import { BasicInfoGrid, DetailInfoCard, MyRatingCard, StillCutStrip } from './media-detail-sections';
@@ -42,6 +43,8 @@ function fallbackOverview(media: MediaDetail) {
 }
 
 export function MediaDetailModal({ media, isOpen, onClose }: { media: MediaDetail | null; isOpen: boolean; onClose: () => void }) {
+  const router = useRouter();
+
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -95,9 +98,9 @@ export function MediaDetailModal({ media, isOpen, onClose }: { media: MediaDetai
         </section>
 
         <div className="mt-5 grid grid-cols-1 gap-2.5 min-[375px]:grid-cols-[1.25fr_0.75fr]">
-          <a href={`/diary/new?mediaId=${media.id}`} className="flex h-[50px] items-center justify-center gap-2 rounded-[16px] bg-[#ff5a52] text-[13px] font-black text-white shadow-[0_12px_22px_rgba(255,90,82,0.28)]">
+          <button type="button" onClick={() => router.push(`/diary/new?mediaId=${encodeURIComponent(media.id)}`)} className="flex h-[50px] items-center justify-center gap-2 rounded-[16px] bg-[#ff5a52] text-[13px] font-black text-white shadow-[0_12px_22px_rgba(255,90,82,0.28)]">
             <span aria-hidden="true">✎</span> 리뷰·다이어리 작성
-          </a>
+          </button>
           <button type="button" className="flex h-[50px] items-center justify-center gap-1.5 rounded-[16px] bg-white text-[13px] font-black text-[#1f4e82] shadow-[0_10px_22px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8]">
             ♡ 찜하기
           </button>

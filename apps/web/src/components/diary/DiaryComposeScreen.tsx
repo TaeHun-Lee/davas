@@ -1,6 +1,8 @@
 "use client";
 
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { createDiary } from '../../lib/api/diaries';
 import { getMediaDetail } from '../../lib/api/media';
 import { DiaryComposeHeader } from './DiaryComposeHeader';
 import { DiaryContentField } from './DiaryContentField';
@@ -18,6 +20,7 @@ type DiaryComposeScreenProps = {
 };
 
 export function DiaryComposeScreen({ mediaId }: DiaryComposeScreenProps) {
+  const router = useRouter();
   const [selectedMedia, setSelectedMedia] = useState<DiaryComposeMedia>(mockDiaryMedia);
   const [mediaStatus, setMediaStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(mediaId ? 'loading' : 'idle');
   const [rating, setRating] = useState(0);
@@ -27,7 +30,8 @@ export function DiaryComposeScreen({ mediaId }: DiaryComposeScreenProps) {
   const [containsSpoiler, setContainsSpoiler] = useState(false);
   const [visibility, setVisibility] = useState<'PUBLIC' | 'PRIVATE'>('PUBLIC');
   const [tags] = useState<string[]>([]);
-  const [isSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
     if (!mediaId) {
@@ -63,19 +67,31 @@ export function DiaryComposeScreen({ mediaId }: DiaryComposeScreenProps) {
     effectiveTitle,
     content,
   });
-  const canSubmit = isValidDraft && mediaStatus !== 'loading' && mediaStatus !== 'error';
+  const canSubmit = isValidDraft && !isSubmitting && mediaStatus !== 'loading' && mediaStatus !== 'error';
 
-  function handleSubmit() {
-    void {
-      mediaId: selectedMedia.id,
-      rating,
-      watchedDate,
-      title: effectiveTitle,
-      content,
-      containsSpoiler,
-      visibility,
-      tags,
-    };
+  async function handleSubmit() {
+    if (!canSubmit) return;
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      await createDiary({
+        mediaId: selectedMedia.id,
+        rating,
+        watchedDate,
+        title: effectiveTitle,
+        content: content.trim(),
+        visibility,
+        hasSpoiler: containsSpoiler,
+        tags,
+      });
+      router.push('/diary');
+    } catch {
+      setSubmitError('다이어리를 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -97,6 +113,11 @@ export function DiaryComposeScreen({ mediaId }: DiaryComposeScreenProps) {
         <WatchedDateField value={watchedDate} onChange={setWatchedDate} />
         <DiaryTitleField value={title} fallbackTitle={selectedMedia.title} onChange={setTitle} />
         <DiaryContentField value={content} onChange={setContent} />
+        {submitError ? (
+          <p className="rounded-[18px] bg-white px-4 py-3 text-center text-[13px] font-bold text-[#ff5a52] shadow-[0_12px_28px_rgba(31,65,114,0.08)]">
+            {submitError}
+          </p>
+        ) : null}
         <DiaryOptionRow
           containsSpoiler={containsSpoiler}
           onToggleSpoiler={() => setContainsSpoiler((value) => !value)}

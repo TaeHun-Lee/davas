@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DiaryVisibility } from '@davas/shared';
-import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString, Length, Max, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString, Length, Max, MaxLength, Min } from 'class-validator';
 
 export class CreateDiaryDto {
   @ApiProperty({ example: 'clx-media-id' })
@@ -12,10 +12,11 @@ export class CreateDiaryDto {
   @Length(1, 120)
   title!: string;
 
-  @ApiProperty({ example: '장면마다 감정의 결이 좋았다.' })
+  @ApiPropertyOptional({ example: '장면마다 감정의 결이 좋았다.' })
+  @IsOptional()
   @IsString()
-  @Length(1, 10000)
-  content!: string;
+  @MaxLength(10000)
+  content = '';
 
   @ApiProperty({ example: '2026-05-05' })
   @IsDateString()
@@ -36,4 +37,10 @@ export class CreateDiaryDto {
   @IsOptional()
   @IsBoolean()
   hasSpoiler = false;
+
+  @ApiPropertyOptional({ example: ['극장', '재관람'], type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags: string[] = [];
 }
