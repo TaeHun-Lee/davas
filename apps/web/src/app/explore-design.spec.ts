@@ -42,9 +42,11 @@ describe('Davas explore screen design', () => {
     assert.match(exploreDashboardSource, /value=\{searchQuery\}/);
     assert.match(exploreDashboardSource, /onChange=\{/);
     assert.match(exploreSearchBarSource, /영화, 드라마, 배우를 검색해보세요/);
-    for (const chip of ['전체', '영화', '드라마', '배우', '감독']) {
+    for (const chip of ['전체', '영화', '드라마', '인물']) {
       assert.match(exploreFilterChipsSource, new RegExp(chip));
     }
+    assert.doesNotMatch(exploreFilterChipsSource, /배우/);
+    assert.doesNotMatch(exploreFilterChipsSource, /감독/);
     assert.doesNotMatch(exploreFilterChipsSource, /장르/);
     assert.doesNotMatch(exploreFilterChipsSource, /평점순/);
     assert.match(exploreFilterChipsSource, /explore-filter-row/);
@@ -69,7 +71,9 @@ describe('Davas explore screen design', () => {
     assert.doesNotMatch(exploreDashboardSource, /activeExploreFilter === '장르'/);
     assert.doesNotMatch(exploreDashboardSource, /item\.genreIds\.length > 0/);
     assert.match(exploreDashboardSource, /const showMediaSearchResults = \['전체', '영화', '드라마'\]\.includes\(activeExploreFilter\)/);
-    assert.match(exploreDashboardSource, /const showPeopleSearchResults = \['전체', '배우', '감독'\]\.includes\(activeExploreFilter\)/);
+    assert.match(exploreDashboardSource, /const showPeopleSearchResults = \['전체', '인물'\]\.includes\(activeExploreFilter\)/);
+    assert.doesNotMatch(exploreDashboardSource, /'배우'/);
+    assert.doesNotMatch(exploreDashboardSource, /'감독'/);
     assert.match(exploreDashboardSource, /filteredMediaSearchStatus/);
     assert.match(exploreDashboardSource, /items=\{filteredMediaSearchItems\}/);
     assert.match(exploreDashboardSource, /status=\{filteredMediaSearchStatus\}/);
@@ -107,8 +111,11 @@ describe('Davas explore screen design', () => {
 
   it('renders separate actor candidates and actor credit results before selecting a work', () => {
     assert.match(personSearchResultsSource, /export function PersonSearchResults/);
-    assert.match(personSearchResultsSource, /배우 검색 결과/);
-    assert.match(personSearchResultsSource, /출연작 보기/);
+    assert.match(personSearchResultsSource, /인물 검색 결과/);
+    assert.match(personSearchResultsSource, /작품 보기/);
+    assert.doesNotMatch(personSearchResultsSource, /배우 검색 결과/);
+    assert.doesNotMatch(personSearchResultsSource, /배우를 검색 중이에요/);
+    assert.doesNotMatch(personSearchResultsSource, /일치하는 배우가 없어요/);
     assert.match(personSearchResultsSource, /knownFor/);
     assert.match(personCreditResultsSource, /export function PersonCreditResults/);
     assert.match(personCreditResultsSource, /출연 작품/);

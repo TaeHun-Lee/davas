@@ -55,7 +55,7 @@ export function ExploreDashboard() {
     });
   const filteredMediaSearchStatus = search.status === 'results' && filteredMediaSearchItems.length === 0 ? 'empty' : search.status;
   const showMediaSearchResults = ['전체', '영화', '드라마'].includes(activeExploreFilter);
-  const showPeopleSearchResults = ['전체', '배우', '감독'].includes(activeExploreFilter);
+  const showPeopleSearchResults = ['전체', '인물'].includes(activeExploreFilter);
   const showCreditResults = showPeopleSearchResults;
   const trendingPosterItems = recommendations.trendingItems.map(recommendationToPosterItem);
   const visibleTrendingItems = showAllTrending ? trendingPosterItems : trendingPosterItems.slice(0, 5);
