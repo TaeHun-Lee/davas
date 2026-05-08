@@ -1,6 +1,6 @@
-export type ExploreFilter = '전체' | '영화' | '드라마' | '배우' | '감독' | '장르' | '평점순';
+export type ExploreFilter = '전체' | '영화' | '드라마' | '배우' | '감독';
 
-const filters: ExploreFilter[] = ['전체', '영화', '드라마', '배우', '감독', '장르', '평점순'];
+const filters: ExploreFilter[] = ['전체', '영화', '드라마', '배우', '감독'];
 
 export function ExploreFilterChips({ activeFilter, onChange }: { activeFilter: ExploreFilter; onChange: (filter: ExploreFilter) => void }) {
   return (

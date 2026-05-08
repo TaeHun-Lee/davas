@@ -51,11 +51,10 @@ export function ExploreDashboard() {
     .filter((item) => {
       if (activeExploreFilter === '영화') return item.mediaType === 'MOVIE';
       if (activeExploreFilter === '드라마') return item.mediaType === 'TV';
-      if (activeExploreFilter === '장르') return item.genreIds.length > 0;
       return true;
     });
   const filteredMediaSearchStatus = search.status === 'results' && filteredMediaSearchItems.length === 0 ? 'empty' : search.status;
-  const showMediaSearchResults = ['전체', '영화', '드라마', '장르', '평점순'].includes(activeExploreFilter);
+  const showMediaSearchResults = ['전체', '영화', '드라마'].includes(activeExploreFilter);
   const showPeopleSearchResults = ['전체', '배우', '감독'].includes(activeExploreFilter);
   const showCreditResults = showPeopleSearchResults;
   const trendingPosterItems = recommendations.trendingItems.map(recommendationToPosterItem);

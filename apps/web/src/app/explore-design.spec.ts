@@ -42,9 +42,11 @@ describe('Davas explore screen design', () => {
     assert.match(exploreDashboardSource, /value=\{searchQuery\}/);
     assert.match(exploreDashboardSource, /onChange=\{/);
     assert.match(exploreSearchBarSource, /영화, 드라마, 배우를 검색해보세요/);
-    for (const chip of ['전체', '영화', '드라마', '배우', '감독', '장르', '평점순']) {
+    for (const chip of ['전체', '영화', '드라마', '배우', '감독']) {
       assert.match(exploreFilterChipsSource, new RegExp(chip));
     }
+    assert.doesNotMatch(exploreFilterChipsSource, /장르/);
+    assert.doesNotMatch(exploreFilterChipsSource, /평점순/);
     assert.match(exploreFilterChipsSource, /explore-filter-row/);
     assert.match(exploreFilterChipsSource, /bg-\[#216bd8\]/);
     assert.match(exploreFilterChipsSource, /rounded-full/);
@@ -64,9 +66,9 @@ describe('Davas explore screen design', () => {
     assert.match(exploreDashboardSource, /item\.mediaType === 'MOVIE'/);
     assert.match(exploreDashboardSource, /activeExploreFilter === '드라마'/);
     assert.match(exploreDashboardSource, /item\.mediaType === 'TV'/);
-    assert.match(exploreDashboardSource, /activeExploreFilter === '장르'/);
-    assert.match(exploreDashboardSource, /item\.genreIds\.length > 0/);
-    assert.match(exploreDashboardSource, /const showMediaSearchResults = \['전체', '영화', '드라마', '장르', '평점순'\]\.includes\(activeExploreFilter\)/);
+    assert.doesNotMatch(exploreDashboardSource, /activeExploreFilter === '장르'/);
+    assert.doesNotMatch(exploreDashboardSource, /item\.genreIds\.length > 0/);
+    assert.match(exploreDashboardSource, /const showMediaSearchResults = \['전체', '영화', '드라마'\]\.includes\(activeExploreFilter\)/);
     assert.match(exploreDashboardSource, /const showPeopleSearchResults = \['전체', '배우', '감독'\]\.includes\(activeExploreFilter\)/);
     assert.match(exploreDashboardSource, /filteredMediaSearchStatus/);
     assert.match(exploreDashboardSource, /items=\{filteredMediaSearchItems\}/);
