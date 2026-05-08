@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { ExploreFilterChips } from './ExploreFilterChips';
+import { ExploreFilterChips, type ExploreFilter } from './ExploreFilterChips';
 import { ExploreSearchBar } from './ExploreSearchBar';
 import { ExploreShortcutGrid } from './ExploreShortcutGrid';
 import { GenreRecommendationSection } from './GenreRecommendationSection';
@@ -45,7 +45,19 @@ export function ExploreDashboard() {
   const recommendations = useExploreRecommendations();
   const [showAllTrending, setShowAllTrending] = useState(false);
   const [showAllToday, setShowAllToday] = useState(false);
+  const [activeExploreFilter, setActiveExploreFilter] = useState<ExploreFilter>('전체');
   const isSearchMode = searchQuery.trim().length >= 2;
+  const filteredMediaSearchItems = search.items
+    .filter((item) => {
+      if (activeExploreFilter === '영화') return item.mediaType === 'MOVIE';
+      if (activeExploreFilter === '드라마') return item.mediaType === 'TV';
+      if (activeExploreFilter === '장르') return item.genreIds.length > 0;
+      return true;
+    });
+  const filteredMediaSearchStatus = search.status === 'results' && filteredMediaSearchItems.length === 0 ? 'empty' : search.status;
+  const showMediaSearchResults = ['전체', '영화', '드라마', '장르', '평점순'].includes(activeExploreFilter);
+  const showPeopleSearchResults = ['전체', '배우', '감독'].includes(activeExploreFilter);
+  const showCreditResults = showPeopleSearchResults;
   const trendingPosterItems = recommendations.trendingItems.map(recommendationToPosterItem);
   const visibleTrendingItems = showAllTrending ? trendingPosterItems : trendingPosterItems.slice(0, 5);
 
@@ -100,10 +112,10 @@ export function ExploreDashboard() {
         }}
       />
 
-      {isSearchMode ? <ExploreFilterChips /> : null}
+      {isSearchMode ? <ExploreFilterChips activeFilter={activeExploreFilter} onChange={setActiveExploreFilter} /> : null}
 
-      {isSearchMode ? <MediaSearchResults items={search.items} status={search.status} query={searchQuery} onSelect={handleSelectMedia} /> : null}
-      {isSearchMode ? (
+      {isSearchMode && showMediaSearchResults ? <MediaSearchResults items={filteredMediaSearchItems} status={filteredMediaSearchStatus} query={searchQuery} onSelect={handleSelectMedia} /> : null}
+      {isSearchMode && showPeopleSearchResults ? (
         <PersonSearchResults
           items={peopleSearch.items}
           status={peopleSearch.status}
@@ -112,7 +124,7 @@ export function ExploreDashboard() {
           onSelect={handlePersonSelect}
         />
       ) : null}
-      {isSearchMode ? (
+      {isSearchMode && showCreditResults ? (
         <PersonCreditResults
           personName={peopleSearch.selectedPerson?.name}
           items={peopleSearch.creditItems}

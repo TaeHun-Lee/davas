@@ -48,8 +48,31 @@ describe('Davas explore screen design', () => {
     assert.match(exploreFilterChipsSource, /explore-filter-row/);
     assert.match(exploreFilterChipsSource, /bg-\[#216bd8\]/);
     assert.match(exploreFilterChipsSource, /rounded-full/);
-    assert.match(exploreDashboardSource, /isSearchMode \? <ExploreFilterChips \/> : null/);
+    assert.match(exploreDashboardSource, /isSearchMode \? <ExploreFilterChips activeFilter=\{activeExploreFilter\} onChange=\{setActiveExploreFilter\} \/> : null/);
     assert.doesNotMatch(exploreDashboardSource, /\n\s*<ExploreFilterChips \/>\n\s*\{isSearchMode \?/);
+    assert.match(exploreFilterChipsSource, /export type ExploreFilter/);
+    assert.match(exploreFilterChipsSource, /activeFilter: ExploreFilter/);
+    assert.match(exploreFilterChipsSource, /onChange: \(filter: ExploreFilter\) => void/);
+    assert.match(exploreFilterChipsSource, /aria-pressed=\{filter === activeFilter\}/);
+    assert.match(exploreFilterChipsSource, /onClick=\{\(\) => onChange\(filter\)\}/);
+  });
+
+  it('filters explore search result sections with the active tag chip', () => {
+    assert.match(exploreDashboardSource, /const \[activeExploreFilter, setActiveExploreFilter\] = useState<ExploreFilter>\('전체'\)/);
+    assert.match(exploreDashboardSource, /const filteredMediaSearchItems = search\.items/);
+    assert.match(exploreDashboardSource, /activeExploreFilter === '영화'/);
+    assert.match(exploreDashboardSource, /item\.mediaType === 'MOVIE'/);
+    assert.match(exploreDashboardSource, /activeExploreFilter === '드라마'/);
+    assert.match(exploreDashboardSource, /item\.mediaType === 'TV'/);
+    assert.match(exploreDashboardSource, /activeExploreFilter === '장르'/);
+    assert.match(exploreDashboardSource, /item\.genreIds\.length > 0/);
+    assert.match(exploreDashboardSource, /const showMediaSearchResults = \['전체', '영화', '드라마', '장르', '평점순'\]\.includes\(activeExploreFilter\)/);
+    assert.match(exploreDashboardSource, /const showPeopleSearchResults = \['전체', '배우', '감독'\]\.includes\(activeExploreFilter\)/);
+    assert.match(exploreDashboardSource, /filteredMediaSearchStatus/);
+    assert.match(exploreDashboardSource, /items=\{filteredMediaSearchItems\}/);
+    assert.match(exploreDashboardSource, /status=\{filteredMediaSearchStatus\}/);
+    assert.match(exploreDashboardSource, /showPeopleSearchResults \? \(/);
+    assert.match(exploreDashboardSource, /showCreditResults \? \(/);
   });
 
   it('calls the backend media search API with Korean and English capable query params', () => {
