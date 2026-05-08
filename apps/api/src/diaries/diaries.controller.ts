@@ -25,7 +25,7 @@ export class DiariesController {
   }
 
   @Get('dashboard')
-  dashboard() {
+  async dashboard() {
     return this.diariesDashboardService.getDashboard();
   }
 

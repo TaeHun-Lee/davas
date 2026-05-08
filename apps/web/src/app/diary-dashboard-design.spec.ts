@@ -23,6 +23,7 @@ const diaryGenreRatioSource = optionalSource('../components/diary/DiaryGenreRati
 const diaryRecentListSource = optionalSource('../components/diary/DiaryRecentListSection.tsx');
 const diaryListItemSource = optionalSource('../components/diary/DiaryListItem.tsx');
 const newDiaryFloatingButtonSource = optionalSource('../components/diary/NewDiaryFloatingButton.tsx');
+const diaryFixtureSource = optionalSource('../components/diary/diary-dashboard-fixtures.ts');
 const diaryUtilsSource = optionalSource('../components/diary/diary-dashboard-utils.ts');
 const appShellSource = optionalSource('../components/layout/AppShell.tsx');
 
@@ -96,6 +97,19 @@ describe('Davas diary dashboard design', () => {
     assert.doesNotMatch(diaryDashboardSource, /<NewDiaryFloatingButton \/>/);
     assert.doesNotMatch(newDiaryFloatingButtonSource, /href="\/diary\/new"/);
     assert.doesNotMatch(newDiaryFloatingButtonSource, /새 다이어리/);
+  });
+
+  it('uses only live diary data and removes mock-only dashboard UI affordances', () => {
+    assert.doesNotMatch(diaryDashboardSource, /fixtureDiaryDashboard/);
+    assert.equal(diaryFixtureSource, '');
+    assert.doesNotMatch(diaryDashboardSource, /임시 데이터/);
+    assert.match(diaryDashboardSource, /emptyDiaryDashboard/);
+    assert.match(diaryDashboardSource, /setDashboard\(nextDashboard\)/);
+    assert.doesNotMatch(diarySummarySectionSource, /actionLabel="더보기 ›"/);
+    assert.doesNotMatch(diaryRecentListSource, /actionLabel="더보기 ›"/);
+    assert.doesNotMatch(diaryListItemSource, /북마크/);
+    assert.doesNotMatch(diaryListItemSource, /더보기/);
+    assert.doesNotMatch(diaryListItemSource, /다이어리 수정/);
   });
 
   it('uses diary dashboard utilities for calendar state instead of inline date math', () => {

@@ -9,7 +9,7 @@ type DiarySummarySectionProps = {
 export function DiarySummarySection({ summary }: DiarySummarySectionProps) {
   return (
     <section aria-labelledby="diary-summary-title">
-      <SectionTitle title="나의 다이어리 요약" actionLabel="더보기 ›" />
+      <SectionTitle title="나의 다이어리 요약" />
       <h2 id="diary-summary-title" className="sr-only">나의 다이어리 요약</h2>
       <div className="grid grid-cols-2 gap-3 min-[390px]:grid-cols-4">
         <DiarySummaryCard icon="▣" label="전체 기록" value={`${summary.totalCount}편`} caption="지금까지 쓴 기록" tone="blue" />

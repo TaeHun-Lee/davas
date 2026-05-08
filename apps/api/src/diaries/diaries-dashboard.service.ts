@@ -1,4 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { DiaryEntity } from '../database/entities/diary.entity';
+
+const DEFAULT_POSTER_GRADIENT = 'from-[#e9eef7] via-[#f6f8fc] to-[#dfe8f5]';
+const GENRE_ICON_KINDS = ['sf', 'drama', 'thriller', 'action', 'etc'] as const;
 
 type DiaryDashboardItem = {
   id: string;
@@ -11,47 +17,20 @@ type DiaryDashboardItem = {
   posterUrl?: string | null;
   posterGradient: string;
   genreNames: string[];
-  isBookmarked?: boolean;
 };
 
-const recentItems: DiaryDashboardItem[] = [
-  {
-    id: 'diary-1',
-    mediaId: 'mock-interstellar',
-    mediaTitle: '인터스텔라',
-    diaryTitle: '우리는 답을 찾을 것이다',
-    watchedDate: '2026.05.18',
-    rating: 4.8,
-    contentPreview: '다시 봐도 압도적인 우주와 가족의 감정선이 긴 여운을 남겼다. 기록을 이어 쓰고 싶은 작품.',
-    posterUrl: '/images/mock/interstellar-poster.jpg',
-    posterGradient: 'from-[#1c355d] via-[#4977a5] to-[#dde7ee]',
-    genreNames: ['SF', '드라마'],
-    isBookmarked: true,
-  },
-  {
-    id: 'diary-2',
-    mediaId: 'mock-inception',
-    mediaTitle: '인셉션',
-    diaryTitle: '꿈의 층위를 따라간 밤',
-    watchedDate: '2026.05.12',
-    rating: 4.5,
-    contentPreview: '복잡한 구조보다 인물들이 붙잡고 있는 후회와 선택이 더 크게 느껴졌다.',
-    posterGradient: 'from-[#172033] via-[#315a80] to-[#8fb8d8]',
-    genreNames: ['SF', '스릴러'],
-  },
-  {
-    id: 'diary-3',
-    mediaId: 'mock-shawshank',
-    mediaTitle: '쇼생크 탈출',
-    diaryTitle: '희망은 좋은 것',
-    watchedDate: '2026.05.03',
-    rating: 4.9,
-    contentPreview: '익숙한 명작이지만 볼 때마다 다른 장면이 마음에 남는다. 오늘은 마지막 바다 장면.',
-    posterGradient: 'from-[#46342d] via-[#8d7058] to-[#ead2a9]',
-    genreNames: ['드라마'],
-    isBookmarked: true,
-  },
-];
+function toDateParts(dateString: string) {
+  const [year, month, day] = dateString.split('-').map((part) => Number(part));
+  return { year, month, day };
+}
+
+function formatWatchedDate(dateString: string) {
+  return dateString.split('-').join('.');
+}
+
+function buildContentPreview(content: string) {
+  return content.trim().slice(0, 120);
+}
 
 function buildGenreRatios(items: DiaryDashboardItem[]) {
   const counts = new Map<string, number>();
@@ -60,43 +39,82 @@ function buildGenreRatios(items: DiaryDashboardItem[]) {
       counts.set(genre, (counts.get(genre) ?? 0) + 1);
     }
   }
-  const total = Array.from(counts.values()).reduce((sum, count) => sum + count, 0) || 1;
-  const iconKinds = ['sf', 'drama', 'thriller', 'action', 'etc'] as const;
+
+  const total = Array.from(counts.values()).reduce((sum, count) => sum + count, 0);
+  if (total === 0) {
+    return [];
+  }
+
   return Array.from(counts.entries())
     .sort((a, b) => b[1] - a[1])
     .map(([genre, count], index) => ({
       genre,
       count,
       percentage: Math.round((count / total) * 100),
-      iconKind: iconKinds[index] ?? 'etc',
+      iconKind: GENRE_ICON_KINDS[index] ?? 'etc',
     }));
 }
 
 @Injectable()
 export class DiariesDashboardService {
-  getDashboard() {
-    const averageRating = recentItems.reduce((sum, item) => sum + item.rating, 0) / recentItems.length;
-    const genreRatios = buildGenreRatios(recentItems);
+  constructor(
+    @InjectRepository(DiaryEntity)
+    private readonly diaries: Repository<DiaryEntity>,
+  ) {}
+
+  async getDashboard() {
+    const diaries = await this.diaries.find({
+      relations: { media: true },
+      order: { watchedDate: 'DESC', createdAt: 'DESC' },
+      take: 50,
+    });
+
+    const dashboardItems = diaries.map((diary): DiaryDashboardItem => ({
+      id: diary.id,
+      mediaId: diary.mediaId,
+      mediaTitle: diary.media?.title ?? '제목 없음',
+      diaryTitle: diary.title,
+      watchedDate: formatWatchedDate(diary.watchedDate),
+      rating: Number(diary.rating),
+      contentPreview: buildContentPreview(diary.content),
+      posterUrl: diary.media?.posterUrl ?? null,
+      posterGradient: DEFAULT_POSTER_GRADIENT,
+      genreNames: diary.media?.genres ?? [],
+    }));
+
+    const now = new Date();
+    const baseDate = diaries[0]?.watchedDate ? toDateParts(diaries[0].watchedDate) : { year: now.getFullYear(), month: now.getMonth() + 1, day: undefined };
+    const monthlyItems = diaries.filter((diary) => {
+      const { year, month } = toDateParts(diary.watchedDate);
+      return year === baseDate.year && month === baseDate.month;
+    });
+    const averageRating = diaries.length > 0 ? diaries.reduce((sum, diary) => sum + Number(diary.rating), 0) / diaries.length : 0;
+    const genreRatios = buildGenreRatios(dashboardItems);
+    const markerCounts = new Map<number, number>();
+    for (const diary of monthlyItems) {
+      const { day } = toDateParts(diary.watchedDate);
+      if (day) {
+        markerCounts.set(day, (markerCounts.get(day) ?? 0) + 1);
+      }
+    }
 
     return {
       summary: {
-        totalCount: recentItems.length,
-        monthlyCount: recentItems.length,
+        totalCount: diaries.length,
+        monthlyCount: monthlyItems.length,
         averageRating: Number(averageRating.toFixed(2)),
         topGenre: genreRatios[0] ? { name: genreRatios[0].genre, count: genreRatios[0].count } : null,
       },
       calendar: {
-        year: 2026,
-        month: 5,
-        selectedDay: 18,
-        markers: [
-          { day: 3, count: 1 },
-          { day: 12, count: 1 },
-          { day: 18, count: 1 },
-        ],
+        year: baseDate.year,
+        month: baseDate.month,
+        selectedDay: baseDate.day,
+        markers: Array.from(markerCounts.entries())
+          .sort((a, b) => a[0] - b[0])
+          .map(([day, count]) => ({ day, count })),
       },
       genreRatios,
-      recentItems,
+      recentItems: dashboardItems,
     };
   }
 }
