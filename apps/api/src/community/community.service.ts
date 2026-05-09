@@ -9,6 +9,7 @@ export type CommunityTab = 'recommended' | 'popular' | 'following' | 'latest';
 export type CommunityDashboardQuery = {
   tab?: CommunityTab;
   q?: string;
+  topic?: string;
 };
 
 export type CommunityTopic = {
@@ -33,6 +34,7 @@ export type CommunityDiaryCard = {
   contentPreview: string;
   rating: number;
   commentCount: number;
+  hasSpoiler: boolean;
   createdAt: string;
 };
 
@@ -50,6 +52,7 @@ export type CommunityDashboardResponse = {
   topics: CommunityTopic[];
   popularDiaries: CommunityDiaryCard[];
   feed: CommunityDiaryCard[];
+  topic?: string;
 };
 
 function normalizeTab(tab: CommunityTab | undefined): CommunityTab {
@@ -73,6 +76,15 @@ function matchesQuery(diary: DiaryEntity, query: string) {
   return target.includes(query.toLowerCase());
 }
 
+function normalizeTopic(topic: string | undefined) {
+  return topic?.trim().replace(/^#/, '') ?? '';
+}
+
+function matchesTopic(diary: DiaryEntity, topic: string) {
+  if (!topic) return true;
+  return (diary.media?.genres ?? []).some((genre) => resolveTmdbGenreLabel(genre) === topic);
+}
+
 function toCommunityDiaryCard(diary: DiaryEntity): CommunityDiaryCard {
   return {
     id: diary.id,
@@ -91,6 +103,7 @@ function toCommunityDiaryCard(diary: DiaryEntity): CommunityDiaryCard {
     contentPreview: buildContentPreview(diary.content),
     rating: Number(diary.rating),
     commentCount: getCommentCount(diary),
+    hasSpoiler: diary.hasSpoiler,
     createdAt: diary.createdAt.toISOString(),
   };
 }
@@ -144,6 +157,7 @@ export class CommunityService {
   async getDashboard(query: CommunityDashboardQuery = {}): Promise<CommunityDashboardResponse> {
     const tab = normalizeTab(query.tab);
     const q = query.q?.trim() ?? '';
+    const topic = normalizeTopic(query.topic);
     const publicDiaries = await this.diaries.find({
       where: { visibility: 'PUBLIC' },
       relations: { media: true, user: true, comments: true },
@@ -151,7 +165,8 @@ export class CommunityService {
       take: 100,
     });
 
-    const searchedDiaries = q ? publicDiaries.filter((diary) => matchesQuery(diary, q)) : publicDiaries;
+    const topicDiaries = topic ? publicDiaries.filter((diary) => matchesTopic(diary, topic)) : publicDiaries;
+    const searchedDiaries = q ? topicDiaries.filter((diary) => matchesQuery(diary, q)) : topicDiaries;
     const popularDiaries = [...searchedDiaries].sort(sortByPopularity).slice(0, 5).map(toCommunityDiaryCard);
     const feedSource = tab === 'following' ? [] : [...searchedDiaries].sort(tab === 'latest' ? sortByLatest : sortByPopularity);
 
@@ -160,6 +175,7 @@ export class CommunityService {
       topics: buildTopics(publicDiaries).slice(0, 8),
       popularDiaries,
       feed: feedSource.map(toCommunityDiaryCard),
+      ...(topic ? { topic } : {}),
     };
   }
 

@@ -24,8 +24,9 @@ const utilsSource = optionalSource('../components/community/community-dashboard-
 const cardSource = optionalSource('../components/community/CommunityDiaryCard.tsx');
 const detailPageSource = optionalSource('./diary/[id]/page.tsx');
 const detailSource = optionalSource('../components/community/CommunityDiaryDetail.tsx');
+const commentsSource = optionalSource('../components/community/CommunityCommentsSection.tsx');
 
-const combinedCommunitySource = [dashboardSource, searchBarSource, tabsSource, topicsSource, popularSource, feedSource, apiSource, utilsSource, cardSource, detailPageSource, detailSource].join('\n');
+const combinedCommunitySource = [dashboardSource, searchBarSource, tabsSource, topicsSource, popularSource, feedSource, apiSource, utilsSource, cardSource, detailPageSource, detailSource, commentsSource].join('\n');
 
 describe('Davas community screen design', () => {
   it('routes /community to the designed community dashboard instead of a placeholder', () => {
@@ -74,12 +75,25 @@ describe('Davas community screen design', () => {
     assert.match(dashboardSource, /useRouter/);
     assert.match(dashboardSource, /toCommunityTab\(searchParams\.get\('tab'\)\)/);
     assert.match(dashboardSource, /searchParams\.get\('q'\) \?\? ''/);
-    assert.match(dashboardSource, /setCommunityDashboardQueryParam\(searchParams, \{ q: nextQuery, tab: activeTab \}\)/);
-    assert.match(dashboardSource, /setCommunityDashboardQueryParam\(searchParams, \{ q: query, tab: nextTab \}\)/);
+    assert.match(dashboardSource, /setCommunityDashboardQueryParam\(searchParams, \{ q: nextQuery, tab: activeTab, topic \}\)/);
+    assert.match(dashboardSource, /setCommunityDashboardQueryParam\(searchParams, \{ q: query, tab: nextTab, topic \}\)/);
     assert.match(utilsSource, /export function toCommunityTab/);
     assert.match(utilsSource, /export function setCommunityDashboardQueryParam/);
     assert.match(utilsSource, /params\.set\('tab', tab\)/);
     assert.match(utilsSource, /params\.delete\('q'\)/);
+  });
+
+  it('uses topic query state and spoiler reveal instead of treating genre topics as text search', () => {
+    assert.match(dashboardSource, /searchParams\.get\('topic'\) \?\? ''/);
+    assert.match(dashboardSource, /setCommunityDashboardQueryParam\(searchParams, \{ q: '', tab: 'recommended', topic: nextTopic \}\)/);
+    assert.match(apiSource, /topic\?: string/);
+    assert.match(apiSource, /searchParams\.set\('topic', params\.topic\.trim\(\)\)/);
+    assert.match(utilsSource, /topic\?: string/);
+    assert.match(utilsSource, /params\.set\('topic', topic\.trim\(\)\)/);
+    assert.match(cardSource, /item\.hasSpoiler/);
+    assert.match(cardSource, /스포일러가 포함된 기록입니다/);
+    assert.match(detailSource, /showSpoilerContent/);
+    assert.match(detailSource, /내용 보기/);
   });
 
   it('supports Slice 5 actionable topic and popular diary navigation without inert controls', () => {
@@ -100,5 +114,18 @@ describe('Davas community screen design', () => {
     assert.match(detailSource, /getCommunityDiary/);
     assert.match(apiSource, /export async function getCommunityDiary/);
     assert.match(apiSource, /\/community\/diaries\/\$\{id\}/);
+  });
+
+  it('renders real community comments with create, edit, and delete API wiring', () => {
+    assert.match(detailSource, /CommunityCommentsSection/);
+    assert.match(apiSource, /export async function getDiaryComments/);
+    assert.match(apiSource, /export async function createDiaryComment/);
+    assert.match(apiSource, /export async function updateDiaryComment/);
+    assert.match(apiSource, /export async function deleteDiaryComment/);
+    assert.match(apiSource, /credentials: 'include'/);
+    assert.match(combinedCommunitySource, /댓글을 작성해보세요/);
+    assert.match(combinedCommunitySource, /수정/);
+    assert.match(combinedCommunitySource, /삭제/);
+    assert.doesNotMatch(combinedCommunitySource, /create comment endpoint contract ready/);
   });
 });

@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { DiaryEntity } from './diary.entity';
 import { UserEntity } from './user.entity';
 
@@ -12,6 +12,7 @@ export class CommentEntity {
   diaryId!: string;
 
   @ManyToOne(() => DiaryEntity, (diary) => diary.comments, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'diary_id' })
   diary!: DiaryEntity;
 
   @Column({ name: 'user_id', type: 'uuid' })

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AppShell } from '../layout/AppShell';
 import { getCommunityDiary } from '../../lib/api/community';
 import type { CommunityDiaryDetail as CommunityDiaryDetailType } from './community-types';
+import { CommunityCommentsSection } from './CommunityCommentsSection';
 
 type CommunityDiaryDetailProps = {
   diaryId: string;
@@ -22,6 +23,7 @@ function Poster({ diary }: { diary: CommunityDiaryDetailType }) {
 export function CommunityDiaryDetail({ diaryId }: CommunityDiaryDetailProps) {
   const [diary, setDiary] = useState<CommunityDiaryDetailType | null>(null);
   const [status, setStatus] = useState<DetailStatus>('loading');
+  const [showSpoilerContent, setShowSpoilerContent] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -52,6 +54,7 @@ export function CommunityDiaryDetail({ diaryId }: CommunityDiaryDetailProps) {
         {status === 'loading' ? <div className="h-[360px] rounded-[28px] bg-white shadow-[0_14px_34px_rgba(31,65,114,0.06)]" aria-label="공개 다이어리를 불러오는 중" /> : null}
         {status === 'error' ? <p className="rounded-[24px] bg-white px-5 py-8 text-center text-[13px] font-bold text-[#e85b6a] shadow-[0_12px_28px_rgba(31,65,114,0.06)]">공개 다이어리를 불러오지 못했어요.</p> : null}
         {diary && status === 'ready' ? (
+          <>
           <div className="rounded-[30px] bg-white p-5 shadow-[0_16px_36px_rgba(31,42,68,0.08)]">
             <div className="flex gap-4">
               <Poster diary={diary} />
@@ -73,8 +76,19 @@ export function CommunityDiaryDetail({ diaryId }: CommunityDiaryDetailProps) {
                 ))}
               </div>
             ) : null}
-            <p className="mt-5 whitespace-pre-wrap text-[14px] font-semibold leading-[22px] text-[#4b5870]">{diary.content}</p>
+            {diary.hasSpoiler && !showSpoilerContent ? (
+              <div className="mt-5 rounded-[22px] bg-[#fff6ec] p-4">
+                <p className="text-[13px] font-extrabold text-[#9b5c17]">스포일러가 포함된 기록입니다.</p>
+                <button type="button" onClick={() => setShowSpoilerContent(true)} className="mt-3 rounded-full bg-[#1f2a44] px-4 py-2 text-[12px] font-black text-white">
+                  내용 보기
+                </button>
+              </div>
+            ) : (
+              <p className="mt-5 whitespace-pre-wrap text-[14px] font-semibold leading-[22px] text-[#4b5870]">{diary.content}</p>
+            )}
           </div>
+          <CommunityCommentsSection diaryId={diary.id} />
+          </>
         ) : null}
       </article>
     </AppShell>

@@ -8,8 +8,8 @@ export class CommunityController {
   constructor(private readonly communityService: CommunityService) {}
 
   @Get('dashboard')
-  dashboard(@Query('tab') tab?: CommunityTab, @Query('q') q?: string) {
-    return this.communityService.getDashboard({ tab, q });
+  dashboard(@Query('tab') tab?: CommunityTab, @Query('q') q?: string, @Query('topic') topic?: string) {
+    return this.communityService.getDashboard({ tab, q, topic });
   }
 
   @Get('diaries/:id')

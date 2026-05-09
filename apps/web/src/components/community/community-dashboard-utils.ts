@@ -7,11 +7,12 @@ export function toCommunityTab(tab: string | null): CommunityTab {
 
 export function setCommunityDashboardQueryParam(
   searchParams: ReadonlyURLSearchParams,
-  next: { q?: string; tab?: CommunityTab },
+  next: { q?: string; tab?: CommunityTab; topic?: string },
 ) {
   const params = new URLSearchParams(searchParams.toString());
   const tab = next.tab ?? toCommunityTab(params.get('tab'));
   const q = next.q ?? params.get('q') ?? '';
+  const topic = next.topic ?? params.get('topic') ?? '';
 
   if (tab === 'recommended') {
     params.delete('tab');
@@ -23,6 +24,12 @@ export function setCommunityDashboardQueryParam(
     params.set('q', q.trim());
   } else {
     params.delete('q');
+  }
+
+  if (topic.trim()) {
+    params.set('topic', topic.trim());
+  } else {
+    params.delete('topic');
   }
 
   const queryString = params.toString();

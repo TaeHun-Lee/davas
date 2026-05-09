@@ -38,7 +38,7 @@ export function CommunityDiaryCard({ item, compact = false }: CommunityDiaryCard
               <span className="truncate text-[11px] font-extrabold text-[#6d7890]">{item.author.nickname}</span>
             </div>
             <h3 className="mt-2 truncate text-[14px] font-extrabold leading-[18px] text-[#1f2a44]">{item.media.title}</h3>
-            <p className="mt-1 line-clamp-3 text-[11px] font-semibold leading-[16px] text-[#7f8aa0]">{item.contentPreview}</p>
+            <p className="mt-1 line-clamp-3 text-[11px] font-semibold leading-[16px] text-[#7f8aa0]">{item.hasSpoiler ? '스포일러가 포함된 기록입니다.' : item.contentPreview}</p>
             <div className="mt-3 flex items-center gap-3 text-[11px] font-extrabold text-[#8a95a8]">
               <span className="text-[#ff5a52]">★ {item.rating.toFixed(1)}</span>
               <span>댓글 {item.commentCount}</span>

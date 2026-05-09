@@ -11,14 +11,14 @@ const emptyCommunityDashboard: CommunityDashboardResponse = {
   feed: [],
 };
 
-export function useCommunityDashboard(tab: CommunityTab, q: string) {
+export function useCommunityDashboard(tab: CommunityTab, q: string, topic = '') {
   const [dashboard, setDashboard] = useState<CommunityDashboardResponse>(emptyCommunityDashboard);
   const [status, setStatus] = useState<CommunityDashboardStatus>('loading');
 
   useEffect(() => {
     let mounted = true;
     setStatus('loading');
-    getCommunityDashboard({ tab, q })
+    getCommunityDashboard({ tab, q, topic })
       .then((nextDashboard) => {
         if (!mounted) return;
         setDashboard(nextDashboard);
@@ -33,7 +33,7 @@ export function useCommunityDashboard(tab: CommunityTab, q: string) {
     return () => {
       mounted = false;
     };
-  }, [tab, q]);
+  }, [tab, q, topic]);
 
   return { dashboard, status };
 }

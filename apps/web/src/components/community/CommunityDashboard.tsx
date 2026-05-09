@@ -16,29 +16,32 @@ export function CommunityDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') ?? '');
+  const [topic, setTopic] = useState(searchParams.get('topic') ?? '');
   const [activeTab, setActiveTab] = useState<CommunityTab>(toCommunityTab(searchParams.get('tab')));
-  const { dashboard, status } = useCommunityDashboard(activeTab, query);
+  const { dashboard, status } = useCommunityDashboard(activeTab, query, topic);
 
   useEffect(() => {
     setQuery(searchParams.get('q') ?? '');
+    setTopic(searchParams.get('topic') ?? '');
     setActiveTab(toCommunityTab(searchParams.get('tab')));
   }, [searchParams]);
 
   function handleSearchChange(nextQuery: string) {
     setQuery(nextQuery);
-    router.replace(setCommunityDashboardQueryParam(searchParams, { q: nextQuery, tab: activeTab }), { scroll: false });
+    router.replace(setCommunityDashboardQueryParam(searchParams, { q: nextQuery, tab: activeTab, topic }), { scroll: false });
   }
 
   function handleTabChange(nextTab: CommunityTab) {
     setActiveTab(nextTab);
-    router.replace(setCommunityDashboardQueryParam(searchParams, { q: query, tab: nextTab }), { scroll: false });
+    router.replace(setCommunityDashboardQueryParam(searchParams, { q: query, tab: nextTab, topic }), { scroll: false });
   }
 
   function handleTopicSelect(topic: CommunityTopic) {
-    const nextQuery = topic.label.replace(/^#/, '');
-    setQuery(nextQuery);
+    const nextTopic = topic.label.replace(/^#/, '');
+    setQuery('');
+    setTopic(nextTopic);
     setActiveTab('recommended');
-    router.replace(setCommunityDashboardQueryParam(searchParams, { q: nextQuery, tab: 'recommended' }), { scroll: false });
+    router.replace(setCommunityDashboardQueryParam(searchParams, { q: '', tab: 'recommended', topic: nextTopic }), { scroll: false });
   }
 
   return (

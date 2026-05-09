@@ -22,6 +22,7 @@ export type CommunityDiaryCard = {
   contentPreview: string;
   rating: number;
   commentCount: number;
+  hasSpoiler: boolean;
   createdAt: string;
 };
 
@@ -34,9 +35,29 @@ export type CommunityDiaryDetail = CommunityDiaryCard & {
   };
 };
 
+export type CommunityComment = {
+  id: string;
+  diaryId: string;
+  content: string;
+  author: {
+    id: string;
+    nickname: string;
+    profileImageUrl: string | null;
+  };
+  createdAt: string;
+  updatedAt: string;
+  isMine: boolean;
+};
+
+export type CommunityCommentsResponse = {
+  diaryId: string;
+  items: CommunityComment[];
+};
+
 export type CommunityDashboardResponse = {
   tab: CommunityTab;
   topics: CommunityTopic[];
   popularDiaries: CommunityDiaryCard[];
   feed: CommunityDiaryCard[];
+  topic?: string;
 };

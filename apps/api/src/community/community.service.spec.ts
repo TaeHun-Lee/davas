@@ -86,6 +86,30 @@ describe('Community dashboard API', () => {
     assert.ok(dashboard.feed.every((item) => !('bookmark' in item)));
   });
 
+  it('filters topic clicks by persisted media genres instead of text search only', async () => {
+    const repository: FakeRepository = {
+      find: async () => [
+        makeDiary({ id: 'genre-match', title: '북유럽 가족 이야기', content: '장르 단어 없는 본문', media: { id: 'media-genre', title: '센티멘탈 밸류', posterUrl: null, releaseDate: null, genres: ['18'] } as MediaEntity }),
+        makeDiary({ id: 'text-only', title: '드라마라는 단어만 있는 기록', content: '하지만 장르는 SF', media: { id: 'media-sf', title: '우주 영화', posterUrl: null, releaseDate: null, genres: ['878'] } as MediaEntity }),
+      ],
+    };
+
+    const dashboard = await new CommunityService(repository as never).getDashboard({ topic: '드라마' });
+
+    assert.deepEqual(dashboard.feed.map((item) => item.id), ['genre-match']);
+    assert.equal(dashboard.topic, '드라마');
+  });
+
+  it('marks spoiler public diaries so cards can hide previews before reveal', async () => {
+    const repository: FakeRepository = {
+      find: async () => [makeDiary({ id: 'spoiler-card', hasSpoiler: true, content: '범인의 정체를 적은 본문입니다.' })],
+    };
+
+    const dashboard = await new CommunityService(repository as never).getDashboard();
+
+    assert.equal(dashboard.feed[0]?.hasSpoiler, true);
+  });
+
   it('loads a public community diary detail without exposing private rows', async () => {
     let findOneOptions: unknown;
     const repository = {
