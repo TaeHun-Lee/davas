@@ -71,8 +71,8 @@ export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: 
 
   return (
     <div className="fixed inset-0 z-[80] flex justify-center overflow-hidden bg-[#172947]/35 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={detailTitle} data-design="media-detail-modal">
-      <div className="relative h-dvh w-full max-w-[430px] overflow-x-hidden overflow-y-auto bg-[#f8fafd] px-4 pb-28 pt-4 shadow-[0_0_40px_rgba(15,23,42,0.18)] min-[390px]:px-5">
-        <header className="sticky top-0 z-10 -mx-4 flex h-[54px] items-center justify-between bg-[#f8fafd]/95 px-4 backdrop-blur min-[390px]:-mx-5 min-[390px]:px-5">
+      <div data-design="media-detail-scroll-shell" className="relative h-dvh w-full max-w-[430px] overflow-x-hidden overflow-y-auto bg-[#f8fafd] px-4 pb-28 pt-0 shadow-[0_0_40px_rgba(15,23,42,0.18)] min-[390px]:px-5">
+        <header className="sticky top-0 z-20 -mx-4 flex h-[62px] items-center justify-between bg-[#f8fafd]/95 px-4 shadow-[0_8px_24px_rgba(31,65,114,0.06)] backdrop-blur min-[390px]:-mx-5 min-[390px]:px-5">
           <IconButton label="상세 닫기" onClick={onClose}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m12.5 5-5 5 5 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </IconButton>

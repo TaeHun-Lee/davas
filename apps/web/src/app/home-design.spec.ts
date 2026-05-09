@@ -23,6 +23,7 @@ const placeholderSource = source('../components/layout/PlaceholderPage.tsx');
 const middlewareSource = source('../middleware.ts');
 const mediaDetailLoadingIndicatorSource = source('../components/media/MediaDetailLoadingIndicator.tsx');
 const mediaHeroCarouselSource = source('../components/media/MediaHeroCarousel.tsx');
+const mediaDetailModalSource = source('../components/media/MediaDetailModal.tsx');
 
 describe('Davas authenticated home design', () => {
   it('renders the authenticated landing through a live-data home dashboard without mock content', () => {
@@ -147,8 +148,8 @@ describe('Davas authenticated home design', () => {
     assert.match(archiveSectionSource, /label: '수정하기'/);
     assert.match(archiveSectionSource, /router\.push\(`\/diary\/\$\{item\.diaryId\}\/edit`\)/);
     assert.match(archiveSectionSource, /label: '상세보기'/);
-    assert.match(archiveSectionSource, /getMediaDetail\(item\.mediaId\)/);
-    assert.match(archiveSectionSource, /MediaDetailModal/);
+    assert.match(dashboardSource, /getMediaDetail\(detailMediaId\)/);
+    assert.match(dashboardSource, /MediaDetailModal/);
     assert.doesNotMatch(archiveSectionSource, /ContinueWritingIcon/);
     assert.doesNotMatch(archiveSectionSource, /기록 이어쓰기/);
     assert.doesNotMatch(dashboardSource + archiveSectionSource + statsGridSource, /icon: '[▤▶★◈]'/);
@@ -157,20 +158,38 @@ describe('Davas authenticated home design', () => {
   it('wires home archive, favorites, and recent record actions to real routes and modals', () => {
     assert.match(mediaHeroCarouselSource, /archive-primary-action/);
     assert.match(mediaHeroCarouselSource, /leading-\[34px\]/);
+    assert.match(dashboardSource, /useSearchParams/);
+    assert.match(dashboardSource, /const detailMediaId = searchParams\.get\('detail'\)/);
+    assert.match(dashboardSource, /router\.push\(`\/\?detail=\$\{encodeURIComponent\(mediaId\)\}`/);
+    assert.match(dashboardSource, /router\.replace\('\/'/);
+    assert.match(dashboardSource, /getMediaDetail\(detailMediaId\)/);
+    assert.match(dashboardSource, /MediaDetailModal/);
+    assert.match(dashboardSource, /returnTo="\/"/);
     assert.match(archiveSectionSource, /label: '수정하기'/);
     assert.match(archiveSectionSource, /router\.push\(`\/diary\/\$\{item\.diaryId\}\/edit`\)/);
     assert.match(archiveSectionSource, /label: '상세보기'/);
-    assert.match(archiveSectionSource, /getMediaDetail\(item\.mediaId\)/);
-    assert.match(archiveSectionSource, /MediaDetailModal/);
+    assert.match(archiveSectionSource, /onDetailSelect\(item\.mediaId\)/);
+    assert.doesNotMatch(archiveSectionSource, /getMediaDetail\(item\.mediaId\)/);
+    assert.doesNotMatch(archiveSectionSource, /MediaDetailModal/);
     assert.match(dashboardSource, /mediaId: item\.mediaId/);
-    assert.match(favoriteMoviesSource, /getMediaDetail\(item\.mediaId\)/);
-    assert.match(favoriteMoviesSource, /MediaDetailModal/);
+    assert.match(favoriteMoviesSource, /onDetailSelect\(item\.mediaId\)/);
+    assert.doesNotMatch(favoriteMoviesSource, /getMediaDetail\(item\.mediaId\)/);
+    assert.doesNotMatch(favoriteMoviesSource, /MediaDetailModal/);
     assert.doesNotMatch(favoriteMoviesSource, /actionLabel/);
     assert.doesNotMatch(favoriteMoviesSource, /전체 보기/);
     assert.match(recentRecordsSource, /router\.push\('\/diary'\)/);
     assert.match(recentRecordsSource, /router\.push\(`\/diary\/\$\{record\.diaryId\}\/edit`\)/);
     assert.match(dashboardSource, /diaryId: item\.id/);
     assert.match(recentRecordsSource, /SectionTitle title="최근 기록"/);
+  });
+
+  it('keeps the media detail modal header flush to the viewport top while scrolling', () => {
+    assert.match(mediaDetailModalSource, /data-design="media-detail-scroll-shell"/);
+    assert.match(mediaDetailModalSource, /pt-0/);
+    assert.doesNotMatch(mediaDetailModalSource, /px-4 pb-28 pt-4/);
+    assert.match(mediaDetailModalSource, /sticky top-0 z-20/);
+    assert.match(mediaDetailModalSource, /shadow-\[0_8px_24px_rgba\(31,65,114,0\.06\)\]/);
+    assert.match(mediaDetailModalSource, /<section className="relative z-\[1\] mt-4/);
   });
 
   it('matches the archive card visual treatment from the supplied design', () => {

@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { DiaryDashboardView, DiaryListItemView } from '../diary/diary-dashboard-types';
 import { ArchiveHighlight, ArchiveHighlightSection } from './ArchiveHighlightSection';
 import { FavoriteMovie, FavoriteMoviesSection } from './FavoriteMoviesSection';
@@ -6,6 +10,8 @@ import { MonthlyWatchCalendarSection } from './MonthlyWatchCalendarSection';
 import { RecentRecord, RecentRecordsSection } from './RecentRecordsSection';
 import { AppShell } from '../layout/AppShell';
 import { SearchEntry } from '../common/SearchField';
+import { MediaDetailModal } from '../media/MediaDetailModal';
+import { getMediaDetail, type MediaDetail } from '../../lib/api/media';
 
 export type HomeDashboardView = {
   archiveHighlight: ArchiveHighlight;
@@ -124,22 +130,63 @@ export function buildHomeDashboardView(dashboard: DiaryDashboardView): HomeDashb
 }
 
 export function HomeDashboard({ user, view }: HomeDashboardProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const detailMediaId = searchParams.get('detail');
+  const [selectedMedia, setSelectedMedia] = useState<MediaDetail | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadDetail() {
+      if (!detailMediaId) {
+        setIsDetailOpen(false);
+        setSelectedMedia(null);
+        return;
+      }
+      const mediaDetail = await getMediaDetail(detailMediaId);
+      if (!isMounted) return;
+      setSelectedMedia(mediaDetail);
+      setIsDetailOpen(true);
+    }
+
+    void loadDetail();
+    return () => {
+      isMounted = false;
+    };
+  }, [detailMediaId]);
+
+  function openHomeMediaDetail(mediaId?: string) {
+    if (!mediaId) return;
+    router.push(`/?detail=${encodeURIComponent(mediaId)}`, { scroll: false });
+  }
+
+  function closeHomeMediaDetail() {
+    setIsDetailOpen(false);
+    setSelectedMedia(null);
+    router.replace('/', { scroll: false });
+  }
+
   return (
-    <AppShell nickname={user?.nickname}>
-      <SearchEntry href="/explore" placeholder="영화나 드라마를 검색해보세요" ariaLabel="탐색에서 영화나 드라마 검색하기" className="text-[13px] font-semibold leading-[18px] text-[#9aa6b8]" />
-      <ArchiveHighlightSection item={view.archiveHighlight} />
-      <HomeStatsGrid stats={view.stats} />
-      {view.favorites.length > 0 ? <FavoriteMoviesSection movies={view.favorites} /> : null}
-      <MonthlyWatchCalendarSection
-        yearMonthLabel={view.calendar.yearMonthLabel}
-        days={view.calendar.days}
-        watchedDays={view.calendar.watchedDays}
-        diaryDays={view.calendar.diaryDays}
-        selectedDay={view.calendar.selectedDay}
-        leadingDays={view.calendar.leadingDays}
-        currentMonthDays={view.calendar.currentMonthDays}
-      />
-      {view.recentRecords.length > 0 ? <RecentRecordsSection records={view.recentRecords} /> : null}
-    </AppShell>
+    <>
+      <AppShell nickname={user?.nickname}>
+        <SearchEntry href="/explore" placeholder="영화나 드라마를 검색해보세요" ariaLabel="탐색에서 영화나 드라마 검색하기" className="text-[13px] font-semibold leading-[18px] text-[#9aa6b8]" />
+        <ArchiveHighlightSection item={view.archiveHighlight} onDetailSelect={openHomeMediaDetail} />
+        <HomeStatsGrid stats={view.stats} />
+        {view.favorites.length > 0 ? <FavoriteMoviesSection movies={view.favorites} onDetailSelect={openHomeMediaDetail} /> : null}
+        <MonthlyWatchCalendarSection
+          yearMonthLabel={view.calendar.yearMonthLabel}
+          days={view.calendar.days}
+          watchedDays={view.calendar.watchedDays}
+          diaryDays={view.calendar.diaryDays}
+          selectedDay={view.calendar.selectedDay}
+          leadingDays={view.calendar.leadingDays}
+          currentMonthDays={view.calendar.currentMonthDays}
+        />
+        {view.recentRecords.length > 0 ? <RecentRecordsSection records={view.recentRecords} /> : null}
+      </AppShell>
+      <MediaDetailModal media={selectedMedia} isOpen={isDetailOpen} onClose={closeHomeMediaDetail} returnTo="/" />
+    </>
   );
 }
