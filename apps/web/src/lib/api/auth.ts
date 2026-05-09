@@ -18,6 +18,15 @@ export function getApiBaseUrl() {
   return `${window.location.protocol}//${window.location.hostname}:4000/api`;
 }
 
+export function normalizeProfileImageUrl(imageUrl?: string | null) {
+  if (!imageUrl) return null;
+  if (/^(https?:|blob:|data:)/.test(imageUrl)) return imageUrl;
+  if (imageUrl.startsWith('/uploads/')) {
+    return `${getApiBaseUrl().replace(/\/api$/, '')}${imageUrl}`;
+  }
+  return imageUrl;
+}
+
 export async function getMe() {
   const response = await fetch(`${getApiBaseUrl()}/auth/me`, {
     credentials: 'include',

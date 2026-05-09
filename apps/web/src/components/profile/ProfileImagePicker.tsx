@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { normalizeProfileImageUrl } from '../../lib/api/auth';
 
 type ProfileImagePickerProps = {
   imageUrl?: string | null;
@@ -8,7 +9,7 @@ type ProfileImagePickerProps = {
 
 export function ProfileImagePicker({ imageUrl, displayName, onFileSelect }: ProfileImagePickerProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const visibleImageUrl = previewUrl ?? imageUrl;
+  const visibleImageUrl = previewUrl ?? normalizeProfileImageUrl(imageUrl);
 
   useEffect(() => {
     return () => {

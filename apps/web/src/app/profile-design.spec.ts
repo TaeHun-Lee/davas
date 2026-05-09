@@ -120,6 +120,7 @@ describe('Davas profile tab design', () => {
     assert.match(profileHeaderSource, /href="\/profile\/edit"/);
     assert.match(profileHeaderSource, /aria-label="프로필 편집"/);
     assert.match(profileHeaderSource, /profileImageUrl/);
+    assert.match(profileHeaderSource, /normalizeProfileImageUrl/);
     assert.match(profileHeaderSource, /<img/);
 
     for (const href of ['/profile/account', '/profile/notifications', '/profile/privacy', '/profile/support', '/profile/about']) {
@@ -140,6 +141,7 @@ describe('Davas profile tab design', () => {
     assert.match(profileEditScreenSource, /updateMe/);
     assert.match(profileEditScreenSource, /uploadProfileImage/);
     assert.match(profileEditScreenSource, /ProfileImagePicker/);
+    assert.match(profileImagePickerSource, /normalizeProfileImageUrl/);
     assert.match(profileImagePickerSource, /type="file"/);
     assert.match(profileImagePickerSource, /accept="image\/\*"/);
     assert.match(profileImagePickerSource, /URL\.createObjectURL/);
@@ -147,6 +149,8 @@ describe('Davas profile tab design', () => {
     assert.match(usersApiSource, /\/users\/me\/profile-image/);
     assert.match(usersApiSource, /FormData/);
     assert.match(usersApiSource, /credentials: 'include'/);
+    assert.match(authApiSource, /normalizeProfileImageUrl/);
+    assert.match(authApiSource, /replace\(\/\\\/api\$\//);
 
     assert.match(profileAccountScreenSource, /logout/);
     assert.match(profileAccountScreenSource, /router\.replace\('\/login'\)/);

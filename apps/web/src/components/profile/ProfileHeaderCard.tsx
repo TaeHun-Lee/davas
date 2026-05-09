@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { AuthenticatedUser } from '../../lib/api/auth';
+import { normalizeProfileImageUrl, type AuthenticatedUser } from '../../lib/api/auth';
 
 type ProfileHeaderCardProps = {
   user: AuthenticatedUser;
@@ -16,7 +16,7 @@ function ChevronIcon() {
 export function ProfileHeaderCard({ user }: ProfileHeaderCardProps) {
   const displayName = user.nickname || '필름메이트';
   const initial = displayName.slice(0, 1).toUpperCase();
-  const profileImageUrl = user.profileImageUrl;
+  const profileImageUrl = normalizeProfileImageUrl(user.profileImageUrl);
 
   return (
     <section data-design="profile-hero-card" className="relative mt-1 pb-3">
