@@ -6,6 +6,7 @@ import { MediaFavoriteEntity } from '../database/entities/media-favorite.entity'
 import { MediaEntity } from '../database/entities/media.entity';
 import { MediaSearchQueryDto } from './dto/media-search-query.dto';
 import { TmdbClient } from './tmdb.client';
+import { resolveTmdbGenreLabels } from './tmdb-genres';
 
 export type MyMediaDiary = {
   id: string;
@@ -206,7 +207,7 @@ export class MediaService {
           posterUrl: favorite.media.posterUrl,
           backdropUrl: favorite.media.backdropUrl,
           releaseDate: favorite.media.releaseDate,
-          genres: favorite.media.genres,
+          genres: resolveTmdbGenreLabels(favorite.media.genres ?? []),
           favoritedAt: favorite.createdAt.toISOString(),
         })),
     };

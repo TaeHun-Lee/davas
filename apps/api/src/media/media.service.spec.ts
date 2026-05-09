@@ -323,7 +323,7 @@ describe('MediaService detail', () => {
         posterUrl: 'https://image.tmdb.org/t/p/w500/poster.jpg',
         backdropUrl: null,
         releaseDate: '2026-02-18',
-        genres: ['드라마'],
+        genres: ['18'],
         country: 'NO',
       },
     });
