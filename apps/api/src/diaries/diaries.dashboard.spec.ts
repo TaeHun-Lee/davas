@@ -84,6 +84,25 @@ describe('Diaries dashboard API contract', () => {
     assert.equal(dashboard.calendar.markers[0]?.day, 8);
   });
 
+  it('aggregates genre ratio rows from real selected media genres instead of exposing TMDB numeric ids', async () => {
+    const repository: FakeRepository = {
+      find: async () => [
+        makeDiary({ id: 'diary-sf', mediaId: 'media-sf', media: { id: 'media-sf', title: '인터스텔라', posterUrl: null, genres: ['878', '18'] } as MediaEntity }),
+        makeDiary({ id: 'diary-drama', mediaId: 'media-drama', media: { id: 'media-drama', title: '드라마', posterUrl: null, genres: ['18'] } as MediaEntity }),
+        makeDiary({ id: 'diary-horror', mediaId: 'media-horror', media: { id: 'media-horror', title: '공포', posterUrl: null, genres: ['27'] } as MediaEntity }),
+      ],
+    };
+
+    const dashboard = await new DiariesDashboardService(repository as never).getDashboard('user-1');
+
+    assert.deepEqual(
+      dashboard.genreRatios.map((item) => item.genre),
+      ['드라마', 'SF', '공포'],
+    );
+    assert.deepEqual(dashboard.summary.topGenre, { name: '드라마', count: 2 });
+    assert.ok(dashboard.genreRatios.every((item) => !/^\d+$/.test(item.genre)), 'numeric TMDB genre ids must not be rendered as genre labels');
+  });
+
   it('returns an empty live dashboard when the user has no diary rows', async () => {
     const repository: FakeRepository = { find: async () => [] };
     const dashboard = await new DiariesDashboardService(repository as never).getDashboard('user-1');

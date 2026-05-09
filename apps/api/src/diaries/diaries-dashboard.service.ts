@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DiaryEntity } from '../database/entities/diary.entity';
 import { MediaEntity } from '../database/entities/media.entity';
+import { resolveTmdbGenreLabel } from '../media/tmdb-genres';
 import { CreateDiaryDto } from './dto/create-diary.dto';
 
 const DEFAULT_POSTER_GRADIENT = 'from-[#e9eef7] via-[#f6f8fc] to-[#dfe8f5]';
@@ -39,7 +40,8 @@ function buildGenreRatios(items: DiaryDashboardItem[]) {
   const counts = new Map<string, number>();
   for (const item of items) {
     for (const genre of item.genreNames) {
-      counts.set(genre, (counts.get(genre) ?? 0) + 1);
+      const genreLabel = resolveTmdbGenreLabel(genre);
+      counts.set(genreLabel, (counts.get(genreLabel) ?? 0) + 1);
     }
   }
 

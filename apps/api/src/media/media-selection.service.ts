@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MediaEntity } from '../database/entities/media.entity';
 import { MediaSelectionDto } from './dto/media-selection.dto';
+import { resolveTmdbGenreLabels } from './tmdb-genres';
 
 @Injectable()
 export class MediaSelectionService {
@@ -34,7 +35,7 @@ export class MediaSelectionService {
       posterUrl: selection.posterUrl ?? null,
       backdropUrl: selection.backdropUrl ?? null,
       releaseDate: selection.releaseDate ?? null,
-      genres: (selection.genreIds ?? []).map(String),
+      genres: resolveTmdbGenreLabels(selection.genreIds ?? []),
       country: selection.country ?? null,
       runtime: null,
     });

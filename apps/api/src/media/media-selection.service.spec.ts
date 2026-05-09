@@ -69,7 +69,7 @@ describe('MediaSelectionService', () => {
     assert.equal(media.title, '인터스텔라');
     assert.equal(media.originalTitle, 'Interstellar');
     assert.equal(media.posterUrl, interstellarSelection.posterUrl);
-    assert.deepEqual(media.genres, ['878', '18']);
+    assert.deepEqual(media.genres, ['SF', '드라마']);
     assert.deepEqual(repository.findCalls[0], { externalProvider: 'TMDB', externalId: '157336' });
     assert.equal(repository.saveCalls.length, 1);
   });
