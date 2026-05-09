@@ -1,5 +1,3 @@
-export type DiaryFilterTab = '전체' | '최근' | '평점순' | '캘린더';
-
 export type DiarySummary = {
   totalCount: number;
   monthlyCount: number;

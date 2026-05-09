@@ -39,26 +39,28 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryDashboardSource, /export function DiaryDashboard/);
     for (const componentName of [
       'DiarySearchBar',
-      'DiaryFilterTabs',
       'DiarySummarySection',
       'DiaryInsightGrid',
       'DiaryRecentListSection',
     ]) {
       assert.match(diaryDashboardSource, new RegExp(componentName));
     }
+    assert.doesNotMatch(diaryDashboardSource, /DiaryFilterTabs/);
+    assert.equal(diaryFilterTabsSource, '');
     assert.match(diarySearchBarSource, /export function DiarySearchBar/);
-    assert.match(diaryFilterTabsSource, /export function DiaryFilterTabs/);
     assert.match(diarySummarySectionSource, /export function DiarySummarySection/);
     assert.match(diaryInsightGridSource, /export function DiaryInsightGrid/);
     assert.match(diaryRecentListSource, /export function DiaryRecentListSection/);
     assert.match(newDiaryFloatingButtonSource, /export function NewDiaryFloatingButton/);
   });
 
-  it('matches the supplied diary tab information architecture', () => {
+  it('matches the supplied diary tab information architecture without the old list filter tab row', () => {
     assert.match(diarySearchBarSource, /다이어리 제목이나 영화 제목으로 검색해보세요/);
-    for (const tab of ['전체', '최근', '평점순', '캘린더']) {
-      assert.match(diaryFilterTabsSource, new RegExp(tab));
+    for (const removedTab of ['전체', '최근', '평점순', '캘린더']) {
+      assert.doesNotMatch(diaryFilterTabsSource, new RegExp(removedTab));
+      assert.doesNotMatch(diaryDashboardSource, new RegExp(`>${removedTab}<`));
     }
+    assert.doesNotMatch(diaryDashboardSource, /role="tablist"/);
     for (const summaryLabel of ['전체 기록', '이번 달', '평균 평점', '최다 장르']) {
       assert.match(diarySummarySectionSource, new RegExp(summaryLabel));
     }
@@ -92,8 +94,9 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryDashboardSource, /overflow-x-hidden/);
     assert.match(diaryListItemSource, /min-w-0/);
     assert.match(diaryListItemSource, /line-clamp-2/);
-    assert.match(diaryFilterTabsSource, /aria-pressed=\{tab === activeTab\}/);
-    assert.match(diaryFilterTabsSource, /aria-label=\{`\$\{tab\} 다이어리 필터`\}/);
+    assert.doesNotMatch(diaryDashboardSource, /<DiaryFilterTabs/);
+    assert.doesNotMatch(diaryFilterTabsSource, /aria-pressed=\{tab === activeTab\}/);
+    assert.doesNotMatch(diaryFilterTabsSource, /aria-label=\{`\$\{tab\} 다이어리 필터`\}/);
     assert.match(diaryGenreRatioSource, /role="progressbar"/);
     assert.match(diaryGenreRatioSource, /aria-valuenow=\{item\.percentage\}/);
     assert.match(diaryMonthlyCalendarSource, /aria-selected=\{day\.selected\}/);
@@ -145,10 +148,10 @@ describe('Davas diary dashboard design', () => {
 
   it('filters my written diaries by the selected calendar date', () => {
     assert.match(diaryDashboardSource, /handleCalendarDaySelect/);
-    assert.match(diaryDashboardSource, /setDiaryDashboardQueryParam\(searchParams, \{ q: query, tab: '캘린더', day: nextDay \}\)/);
-    assert.match(diaryDashboardSource, /filterDiaryItems\(dashboard\.recentItems, query, activeTab, selectedCalendarDay\)/);
+    assert.match(diaryDashboardSource, /setDiaryDashboardQueryParam\(searchParams, \{ q: query, day: nextDay \}\)/);
+    assert.match(diaryDashboardSource, /filterDiaryItems\(dashboard\.recentItems, query, selectedCalendarDay\)/);
     assert.match(diaryDashboardSource, /selectedCalendarDescription/);
-    assert.match(diaryUtilsSource, /tab === '캘린더' && selectedDay/);
+    assert.match(diaryUtilsSource, /selectedDay/);
   });
 
   it('uses diary dashboard utilities for calendar state instead of inline date math', () => {
@@ -157,12 +160,13 @@ describe('Davas diary dashboard design', () => {
     assert.doesNotMatch(diaryMonthlyCalendarSource, /new Date\([^)]*\)\.getDay\(\)/);
   });
 
-  it('supports Slice 2 client-side diary search, tab state, and empty results', () => {
+  it('supports Slice 2 client-side diary search, calendar day state, and empty results without filter tabs', () => {
     assert.match(diaryDashboardSource, /useSearchParams/);
     assert.match(diaryDashboardSource, /useRouter/);
     assert.match(diaryDashboardSource, /setDiaryDashboardQueryParam/);
-    assert.match(diaryDashboardSource, /activeTab/);
-    assert.match(diaryDashboardSource, /filterDiaryItems/);
+    assert.doesNotMatch(diaryDashboardSource, /activeTab/);
+    assert.doesNotMatch(diaryDashboardSource, /handleTabChange/);
+    assert.match(diaryDashboardSource, /filterDiaryItems\(dashboard\.recentItems, query, selectedCalendarDay\)/);
     assert.match(diaryRecentListSource, /검색 결과가 없어요/);
     assert.match(diaryRecentListSource, /다른 제목이나 작품명으로 다시 검색해보세요/);
   });
@@ -183,13 +187,13 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryDashboardSource, /selectedCalendarDay/);
     assert.match(diaryDashboardSource, /toCalendarDay\(searchParams\.get\('day'\)\)/);
     assert.match(diaryDashboardSource, /handleCalendarDaySelect/);
-    assert.match(diaryDashboardSource, /setDiaryDashboardQueryParam\(searchParams, \{ q: query, tab: '캘린더', day: nextDay \}\)/);
-    assert.match(diaryDashboardSource, /filterDiaryItems\(dashboard\.recentItems, query, activeTab, selectedCalendarDay\)/);
+    assert.match(diaryDashboardSource, /setDiaryDashboardQueryParam\(searchParams, \{ q: query, day: nextDay \}\)/);
+    assert.match(diaryDashboardSource, /filterDiaryItems\(dashboard\.recentItems, query, selectedCalendarDay\)/);
     assert.match(diaryInsightGridSource, /onDaySelect/);
     assert.match(diaryMonthlyCalendarSource, /onDaySelect\?: \(day: number\) => void/);
     assert.match(diaryMonthlyCalendarSource, /disabled=\{!day\.currentMonth\}/);
     assert.match(diaryUtilsSource, /selectedDay\?: number/);
-    assert.match(diaryUtilsSource, /tab === '캘린더' && selectedDay/);
+    assert.match(diaryUtilsSource, /selectedDay/);
     assert.match(diaryUtilsSource, /params\.set\('day', String\(day\)\)/);
     assert.match(diaryUtilsSource, /params\.delete\('day'\)/);
     assert.match(diaryRecentListSource, /description\?: string/);
