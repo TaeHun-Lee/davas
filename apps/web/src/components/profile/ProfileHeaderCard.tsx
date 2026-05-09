@@ -4,15 +4,6 @@ type ProfileHeaderCardProps = {
   user: AuthenticatedUser;
 };
 
-function SettingsIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" stroke="#6f84a3" strokeWidth="1.8" />
-      <path d="M19.4 13.4c.1-.5.1-.9.1-1.4s0-.9-.1-1.4l2-1.5-2-3.4-2.4 1a8.4 8.4 0 0 0-2.4-1.4L14.2 2h-4l-.4 3.3c-.9.3-1.7.8-2.4 1.4l-2.4-1-2 3.4 2 1.5c-.1.5-.1.9-.1 1.4s0 .9.1 1.4l-2 1.5 2 3.4 2.4-1c.7.6 1.5 1.1 2.4 1.4l.4 3.3h4l.4-3.3c.9-.3 1.7-.8 2.4-1.4l2.4 1 2-3.4-2-1.5Z" stroke="#6f84a3" strokeWidth="1.6" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function ChevronIcon() {
   return (
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -27,14 +18,6 @@ export function ProfileHeaderCard({ user }: ProfileHeaderCardProps) {
 
   return (
     <section data-design="profile-hero-card" className="relative mt-1 pb-3">
-      <button
-        type="button"
-        data-design="profile-settings-button"
-        className="absolute right-0 top-[-48px] grid h-10 w-10 place-items-center rounded-full bg-white text-[#6f84a3] shadow-[0_8px_20px_rgba(34,57,92,0.12)]"
-        aria-label="프로필 설정"
-      >
-        <SettingsIcon />
-      </button>
       <div className="flex items-center gap-5 pr-2">
         <div className="grid h-[86px] w-[86px] shrink-0 place-items-center overflow-hidden rounded-full bg-[linear-gradient(145deg,#dbe7f8,#f7f0e6)] text-[30px] font-black text-[#2e5c9f] shadow-[0_12px_24px_rgba(31,65,114,0.13)]">
           {initial}

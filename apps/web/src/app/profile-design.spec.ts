@@ -78,7 +78,8 @@ describe('Davas profile tab design', () => {
     assert.match(profileDashboardSource, /pb-8/);
     assert.match(profileHeaderSource, /h-\[86px\] w-\[86px\]/);
     assert.match(profileHeaderSource, /rounded-full/);
-    assert.match(profileHeaderSource, /data-design="profile-settings-button"/);
+    assert.doesNotMatch(profileHeaderSource, /data-design="profile-settings-button"|aria-label="프로필 설정"|SettingsIcon/);
+    assert.doesNotMatch(profileHeaderSource, /top-\[-48px\]|right-0/);
     assert.match(profileStatsSource, /grid-cols-4/);
     assert.match(profileStatsSource, /divide-x/);
     assert.match(profileActivitySource, /grid-cols-4/);
