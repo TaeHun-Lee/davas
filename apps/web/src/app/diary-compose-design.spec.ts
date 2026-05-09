@@ -23,6 +23,7 @@ const utilsSource = source('../components/diary/diary-compose-utils.ts');
 const mediaApiSource = source('../lib/api/media.ts');
 const diariesApiSource = source('../lib/api/diaries.ts');
 const mediaDetailModalSource = source('../components/media/MediaDetailModal.tsx');
+const mediaDetailSectionsSource = source('../components/media/media-detail-sections.tsx');
 const mediaDetailLoadingIndicatorSource = source('../components/media/MediaDetailLoadingIndicator.tsx');
 
 describe('Davas diary compose screen design', () => {
@@ -164,6 +165,17 @@ describe('Davas diary compose screen design', () => {
     assert.match(composeScreenSource, /setRating\(diary\.rating\)/);
     assert.match(composeScreenSource, /await updateDiary\(diaryId, payload\)/);
     assert.match(submitBarSource, /수정 완료/);
+  });
+
+  it('keeps the my rating card compact without average summary labels', () => {
+    const myRatingCardSource = mediaDetailSectionsSource.slice(
+      mediaDetailSectionsSource.indexOf('export function MyRatingCard'),
+    );
+
+    assert.match(myRatingCardSource, /나의 별점/);
+    assert.match(myRatingCardSource, /averageRating/);
+    assert.doesNotMatch(myRatingCardSource, /개의 다이어리 평균/);
+    assert.doesNotMatch(myRatingCardSource, /평균 별점/);
   });
 
   it('wraps diary option controls to keep spoiler switch within its pill on mobile', () => {

@@ -214,7 +214,7 @@ describe('Davas explore screen design', () => {
     assert.match(mediaDetailModalSource, /averageRating=\{media\.myAverageRating/);
     assert.match(mediaDetailSectionsSource, /diaries\.map\(\(diary\)/);
     assert.match(mediaDetailSectionsSource, /href=\{`\/diary\/\$\{diary\.id\}\/edit`\}/);
-    assert.match(mediaDetailSectionsSource, /평균 별점/);
+    assert.doesNotMatch(mediaDetailSectionsSource, /평균 별점/);
     assert.match(mediaDetailSectionsSource, /diary\.contentPreview/);
     assert.doesNotMatch(mediaDetailSectionsSource, /export function MyRatingCard\(\{ currentRating = 0 \}/);
     assert.match(mediaDetailModalSource, /bg-\[#ff5a52\]/);
