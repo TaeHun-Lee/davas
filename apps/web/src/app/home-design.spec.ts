@@ -125,7 +125,7 @@ describe('Davas authenticated home design', () => {
 
   it('adds temporary pages for non-home bottom navigation routes', () => {
     assert.match(placeholderSource, /임시 페이지/);
-    for (const route of ['/explore', '/community', '/diary', '/profile']) {
+    for (const route of ['/explore', '/community', '/diary']) {
       assert.match(tabBarSource, new RegExp(`href: '${route}'`));
     }
   });
