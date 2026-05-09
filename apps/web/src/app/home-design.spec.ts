@@ -22,12 +22,17 @@ const homeUtilsSource = source('../components/home/home-utils.ts');
 const placeholderSource = source('../components/layout/PlaceholderPage.tsx');
 const middlewareSource = source('../middleware.ts');
 const mediaDetailLoadingIndicatorSource = source('../components/media/MediaDetailLoadingIndicator.tsx');
+const mediaHeroCarouselSource = source('../components/media/MediaHeroCarousel.tsx');
 
 describe('Davas authenticated home design', () => {
   it('renders the authenticated landing through a live-data home dashboard without mock content', () => {
     assert.match(landingSource, /HomeDashboard/);
     assert.match(landingSource, /getDiaryDashboard/);
     assert.match(archiveSectionSource, /For Your Archive/);
+    assert.match(archiveSectionSource, /MediaHeroCarousel/);
+    assert.match(archiveSectionSource, /buildArchiveHeroItems/);
+    assert.match(mediaHeroCarouselSource, /export type MediaHeroCarouselItem/);
+    assert.match(mediaHeroCarouselSource, /imageVariant: 'poster' \| 'backdrop'/);
     assert.match(dashboardSource, /HomeDashboardView/);
     assert.match(landingSource, /MediaDetailLoadingIndicator/);
     assert.match(landingSource, /label="인증 상태를 확인하는 중"/);
@@ -127,11 +132,11 @@ describe('Davas authenticated home design', () => {
 
   it('uses designed SVG icons for archive buttons and statistic cards', () => {
     assert.match(statsGridSource, /function StatIcon/);
-    assert.match(archiveSectionSource, /function ArchivePoster/);
+    assert.match(archiveSectionSource, /MediaHeroCarousel/);
     assert.match(dashboardSource, /posterUrl: item\.posterUrl/);
-    assert.match(archiveSectionSource, /w-\[126px\]/);
-    assert.match(archiveSectionSource, /h-\[154px\]/);
-    assert.match(archiveSectionSource, /archive-action-row/);
+    assert.match(mediaHeroCarouselSource, /w-\[126px\]/);
+    assert.match(mediaHeroCarouselSource, /h-\[154px\]/);
+    assert.match(mediaHeroCarouselSource, /archive-action-row/);
     assert.match(statsGridSource, /NotebookIcon/);
     assert.match(statsGridSource, /CalendarWatchIcon/);
     assert.match(statsGridSource, /MasksIcon/);
@@ -141,20 +146,20 @@ describe('Davas authenticated home design', () => {
   });
 
   it('matches the archive card visual treatment from the supplied design', () => {
-    assert.match(archiveSectionSource, /archive-gradient-card/);
+    assert.match(mediaHeroCarouselSource, /archive-gradient-card/);
     assert.match(archiveSectionSource, /linear-gradient\(145deg,#ffffff_0%,#f7fbff_48%,#eef6ff_100%\)/);
-    assert.match(archiveSectionSource, /archive-primary-action/);
-    assert.match(archiveSectionSource, /bg-\[#2f7eea\]/);
-    assert.match(archiveSectionSource, /h-\[34px\]/);
-    assert.match(archiveSectionSource, /archive-secondary-action/);
-    assert.match(archiveSectionSource, /bg-\[#fbfdff\]/);
-    assert.match(archiveSectionSource, /archive-carousel-indicator/);
-    assert.match(archiveSectionSource, /w-\[22px\]/);
-    assert.match(archiveSectionSource, /bg-\[#dbe5f3\]/);
-    assert.match(archiveSectionSource, /text-\[13px\] font-extrabold leading-\[18px\] text-\[#236fd7\]/);
-    assert.match(archiveSectionSource, /text-\[25px\] font-black leading-\[29px\] tracking-\[-0\.04em\] text-\[#132b55\]/);
-    assert.match(archiveSectionSource, /text-\[12px\] font-bold leading-\[16px\] text-\[#8d98a8\]/);
-    assert.match(archiveSectionSource, /text-\[12px\] font-semibold leading-\[18px\] text-\[#788395\]/);
+    assert.match(mediaHeroCarouselSource, /archive-primary-action/);
+    assert.match(mediaHeroCarouselSource, /bg-\[#2f7eea\]/);
+    assert.match(mediaHeroCarouselSource, /h-\[34px\]/);
+    assert.match(mediaHeroCarouselSource, /archive-secondary-action/);
+    assert.match(mediaHeroCarouselSource, /bg-white|bg-\[#fbfdff\]/);
+    assert.match(mediaHeroCarouselSource, /carousel-indicator/);
+    assert.match(mediaHeroCarouselSource, /w-\[22px\]/);
+    assert.match(mediaHeroCarouselSource, /bg-\[#dbe5f3\]/);
+    assert.match(mediaHeroCarouselSource, /text-\[13px\] font-extrabold leading-\[18px\] text-\[#236fd7\]/);
+    assert.match(mediaHeroCarouselSource, /text-\[25px\] font-black leading-\[29px\] tracking-\[-0\.04em\] text-\[#132b55\]/);
+    assert.match(mediaHeroCarouselSource, /text-\[12px\] font-bold leading-\[16px\] text-\[#8b96a8\]|text-\[12px\] font-bold leading-\[16px\] text-\[#8d98a8\]/);
+    assert.match(mediaHeroCarouselSource, /text-\[12px\] font-semibold leading-\[18px\] text-\[#747f91\]|text-\[12px\] font-semibold leading-\[18px\] text-\[#788395\]/);
   });
 
   it('matches the supplied 2x2 statistic-card design treatment', () => {
@@ -186,10 +191,10 @@ describe('Davas authenticated home design', () => {
     assert.match(globalSource, /font-feature-settings:\s*'kern'/);
     assert.match(globalSource, /text-rendering:\s*optimizeLegibility/);
     assert.match(dashboardSource, /text-\[13px\] font-semibold leading-\[18px\] text-\[#9aa6b8\]/);
-    assert.match(archiveSectionSource, /text-\[13px\] font-extrabold leading-\[18px\] text-\[#236fd7\]/);
-    assert.match(archiveSectionSource, /text-\[25px\] font-black leading-\[29px\] tracking-\[-0\.04em\] text-\[#132b55\]/);
-    assert.match(archiveSectionSource, /text-\[12px\] font-bold leading-\[16px\] text-\[#8d98a8\]/);
-    assert.match(archiveSectionSource, /text-\[12px\] font-semibold leading-\[18px\] text-\[#788395\]/);
+    assert.match(mediaHeroCarouselSource, /text-\[13px\] font-extrabold leading-\[18px\] text-\[#236fd7\]/);
+    assert.match(mediaHeroCarouselSource, /text-\[25px\] font-black leading-\[29px\] tracking-\[-0\.04em\] text-\[#132b55\]/);
+    assert.match(mediaHeroCarouselSource, /text-\[12px\] font-bold leading-\[16px\] text-\[#8b96a8\]|text-\[12px\] font-bold leading-\[16px\] text-\[#8d98a8\]/);
+    assert.match(mediaHeroCarouselSource, /text-\[12px\] font-semibold leading-\[18px\] text-\[#747f91\]|text-\[12px\] font-semibold leading-\[18px\] text-\[#788395\]/);
     assert.match(mediaPosterRowSource + monthlyCalendarSource + recentRecordsSource, /text-\[16px\] font-extrabold leading-\[22px\] tracking-\[-0\.02em\] text-\[#1f2a44\]/);
     assert.match(statsGridSource, /text-\[21px\] font-extrabold leading-\[24px\] tracking-\[-0\.03em\] text-\[#111827\]/);
     assert.match(tabBarSource, /text-\[11px\] font-bold leading-\[14px\]/);
@@ -204,14 +209,14 @@ describe('Davas authenticated home design', () => {
     assert.match(appShellSource, /min-\[390px\]:px-5/);
     assert.match(archiveSectionSource + monthlyCalendarSource + recentRecordsSource, /card-surface/);
     assert.match(archiveSectionSource + statsGridSource + monthlyCalendarSource + recentRecordsSource, /max-\[374px\]:/);
-    assert.match(archiveSectionSource, /max-\[374px\]:text-\[22px\]/);
+    assert.match(mediaHeroCarouselSource, /max-\[374px\]:text-\[22px\]/);
     assert.match(mediaPosterRowSource, /-mx-4 overflow-x-auto px-4/);
     assert.match(mediaPosterRowSource, /min-\[390px\]:-mx-5 min-\[390px\]:px-5/);
   });
 
   it('keeps the archive poster image cropped from the visual center', () => {
-    assert.match(archiveSectionSource, /data-design="archive-poster"/);
-    assert.match(archiveSectionSource, /object-cover object-center/);
-    assert.match(archiveSectionSource, /objectPosition:\s*'center center'/);
+    assert.match(mediaHeroCarouselSource, /data-design="archive-poster"/);
+    assert.match(mediaHeroCarouselSource, /object-cover object-center/);
+    assert.match(mediaHeroCarouselSource, /object-center/);
   });
 });

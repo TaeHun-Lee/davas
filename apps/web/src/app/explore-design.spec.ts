@@ -28,6 +28,7 @@ const todayRecommendationSource = source('../components/explore/TodayRecommendat
 const genreRecommendationSource = source('../components/explore/GenreRecommendationSection.tsx');
 const exploreShortcutGridSource = source('../components/explore/ExploreShortcutGrid.tsx');
 const mediaDetailLoadingIndicatorSource = source('../components/media/MediaDetailLoadingIndicator.tsx');
+const mediaHeroCarouselSource = source('../components/media/MediaHeroCarousel.tsx');
 
 describe('Davas explore screen design', () => {
   it('routes /explore to the designed explore dashboard instead of a placeholder', () => {
@@ -283,12 +284,12 @@ describe('Davas explore screen design', () => {
     assert.match(todayRecommendationSource, /상세 보기/);
     assert.doesNotMatch(todayRecommendationSource, /다이어리 쓰기/);
     assert.match(todayRecommendationSource, /today-recommendation-card/);
-    assert.match(todayRecommendationSource, /today-recommendation-actions/);
-    assert.match(todayRecommendationSource, /whitespace-nowrap/);
-    assert.match(todayRecommendationSource, /RecommendationStill/);
+    assert.match(mediaHeroCarouselSource, /today-recommendation-actions/);
+    assert.match(mediaHeroCarouselSource, /whitespace-nowrap/);
+    assert.match(mediaHeroCarouselSource, /HeroImage/);
     assert.doesNotMatch(todayRecommendationSource, /PencilIcon/);
     assert.doesNotMatch(todayRecommendationSource, /today-diary-button/);
-    assert.match(todayRecommendationSource, /carousel-indicator/);
+    assert.match(mediaHeroCarouselSource, /carousel-indicator/);
     assert.match(exploreDashboardSource, /TodayRecommendationSection/);
     assert.doesNotMatch(exploreDashboardSource, /function RecommendationStill/);
     assert.doesNotMatch(exploreDashboardSource, /function PencilIcon/);
@@ -301,7 +302,7 @@ describe('Davas explore screen design', () => {
     }
     assert.match(todayRecommendationSource, /data-design="today-recommendation-placeholder"/);
     assert.match(todayRecommendationSource, /aria-label="오늘의 추천을 불러오는 중"/);
-    assert.match(todayRecommendationSource, /carouselItems\.length === 0/);
+    assert.match(mediaHeroCarouselSource, /carouselItems\.length === 0/);
     assert.match(todayRecommendationSource, /data-design="recommendation-still-placeholder"/);
     assert.doesNotMatch(todayRecommendationSource, /h-5 w-2 rounded-t/);
     assert.doesNotMatch(todayRecommendationSource, /h-8 w-2\.5 rounded-t/);
@@ -361,32 +362,42 @@ describe('Davas explore screen design', () => {
     assert.match(useExploreRecommendationsSource, /todayItems: MediaRecommendationItem\[\]/);
     assert.match(useExploreRecommendationsSource, /getTodayRecommendation\(\{ limit: 3/);
     assert.match(todayRecommendationSource, /items\?: MediaRecommendationItem\[\]/);
-    assert.match(todayRecommendationSource, /useState\(0\)/);
-    assert.match(todayRecommendationSource, /activeIndex/);
-    assert.match(todayRecommendationSource, /setActiveIndex/);
-    assert.match(todayRecommendationSource, /carousel-indicator/);
+    assert.match(mediaHeroCarouselSource, /useState\(0\)/);
+    assert.match(mediaHeroCarouselSource, /activeIndex/);
+    assert.match(mediaHeroCarouselSource, /setActiveIndex/);
+    assert.match(mediaHeroCarouselSource, /carousel-indicator/);
     assert.match(todayRecommendationSource, /items\.map/);
     assert.doesNotMatch(todayRecommendationSource, /item\?: MediaRecommendationItem/);
   });
 
   it('adds arrow-only carousel controls, smooth slide animation, and a functional today 전체 보기 action', () => {
-    assert.match(todayRecommendationSource, /onViewAll\?: \(\) => void/);
+    assert.match(todayRecommendationSource, /MediaHeroCarousel/);
+    assert.match(todayRecommendationSource, /buildTodayHeroItems/);
+    assert.match(mediaHeroCarouselSource, /useEffect/);
+    assert.match(mediaHeroCarouselSource, /setInterval/);
+    assert.match(mediaHeroCarouselSource, /3000/);
+    assert.match(mediaHeroCarouselSource, /onPointerDown/);
+    assert.match(mediaHeroCarouselSource, /onPointerUp/);
+    assert.match(mediaHeroCarouselSource, /dragThreshold/);
+    assert.match(mediaHeroCarouselSource, /setPointerCapture/);
+    assert.match(mediaHeroCarouselSource, /today-carousel-track/);
+    assert.match(mediaHeroCarouselSource, /translateX\(-\$\{activeIndex \* 100\}%\)/);
     assert.match(todayRecommendationSource, /actionLabel="전체 보기 ›"/);
     assert.match(todayRecommendationSource, /onAction=\{onViewAll\}/);
-    assert.match(todayRecommendationSource, /today-carousel-viewport/);
-    assert.match(todayRecommendationSource, /today-carousel-track/);
-    assert.match(todayRecommendationSource, /transition-transform/);
-    assert.match(todayRecommendationSource, /duration-500/);
-    assert.match(todayRecommendationSource, /translateX\(-\$\{activeIndex \* 100\}%\)/);
-    assert.match(todayRecommendationSource, /today-carousel-control/);
-    assert.match(todayRecommendationSource, /today-carousel-arrow-only/);
-    assert.doesNotMatch(todayRecommendationSource, /today-carousel-control[^\n]*rounded-full/);
-    assert.doesNotMatch(todayRecommendationSource, /today-carousel-control[^\n]*bg-white\/70/);
-    assert.doesNotMatch(todayRecommendationSource, /today-carousel-control[^\n]*backdrop-blur/);
-    assert.match(todayRecommendationSource, /aria-label="이전 추천 보기"/);
-    assert.match(todayRecommendationSource, /aria-label="다음 추천 보기"/);
-    assert.match(todayRecommendationSource, /setActiveIndex\(\(index\) => \(index - 1 \+ carouselItems\.length\) % carouselItems\.length\)/);
-    assert.match(todayRecommendationSource, /setActiveIndex\(\(index\) => \(index \+ 1\) % carouselItems\.length\)/);
+    assert.match(mediaHeroCarouselSource, /today-carousel-viewport/);
+    assert.match(mediaHeroCarouselSource, /today-carousel-track/);
+    assert.match(mediaHeroCarouselSource, /transition-transform/);
+    assert.match(mediaHeroCarouselSource, /duration-500/);
+    assert.match(mediaHeroCarouselSource, /translateX\(-\$\{activeIndex \* 100\}%\)/);
+    assert.match(mediaHeroCarouselSource, /today-carousel-control/);
+    assert.match(mediaHeroCarouselSource, /today-carousel-arrow-only/);
+    assert.doesNotMatch(mediaHeroCarouselSource, /today-carousel-control[^\n]*rounded-full/);
+    assert.doesNotMatch(mediaHeroCarouselSource, /today-carousel-control[^\n]*bg-white\/70/);
+    assert.doesNotMatch(mediaHeroCarouselSource, /today-carousel-control[^\n]*backdrop-blur/);
+    assert.match(mediaHeroCarouselSource, /aria-label="이전 추천 보기"/);
+    assert.match(mediaHeroCarouselSource, /aria-label="다음 추천 보기"/);
+    assert.match(mediaHeroCarouselSource, /setActiveIndex\(\(index\) => \(index - 1 \+ carouselItems\.length\) % carouselItems\.length\)/);
+    assert.match(mediaHeroCarouselSource, /setActiveIndex\(\(index\) => \(index \+ 1\) % carouselItems\.length\)/);
     assert.match(exploreDashboardSource, /showAllToday/);
     assert.match(exploreDashboardSource, /setShowAllToday/);
     assert.match(exploreDashboardSource, /today-overview-list/);
@@ -394,31 +405,32 @@ describe('Davas explore screen design', () => {
   });
 
   it('keeps today recommendation CTA as a single detail action on mobile', () => {
-    assert.match(todayRecommendationSource, /recommendation-still[^\n]*h-full/);
-    assert.match(todayRecommendationSource, /recommendation-still[^\n]*min-h-\[168px\]/);
-    assert.match(todayRecommendationSource, /items-stretch/);
-    assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*grid-cols-1/);
-    assert.doesNotMatch(todayRecommendationSource, /today-recommendation-actions[^\n]*grid-cols-\[0\.9fr_1\.1fr\]/);
-    assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*gap-0/);
+    assert.match(mediaHeroCarouselSource, /recommendation-still[^\n]*h-full/);
+    assert.match(mediaHeroCarouselSource, /recommendation-still[^\n]*min-h-\[168px\]/);
+    assert.match(mediaHeroCarouselSource, /items-stretch/);
+    assert.match(mediaHeroCarouselSource, /today-recommendation-actions[^\n]*grid-cols-1/);
+    assert.doesNotMatch(mediaHeroCarouselSource, /today-recommendation-actions[^\n]*grid-cols-\[0\.9fr_1\.1fr\]/);
+    assert.match(mediaHeroCarouselSource, /today-recommendation-actions[^\n]*gap-0/);
     assert.doesNotMatch(todayRecommendationSource, /<button[^\n]*다이어리 쓰기/);
     assert.doesNotMatch(todayRecommendationSource, /today-diary-button[^\n]*bg-\[#2f7eea\]/);
-    assert.match(todayRecommendationSource, /carousel-indicator mt-2/);
-    assert.doesNotMatch(todayRecommendationSource, /carousel-indicator mt-3\.5/);
+    assert.match(mediaHeroCarouselSource, /carousel-indicator mt-2/);
+    assert.doesNotMatch(mediaHeroCarouselSource, /carousel-indicator mt-3\.5/);
   });
 
   it('aligns the remaining today recommendation detail CTA without a diary button', () => {
-    assert.match(todayRecommendationSource, /max-\[430px\]:grid-cols-1/);
-    assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*mt-3[^\n]*pb-2/);
-    assert.match(todayRecommendationSource, /today-recommendation-actions[^\n]*pr-2/);
-    assert.doesNotMatch(todayRecommendationSource, /today-recommendation-actions[^\n]*max-\[430px\]:grid-cols-2/);
-    assert.match(todayRecommendationSource, /data-design="today-detail-button"/);
+    assert.match(mediaHeroCarouselSource, /max-\[430px\]:grid-cols-1/);
+    assert.match(mediaHeroCarouselSource, /today-recommendation-actions[^\n]*mt-3[^\n]*pb-2/);
+    assert.match(mediaHeroCarouselSource, /today-recommendation-actions[^\n]*pr-2/);
+    assert.doesNotMatch(mediaHeroCarouselSource, /today-recommendation-actions[^\n]*max-\[430px\]:grid-cols-2/);
+    assert.match(mediaHeroCarouselSource, /dataDesign\?: string/);
+    assert.match(todayRecommendationSource, /dataDesign: 'today-detail-button'/);
     assert.doesNotMatch(todayRecommendationSource, /data-design="today-diary-button"/);
-    assert.match(todayRecommendationSource, /today-detail-button[^\n]*h-\[36px\][^\n]*w-full[^\n]*items-center/);
+    assert.match(mediaHeroCarouselSource, /today-detail-button[^\n]*h-\[36px\][^\n]*items-center/);
     assert.doesNotMatch(todayRecommendationSource, /today-diary-button/);
     assert.doesNotMatch(todayRecommendationSource, /today-diary-button-icon/);
     assert.doesNotMatch(todayRecommendationSource, /<PencilIcon/);
     assert.doesNotMatch(todayRecommendationSource, /다이어리 쓰기/);
-    assert.doesNotMatch(todayRecommendationSource, /today-recommendation-actions[^\n]*pt-4"/);
+    assert.doesNotMatch(mediaHeroCarouselSource, /today-recommendation-actions[^\n]*pt-4"/);
   });
 
   it('shows selected media loading as an animated indicator instead of bottom-page text', () => {
@@ -437,7 +449,7 @@ describe('Davas explore screen design', () => {
     assert.match(mediaApiSource, /function toMediaSelectionPayload/);
     assert.match(mediaApiSource, /body: JSON\.stringify\(toMediaSelectionPayload\(selection\)\)/);
     assert.doesNotMatch(mediaApiSource, /body: JSON\.stringify\(selection\)/);
-    assert.match(todayRecommendationSource, /data-design="today-detail-button"[^\n]*onClick=\{\(\) => void onSelect\?\.\(entry\)\}/);
+    assert.match(todayRecommendationSource, /if \(source\) void onSelect\?\.\(source\)/);
     assert.match(mediaPosterRowSource, /aria-label=\{`\$\{item\.title\} 상세 보기`\}/);
     assert.match(mediaPosterRowSource, /onClick=\{\(\) => onSelect\(item\.sourceItem!\)\}/);
     assert.match(genreRecommendationSource, /aria-label=\{`\$\{item\.title\} 상세 보기`\}/);
