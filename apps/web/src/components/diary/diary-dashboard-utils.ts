@@ -58,7 +58,11 @@ export function filterDiaryItems(items: DiaryListItemView[], query: string, tab:
     return [...calendarItems].sort((a, b) => b.rating - a.rating);
   }
 
-  return [...calendarItems].sort((a, b) => Number(new Date(b.watchedDate)) - Number(new Date(a.watchedDate)));
+  return sortByRecentlyWritten(calendarItems);
+}
+
+export function sortByRecentlyWritten(items: DiaryListItemView[]) {
+  return [...items].sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)));
 }
 
 function getWatchedDay(watchedDate: string) {

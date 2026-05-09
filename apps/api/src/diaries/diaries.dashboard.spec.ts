@@ -111,7 +111,28 @@ describe('Diaries dashboard API contract', () => {
     assert.deepEqual(findOptions, {
       where: { userId: 'user-42' },
       relations: { media: true },
-      order: { watchedDate: 'DESC', createdAt: 'DESC' },
+      order: { createdAt: 'DESC', watchedDate: 'DESC' },
+      take: 50,
+    });
+  });
+
+
+
+  it('orders my written diary list by most recently created diary first', async () => {
+    let findOptions: unknown;
+    const repository: FakeRepository = {
+      find: async (options) => {
+        findOptions = options;
+        return [];
+      },
+    };
+
+    await new DiariesDashboardService(repository as never).getDashboard('user-42');
+
+    assert.deepEqual(findOptions, {
+      where: { userId: 'user-42' },
+      relations: { media: true },
+      order: { createdAt: 'DESC', watchedDate: 'DESC' },
       take: 50,
     });
   });

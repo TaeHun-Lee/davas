@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { MoviePosterVisual } from '../home/MoviePosterVisual';
 import type { DiaryListItemView } from './diary-dashboard-types';
 
@@ -19,10 +20,15 @@ export function DiaryListItem({ item }: DiaryListItemProps) {
           <span aria-label={`평점 ${item.rating}점`} className="text-[#ef9b2d]">★ {item.rating.toFixed(1)}</span>
         </div>
         <p className="mt-2 line-clamp-2 text-[12px] font-medium leading-[18px] text-[#6d7890]">{item.contentPreview}</p>
-        <div className="mt-2 flex min-w-0 gap-1 overflow-hidden">
-          {item.genreNames.slice(0, 2).map((genre) => (
-            <span key={genre} className="shrink-0 rounded-full bg-[#eef5ff] px-2 py-1 text-[10px] font-bold text-[#216bd8]">{genre}</span>
-          ))}
+        <div className="mt-2 flex min-w-0 items-end justify-between gap-2">
+          <div className="flex min-w-0 gap-1 overflow-hidden">
+            {item.genreNames.slice(0, 2).map((genre) => (
+              <span key={genre} className="shrink-0 rounded-full bg-[#eef5ff] px-2 py-1 text-[10px] font-bold text-[#216bd8]">{genre}</span>
+            ))}
+          </div>
+          <Link href={`/diary/${item.id}/edit`} className="shrink-0 rounded-full bg-[#eef5ff] px-3 py-1 text-[11px] font-extrabold text-[#216bd8]">
+            수정
+          </Link>
         </div>
       </div>
     </article>

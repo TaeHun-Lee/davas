@@ -41,6 +41,7 @@ export type DiaryListItemView = {
   mediaTitle: string;
   diaryTitle: string;
   watchedDate: string;
+  createdAt: string;
   rating: number;
   contentPreview: string;
   posterUrl?: string | null;

@@ -86,6 +86,8 @@ export function DiaryDashboard() {
     [dashboard.recentItems, query, activeTab, selectedCalendarDay],
   );
 
+  const shouldShowMyDiarySection = visibleDiaries.length > 0;
+
   const selectedCalendarDescription = activeTab === '캘린더' && selectedCalendarDay
     ? `${dashboard.calendar.month}월 ${selectedCalendarDay}일에 작성한 기록만 모아봤어요.`
     : undefined;
@@ -128,13 +130,13 @@ export function DiaryDashboard() {
           genreRatios={dashboard.genreRatios}
           onDaySelect={handleCalendarDaySelect}
         />
-        <DiaryRecentListSection
-          items={visibleDiaries}
-          title={activeTab === '캘린더' && selectedCalendarDay ? `${selectedCalendarDay}일 다이어리` : '최근 작성한 다이어리'}
-          description={selectedCalendarDescription}
-          emptyTitle={query ? '검색 결과가 없어요' : '아직 작성한 다이어리가 없어요'}
-          emptyDescription={query ? '다른 제목이나 작품명으로 다시 검색해보세요' : '작품 상세 화면에서 다이어리를 작성하면 이곳에 모아볼 수 있어요'}
-        />
+        {shouldShowMyDiarySection ? (
+          <DiaryRecentListSection
+            items={visibleDiaries}
+            title="내가 작성한 다이어리"
+            description={selectedCalendarDescription}
+          />
+        ) : null}
       </div>
     </AppShell>
   );

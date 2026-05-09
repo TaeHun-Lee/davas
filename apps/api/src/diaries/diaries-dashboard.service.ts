@@ -14,6 +14,7 @@ type DiaryDashboardItem = {
   mediaTitle: string;
   diaryTitle: string;
   watchedDate: string;
+  createdAt: string;
   rating: number;
   contentPreview: string;
   posterUrl?: string | null;
@@ -101,7 +102,7 @@ export class DiariesDashboardService {
     const diaries = await this.diaries.find({
       where: { userId },
       relations: { media: true },
-      order: { watchedDate: 'DESC', createdAt: 'DESC' },
+      order: { createdAt: 'DESC', watchedDate: 'DESC' },
       take: 50,
     });
 
@@ -111,6 +112,7 @@ export class DiariesDashboardService {
       mediaTitle: diary.media?.title ?? '제목 없음',
       diaryTitle: diary.title,
       watchedDate: formatWatchedDate(diary.watchedDate),
+      createdAt: diary.createdAt.toISOString(),
       rating: Number(diary.rating),
       contentPreview: buildContentPreview(diary.content),
       posterUrl: diary.media?.posterUrl ?? null,

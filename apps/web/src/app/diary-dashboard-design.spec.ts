@@ -65,7 +65,8 @@ describe('Davas diary dashboard design', () => {
     assert.match(diarySummarySectionSource, /나의 다이어리 요약/);
     assert.match(diaryMonthlyCalendarSource, /이번 달 기록 캘린더/);
     assert.match(diaryGenreRatioSource, /장르별 기록 비율/);
-    assert.match(diaryRecentListSource, /최근 작성한 다이어리/);
+    assert.match(diaryRecentListSource, /내가 작성한 다이어리/);
+    assert.doesNotMatch(diaryRecentListSource, /최근 작성한 다이어리/);
     assert.doesNotMatch(diaryDashboardSource, /NewDiaryFloatingButton/);
     assert.doesNotMatch(diaryDashboardSource, /새 다이어리/);
   });
@@ -117,7 +118,8 @@ describe('Davas diary dashboard design', () => {
     assert.doesNotMatch(diaryRecentListSource, /actionLabel="더보기 ›"/);
     assert.doesNotMatch(diaryListItemSource, /북마크/);
     assert.doesNotMatch(diaryListItemSource, /더보기/);
-    assert.doesNotMatch(diaryListItemSource, /다이어리 수정/);
+    assert.match(diaryListItemSource, /수정/);
+    assert.match(diaryListItemSource, /href=\{`\/diary\/\$\{item\.id\}\/edit`\}/);
   });
 
 
@@ -127,6 +129,26 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryComposeSource, /mediaPosterUrl: selectedMedia\.posterUrl/);
     assert.match(diaryListItemSource, /imageUrl=\{item\.posterUrl\}/);
     assert.match(diaryListItemSource, /label=\{item\.posterUrl \? undefined : item\.mediaTitle\}/);
+  });
+
+
+
+  it('shows my written diary section only when there are matching diaries and defaults to recently written order', () => {
+    assert.match(diaryDashboardSource, /const shouldShowMyDiarySection = visibleDiaries\.length > 0/);
+    assert.match(diaryDashboardSource, /\{shouldShowMyDiarySection \? \(/);
+    assert.match(diaryDashboardSource, /title="내가 작성한 다이어리"/);
+    assert.doesNotMatch(diaryDashboardSource, /최근 작성한 다이어리/);
+    assert.doesNotMatch(diaryDashboardSource, /emptyTitle=\{query \?/);
+    assert.match(diaryUtilsSource, /sortByRecentlyWritten/);
+    assert.match(diaryUtilsSource, /createdAt/);
+  });
+
+  it('filters my written diaries by the selected calendar date', () => {
+    assert.match(diaryDashboardSource, /handleCalendarDaySelect/);
+    assert.match(diaryDashboardSource, /setDiaryDashboardQueryParam\(searchParams, \{ q: query, tab: '캘린더', day: nextDay \}\)/);
+    assert.match(diaryDashboardSource, /filterDiaryItems\(dashboard\.recentItems, query, activeTab, selectedCalendarDay\)/);
+    assert.match(diaryDashboardSource, /selectedCalendarDescription/);
+    assert.match(diaryUtilsSource, /tab === '캘린더' && selectedDay/);
   });
 
   it('uses diary dashboard utilities for calendar state instead of inline date math', () => {

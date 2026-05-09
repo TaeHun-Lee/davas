@@ -12,7 +12,7 @@ type DiaryRecentListSectionProps = {
 
 export function DiaryRecentListSection({
   items,
-  title = '최근 작성한 다이어리',
+  title = '내가 작성한 다이어리',
   description,
   emptyTitle = '검색 결과가 없어요',
   emptyDescription = '다른 제목이나 작품명으로 다시 검색해보세요',
