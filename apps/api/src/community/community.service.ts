@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DiaryEntity } from '../database/entities/diary.entity';
+import { UserFollowEntity } from '../database/entities/user-follow.entity';
 import { resolveTmdbGenreLabel } from '../media/tmdb-genres';
 
 export type CommunityTab = 'recommended' | 'popular' | 'following' | 'latest';
@@ -10,6 +11,7 @@ export type CommunityDashboardQuery = {
   tab?: CommunityTab;
   q?: string;
   topic?: string;
+  userId?: string;
 };
 
 export type CommunityTopic = {
@@ -23,6 +25,8 @@ export type CommunityDiaryCard = {
     id: string;
     nickname: string;
     profileImageUrl: string | null;
+    isFollowed: boolean;
+    isMine: boolean;
   };
   media: {
     id: string;
@@ -55,6 +59,16 @@ export type CommunityDashboardResponse = {
   topic?: string;
 };
 
+export type CommunityFollowResponse = {
+  followingId: string;
+  isFollowed: boolean;
+};
+
+type ViewerContext = {
+  userId?: string;
+  followingIds: Set<string>;
+};
+
 function normalizeTab(tab: CommunityTab | undefined): CommunityTab {
   return tab === 'popular' || tab === 'following' || tab === 'latest' ? tab : 'recommended';
 }
@@ -85,13 +99,16 @@ function matchesTopic(diary: DiaryEntity, topic: string) {
   return (diary.media?.genres ?? []).some((genre) => resolveTmdbGenreLabel(genre) === topic);
 }
 
-function toCommunityDiaryCard(diary: DiaryEntity): CommunityDiaryCard {
+function toCommunityDiaryCard(diary: DiaryEntity, viewer: ViewerContext = { followingIds: new Set() }): CommunityDiaryCard {
+  const authorId = diary.userId ?? diary.user?.id;
   return {
     id: diary.id,
     author: {
-      id: diary.user?.id ?? diary.userId,
+      id: authorId,
       nickname: diary.user?.nickname ?? '알 수 없는 사용자',
       profileImageUrl: diary.user?.profileImageUrl ?? null,
+      isFollowed: viewer.followingIds.has(authorId),
+      isMine: viewer.userId === authorId,
     },
     media: {
       id: diary.media?.id ?? diary.mediaId,
@@ -108,14 +125,15 @@ function toCommunityDiaryCard(diary: DiaryEntity): CommunityDiaryCard {
   };
 }
 
-function toCommunityDiaryDetail(diary: DiaryEntity): CommunityDiaryDetail {
+function toCommunityDiaryDetail(diary: DiaryEntity, viewer: ViewerContext = { followingIds: new Set() }): CommunityDiaryDetail {
+  const card = toCommunityDiaryCard(diary, viewer);
   return {
-    ...toCommunityDiaryCard(diary),
+    ...card,
     content: diary.content,
     watchedDate: diary.watchedDate,
     hasSpoiler: diary.hasSpoiler,
     media: {
-      ...toCommunityDiaryCard(diary).media,
+      ...card.media,
       genreNames: (diary.media?.genres ?? []).map(resolveTmdbGenreLabel),
     },
   };
@@ -152,12 +170,16 @@ export class CommunityService {
   constructor(
     @InjectRepository(DiaryEntity)
     private readonly diaries: Repository<DiaryEntity>,
+    @Optional()
+    @InjectRepository(UserFollowEntity)
+    private readonly follows?: Repository<UserFollowEntity>,
   ) {}
 
   async getDashboard(query: CommunityDashboardQuery = {}): Promise<CommunityDashboardResponse> {
     const tab = normalizeTab(query.tab);
     const q = query.q?.trim() ?? '';
     const topic = normalizeTopic(query.topic);
+    const viewer = await this.buildViewerContext(query.userId);
     const publicDiaries = await this.diaries.find({
       where: { visibility: 'PUBLIC' },
       relations: { media: true, user: true, comments: true },
@@ -167,19 +189,51 @@ export class CommunityService {
 
     const topicDiaries = topic ? publicDiaries.filter((diary) => matchesTopic(diary, topic)) : publicDiaries;
     const searchedDiaries = q ? topicDiaries.filter((diary) => matchesQuery(diary, q)) : topicDiaries;
-    const popularDiaries = [...searchedDiaries].sort(sortByPopularity).slice(0, 5).map(toCommunityDiaryCard);
-    const feedSource = tab === 'following' ? [] : [...searchedDiaries].sort(tab === 'latest' ? sortByLatest : sortByPopularity);
+    const popularDiaries = [...searchedDiaries].sort(sortByPopularity).slice(0, 5).map((diary) => toCommunityDiaryCard(diary, viewer));
+    const feedCandidates = tab === 'following' ? searchedDiaries.filter((diary) => viewer.followingIds.has(diary.userId ?? diary.user?.id)) : searchedDiaries;
+    const feedSource = [...feedCandidates].sort(tab === 'latest' ? sortByLatest : sortByPopularity);
 
     return {
       tab,
       topics: buildTopics(publicDiaries).slice(0, 8),
       popularDiaries,
-      feed: feedSource.map(toCommunityDiaryCard),
+      feed: feedSource.map((diary) => toCommunityDiaryCard(diary, viewer)),
       ...(topic ? { topic } : {}),
     };
   }
 
-  async getPublicDiary(id: string): Promise<CommunityDiaryDetail> {
+  async getPublicDiary(id: string, userId?: string): Promise<CommunityDiaryDetail> {
+    const diary = await this.getPublicDiaryEntity(id);
+    const viewer = await this.buildViewerContext(userId);
+    return toCommunityDiaryDetail(diary, viewer);
+  }
+
+  async followDiaryAuthor(diaryId: string, userId: string): Promise<CommunityFollowResponse> {
+    const diary = await this.getPublicDiaryEntity(diaryId);
+    const followingId = diary.userId ?? diary.user?.id;
+    if (followingId === userId) {
+      throw new BadRequestException('자기 자신은 팔로우할 수 없습니다.');
+    }
+
+    const existing = await this.follows?.findOne({ where: { followerId: userId, followingId } });
+    if (!existing) {
+      await this.follows?.save(this.follows.create({ followerId: userId, followingId }));
+    }
+    return { followingId, isFollowed: true };
+  }
+
+  async unfollowDiaryAuthor(diaryId: string, userId: string): Promise<CommunityFollowResponse> {
+    const diary = await this.getPublicDiaryEntity(diaryId);
+    const followingId = diary.userId ?? diary.user?.id;
+    if (followingId === userId) {
+      throw new BadRequestException('자기 자신은 팔로우할 수 없습니다.');
+    }
+
+    await this.follows?.delete({ followerId: userId, followingId });
+    return { followingId, isFollowed: false };
+  }
+
+  private async getPublicDiaryEntity(id: string) {
     const diary = await this.diaries.findOne({
       where: { id, visibility: 'PUBLIC' },
       relations: { media: true, user: true, comments: true },
@@ -187,6 +241,14 @@ export class CommunityService {
     if (!diary) {
       throw new NotFoundException('공개 다이어리를 찾을 수 없습니다.');
     }
-    return toCommunityDiaryDetail(diary);
+    return diary;
+  }
+
+  private async buildViewerContext(userId?: string): Promise<ViewerContext> {
+    if (!userId || !this.follows) {
+      return { userId, followingIds: new Set() };
+    }
+    const followRows = await this.follows.find({ where: { followerId: userId } });
+    return { userId, followingIds: new Set(followRows.map((follow) => follow.followingId)) };
   }
 }

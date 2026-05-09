@@ -8,7 +8,7 @@ type CommunityFeedSectionProps = {
 };
 
 function emptyMessage(tab: CommunityTab) {
-  if (tab === 'following') return '팔로잉 피드는 관계 기능 연결 후 표시됩니다.';
+  if (tab === 'following') return '팔로잉한 작성자의 공개 기록이 아직 없어요.';
   return '아직 공개 다이어리가 없어요.';
 }
 

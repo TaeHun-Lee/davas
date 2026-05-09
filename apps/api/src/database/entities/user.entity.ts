@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryG
 import { CommentEntity } from './comment.entity';
 import { DiaryEntity } from './diary.entity';
 import { MediaFavoriteEntity } from './media-favorite.entity';
+import { UserFollowEntity } from './user-follow.entity';
 
 @Entity({ name: 'users' })
 export class UserEntity {
@@ -34,6 +35,12 @@ export class UserEntity {
 
   @OneToMany(() => MediaFavoriteEntity, (favorite) => favorite.user)
   mediaFavorites?: MediaFavoriteEntity[];
+
+  @OneToMany(() => UserFollowEntity, (follow) => follow.follower)
+  following?: UserFollowEntity[];
+
+  @OneToMany(() => UserFollowEntity, (follow) => follow.following)
+  followers?: UserFollowEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

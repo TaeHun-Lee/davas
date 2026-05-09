@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AppShell } from '../layout/AppShell';
-import { getCommunityDiary } from '../../lib/api/community';
+import { followCommunityDiaryAuthor, getCommunityDiary, unfollowCommunityDiaryAuthor } from '../../lib/api/community';
 import type { CommunityDiaryDetail as CommunityDiaryDetailType } from './community-types';
 import { CommunityCommentsSection } from './CommunityCommentsSection';
 
@@ -24,6 +24,8 @@ export function CommunityDiaryDetail({ diaryId }: CommunityDiaryDetailProps) {
   const [diary, setDiary] = useState<CommunityDiaryDetailType | null>(null);
   const [status, setStatus] = useState<DetailStatus>('loading');
   const [showSpoilerContent, setShowSpoilerContent] = useState(false);
+  const [isFollowPending, setIsFollowPending] = useState(false);
+  const [followError, setFollowError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -45,6 +47,29 @@ export function CommunityDiaryDetail({ diaryId }: CommunityDiaryDetailProps) {
     };
   }, [diaryId]);
 
+  async function handleFollowToggle() {
+    if (!diary || diary.author.isMine || isFollowPending) return;
+    setIsFollowPending(true);
+    setFollowError(null);
+    try {
+      const result = diary.author.isFollowed ? await unfollowCommunityDiaryAuthor(diary.id) : await followCommunityDiaryAuthor(diary.id);
+      setDiary((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          author: {
+            ...current.author,
+            isFollowed: result.isFollowed,
+          },
+        };
+      });
+    } catch {
+      setFollowError('팔로우 상태를 변경하지 못했어요. 로그인 상태를 확인해주세요.');
+    } finally {
+      setIsFollowPending(false);
+    }
+  }
+
   return (
     <AppShell>
       <article className="overflow-x-hidden pb-8" data-design="community-diary-detail">
@@ -59,7 +84,19 @@ export function CommunityDiaryDetail({ diaryId }: CommunityDiaryDetailProps) {
             <div className="flex gap-4">
               <Poster diary={diary} />
               <div className="min-w-0 flex-1">
-                <p className="text-[12px] font-extrabold text-[#216bd8]">{diary.author.nickname}</p>
+                <div className="flex items-center gap-2">
+                  <p className="min-w-0 flex-1 truncate text-[12px] font-extrabold text-[#216bd8]">{diary.author.nickname}</p>
+                  {!diary.author.isMine ? (
+                    <button
+                      type="button"
+                      onClick={handleFollowToggle}
+                      disabled={isFollowPending}
+                      className={`h-8 rounded-full px-3 text-[11px] font-black transition ${diary.author.isFollowed ? 'bg-[#eef3fb] text-[#4c5b73]' : 'bg-[#216bd8] text-white shadow-[0_8px_18px_rgba(33,107,216,0.24)]'} disabled:opacity-60`}
+                    >
+                      {diary.author.isFollowed ? '팔로잉' : '팔로우'}
+                    </button>
+                  ) : null}
+                </div>
                 <h1 className="mt-2 text-[20px] font-black leading-[26px] tracking-[-0.03em] text-[#1f2a44]">{diary.media.title}</h1>
                 <p className="mt-1 text-[13px] font-bold text-[#66758c]">{diary.diaryTitle}</p>
                 <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-extrabold text-[#8a95a8]">
@@ -86,6 +123,7 @@ export function CommunityDiaryDetail({ diaryId }: CommunityDiaryDetailProps) {
             ) : (
               <p className="mt-5 whitespace-pre-wrap text-[14px] font-semibold leading-[22px] text-[#4b5870]">{diary.content}</p>
             )}
+            {followError ? <p className="mt-4 text-[12px] font-bold text-[#e85b6a]">{followError}</p> : null}
           </div>
           <CommunityCommentsSection diaryId={diary.id} />
           </>

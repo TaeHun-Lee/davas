@@ -11,6 +11,8 @@ export type CommunityDiaryCard = {
     id: string;
     nickname: string;
     profileImageUrl: string | null;
+    isFollowed: boolean;
+    isMine: boolean;
   };
   media: {
     id: string;

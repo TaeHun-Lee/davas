@@ -1,5 +1,5 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { CommentEntity, DiaryEntity, MediaEntity, MediaFavoriteEntity, MediaImageEntity, UserEntity } from './entities';
+import { CommentEntity, DiaryEntity, MediaEntity, MediaFavoriteEntity, MediaImageEntity, UserEntity, UserFollowEntity } from './entities';
 
 export function createTypeOrmOptions(): TypeOrmModuleOptions {
   return {
@@ -10,7 +10,7 @@ export function createTypeOrmOptions(): TypeOrmModuleOptions {
     username: process.env.DB_USERNAME ?? 'postgres',
     password: process.env.DB_PASSWORD ?? 'postgres',
     database: process.env.DB_DATABASE ?? 'davas',
-    entities: [UserEntity, MediaEntity, MediaImageEntity, MediaFavoriteEntity, DiaryEntity, CommentEntity],
+    entities: [UserEntity, UserFollowEntity, MediaEntity, MediaImageEntity, MediaFavoriteEntity, DiaryEntity, CommentEntity],
     synchronize: process.env.TYPEORM_SYNC === 'true',
     logging: process.env.TYPEORM_LOGGING === 'true',
   };

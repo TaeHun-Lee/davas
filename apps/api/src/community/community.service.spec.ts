@@ -131,4 +131,54 @@ describe('Community dashboard API', () => {
     assert.equal(detail.commentCount, 2);
     assert.ok(!('likeCount' in detail));
   });
+
+  it('builds the following tab from persisted follow relationships for the authenticated user', async () => {
+    const repository: FakeRepository = {
+      find: async () => [
+        makeDiary({ id: 'followed-author-diary', userId: 'author-followed', user: { id: 'author-followed', nickname: '팔로우작가', profileImageUrl: null } as UserEntity }),
+        makeDiary({ id: 'other-author-diary', userId: 'author-other', user: { id: 'author-other', nickname: '다른작가', profileImageUrl: null } as UserEntity }),
+      ],
+    };
+    const follows = {
+      find: async () => [{ followingId: 'author-followed' }],
+    };
+
+    const dashboard = await new CommunityService(repository as never, follows as never).getDashboard({ tab: 'following', userId: 'viewer-1' });
+
+    assert.deepEqual(dashboard.feed.map((item) => item.id), ['followed-author-diary']);
+    assert.equal(dashboard.feed[0]?.author.isFollowed, true);
+  });
+
+  it('follows and unfollows public diary authors without allowing self-follow', async () => {
+    const repository = {
+      find: async () => [],
+      findOne: async () => makeDiary({ userId: 'author-1', user: { id: 'author-1', nickname: '작성자', profileImageUrl: null } as UserEntity }),
+    };
+    const calls: Array<{ method: string; input: unknown }> = [];
+    const follows = {
+      find: async () => [],
+      findOne: async () => null,
+      create: (input: unknown) => {
+        calls.push({ method: 'create', input });
+        return input;
+      },
+      save: async (input: unknown) => {
+        calls.push({ method: 'save', input });
+        return input;
+      },
+      delete: async (input: unknown) => {
+        calls.push({ method: 'delete', input });
+        return { affected: 1 };
+      },
+    };
+    const service = new CommunityService(repository as never, follows as never);
+
+    const followed = await service.followDiaryAuthor('diary-1', 'viewer-1');
+    const unfollowed = await service.unfollowDiaryAuthor('diary-1', 'viewer-1');
+
+    assert.deepEqual(followed, { followingId: 'author-1', isFollowed: true });
+    assert.deepEqual(unfollowed, { followingId: 'author-1', isFollowed: false });
+    assert.deepEqual(calls.map((call) => call.method), ['create', 'save', 'delete']);
+    await assert.rejects(() => new CommunityService({ find: async () => [], findOne: async () => makeDiary({ userId: 'viewer-1' }) } as never, follows as never).followDiaryAuthor('mine', 'viewer-1'));
+  });
 });

@@ -67,7 +67,7 @@ describe('Davas community screen design', () => {
     for (const forbidden of ['라라랜드', '인터스텔라', '민트초코', '영화덕후', '우주여행자', '128', '201']) {
       assert.doesNotMatch(combinedCommunitySource, new RegExp(forbidden));
     }
-    assert.doesNotMatch(combinedCommunitySource, /likeCount|bookmark|팔로우|좋아요/);
+    assert.doesNotMatch(combinedCommunitySource, /likeCount|bookmark|좋아요/);
   });
 
   it('supports Slice 4 URL-addressable community search and tab state', () => {
@@ -127,5 +127,19 @@ describe('Davas community screen design', () => {
     assert.match(combinedCommunitySource, /수정/);
     assert.match(combinedCommunitySource, /삭제/);
     assert.doesNotMatch(combinedCommunitySource, /create comment endpoint contract ready/);
+  });
+
+  it('supports Phase 2 real following feed and author follow toggles', () => {
+    assert.match(apiSource, /export async function followCommunityDiaryAuthor/);
+    assert.match(apiSource, /export async function unfollowCommunityDiaryAuthor/);
+    assert.match(apiSource, /\/community\/diaries\/\$\{diaryId\}\/follow/);
+    assert.match(apiSource, /method: 'POST'/);
+    assert.match(apiSource, /method: 'DELETE'/);
+    assert.match(detailSource, /handleFollowToggle/);
+    assert.match(detailSource, /diary\.author\.isMine/);
+    assert.match(detailSource, /diary\.author\.isFollowed/);
+    assert.match(detailSource, /팔로우/);
+    assert.match(feedSource, /팔로잉한 작성자의 공개 기록이 아직 없어요/);
+    assert.doesNotMatch(feedSource, /관계 기능 연결 후 표시됩니다/);
   });
 });
