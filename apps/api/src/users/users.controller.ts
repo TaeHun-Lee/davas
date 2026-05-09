@@ -1,21 +1,40 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
+import { UpdateMeDto, UsersService, type ProfileImageFile } from './users.service';
+
+const ACCESS_TOKEN_COOKIE = 'davas_access_token';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
+  constructor(private readonly users: UsersService) {}
+
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return { id, message: 'user profile endpoint contract ready' };
+    return { id, message: 'public user profile endpoint is not implemented yet' };
   }
 
   @Patch('me')
-  updateMe(@Body() body: { nickname?: string; bio?: string; preferredGenres?: string[] }) {
-    return { message: 'update profile endpoint contract ready', profile: body };
+  async updateMe(@Req() request: Request, @Body() body: UpdateMeDto) {
+    return { user: await this.users.updateMe(this.readCookie(request, ACCESS_TOKEN_COOKIE), body) };
   }
 
   @Post('me/profile-image')
-  uploadProfileImage() {
-    return { message: 'profile image upload endpoint contract ready' };
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadProfileImage(@Req() request: Request, @UploadedFile() file?: ProfileImageFile) {
+    return { user: await this.users.saveProfileImage(this.readCookie(request, ACCESS_TOKEN_COOKIE), file) };
+  }
+
+  private readCookie(request: Request, name: string): string | undefined {
+    const cookieHeader = request.headers.cookie;
+    if (!cookieHeader) return undefined;
+
+    return cookieHeader
+      .split(';')
+      .map((part) => part.trim())
+      .map((part) => part.split('='))
+      .find(([key]) => key === name)?.[1];
   }
 }

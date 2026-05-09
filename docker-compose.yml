@@ -35,8 +35,11 @@ services:
       TYPEORM_LOGGING: "false"
       JWT_ACCESS_SECRET: replace-me-in-local-env
       TMDB_API_KEY: ${TMDB_API_KEY:-}
+      UPLOADS_DIR: /app/uploads
     ports:
       - "4000:4000"
+    volumes:
+      - davas-api-uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -60,3 +63,4 @@ services:
 
 volumes:
   davas-postgres-data:
+  davas-api-uploads:

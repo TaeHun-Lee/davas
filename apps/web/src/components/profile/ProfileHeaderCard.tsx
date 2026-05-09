@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { AuthenticatedUser } from '../../lib/api/auth';
 
 type ProfileHeaderCardProps = {
@@ -15,12 +16,13 @@ function ChevronIcon() {
 export function ProfileHeaderCard({ user }: ProfileHeaderCardProps) {
   const displayName = user.nickname || '필름메이트';
   const initial = displayName.slice(0, 1).toUpperCase();
+  const profileImageUrl = user.profileImageUrl;
 
   return (
     <section data-design="profile-hero-card" className="relative mt-1 pb-3">
-      <div className="flex items-center gap-5 pr-2">
+      <Link href="/profile/edit" aria-label="프로필 편집" className="flex items-center gap-5 pr-2">
         <div className="grid h-[86px] w-[86px] shrink-0 place-items-center overflow-hidden rounded-full bg-[linear-gradient(145deg,#dbe7f8,#f7f0e6)] text-[30px] font-black text-[#2e5c9f] shadow-[0_12px_24px_rgba(31,65,114,0.13)]">
-          {initial}
+          {profileImageUrl ? <img src={profileImageUrl} alt="" className="h-full w-full object-cover" /> : initial}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -28,12 +30,12 @@ export function ProfileHeaderCard({ user }: ProfileHeaderCardProps) {
             <span className="rounded-full bg-[#3a6fc6] px-2.5 py-0.5 text-[11px] font-extrabold text-white">Pro</span>
           </div>
           <p className="mt-2 max-w-[180px] text-[13px] font-semibold leading-[19px] text-[#7d8aa0]">
-            영화를 기록하고, 기억하고,
-            <br />나만의 아카이브로 남겨요.
+            {user.bio || '영화를 기록하고, 기억하고,'}
+            {!user.bio ? <><br />나만의 아카이브로 남겨요.</> : null}
           </p>
         </div>
         <ChevronIcon />
-      </div>
+      </Link>
     </section>
   );
 }

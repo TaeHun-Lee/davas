@@ -13,6 +13,20 @@ const profileStatsSource = source('../components/profile/ProfileStatsGrid.tsx');
 const profileActivitySource = source('../components/profile/ProfileActivitySection.tsx');
 const profileListsSource = source('../components/profile/ProfileListsSection.tsx');
 const profileSettingsSource = source('../components/profile/ProfileSettingsSection.tsx');
+const profileEditPageSource = source('./profile/edit/page.tsx');
+const profileAccountPageSource = source('./profile/account/page.tsx');
+const profileNotificationsPageSource = source('./profile/notifications/page.tsx');
+const profilePrivacyPageSource = source('./profile/privacy/page.tsx');
+const profileSupportPageSource = source('./profile/support/page.tsx');
+const profileAboutPageSource = source('./profile/about/page.tsx');
+const profileEditScreenSource = source('../components/profile/ProfileEditScreen.tsx');
+const profileImagePickerSource = source('../components/profile/ProfileImagePicker.tsx');
+const profileAccountScreenSource = source('../components/profile/ProfileAccountScreen.tsx');
+const profileNotificationsScreenSource = source('../components/profile/ProfileNotificationsScreen.tsx');
+const profilePrivacyScreenSource = source('../components/profile/ProfilePrivacyScreen.tsx');
+const profileSupportScreenSource = source('../components/profile/ProfileSupportScreen.tsx');
+const profileAboutScreenSource = source('../components/profile/ProfileAboutScreen.tsx');
+const usersApiSource = source('../lib/api/users.ts');
 const authApiSource = source('../lib/api/auth.ts');
 const diaryApiSource = source('../lib/api/diaries.ts');
 const placeholderSource = source('../components/layout/PlaceholderPage.tsx');
@@ -100,5 +114,47 @@ describe('Davas profile tab design', () => {
   it('limits placeholder pages to unfinished tabs and removes profile from the temporary route contract', () => {
     assert.match(placeholderSource, /임시 페이지/);
     assert.doesNotMatch(profilePageSource, /임시 페이지/);
+  });
+
+  it('wires the profile chevron and settings rows to real profile feature routes', () => {
+    assert.match(profileHeaderSource, /href="\/profile\/edit"/);
+    assert.match(profileHeaderSource, /aria-label="프로필 편집"/);
+    assert.match(profileHeaderSource, /profileImageUrl/);
+    assert.match(profileHeaderSource, /<img/);
+
+    for (const href of ['/profile/account', '/profile/notifications', '/profile/privacy', '/profile/support', '/profile/about']) {
+      assert.match(profileSettingsSource, new RegExp(`href\\s*[:=]\\s*\\{?['\"]${href}`));
+    }
+    assert.match(profileSettingsSource, /import Link from 'next\/link'/);
+    assert.doesNotMatch(profileSettingsSource, /<button[\s\S]*key=\{item\.label\}/);
+
+    assert.match(profileEditPageSource, /ProfileEditScreen/);
+    assert.match(profileAccountPageSource, /ProfileAccountScreen/);
+    assert.match(profileNotificationsPageSource, /ProfileNotificationsScreen/);
+    assert.match(profilePrivacyPageSource, /ProfilePrivacyScreen/);
+    assert.match(profileSupportPageSource, /ProfileSupportScreen/);
+    assert.match(profileAboutPageSource, /ProfileAboutScreen/);
+  });
+
+  it('implements profile editing, image upload, and concrete settings behavior', () => {
+    assert.match(profileEditScreenSource, /updateMe/);
+    assert.match(profileEditScreenSource, /uploadProfileImage/);
+    assert.match(profileEditScreenSource, /ProfileImagePicker/);
+    assert.match(profileImagePickerSource, /type="file"/);
+    assert.match(profileImagePickerSource, /accept="image\/\*"/);
+    assert.match(profileImagePickerSource, /URL\.createObjectURL/);
+    assert.match(usersApiSource, /\/users\/me/);
+    assert.match(usersApiSource, /\/users\/me\/profile-image/);
+    assert.match(usersApiSource, /FormData/);
+    assert.match(usersApiSource, /credentials: 'include'/);
+
+    assert.match(profileAccountScreenSource, /logout/);
+    assert.match(profileAccountScreenSource, /router\.replace\('\/login'\)/);
+    assert.match(profileNotificationsScreenSource, /localStorage/);
+    assert.match(profileNotificationsScreenSource, /davas\.notificationSettings/);
+    assert.match(profilePrivacyScreenSource, /localStorage/);
+    assert.match(profilePrivacyScreenSource, /davas\.privacySettings/);
+    assert.match(profileSupportScreenSource, /mailto:/);
+    assert.match(profileAboutScreenSource, /NEXT_PUBLIC_APP_VERSION/);
   });
 });
