@@ -86,15 +86,13 @@ describe('Davas profile tab design', () => {
     assert.match(profileSettingsSource, /rounded-\[20px\]/);
   });
 
-  it('wires profile section header actions to real diary navigation instead of inert buttons', () => {
-    assert.match(profileActivitySource, /import Link from 'next\/link'/);
-    assert.match(profileActivitySource, /href="\/diary"/);
-    assert.match(profileActivitySource, /aria-label="활동 전체 보기"/);
+  it('removes duplicate profile section header actions that only route back to the diary tab', () => {
+    assert.doesNotMatch(profileActivitySource, /import Link from 'next\/link'/);
+    assert.doesNotMatch(profileActivitySource, /더보기|활동 전체 보기|href="\/diary"/);
     assert.doesNotMatch(profileActivitySource, /<button[^>]*>더보기/);
 
-    assert.match(profileListsSource, /import Link from 'next\/link'/);
-    assert.match(profileListsSource, /href="\/diary"/);
-    assert.match(profileListsSource, /aria-label="나의 리스트 전체 보기"/);
+    assert.doesNotMatch(profileListsSource, /import Link from 'next\/link'/);
+    assert.doesNotMatch(profileListsSource, /전체 보기|전체보기|나의 리스트 전체 보기|href="\/diary"/);
     assert.doesNotMatch(profileListsSource, /<button[^>]*>전체 보기/);
   });
 

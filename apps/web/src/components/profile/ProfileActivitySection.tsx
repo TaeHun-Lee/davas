@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import type { ProfileView } from './ProfileDashboard';
 
 type ProfileActivitySectionProps = {
@@ -50,11 +49,8 @@ export function ProfileActivitySection({ activity }: ProfileActivitySectionProps
 
   return (
     <section className="mt-5" data-design="profile-activity-section">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3">
         <h2 className="text-[17px] font-black tracking-[-0.03em] text-[#284778]">활동</h2>
-        <Link href="/diary" aria-label="활동 전체 보기" className="text-[12px] font-extrabold text-[#8a96a9]">
-          더보기 ›
-        </Link>
       </div>
       <div className="card-surface grid grid-cols-4 divide-x divide-[#e7edf5] rounded-[20px] bg-white px-2 py-4 shadow-[0_12px_28px_rgba(31,65,114,0.08)]">
         {activityItems.map((item) => (
