@@ -43,9 +43,26 @@ function DavasLogoMark() {
   );
 }
 
-function ProfileAvatar({ user }: { user: AuthenticatedUser | null }) {
-  const displayName = user?.nickname || '필름메이트';
-  const profileImageUrl = normalizeProfileImageUrl(user?.profileImageUrl);
+function ProfileAvatarSkeleton() {
+  return (
+    <span
+      data-design="profile-avatar-skeleton"
+      className="relative h-9 w-9 overflow-hidden rounded-full bg-[#e7edf6] shadow-[0_6px_14px_rgba(31,65,114,0.09)] ring-2 ring-white"
+    />
+  );
+}
+
+function ProfileAvatar({ user }: { user: AuthenticatedUser | null | undefined }) {
+  if (user === undefined) {
+    return <ProfileAvatarSkeleton />;
+  }
+
+  if (user === null) {
+    return <ProfileAvatarSkeleton />;
+  }
+
+  const displayName = user.nickname || '필름메이트';
+  const profileImageUrl = normalizeProfileImageUrl(user.profileImageUrl);
 
   return (
     <span
@@ -64,7 +81,7 @@ function ProfileAvatar({ user }: { user: AuthenticatedUser | null }) {
 export function DavasHeader() {
   const [isElevated, setIsElevated] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [user, setUser] = useState<AuthenticatedUser | null>(null);
+  const [user, setUser] = useState<AuthenticatedUser | null | undefined>(undefined);
 
   useEffect(() => {
     const updateHeaderElevation = () => {

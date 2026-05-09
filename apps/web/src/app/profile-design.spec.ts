@@ -100,6 +100,14 @@ describe('Davas profile tab design', () => {
     assert.match(profileImagePickerSource, /DefaultProfileAvatar initial=\{displayName\}/);
   });
 
+  it('keeps the header avatar blank while the authenticated user is loading', () => {
+    assert.match(headerSource, /useState<AuthenticatedUser \| null \| undefined>\(undefined\)/);
+    assert.match(headerSource, /user:\s*AuthenticatedUser \| null \| undefined/);
+    assert.match(headerSource, /function ProfileAvatarSkeleton\(\)[\s\S]*data-design="profile-avatar-skeleton"/);
+    assert.match(headerSource, /if \(user === undefined\) \{\s*return <ProfileAvatarSkeleton \/>;\s*\}/);
+    assert.doesNotMatch(headerSource, /user\?\.nickname \|\| '필름메이트'/);
+  });
+
   it('uses the mobile visual treatment from the profile reference without horizontal overflow', () => {
     assert.match(profileDashboardSource, /overflow-x-hidden/);
     assert.match(profileDashboardSource, /pb-8/);
