@@ -95,6 +95,7 @@ export function buildHomeDashboardView(dashboard: DiaryDashboardView): HomeDashb
       { label: '최다 장르', value: dashboard.summary.topGenre?.name ?? '-', helper: '가장 많이 기록한 장르', kind: 'genre' },
     ],
     favorites: topRatedItems.map((item) => ({
+      mediaId: item.mediaId,
       title: item.mediaTitle,
       meta: getMediaMeta(item),
       rating: formatRating(item.rating),
@@ -111,6 +112,7 @@ export function buildHomeDashboardView(dashboard: DiaryDashboardView): HomeDashb
       currentMonthDays: calendar.currentMonthDays,
     },
     recentRecords: recentItems.slice(0, 5).map((item) => ({
+      diaryId: item.id,
       title: item.mediaTitle,
       desc: item.contentPreview || item.diaryTitle,
       date: item.watchedDate,

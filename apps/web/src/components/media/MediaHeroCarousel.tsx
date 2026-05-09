@@ -60,7 +60,7 @@ function HeroImage({ item }: { item: MediaHeroCarouselItem }) {
 
 function actionClass(kind: MediaHeroCarouselAction['kind']) {
   if (kind === 'primary') {
-    return 'archive-primary-action flex h-[34px] flex-[1.2] items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#2f7eea] px-3 text-[11px] font-extrabold text-white shadow-[0_9px_18px_rgba(47,126,234,0.28)]';
+    return 'archive-primary-action flex h-[34px] flex-[1.2] items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#2f7eea] px-3 text-[11px] font-extrabold leading-[34px] text-white shadow-[0_9px_18px_rgba(47,126,234,0.28)]';
   }
   return 'archive-secondary-action today-detail-button flex h-[36px] min-w-0 items-center justify-center whitespace-nowrap rounded-full border border-[#e8eef6] bg-white px-3 text-[11px] font-extrabold leading-[14px] text-[#536179] shadow-[0_5px_12px_rgba(31,65,114,0.05)]';
 }

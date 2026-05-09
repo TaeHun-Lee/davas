@@ -43,7 +43,8 @@ describe('Davas authenticated home design', () => {
     assert.match(dashboardSource, /FavoriteMoviesSection movies=\{view\.favorites\}/);
     assert.match(dashboardSource, /MonthlyWatchCalendarSection/);
     assert.match(dashboardSource, /RecentRecordsSection records=\{view\.recentRecords\}/);
-    assert.match(favoriteMoviesSource, /내가 가장 사랑한 영화/);
+    assert.match(favoriteMoviesSource, /내가 가장 사랑한 컨텐츠/);
+    assert.doesNotMatch(favoriteMoviesSource, /내가 가장 사랑한 영화/);
     assert.match(favoriteMoviesSource, /MediaPosterRowSection/);
     assert.match(monthlyCalendarSource, /이번 달 관람 기록/);
     assert.match(recentRecordsSource, /최근 기록/);
@@ -151,6 +152,25 @@ describe('Davas authenticated home design', () => {
     assert.doesNotMatch(archiveSectionSource, /ContinueWritingIcon/);
     assert.doesNotMatch(archiveSectionSource, /기록 이어쓰기/);
     assert.doesNotMatch(dashboardSource + archiveSectionSource + statsGridSource, /icon: '[▤▶★◈]'/);
+  });
+
+  it('wires home archive, favorites, and recent record actions to real routes and modals', () => {
+    assert.match(mediaHeroCarouselSource, /archive-primary-action/);
+    assert.match(mediaHeroCarouselSource, /leading-\[34px\]/);
+    assert.match(archiveSectionSource, /label: '수정하기'/);
+    assert.match(archiveSectionSource, /router\.push\(`\/diary\/\$\{item\.diaryId\}\/edit`\)/);
+    assert.match(archiveSectionSource, /label: '상세보기'/);
+    assert.match(archiveSectionSource, /getMediaDetail\(item\.mediaId\)/);
+    assert.match(archiveSectionSource, /MediaDetailModal/);
+    assert.match(dashboardSource, /mediaId: item\.mediaId/);
+    assert.match(favoriteMoviesSource, /getMediaDetail\(item\.mediaId\)/);
+    assert.match(favoriteMoviesSource, /MediaDetailModal/);
+    assert.doesNotMatch(favoriteMoviesSource, /actionLabel/);
+    assert.doesNotMatch(favoriteMoviesSource, /전체 보기/);
+    assert.match(recentRecordsSource, /router\.push\('\/diary'\)/);
+    assert.match(recentRecordsSource, /router\.push\(`\/diary\/\$\{record\.diaryId\}\/edit`\)/);
+    assert.match(dashboardSource, /diaryId: item\.id/);
+    assert.match(recentRecordsSource, /SectionTitle title="최근 기록"/);
   });
 
   it('matches the archive card visual treatment from the supplied design', () => {
