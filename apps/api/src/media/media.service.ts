@@ -1,9 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { DiaryEntity } from '../database/entities/diary.entity';
 import { MediaEntity } from '../database/entities/media.entity';
 import { MediaSearchQueryDto } from './dto/media-search-query.dto';
 import { TmdbClient } from './tmdb.client';
+
+export type MyMediaDiary = {
+  id: string;
+  rating: number;
+  title: string;
+  contentPreview: string;
+  watchedDate: string;
+  updatedAt: string;
+};
 
 export type MediaDetailResponse = {
   id: string;
@@ -30,7 +40,16 @@ export type MediaDetailResponse = {
   cast: string[];
   stillCuts: string[];
   certification: string | null;
+  myDiary: MyMediaDiary | null;
 };
+
+function formatWatchedDate(dateString: string) {
+  return dateString.split('-').join('.');
+}
+
+function buildContentPreview(content: string) {
+  return content.trim().slice(0, 120);
+}
 
 @Injectable()
 export class MediaService {
@@ -38,6 +57,8 @@ export class MediaService {
     private readonly tmdbClient: TmdbClient,
     @InjectRepository(MediaEntity)
     private readonly mediaRepository?: Repository<MediaEntity>,
+    @InjectRepository(DiaryEntity)
+    private readonly diaryRepository?: Repository<DiaryEntity>,
   ) {}
 
   async search(query: MediaSearchQueryDto) {
@@ -64,14 +85,16 @@ export class MediaService {
     return this.tmdbClient.personCredits({ personId, language });
   }
 
-  async findDetail(id: string): Promise<MediaDetailResponse> {
+  async findDetail(id: string, userId?: string): Promise<MediaDetailResponse> {
     const media = await this.mediaRepository?.findOne({ where: { id } });
     if (!media) {
       throw new NotFoundException('Media not found');
     }
 
+    const myDiary = await this.findMyDiary(id, userId);
+
     if (media.externalProvider !== 'TMDB') {
-      return this.fromCachedMedia(media);
+      return { ...this.fromCachedMedia(media), myDiary };
     }
 
     const detail = await this.tmdbClient.detail({
@@ -105,6 +128,30 @@ export class MediaService {
       cast: detail.cast,
       stillCuts: detail.stillCuts,
       certification: detail.certification,
+      myDiary,
+    };
+  }
+
+  private async findMyDiary(mediaId: string, userId?: string): Promise<MyMediaDiary | null> {
+    if (!userId || !this.diaryRepository) {
+      return null;
+    }
+
+    const diary = await this.diaryRepository.findOne({
+      where: { userId, mediaId },
+      order: { updatedAt: 'DESC', createdAt: 'DESC' },
+    });
+    if (!diary) {
+      return null;
+    }
+
+    return {
+      id: diary.id,
+      rating: Number(diary.rating),
+      title: diary.title,
+      contentPreview: buildContentPreview(diary.content),
+      watchedDate: formatWatchedDate(diary.watchedDate),
+      updatedAt: diary.updatedAt.toISOString(),
     };
   }
 
@@ -134,6 +181,7 @@ export class MediaService {
       cast: [],
       stillCuts: [],
       certification: null,
+      myDiary: null,
     };
   }
 }

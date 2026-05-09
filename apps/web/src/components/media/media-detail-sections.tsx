@@ -55,22 +55,31 @@ export function BasicInfoGrid({ media }: { media: MediaDetail }) {
   );
 }
 
-export function MyRatingCard({ currentRating = 0 }: { currentRating?: number } = {}) {
+export function MyRatingCard({ diary }: { diary?: MediaDetail['myDiary'] } = {}) {
+  const currentRating = diary?.rating ?? 0;
   return (
     <section className="rounded-[20px] bg-white p-4 shadow-[0_10px_24px_rgba(31,65,114,0.07)] ring-1 ring-[#edf2f8]">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-[15px] font-black leading-[20px] tracking-[-0.025em] text-[#1f4e82]">나의 별점</h3>
-        <button type="button" className="rounded-full bg-[#f7f9fc] px-3 py-1 text-[10px] font-extrabold text-[#647189] shadow-[0_4px_10px_rgba(31,65,114,0.06)]">별점 수정</button>
+        <button type="button" className="rounded-full bg-[#f7f9fc] px-3 py-1 text-[10px] font-extrabold text-[#647189] shadow-[0_4px_10px_rgba(31,65,114,0.06)]">{diary ? '다이어리 수정' : '별점 수정'}</button>
       </div>
       <div className="mt-3 flex items-center gap-1 text-[18px] leading-none">
         {Array.from({ length: 5 }).map((_, index) => (
           <span key={index} className={index < currentRating ? 'text-[#ff5a52]' : 'text-[#d6dce6]'}>★</span>
         ))}
-        <strong className="ml-2 text-[16px] font-black text-[#1f4e82]">{currentRating.toFixed(1)}</strong>
+        <strong className="ml-2 text-[16px] font-black text-[#1f4e82]">{diary ? diary.rating.toFixed(1) : currentRating.toFixed(1)}</strong>
       </div>
-      <div className="mt-3 rounded-[14px] bg-[#f6f8fc] p-3 text-[11px] font-bold leading-[16px] text-[#7a8596]">
-        ✎ 감상평을 남기면 나만의 다이어리에 기록할 수 있어요.
-      </div>
+      {diary ? (
+        <div className="mt-3 rounded-[14px] bg-[#f6f8fc] p-3 text-[11px] font-bold leading-[16px] text-[#5f6b7a]">
+          <p className="text-[12px] font-black text-[#1f4e82]">{diary.title}</p>
+          <p className="mt-1 text-[10px] font-extrabold text-[#8a94a6]">감상일 {diary.watchedDate}</p>
+          {diary.contentPreview ? <p className="mt-2 line-clamp-3">{diary.contentPreview}</p> : null}
+        </div>
+      ) : (
+        <div className="mt-3 rounded-[14px] bg-[#f6f8fc] p-3 text-[11px] font-bold leading-[16px] text-[#7a8596]">
+          ✎ 감상평을 남기면 나만의 다이어리에 기록할 수 있어요.
+        </div>
+      )}
     </section>
   );
 }

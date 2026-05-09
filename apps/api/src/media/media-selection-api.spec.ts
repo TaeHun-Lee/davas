@@ -17,7 +17,7 @@ describe('Media selection API contract', () => {
     assert.match(controllerSource, /MediaSelectionDto/);
     assert.match(controllerSource, /mediaSelectionService\.select/);
     assert.match(moduleSource, /MediaSelectionService/);
-    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[MediaEntity\]\)/);
+    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[MediaEntity, DiaryEntity\]\)/);
     assert.match(dtoSource, /externalProvider/);
     assert.match(dtoSource, /externalId/);
     assert.match(dtoSource, /mediaType/);

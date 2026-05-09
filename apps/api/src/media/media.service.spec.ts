@@ -86,6 +86,14 @@ function fakeRepository(media: Record<string, unknown> | null) {
   };
 }
 
+function fakeDiaryRepository(diary: Record<string, unknown> | null) {
+  return {
+    async findOne() {
+      return diary;
+    },
+  };
+}
+
 describe('MediaService detail', () => {
   it('hydrates a selected TMDB media row with detail-only fields from TMDB', async () => {
     const tmdbClient = new FakeTmdbClient();
@@ -115,6 +123,44 @@ describe('MediaService detail', () => {
     assert.equal(detail.certification, '15');
     assert.equal(detail.tmdbRating, 7.494);
     assert.deepEqual(tmdbClient.detailCalls, [{ externalId: '1124566', mediaType: 'MOVIE', language: 'ko-KR' }]);
+  });
+
+  it('includes the authenticated user diary for the selected media detail', async () => {
+    const tmdbClient = new FakeTmdbClient();
+    const service = new MediaService(tmdbClient as never, fakeRepository({
+      id: 'media-id',
+      externalProvider: 'TMDB',
+      externalId: '1124566',
+      mediaType: 'MOVIE',
+      title: '센티멘탈 밸류',
+      originalTitle: 'Affeksjonsverdi',
+      overview: '검색 시놉시스',
+      posterUrl: null,
+      backdropUrl: null,
+      releaseDate: '2026-02-18',
+      genres: ['18'],
+      country: null,
+      runtime: null,
+    }) as never, fakeDiaryRepository({
+      id: 'diary-id',
+      mediaId: 'media-id',
+      title: '극장에서 남긴 기록',
+      content: '배우들의 감정선이 오래 남았다.',
+      watchedDate: '2026-05-09',
+      rating: '4.5',
+      updatedAt: new Date('2026-05-09T10:00:00.000Z'),
+    }) as never);
+
+    const detail = await service.findDetail('media-id', 'user-id');
+
+    assert.deepEqual(detail.myDiary, {
+      id: 'diary-id',
+      rating: 4.5,
+      title: '극장에서 남긴 기록',
+      contentPreview: '배우들의 감정선이 오래 남았다.',
+      watchedDate: '2026.05.09',
+      updatedAt: '2026-05-09T10:00:00.000Z',
+    });
   });
 });
 

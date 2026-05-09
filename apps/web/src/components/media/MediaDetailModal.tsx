@@ -115,7 +115,7 @@ export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: 
 
         <div className="mt-5 grid gap-3 min-[390px]:grid-cols-2">
           <BasicInfoGrid media={media} />
-          <MyRatingCard />
+          <MyRatingCard diary={media.myDiary} />
         </div>
       </div>
     </div>

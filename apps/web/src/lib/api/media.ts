@@ -58,6 +58,14 @@ export type MediaDetail = Omit<SelectedMedia, 'genreIds'> & {
   cast: string[];
   stillCuts: string[];
   certification: string | null;
+  myDiary?: {
+    id: string;
+    rating: number;
+    title: string;
+    contentPreview: string;
+    watchedDate: string;
+    updatedAt: string;
+  } | null;
   genreIds?: number[];
 };
 
