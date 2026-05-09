@@ -76,7 +76,7 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryMonthlyCalendarSource, /onMonthSelect\?\.\(pickerYear, monthOption\)/);
     assert.match(diaryGenreRatioSource, /장르별 기록 비율/);
     assert.match(diaryGenreRatioSource, /flex flex-col/);
-    assert.match(diaryGenreRatioSource, /min-\[390px\]:max-h-\[/);
+    assert.match(diaryGenreRatioSource, /min-\[390px\]:max-h-\[430px\]/);
     assert.match(diaryGenreRatioSource, /min-h-0/);
     assert.match(diaryGenreRatioSource, /overflow-y-auto/);
     assert.match(diaryRecentListSource, /내가 작성한 다이어리/);
