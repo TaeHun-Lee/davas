@@ -7,6 +7,11 @@ export class CreateDiaryDto {
   @IsString()
   mediaId!: string;
 
+  @ApiPropertyOptional({ example: 'https://image.tmdb.org/t/p/w500/poster.jpg' })
+  @IsOptional()
+  @IsString()
+  mediaPosterUrl?: string | null;
+
   @ApiProperty({ example: '묵직한 여운이 남은 작품' })
   @IsString()
   @Length(1, 120)

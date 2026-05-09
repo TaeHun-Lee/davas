@@ -1,5 +1,6 @@
 export type CreateDiaryPayload = {
   mediaId: string;
+  mediaPosterUrl?: string | null;
   rating: number;
   watchedDate: string;
   title: string;

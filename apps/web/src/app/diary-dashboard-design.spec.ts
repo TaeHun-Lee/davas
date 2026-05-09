@@ -14,6 +14,7 @@ function optionalSource(path: string) {
 const diaryPageSource = source('./diary/page.tsx');
 const diaryDashboardSource = optionalSource('../components/diary/DiaryDashboard.tsx');
 const diaryApiSource = optionalSource('../lib/api/diaries.ts');
+const diaryComposeSource = optionalSource('../components/diary/DiaryComposeScreen.tsx');
 const diarySearchBarSource = optionalSource('../components/diary/DiarySearchBar.tsx');
 const diaryFilterTabsSource = optionalSource('../components/diary/DiaryFilterTabs.tsx');
 const diarySummarySectionSource = optionalSource('../components/diary/DiarySummarySection.tsx');
@@ -117,6 +118,15 @@ describe('Davas diary dashboard design', () => {
     assert.doesNotMatch(diaryListItemSource, /북마크/);
     assert.doesNotMatch(diaryListItemSource, /더보기/);
     assert.doesNotMatch(diaryListItemSource, /다이어리 수정/);
+  });
+
+
+
+  it('sends the selected media poster to the server and renders it as the recent diary thumbnail', () => {
+    assert.match(diaryApiSource, /mediaPosterUrl\?: string \| null/);
+    assert.match(diaryComposeSource, /mediaPosterUrl: selectedMedia\.posterUrl/);
+    assert.match(diaryListItemSource, /imageUrl=\{item\.posterUrl\}/);
+    assert.match(diaryListItemSource, /label=\{item\.posterUrl \? undefined : item\.mediaTitle\}/);
   });
 
   it('uses diary dashboard utilities for calendar state instead of inline date math', () => {

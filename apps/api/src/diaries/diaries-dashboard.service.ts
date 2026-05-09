@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DiaryEntity } from '../database/entities/diary.entity';
+import { MediaEntity } from '../database/entities/media.entity';
 import { CreateDiaryDto } from './dto/create-diary.dto';
 
 const DEFAULT_POSTER_GRADIENT = 'from-[#e9eef7] via-[#f6f8fc] to-[#dfe8f5]';
@@ -61,9 +62,13 @@ export class DiariesDashboardService {
   constructor(
     @InjectRepository(DiaryEntity)
     private readonly diaries: Repository<DiaryEntity>,
+    @InjectRepository(MediaEntity)
+    private readonly mediaRepository?: Repository<MediaEntity>,
   ) {}
 
   async createDiary(userId: string, dto: CreateDiaryDto) {
+    await this.saveRepresentativePoster(dto);
+
     const diary = this.diaries.create({
       userId,
       mediaId: dto.mediaId,
@@ -76,6 +81,20 @@ export class DiariesDashboardService {
     });
 
     return this.diaries.save(diary);
+  }
+
+  private async saveRepresentativePoster(dto: CreateDiaryDto) {
+    if (!dto.mediaPosterUrl || !this.mediaRepository) {
+      return;
+    }
+
+    const media = await this.mediaRepository.findOne({ where: { id: dto.mediaId } });
+    if (!media || media.posterUrl === dto.mediaPosterUrl) {
+      return;
+    }
+
+    media.posterUrl = dto.mediaPosterUrl;
+    await this.mediaRepository.save(media);
   }
 
   async getDashboard(userId: string) {

@@ -87,6 +87,7 @@ export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProp
     try {
       await createDiary({
         mediaId: selectedMedia.id,
+        mediaPosterUrl: selectedMedia.posterUrl,
         rating,
         watchedDate,
         title: effectiveTitle,

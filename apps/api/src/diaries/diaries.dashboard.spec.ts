@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 import { DiaryEntity } from '../database/entities/diary.entity';
+import { MediaEntity } from '../database/entities/media.entity';
 import { DiariesController } from './diaries.controller';
 import { DiariesDashboardService } from './diaries-dashboard.service';
 
@@ -24,6 +25,11 @@ type FakeRepository = {
   find: (options?: unknown) => Promise<DiaryEntity[]>;
   create?: (input: Partial<DiaryEntity>) => DiaryEntity;
   save?: (input: DiaryEntity) => Promise<DiaryEntity>;
+};
+
+type FakeMediaRepository = {
+  findOne: (options?: unknown) => Promise<MediaEntity | null>;
+  save: (input: MediaEntity) => Promise<MediaEntity>;
 };
 
 function makeDiary(overrides: Partial<DiaryEntity> = {}): DiaryEntity {
@@ -60,7 +66,7 @@ describe('Diaries dashboard API contract', () => {
   });
 
   it('loads the dashboard from persisted diary and media rows instead of mock fixtures', async () => {
-    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[DiaryEntity\]\)/);
+    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[DiaryEntity, MediaEntity\]\)/);
     assert.match(serviceSource, /@InjectRepository\(DiaryEntity\)/);
     assert.doesNotMatch(serviceSource, /mock-interstellar|mock-inception|mock-shawshank|const recentItems/);
 
@@ -165,4 +171,49 @@ describe('Diaries dashboard API contract', () => {
     assert.equal(result.diary.id, 'created-diary');
     assert.doesNotMatch(controllerSource, /create diary endpoint contract ready/);
   });
+
+  it('stores the selected media representative poster on the server before showing diary thumbnails', async () => {
+    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[DiaryEntity, MediaEntity\]\)/);
+    assert.match(serviceSource, /@InjectRepository\(MediaEntity\)/);
+    assert.match(serviceSource, /mediaPosterUrl/);
+    assert.match(serviceSource, /media\.posterUrl = dto\.mediaPosterUrl/);
+
+    const created = makeDiary({ id: 'created-diary', userId: 'user-9', mediaId: 'media-9' });
+    const media = {
+      id: 'media-9',
+      title: '괴물',
+      posterUrl: null,
+    } as MediaEntity;
+    let savedMedia: MediaEntity | undefined;
+    const repository: FakeRepository = {
+      find: async () => [],
+      create: () => created,
+      save: async (input) => input,
+    };
+    const mediaRepository: FakeMediaRepository = {
+      findOne: async (options) => {
+        assert.deepEqual(options, { where: { id: 'media-9' } });
+        return media;
+      },
+      save: async (input) => {
+        savedMedia = input;
+        return input;
+      },
+    };
+
+    await new DiariesDashboardService(repository as never, mediaRepository as never).createDiary('user-9', {
+      mediaId: 'media-9',
+      mediaPosterUrl: 'https://image.tmdb.org/t/p/w500/monster.jpg',
+      title: '괴물',
+      content: '',
+      watchedDate: '2026-05-08',
+      rating: 0,
+      visibility: 'PRIVATE',
+      hasSpoiler: false,
+      tags: [],
+    });
+
+    assert.equal(savedMedia?.posterUrl, 'https://image.tmdb.org/t/p/w500/monster.jpg');
+  });
+
 });
