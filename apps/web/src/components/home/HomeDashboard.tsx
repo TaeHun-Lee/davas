@@ -5,6 +5,7 @@ import { HomeStat, HomeStatsGrid } from './HomeStatsGrid';
 import { MonthlyWatchCalendarSection } from './MonthlyWatchCalendarSection';
 import { RecentRecord, RecentRecordsSection } from './RecentRecordsSection';
 import { AppShell } from '../layout/AppShell';
+import { SearchEntry } from '../common/SearchField';
 
 export type HomeDashboardView = {
   archiveHighlight: ArchiveHighlight;
@@ -31,26 +32,6 @@ type HomeDashboardProps = {
 };
 
 const DEFAULT_POSTER_GRADIENT = 'from-[#e9eef7] via-[#f6f8fc] to-[#dfe8f5]';
-
-function SearchIcon() {
-  return (
-    <svg width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <circle cx="8.8" cy="8.8" r="5.7" stroke="#216BD8" strokeWidth="2" />
-      <path d="m13.3 13.3 3.6 3.6" stroke="#216BD8" strokeWidth="2.2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function HomeSearchBar() {
-  return (
-    <div className="card-surface rounded-[18px] px-4 py-3">
-      <div className="flex items-center gap-3 text-[13px] font-semibold leading-[18px] text-[#9aa6b8]">
-        <SearchIcon />
-        <span>영화나 드라마를 검색해보세요</span>
-      </div>
-    </div>
-  );
-}
 
 function formatRating(rating: number) {
   return rating.toFixed(1);
@@ -141,7 +122,7 @@ export function buildHomeDashboardView(dashboard: DiaryDashboardView): HomeDashb
 export function HomeDashboard({ user, view }: HomeDashboardProps) {
   return (
     <AppShell nickname={user?.nickname}>
-      <HomeSearchBar />
+      <SearchEntry href="/explore" placeholder="영화나 드라마를 검색해보세요" ariaLabel="탐색에서 영화나 드라마 검색하기" className="text-[13px] font-semibold leading-[18px] text-[#9aa6b8]" />
       <ArchiveHighlightSection item={view.archiveHighlight} />
       <HomeStatsGrid stats={view.stats} />
       {view.favorites.length > 0 ? <FavoriteMoviesSection movies={view.favorites} /> : null}

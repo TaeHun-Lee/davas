@@ -264,7 +264,7 @@ describe('Davas explore screen design', () => {
 
   it('extracts reusable explore search and filter controls', () => {
     assert.match(exploreSearchBarSource, /export function ExploreSearchBar/);
-    assert.match(exploreSearchBarSource, /SearchIcon/);
+    assert.match(exploreSearchBarSource, /SearchField/);
     assert.match(exploreSearchBarSource, /영화, 드라마, 배우를 검색해보세요/);
     assert.match(exploreFilterChipsSource, /export function ExploreFilterChips/);
     assert.match(exploreFilterChipsSource, /explore-filter-row/);

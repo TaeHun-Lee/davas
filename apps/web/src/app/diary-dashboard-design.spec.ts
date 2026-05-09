@@ -74,7 +74,7 @@ describe('Davas diary dashboard design', () => {
   });
 
   it('keeps the diary search bar focused on text search without a right drawer icon', () => {
-    assert.match(diarySearchBarSource, /type="search"/);
+    assert.match(diarySearchBarSource, /SearchField/);
     assert.match(diarySearchBarSource, /다이어리 제목이나 영화 제목으로 검색해보세요/);
     assert.doesNotMatch(diarySearchBarSource, /다이어리 상세 필터/);
     assert.doesNotMatch(diarySearchBarSource, /☰/);
