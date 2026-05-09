@@ -2,6 +2,8 @@ import { BadRequestException, Injectable, NotFoundException, Optional } from '@n
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DiaryEntity } from '../database/entities/diary.entity';
+import { DiaryLikeEntity } from '../database/entities/diary-like.entity';
+import { UserEntity } from '../database/entities/user.entity';
 import { UserFollowEntity } from '../database/entities/user-follow.entity';
 import { resolveTmdbGenreLabel } from '../media/tmdb-genres';
 
@@ -38,6 +40,8 @@ export type CommunityDiaryCard = {
   contentPreview: string;
   rating: number;
   commentCount: number;
+  likeCount: number;
+  isLiked: boolean;
   hasSpoiler: boolean;
   createdAt: string;
 };
@@ -64,9 +68,32 @@ export type CommunityFollowResponse = {
   isFollowed: boolean;
 };
 
+export type CommunityLikeResponse = {
+  diaryId: string;
+  isLiked: boolean;
+};
+
+export type CommunityAuthorProfileResponse = {
+  author: {
+    id: string;
+    nickname: string;
+    profileImageUrl: string | null;
+    bio: string | null;
+    isFollowed: boolean;
+    isMine: boolean;
+  };
+  stats: {
+    publicDiaryCount: number;
+    followerCount: number;
+    followingCount: number;
+  };
+  feed: CommunityDiaryCard[];
+};
+
 type ViewerContext = {
   userId?: string;
   followingIds: Set<string>;
+  likedDiaryIds: Set<string>;
 };
 
 function normalizeTab(tab: CommunityTab | undefined): CommunityTab {
@@ -85,6 +112,10 @@ function getCommentCount(diary: DiaryEntity) {
   return Array.isArray(diary.comments) ? diary.comments.length : 0;
 }
 
+function getLikeCount(diary: DiaryEntity) {
+  return Array.isArray(diary.likes) ? diary.likes.length : 0;
+}
+
 function matchesQuery(diary: DiaryEntity, query: string) {
   const target = [diary.title, diary.content, diary.media?.title, diary.user?.nickname].filter(Boolean).join(' ').toLowerCase();
   return target.includes(query.toLowerCase());
@@ -99,7 +130,7 @@ function matchesTopic(diary: DiaryEntity, topic: string) {
   return (diary.media?.genres ?? []).some((genre) => resolveTmdbGenreLabel(genre) === topic);
 }
 
-function toCommunityDiaryCard(diary: DiaryEntity, viewer: ViewerContext = { followingIds: new Set() }): CommunityDiaryCard {
+function toCommunityDiaryCard(diary: DiaryEntity, viewer: ViewerContext = { followingIds: new Set(), likedDiaryIds: new Set() }): CommunityDiaryCard {
   const authorId = diary.userId ?? diary.user?.id;
   return {
     id: diary.id,
@@ -120,12 +151,14 @@ function toCommunityDiaryCard(diary: DiaryEntity, viewer: ViewerContext = { foll
     contentPreview: buildContentPreview(diary.content),
     rating: Number(diary.rating),
     commentCount: getCommentCount(diary),
+    likeCount: getLikeCount(diary),
+    isLiked: viewer.likedDiaryIds.has(diary.id) || Boolean(diary.likes?.some((like) => like.userId === viewer.userId)),
     hasSpoiler: diary.hasSpoiler,
     createdAt: diary.createdAt.toISOString(),
   };
 }
 
-function toCommunityDiaryDetail(diary: DiaryEntity, viewer: ViewerContext = { followingIds: new Set() }): CommunityDiaryDetail {
+function toCommunityDiaryDetail(diary: DiaryEntity, viewer: ViewerContext = { followingIds: new Set(), likedDiaryIds: new Set() }): CommunityDiaryDetail {
   const card = toCommunityDiaryCard(diary, viewer);
   return {
     ...card,
@@ -154,6 +187,8 @@ function buildTopics(diaries: DiaryEntity[]): CommunityTopic[] {
 }
 
 function sortByPopularity(a: DiaryEntity, b: DiaryEntity) {
+  const likeDiff = getLikeCount(b) - getLikeCount(a);
+  if (likeDiff !== 0) return likeDiff;
   const commentDiff = getCommentCount(b) - getCommentCount(a);
   if (commentDiff !== 0) return commentDiff;
   const ratingDiff = Number(b.rating) - Number(a.rating);
@@ -173,6 +208,12 @@ export class CommunityService {
     @Optional()
     @InjectRepository(UserFollowEntity)
     private readonly follows?: Repository<UserFollowEntity>,
+    @Optional()
+    @InjectRepository(DiaryLikeEntity)
+    private readonly likes?: Repository<DiaryLikeEntity>,
+    @Optional()
+    @InjectRepository(UserEntity)
+    private readonly users?: Repository<UserEntity>,
   ) {}
 
   async getDashboard(query: CommunityDashboardQuery = {}): Promise<CommunityDashboardResponse> {
@@ -182,7 +223,7 @@ export class CommunityService {
     const viewer = await this.buildViewerContext(query.userId);
     const publicDiaries = await this.diaries.find({
       where: { visibility: 'PUBLIC' },
-      relations: { media: true, user: true, comments: true },
+      relations: { media: true, user: true, comments: true, likes: true },
       order: { createdAt: 'DESC' },
       take: 100,
     });
@@ -206,6 +247,59 @@ export class CommunityService {
     const diary = await this.getPublicDiaryEntity(id);
     const viewer = await this.buildViewerContext(userId);
     return toCommunityDiaryDetail(diary, viewer);
+  }
+
+  async likeDiary(diaryId: string, userId: string): Promise<CommunityLikeResponse> {
+    await this.getPublicDiaryEntity(diaryId);
+    const existing = await this.likes?.findOne({ where: { userId, diaryId } });
+    if (!existing) {
+      await this.likes?.save(this.likes.create({ userId, diaryId }));
+    }
+    return { diaryId, isLiked: true };
+  }
+
+  async unlikeDiary(diaryId: string, userId: string): Promise<CommunityLikeResponse> {
+    await this.getPublicDiaryEntity(diaryId);
+    await this.likes?.delete({ userId, diaryId });
+    return { diaryId, isLiked: false };
+  }
+
+  async getAuthorProfile(authorId: string, userId?: string): Promise<CommunityAuthorProfileResponse> {
+    const viewer = await this.buildViewerContext(userId);
+    const [author, feed] = await Promise.all([
+      this.users?.findOne({ where: { id: authorId } }),
+      this.diaries.find({
+        where: { userId: authorId, visibility: 'PUBLIC' },
+        relations: { media: true, user: true, comments: true, likes: true },
+        order: { createdAt: 'DESC' },
+        take: 100,
+      }),
+    ]);
+    const profileAuthor = author ?? feed[0]?.user;
+    if (!profileAuthor) {
+      throw new NotFoundException('작성자를 찾을 수 없습니다.');
+    }
+    const [followerCount, followingCount] = await Promise.all([
+      this.follows?.count({ where: { followingId: authorId } }) ?? Promise.resolve(0),
+      this.follows?.count({ where: { followerId: authorId } }) ?? Promise.resolve(0),
+    ]);
+
+    return {
+      author: {
+        id: profileAuthor.id,
+        nickname: profileAuthor.nickname,
+        profileImageUrl: profileAuthor.profileImageUrl ?? null,
+        bio: profileAuthor.bio ?? null,
+        isFollowed: viewer.followingIds.has(authorId),
+        isMine: viewer.userId === authorId,
+      },
+      stats: {
+        publicDiaryCount: feed.length,
+        followerCount,
+        followingCount,
+      },
+      feed: feed.map((diary) => toCommunityDiaryCard(diary, viewer)),
+    };
   }
 
   async followDiaryAuthor(diaryId: string, userId: string): Promise<CommunityFollowResponse> {
@@ -236,7 +330,7 @@ export class CommunityService {
   private async getPublicDiaryEntity(id: string) {
     const diary = await this.diaries.findOne({
       where: { id, visibility: 'PUBLIC' },
-      relations: { media: true, user: true, comments: true },
+      relations: { media: true, user: true, comments: true, likes: true },
     });
     if (!diary) {
       throw new NotFoundException('공개 다이어리를 찾을 수 없습니다.');
@@ -246,9 +340,16 @@ export class CommunityService {
 
   private async buildViewerContext(userId?: string): Promise<ViewerContext> {
     if (!userId || !this.follows) {
-      return { userId, followingIds: new Set() };
+      return { userId, followingIds: new Set(), likedDiaryIds: new Set() };
     }
-    const followRows = await this.follows.find({ where: { followerId: userId } });
-    return { userId, followingIds: new Set(followRows.map((follow) => follow.followingId)) };
+    const [followRows, likeRows] = await Promise.all([
+      this.follows.find({ where: { followerId: userId } }),
+      this.likes?.find({ where: { userId } }) ?? Promise.resolve([]),
+    ]);
+    return {
+      userId,
+      followingIds: new Set(followRows.map((follow) => follow.followingId)),
+      likedDiaryIds: new Set(likeRows.map((like) => like.diaryId)),
+    };
   }
 }

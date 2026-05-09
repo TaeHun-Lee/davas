@@ -57,7 +57,7 @@ describe('Community dashboard API', () => {
 
     assert.deepEqual(findOptions, {
       where: { visibility: 'PUBLIC' },
-      relations: { media: true, user: true, comments: true },
+      relations: { media: true, user: true, comments: true, likes: true },
       order: { createdAt: 'DESC' },
       take: 100,
     });
@@ -82,7 +82,8 @@ describe('Community dashboard API', () => {
     const dashboard = await new CommunityService(repository as never).getDashboard({ q: '찾는' });
 
     assert.deepEqual(dashboard.feed.map((item) => item.id), ['match-media']);
-    assert.ok(dashboard.feed.every((item) => !('likeCount' in item)));
+    assert.equal(dashboard.feed[0]?.likeCount, 0);
+    assert.equal(dashboard.feed[0]?.isLiked, false);
     assert.ok(dashboard.feed.every((item) => !('bookmark' in item)));
   });
 
@@ -124,12 +125,13 @@ describe('Community dashboard API', () => {
 
     assert.deepEqual(findOneOptions, {
       where: { id: 'public-detail', visibility: 'PUBLIC' },
-      relations: { media: true, user: true, comments: true },
+      relations: { media: true, user: true, comments: true, likes: true },
     });
     assert.equal(detail.id, 'public-detail');
     assert.equal(detail.content, '공개 다이어리 전문입니다.');
     assert.equal(detail.commentCount, 2);
-    assert.ok(!('likeCount' in detail));
+    assert.equal(detail.likeCount, 0);
+    assert.equal(detail.isLiked, false);
   });
 
   it('builds the following tab from persisted follow relationships for the authenticated user', async () => {
@@ -180,5 +182,90 @@ describe('Community dashboard API', () => {
     assert.deepEqual(unfollowed, { followingId: 'author-1', isFollowed: false });
     assert.deepEqual(calls.map((call) => call.method), ['create', 'save', 'delete']);
     await assert.rejects(() => new CommunityService({ find: async () => [], findOne: async () => makeDiary({ userId: 'viewer-1' }) } as never, follows as never).followDiaryAuthor('mine', 'viewer-1'));
+  });
+
+  it('sorts popular community diaries by persisted likes and exposes viewer like state', async () => {
+    const repository: FakeRepository = {
+      find: async () => [
+        makeDiary({ id: 'comment-only', comments: [{ id: 'c1' }, { id: 'c2' }, { id: 'c3' }] as never, likes: [] as never }),
+        makeDiary({ id: 'liked-diary', comments: [] as never, likes: [{ userId: 'viewer-1' }, { userId: 'viewer-2' }] as never }),
+      ],
+    };
+    const likes = {
+      find: async () => [{ diaryId: 'liked-diary' }],
+      findOne: async () => null,
+      create: (input: unknown) => input,
+      save: async (input: unknown) => input,
+      delete: async () => ({ affected: 1 }),
+    };
+
+    const dashboard = await new CommunityService(repository as never, undefined, likes as never).getDashboard({ tab: 'popular', userId: 'viewer-1' });
+
+    assert.deepEqual(dashboard.feed.map((item) => item.id), ['liked-diary', 'comment-only']);
+    assert.equal(dashboard.feed[0]?.likeCount, 2);
+    assert.equal(dashboard.feed[0]?.isLiked, true);
+  });
+
+  it('likes and unlikes public community diaries for the authenticated viewer', async () => {
+    const repository = {
+      find: async () => [],
+      findOne: async () => makeDiary({ id: 'public-diary' }),
+    };
+    const calls: Array<{ method: string; input: unknown }> = [];
+    const likes = {
+      find: async () => [],
+      findOne: async () => null,
+      create: (input: unknown) => {
+        calls.push({ method: 'create', input });
+        return input;
+      },
+      save: async (input: unknown) => {
+        calls.push({ method: 'save', input });
+        return input;
+      },
+      delete: async (input: unknown) => {
+        calls.push({ method: 'delete', input });
+        return { affected: 1 };
+      },
+    };
+    const service = new CommunityService(repository as never, undefined, likes as never);
+
+    const liked = await service.likeDiary('public-diary', 'viewer-1');
+    const unliked = await service.unlikeDiary('public-diary', 'viewer-1');
+
+    assert.deepEqual(liked, { diaryId: 'public-diary', isLiked: true });
+    assert.deepEqual(unliked, { diaryId: 'public-diary', isLiked: false });
+    assert.deepEqual(calls.map((call) => call.method), ['create', 'save', 'delete']);
+  });
+
+  it('loads an author public profile with only that author public feed', async () => {
+    const repository: FakeRepository = {
+      find: async (options) => {
+        assert.deepEqual(options, {
+          where: { userId: 'author-1', visibility: 'PUBLIC' },
+          relations: { media: true, user: true, comments: true, likes: true },
+          order: { createdAt: 'DESC' },
+          take: 100,
+        });
+        return [makeDiary({ id: 'author-public', userId: 'author-1', user: { id: 'author-1', nickname: '공개작가', profileImageUrl: null, bio: '소개' } as UserEntity })];
+      },
+    };
+    const follows = {
+      find: async () => [{ followingId: 'author-1' }],
+      count: async (options: unknown) => (JSON.stringify(options).includes('followingId') ? 7 : 3),
+    };
+    const users = {
+      findOne: async () => ({ id: 'author-1', nickname: '공개작가', profileImageUrl: null, bio: '소개' }),
+    };
+
+    const profile = await new CommunityService(repository as never, follows as never, undefined, users as never).getAuthorProfile('author-1', 'viewer-1');
+
+    assert.equal(profile.author.nickname, '공개작가');
+    assert.equal(profile.author.bio, '소개');
+    assert.equal(profile.author.isFollowed, true);
+    assert.equal(profile.stats.publicDiaryCount, 1);
+    assert.equal(profile.stats.followerCount, 7);
+    assert.equal(profile.stats.followingCount, 3);
+    assert.deepEqual(profile.feed.map((item) => item.id), ['author-public']);
   });
 });

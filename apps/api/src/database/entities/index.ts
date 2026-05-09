@@ -1,4 +1,5 @@
 export * from './comment.entity';
+export * from './diary-like.entity';
 export * from './diary.entity';
 export * from './media-favorite.entity';
 export * from './media-image.entity';

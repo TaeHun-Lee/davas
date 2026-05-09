@@ -1,6 +1,7 @@
 import { DiaryVisibility } from '@davas/shared';
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { CommentEntity } from './comment.entity';
+import { DiaryLikeEntity } from './diary-like.entity';
 import { MediaEntity } from './media.entity';
 import { UserEntity } from './user.entity';
 
@@ -45,6 +46,9 @@ export class DiaryEntity {
 
   @OneToMany(() => CommentEntity, (comment) => comment.diary)
   comments!: CommentEntity[];
+
+  @OneToMany(() => DiaryLikeEntity, (like) => like.diary)
+  likes?: DiaryLikeEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

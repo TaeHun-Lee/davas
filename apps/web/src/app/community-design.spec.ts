@@ -25,8 +25,10 @@ const cardSource = optionalSource('../components/community/CommunityDiaryCard.ts
 const detailPageSource = optionalSource('./diary/[id]/page.tsx');
 const detailSource = optionalSource('../components/community/CommunityDiaryDetail.tsx');
 const commentsSource = optionalSource('../components/community/CommunityCommentsSection.tsx');
+const authorPageSource = optionalSource('./community/authors/[id]/page.tsx');
+const authorProfileSource = optionalSource('../components/community/CommunityAuthorProfile.tsx');
 
-const combinedCommunitySource = [dashboardSource, searchBarSource, tabsSource, topicsSource, popularSource, feedSource, apiSource, utilsSource, cardSource, detailPageSource, detailSource, commentsSource].join('\n');
+const combinedCommunitySource = [dashboardSource, searchBarSource, tabsSource, topicsSource, popularSource, feedSource, apiSource, utilsSource, cardSource, detailPageSource, detailSource, commentsSource, authorPageSource, authorProfileSource].join('\n');
 
 describe('Davas community screen design', () => {
   it('routes /community to the designed community dashboard instead of a placeholder', () => {
@@ -67,7 +69,7 @@ describe('Davas community screen design', () => {
     for (const forbidden of ['라라랜드', '인터스텔라', '민트초코', '영화덕후', '우주여행자', '128', '201']) {
       assert.doesNotMatch(combinedCommunitySource, new RegExp(forbidden));
     }
-    assert.doesNotMatch(combinedCommunitySource, /likeCount|bookmark|좋아요/);
+    assert.doesNotMatch(combinedCommunitySource, /bookmark/);
   });
 
   it('supports Slice 4 URL-addressable community search and tab state', () => {
@@ -141,5 +143,27 @@ describe('Davas community screen design', () => {
     assert.match(detailSource, /팔로우/);
     assert.match(feedSource, /팔로잉한 작성자의 공개 기록이 아직 없어요/);
     assert.doesNotMatch(feedSource, /관계 기능 연결 후 표시됩니다/);
+  });
+
+  it('supports Phase 2 community likes and public author profile feeds', () => {
+    assert.match(apiSource, /export async function likeCommunityDiary/);
+    assert.match(apiSource, /export async function unlikeCommunityDiary/);
+    assert.match(apiSource, /\/community\/diaries\/\$\{diaryId\}\/like/);
+    assert.match(apiSource, /export async function getCommunityAuthorProfile/);
+    assert.match(apiSource, /\/community\/authors\/\$\{authorId\}/);
+    assert.match(cardSource, /좋아요/);
+    assert.match(cardSource, /item\.likeCount/);
+    assert.match(detailSource, /handleLikeToggle/);
+    assert.match(detailSource, /diary\.isLiked/);
+    assert.match(detailSource, /likeCommunityDiary/);
+    assert.match(cardSource, /href=\{`\/community\/authors\/\$\{item\.author\.id\}`\}/);
+    assert.match(detailSource, /href=\{`\/community\/authors\/\$\{diary\.author\.id\}`\}/);
+    assert.match(authorPageSource, /CommunityAuthorProfile/);
+    assert.match(authorPageSource, /params\?: Promise<\{ id: string \}>/);
+    assert.match(authorProfileSource, /getCommunityAuthorProfile/);
+    assert.match(authorProfileSource, /작성자의 공개 기록/);
+    assert.match(authorProfileSource, /followerCount/);
+    assert.match(authorProfileSource, /publicDiaryCount/);
+    assert.doesNotMatch(authorProfileSource, /PlaceholderPage|mockAuthor|샘플 작성자/);
   });
 });

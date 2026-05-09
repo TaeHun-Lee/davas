@@ -1,4 +1,4 @@
-import type { CommunityCommentsResponse, CommunityComment, CommunityDashboardResponse, CommunityDiaryDetail, CommunityTab } from '../../components/community/community-types';
+import type { CommunityAuthorProfileResponse, CommunityCommentsResponse, CommunityComment, CommunityDashboardResponse, CommunityDiaryDetail, CommunityTab } from '../../components/community/community-types';
 
 function getApiBaseUrl() {
   if (typeof window === 'undefined') {
@@ -94,4 +94,27 @@ export async function unfollowCommunityDiaryAuthor(diaryId: string) {
     credentials: 'include',
   });
   return parseJsonResponse<{ followingId: string; isFollowed: boolean }>(response, 'unfollow community author failed');
+}
+
+export async function likeCommunityDiary(diaryId: string) {
+  const response = await fetch(`${getApiBaseUrl()}/community/diaries/${diaryId}/like`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  return parseJsonResponse<{ diaryId: string; isLiked: boolean }>(response, 'like community diary failed');
+}
+
+export async function unlikeCommunityDiary(diaryId: string) {
+  const response = await fetch(`${getApiBaseUrl()}/community/diaries/${diaryId}/like`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  return parseJsonResponse<{ diaryId: string; isLiked: boolean }>(response, 'unlike community diary failed');
+}
+
+export async function getCommunityAuthorProfile(authorId: string) {
+  const response = await fetch(`${getApiBaseUrl()}/community/authors/${authorId}`, {
+    credentials: 'include',
+  });
+  return parseJsonResponse<CommunityAuthorProfileResponse>(response, 'community author profile failed');
 }

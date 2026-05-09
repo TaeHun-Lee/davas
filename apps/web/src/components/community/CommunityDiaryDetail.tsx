@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AppShell } from '../layout/AppShell';
-import { followCommunityDiaryAuthor, getCommunityDiary, unfollowCommunityDiaryAuthor } from '../../lib/api/community';
+import { followCommunityDiaryAuthor, getCommunityDiary, likeCommunityDiary, unfollowCommunityDiaryAuthor, unlikeCommunityDiary } from '../../lib/api/community';
 import type { CommunityDiaryDetail as CommunityDiaryDetailType } from './community-types';
 import { CommunityCommentsSection } from './CommunityCommentsSection';
 
@@ -26,6 +26,8 @@ export function CommunityDiaryDetail({ diaryId }: CommunityDiaryDetailProps) {
   const [showSpoilerContent, setShowSpoilerContent] = useState(false);
   const [isFollowPending, setIsFollowPending] = useState(false);
   const [followError, setFollowError] = useState<string | null>(null);
+  const [isLikePending, setIsLikePending] = useState(false);
+  const [likeError, setLikeError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -70,6 +72,28 @@ export function CommunityDiaryDetail({ diaryId }: CommunityDiaryDetailProps) {
     }
   }
 
+  async function handleLikeToggle() {
+    if (!diary || isLikePending) return;
+    setIsLikePending(true);
+    setLikeError(null);
+    try {
+      const result = diary.isLiked ? await unlikeCommunityDiary(diary.id) : await likeCommunityDiary(diary.id);
+      setDiary((current) => {
+        if (!current) return current;
+        const delta = result.isLiked === current.isLiked ? 0 : result.isLiked ? 1 : -1;
+        return {
+          ...current,
+          isLiked: result.isLiked,
+          likeCount: Math.max(0, current.likeCount + delta),
+        };
+      });
+    } catch {
+      setLikeError('좋아요 상태를 변경하지 못했어요. 로그인 상태를 확인해주세요.');
+    } finally {
+      setIsLikePending(false);
+    }
+  }
+
   return (
     <AppShell>
       <article className="overflow-x-hidden pb-8" data-design="community-diary-detail">
@@ -85,7 +109,9 @@ export function CommunityDiaryDetail({ diaryId }: CommunityDiaryDetailProps) {
               <Poster diary={diary} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="min-w-0 flex-1 truncate text-[12px] font-extrabold text-[#216bd8]">{diary.author.nickname}</p>
+                  <Link href={`/community/authors/${diary.author.id}`} className="min-w-0 flex-1 truncate text-[12px] font-extrabold text-[#216bd8]">
+                    {diary.author.nickname}
+                  </Link>
                   {!diary.author.isMine ? (
                     <button
                       type="button"
@@ -103,6 +129,14 @@ export function CommunityDiaryDetail({ diaryId }: CommunityDiaryDetailProps) {
                   <span className="text-[#ff5a52]">★ {diary.rating.toFixed(1)}</span>
                   <span>{diary.watchedDate}</span>
                   <span>댓글 {diary.commentCount}</span>
+                  <button
+                    type="button"
+                    onClick={handleLikeToggle}
+                    disabled={isLikePending}
+                    className={`rounded-full px-2 py-0.5 font-black transition ${diary.isLiked ? 'bg-[#eef5ff] text-[#216bd8]' : 'bg-[#f4f6fb] text-[#7b8798]'} disabled:opacity-60`}
+                  >
+                    좋아요 {diary.likeCount}
+                  </button>
                 </div>
               </div>
             </div>
@@ -124,6 +158,7 @@ export function CommunityDiaryDetail({ diaryId }: CommunityDiaryDetailProps) {
               <p className="mt-5 whitespace-pre-wrap text-[14px] font-semibold leading-[22px] text-[#4b5870]">{diary.content}</p>
             )}
             {followError ? <p className="mt-4 text-[12px] font-bold text-[#e85b6a]">{followError}</p> : null}
+            {likeError ? <p className="mt-2 text-[12px] font-bold text-[#e85b6a]">{likeError}</p> : null}
           </div>
           <CommunityCommentsSection diaryId={diary.id} />
           </>

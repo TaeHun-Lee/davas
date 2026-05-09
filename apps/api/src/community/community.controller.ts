@@ -26,6 +26,24 @@ export class CommunityController {
     return this.communityService.getPublicDiary(id, viewer?.id);
   }
 
+  @Get('authors/:id')
+  async authorProfile(@Req() request: Request, @Param('id') id: string) {
+    const viewer = await this.resolveOptionalUser(request);
+    return this.communityService.getAuthorProfile(id, viewer?.id);
+  }
+
+  @Post('diaries/:id/like')
+  async likeDiary(@Req() request: Request, @Param('id') id: string) {
+    const viewer = await this.resolveRequiredUser(request);
+    return this.communityService.likeDiary(id, viewer.id);
+  }
+
+  @Delete('diaries/:id/like')
+  async unlikeDiary(@Req() request: Request, @Param('id') id: string) {
+    const viewer = await this.resolveRequiredUser(request);
+    return this.communityService.unlikeDiary(id, viewer.id);
+  }
+
   @Post('diaries/:id/follow')
   async followDiaryAuthor(@Req() request: Request, @Param('id') id: string) {
     const viewer = await this.resolveRequiredUser(request);
