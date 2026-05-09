@@ -69,6 +69,11 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryMonthlyCalendarSource, /aria-label="이전 달 보기"/);
     assert.match(diaryMonthlyCalendarSource, /aria-label="다음 달 보기"/);
     assert.match(diaryMonthlyCalendarSource, /aria-label="달력 전체 선택"/);
+    assert.match(diaryMonthlyCalendarSource, /flex-col/);
+    assert.match(diaryMonthlyCalendarSource, /aria-label="월 선택 팝업 열기"/);
+    assert.match(diaryMonthlyCalendarSource, /role="dialog"/);
+    assert.match(diaryMonthlyCalendarSource, /aria-label="월 선택 팝업"/);
+    assert.match(diaryMonthlyCalendarSource, /onMonthSelect\?\.\(pickerYear, monthOption\)/);
     assert.match(diaryGenreRatioSource, /장르별 기록 비율/);
     assert.match(diaryRecentListSource, /내가 작성한 다이어리/);
     assert.doesNotMatch(diaryRecentListSource, /최근 작성한 다이어리/);

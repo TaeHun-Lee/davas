@@ -10,6 +10,7 @@ type DiaryInsightGridProps = {
   genreRatios: DiaryGenreRatio[];
   onDaySelect?: (day: number) => void;
   onMonthChange?: (offset: -1 | 1) => void;
+  onMonthSelect?: (year: number, month: number) => void;
   onSelectAll?: () => void;
 };
 
@@ -21,6 +22,7 @@ export function DiaryInsightGrid({
   genreRatios,
   onDaySelect,
   onMonthChange,
+  onMonthSelect,
   onSelectAll,
 }: DiaryInsightGridProps) {
   return (
@@ -32,6 +34,7 @@ export function DiaryInsightGrid({
         markers={calendarMarkers}
         onDaySelect={onDaySelect}
         onMonthChange={onMonthChange}
+        onMonthSelect={onMonthSelect}
         onSelectAll={onSelectAll}
       />
       <DiaryGenreRatioCard items={genreRatios} />

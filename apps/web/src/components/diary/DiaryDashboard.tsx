@@ -148,6 +148,16 @@ export function DiaryDashboard() {
     });
   };
 
+  const handleCalendarMonthSelect = (nextYear: number, nextMonth: number) => {
+    setShowAllDiaries(false);
+    setCalendarYear(nextYear);
+    setCalendarMonth(nextMonth);
+    setSelectedCalendarDay(undefined);
+    router.replace(setDiaryDashboardQueryParam(searchParams, { q: query, year: nextYear, month: nextMonth }), {
+      scroll: false,
+    });
+  };
+
   const handleCalendarSelectAll = () => {
     setShowAllDiaries(false);
     setSelectedCalendarDay(undefined);
@@ -184,6 +194,7 @@ export function DiaryDashboard() {
           genreRatios={dashboard.genreRatios}
           onDaySelect={handleCalendarDaySelect}
           onMonthChange={handleCalendarMonthChange}
+          onMonthSelect={handleCalendarMonthSelect}
           onSelectAll={handleCalendarSelectAll}
         />
         {shouldShowMyDiarySection ? (
