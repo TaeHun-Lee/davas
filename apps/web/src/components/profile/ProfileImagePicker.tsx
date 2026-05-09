@@ -20,7 +20,7 @@ export function ProfileImagePicker({ imageUrl, displayName, onFileSelect }: Prof
 
   return (
     <label aria-label={`${displayName} 프로필 사진 선택`} className="mx-auto grid h-[108px] w-[108px] cursor-pointer place-items-center overflow-hidden rounded-full bg-[#f8d8c9] shadow-[0_16px_30px_rgba(31,65,114,0.16)]">
-      {visibleImageUrl ? <img src={visibleImageUrl} alt="" className="h-full w-full object-cover" /> : <DefaultProfileAvatar />}
+      {visibleImageUrl ? <img src={visibleImageUrl} alt="" className="h-full w-full object-cover" /> : <DefaultProfileAvatar initial={displayName} className="text-[34px]" />}
       <input
         type="file"
         accept="image/*"

@@ -89,15 +89,15 @@ describe('Davas profile tab design', () => {
     assert.doesNotMatch(profileDashboardSource, /receivedLikes:\s*126|following:\s*32/);
   });
 
-  it('uses the same default profile thumbnail in the header, profile hero, and profile edit picker', () => {
+  it('uses the same first-letter default profile thumbnail in the header, profile hero, and profile edit picker', () => {
     assert.match(defaultProfileAvatarSource, /export function DefaultProfileAvatar/);
-    assert.match(defaultProfileAvatarSource, /viewBox="0 0 80 80"/);
-    assert.match(headerSource, /DefaultProfileAvatar/);
+    assert.match(defaultProfileAvatarSource, /initial:\s*string/);
+    assert.match(defaultProfileAvatarSource, /\{initial\.slice\(0, 1\)\.toUpperCase\(\)\}/);
+    assert.doesNotMatch(defaultProfileAvatarSource, /<svg|viewBox="0 0 80 80"/);
+    assert.match(headerSource, /DefaultProfileAvatar initial=\{displayName\}/);
     assert.doesNotMatch(headerSource, /function FallbackAvatar/);
-    assert.match(profileHeaderSource, /DefaultProfileAvatar/);
-    assert.doesNotMatch(profileHeaderSource, /displayName\.slice\(0, 1\)\.toUpperCase\(\)/);
-    assert.match(profileImagePickerSource, /DefaultProfileAvatar/);
-    assert.doesNotMatch(profileImagePickerSource, /displayName\.slice\(0, 1\)\.toUpperCase\(\)/);
+    assert.match(profileHeaderSource, /DefaultProfileAvatar initial=\{displayName\}/);
+    assert.match(profileImagePickerSource, /DefaultProfileAvatar initial=\{displayName\}/);
   });
 
   it('uses the mobile visual treatment from the profile reference without horizontal overflow', () => {

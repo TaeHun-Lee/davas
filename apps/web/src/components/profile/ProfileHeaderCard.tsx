@@ -22,7 +22,7 @@ export function ProfileHeaderCard({ user }: ProfileHeaderCardProps) {
     <section data-design="profile-hero-card" className="relative mt-1 pb-3">
       <Link href="/profile/edit" aria-label="프로필 편집" className="flex items-center gap-5 pr-2">
         <div className="grid h-[86px] w-[86px] shrink-0 place-items-center overflow-hidden rounded-full bg-[#f8d8c9] shadow-[0_12px_24px_rgba(31,65,114,0.13)]">
-          {profileImageUrl ? <img src={profileImageUrl} alt="" className="h-full w-full object-cover" /> : <DefaultProfileAvatar />}
+          {profileImageUrl ? <img src={profileImageUrl} alt="" className="h-full w-full object-cover" /> : <DefaultProfileAvatar initial={displayName} className="text-[30px]" />}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">

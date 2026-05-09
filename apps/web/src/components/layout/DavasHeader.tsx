@@ -44,6 +44,7 @@ function DavasLogoMark() {
 }
 
 function ProfileAvatar({ user }: { user: AuthenticatedUser | null }) {
+  const displayName = user?.nickname || '필름메이트';
   const profileImageUrl = normalizeProfileImageUrl(user?.profileImageUrl);
 
   return (
@@ -54,7 +55,7 @@ function ProfileAvatar({ user }: { user: AuthenticatedUser | null }) {
       {profileImageUrl ? (
         <img src={profileImageUrl} alt="" className="h-full w-full object-cover" />
       ) : (
-        <DefaultProfileAvatar />
+        <DefaultProfileAvatar initial={displayName} className="text-[14px]" />
       )}
     </span>
   );
