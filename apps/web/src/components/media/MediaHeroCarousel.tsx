@@ -12,6 +12,8 @@ function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
 
 export type MediaHeroCarouselItem = {
   id: string;
+  diaryId?: string;
+  mediaId?: string;
   title: string;
   meta?: string;
   description?: string;

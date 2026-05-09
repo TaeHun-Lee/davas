@@ -130,19 +130,27 @@ describe('Davas authenticated home design', () => {
     }
   });
 
-  it('uses designed SVG icons for archive buttons and statistic cards', () => {
+  it('uses designed SVG icons for statistic cards while archive actions stay text-only and actionable', () => {
     assert.match(statsGridSource, /function StatIcon/);
     assert.match(archiveSectionSource, /MediaHeroCarousel/);
     assert.match(dashboardSource, /posterUrl: item\.posterUrl/);
+    assert.match(archiveSectionSource, /mediaId: item\.mediaId/);
+    assert.match(dashboardSource, /diaryId: latestItem\.id/);
+    assert.match(dashboardSource, /mediaId: latestItem\.mediaId/);
     assert.match(mediaHeroCarouselSource, /w-\[126px\]/);
     assert.match(mediaHeroCarouselSource, /h-\[154px\]/);
     assert.match(mediaHeroCarouselSource, /archive-action-row/);
     assert.match(statsGridSource, /NotebookIcon/);
     assert.match(statsGridSource, /CalendarWatchIcon/);
     assert.match(statsGridSource, /MasksIcon/);
-    assert.match(archiveSectionSource, /ContinueWritingIcon/);
+    assert.match(archiveSectionSource, /label: '수정하기'/);
+    assert.match(archiveSectionSource, /router\.push\(`\/diary\/\$\{item\.diaryId\}\/edit`\)/);
+    assert.match(archiveSectionSource, /label: '상세보기'/);
+    assert.match(archiveSectionSource, /getMediaDetail\(item\.mediaId\)/);
+    assert.match(archiveSectionSource, /MediaDetailModal/);
+    assert.doesNotMatch(archiveSectionSource, /ContinueWritingIcon/);
+    assert.doesNotMatch(archiveSectionSource, /기록 이어쓰기/);
     assert.doesNotMatch(dashboardSource + archiveSectionSource + statsGridSource, /icon: '[▤▶★◈]'/);
-    assert.doesNotMatch(archiveSectionSource, />▤ 기록 이어쓰기/);
   });
 
   it('matches the archive card visual treatment from the supplied design', () => {

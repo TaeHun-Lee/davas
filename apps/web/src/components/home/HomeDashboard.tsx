@@ -71,6 +71,8 @@ export function buildHomeDashboardView(dashboard: DiaryDashboardView): HomeDashb
   return {
     archiveHighlight: latestItem
       ? {
+          diaryId: latestItem.id,
+          mediaId: latestItem.mediaId,
           posterSrc: latestItem.posterUrl ?? null,
           posterAlt: `${latestItem.mediaTitle} 포스터`,
           eyebrow: '최근에 기록한 작품',

@@ -1,15 +1,14 @@
-import { MediaHeroCarousel, type MediaHeroCarouselItem } from '../media/MediaHeroCarousel';
+'use client';
 
-function ContinueWritingIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-      <path d="M4.2 2.8h8.1a2 2 0 0 1 2 2v10.4H5.1a2 2 0 0 1-2-2V3.8c0-.6.4-1 1.1-1Z" stroke="white" strokeWidth="1.7" />
-      <path d="M6.1 2.8v12.4M8.3 7h3.5M8.3 10.2h2.8" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { MediaHeroCarousel, type MediaHeroCarouselItem } from '../media/MediaHeroCarousel';
+import { MediaDetailModal } from '../media/MediaDetailModal';
+import { getMediaDetail, type MediaDetail } from '../../lib/api/media';
 
 export type ArchiveHighlight = {
+  diaryId?: string;
+  mediaId?: string;
   posterSrc?: string | null;
   posterAlt: string;
   eyebrow: string;
@@ -25,7 +24,9 @@ export type ArchiveHighlightSectionProps = {
 export function buildArchiveHeroItems(item: ArchiveHighlight): MediaHeroCarouselItem[] {
   return [
     {
-      id: item.title,
+      id: item.mediaId ?? item.diaryId ?? item.title,
+      diaryId: item.diaryId,
+      mediaId: item.mediaId,
       title: item.title,
       meta: item.meta,
       description: item.quote,
@@ -38,15 +39,29 @@ export function buildArchiveHeroItems(item: ArchiveHighlight): MediaHeroCarousel
 }
 
 export function ArchiveHighlightSection({ item }: ArchiveHighlightSectionProps) {
+  const router = useRouter();
+  const [selectedMedia, setSelectedMedia] = useState<MediaDetail | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  async function openDetail(item: MediaHeroCarouselItem) {
+    if (!item.mediaId) return;
+    const mediaDetail = await getMediaDetail(item.mediaId);
+    setSelectedMedia(mediaDetail);
+    setIsDetailOpen(true);
+  }
+
   return (
-    <MediaHeroCarousel
-      cardLabel={<><span className="text-[#236fd7]">✣</span> For Your Archive</>}
-      items={buildArchiveHeroItems(item)}
-      className="mt-4 bg-[linear-gradient(145deg,#ffffff_0%,#f7fbff_48%,#eef6ff_100%)] px-4 pb-3 pt-4 ring-[#eaf0f8] max-[374px]:px-3.5"
-      actions={() => [
-        { label: '기록 이어쓰기', kind: 'primary', icon: <ContinueWritingIcon /> },
-        { label: '상세 보기 ›', kind: 'secondary' },
-      ]}
-    />
+    <>
+      <MediaHeroCarousel
+        cardLabel={<><span className="text-[#236fd7]">✣</span> For Your Archive</>}
+        items={buildArchiveHeroItems(item)}
+        className="mt-4 bg-[linear-gradient(145deg,#ffffff_0%,#f7fbff_48%,#eef6ff_100%)] px-4 pb-3 pt-4 ring-[#eaf0f8] max-[374px]:px-3.5"
+        actions={(item) => [
+          ...(item.diaryId ? [{ label: '수정하기', kind: 'primary' as const, onClick: () => router.push(`/diary/${item.diaryId}/edit`) }] : []),
+          ...(item.mediaId ? [{ label: '상세보기', kind: 'secondary' as const, onClick: () => void openDetail(item) }] : []),
+        ]}
+      />
+      <MediaDetailModal media={selectedMedia} isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} returnTo="/" />
+    </>
   );
 }
