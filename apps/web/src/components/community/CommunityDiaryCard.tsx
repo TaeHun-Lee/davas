@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { normalizeProfileImageUrl } from '../../lib/api/auth';
 import type { CommunityDiaryCard as CommunityDiaryCardType } from './community-types';
 
 type CommunityDiaryCardProps = {
@@ -14,8 +15,9 @@ function Poster({ title, posterUrl, className }: { title: string; posterUrl: str
 }
 
 function Avatar({ nickname, imageUrl }: { nickname: string; imageUrl: string | null }) {
-  if (imageUrl) {
-    return <img src={imageUrl} alt="" className="h-6 w-6 rounded-full object-cover" />;
+  const profileImageUrl = normalizeProfileImageUrl(imageUrl);
+  if (profileImageUrl) {
+    return <img src={profileImageUrl} alt="" className="h-6 w-6 rounded-full object-cover" />;
   }
   return (
     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#eaf1ff] text-[10px] font-black text-[#216bd8]" aria-hidden="true">

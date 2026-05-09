@@ -92,6 +92,7 @@ describe('Davas community screen design', () => {
     assert.match(popularSource, /href="\/community\?tab=popular"/);
     assert.doesNotMatch(popularSource, /<span className="text-\[12px\] font-extrabold text-\[#216bd8\]">전체 보기/);
     assert.match(cardSource, /import Link from 'next\/link'/);
+    assert.match(cardSource, /normalizeProfileImageUrl/);
     assert.match(cardSource, /href=\{`\/diary\/\$\{item\.id\}`\}/);
     assert.doesNotMatch(cardSource, /\/edit/);
     assert.match(detailPageSource, /CommunityDiaryDetail/);
