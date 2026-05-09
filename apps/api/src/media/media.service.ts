@@ -42,6 +42,8 @@ export type MediaDetailResponse = {
   stillCuts: string[];
   certification: string | null;
   myDiary: MyMediaDiary | null;
+  myDiaries: MyMediaDiary[];
+  myAverageRating: number | null;
   isFavorite: boolean;
 };
 
@@ -100,11 +102,13 @@ export class MediaService {
       throw new NotFoundException('Media not found');
     }
 
-    const myDiary = await this.findMyDiary(id, userId);
+    const myDiaries = await this.findMyDiaries(id, userId);
+    const myDiary = myDiaries[0] ?? null;
+    const myAverageRating = this.calculateAverageRating(myDiaries);
     const isFavorite = await this.isFavorite(id, userId);
 
     if (media.externalProvider !== 'TMDB') {
-      return { ...this.fromCachedMedia(media), myDiary, isFavorite };
+      return { ...this.fromCachedMedia(media), myDiary, myDiaries, myAverageRating, isFavorite };
     }
 
     const detail = await this.tmdbClient.detail({
@@ -139,6 +143,8 @@ export class MediaService {
       stillCuts: detail.stillCuts,
       certification: detail.certification,
       myDiary,
+      myDiaries,
+      myAverageRating,
       isFavorite,
     };
   }
@@ -169,27 +175,34 @@ export class MediaService {
     return Boolean(await this.favoriteRepository.findOne({ where: { userId, mediaId } }));
   }
 
-  private async findMyDiary(mediaId: string, userId?: string): Promise<MyMediaDiary | null> {
+  private async findMyDiaries(mediaId: string, userId?: string): Promise<MyMediaDiary[]> {
     if (!userId || !this.diaryRepository) {
-      return null;
+      return [];
     }
 
-    const diary = await this.diaryRepository.findOne({
+    const options = {
       where: { userId, mediaId },
       order: { updatedAt: 'DESC', createdAt: 'DESC' },
-    });
-    if (!diary) {
-      return null;
-    }
+    } as const;
+    const repository = this.diaryRepository as Repository<DiaryEntity> & { find?: Repository<DiaryEntity>['find'] };
+    const diaries = repository.find ? await repository.find(options) : [];
 
-    return {
+    return diaries.map((diary) => ({
       id: diary.id,
       rating: Number(diary.rating),
       title: diary.title,
       contentPreview: buildContentPreview(diary.content),
       watchedDate: formatWatchedDate(diary.watchedDate),
       updatedAt: diary.updatedAt.toISOString(),
-    };
+    }));
+  }
+
+  private calculateAverageRating(diaries: MyMediaDiary[]) {
+    if (diaries.length === 0) {
+      return null;
+    }
+    const total = diaries.reduce((sum, diary) => sum + diary.rating, 0);
+    return Math.round((total / diaries.length) * 10) / 10;
   }
 
   private fromCachedMedia(media: MediaEntity): MediaDetailResponse {
@@ -219,6 +232,8 @@ export class MediaService {
       stillCuts: [],
       certification: null,
       myDiary: null,
+      myDiaries: [],
+      myAverageRating: null,
       isFavorite: false,
     };
   }

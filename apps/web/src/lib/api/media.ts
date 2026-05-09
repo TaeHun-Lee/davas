@@ -44,6 +44,15 @@ export type SelectedMedia = MediaSearchResult & {
   genres?: string[];
 };
 
+export type MyMediaDiary = {
+  id: string;
+  rating: number;
+  title: string;
+  contentPreview: string;
+  watchedDate: string;
+  updatedAt: string;
+};
+
 export type MediaDetail = Omit<SelectedMedia, 'genreIds'> & {
   tagline: string | null;
   runtime: number | null;
@@ -58,14 +67,9 @@ export type MediaDetail = Omit<SelectedMedia, 'genreIds'> & {
   cast: string[];
   stillCuts: string[];
   certification: string | null;
-  myDiary?: {
-    id: string;
-    rating: number;
-    title: string;
-    contentPreview: string;
-    watchedDate: string;
-    updatedAt: string;
-  } | null;
+  myDiary?: MyMediaDiary | null;
+  myDiaries?: MyMediaDiary[];
+  myAverageRating?: number | null;
   isFavorite?: boolean;
   genreIds?: number[];
 };

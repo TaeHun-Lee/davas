@@ -91,6 +91,20 @@ function fakeDiaryRepository(diary: Record<string, unknown> | null) {
     async findOne() {
       return diary;
     },
+    async find() {
+      return diary ? [diary] : [];
+    },
+  };
+}
+
+function fakeDiariesRepository(diaries: Array<Record<string, unknown>>) {
+  const calls: unknown[] = [];
+  return {
+    calls,
+    async find(input?: unknown) {
+      calls.push(input);
+      return diaries;
+    },
   };
 }
 
@@ -186,6 +200,68 @@ describe('MediaService detail', () => {
       watchedDate: '2026.05.09',
       updatedAt: '2026-05-09T10:00:00.000Z',
     });
+  });
+
+  it('includes all authenticated user diaries and their average rating for the selected media detail', async () => {
+    const tmdbClient = new FakeTmdbClient();
+    const diaries = fakeDiariesRepository([
+      {
+        id: 'newer-diary-id',
+        mediaId: 'media-id',
+        title: '두 번째 기록',
+        content: '다시 보니 장면의 결이 달랐다.',
+        watchedDate: '2026-05-10',
+        rating: '3.5',
+        updatedAt: new Date('2026-05-10T10:00:00.000Z'),
+      },
+      {
+        id: 'older-diary-id',
+        mediaId: 'media-id',
+        title: '첫 번째 기록',
+        content: '처음 본 감상이 오래 남았다.',
+        watchedDate: '2026-05-09',
+        rating: '4.5',
+        updatedAt: new Date('2026-05-09T10:00:00.000Z'),
+      },
+    ]);
+    const service = new MediaService(tmdbClient as never, fakeRepository({
+      id: 'media-id',
+      externalProvider: 'TMDB',
+      externalId: '1124566',
+      mediaType: 'MOVIE',
+      title: '센티멘탈 밸류',
+      originalTitle: 'Affeksjonsverdi',
+      overview: '검색 시놉시스',
+      posterUrl: null,
+      backdropUrl: null,
+      releaseDate: '2026-02-18',
+      genres: ['18'],
+      country: null,
+      runtime: null,
+    }) as never, diaries as never);
+
+    const detail = await service.findDetail('media-id', 'user-id');
+
+    assert.deepEqual(diaries.calls[0], { where: { userId: 'user-id', mediaId: 'media-id' }, order: { updatedAt: 'DESC', createdAt: 'DESC' } });
+    assert.equal(detail.myAverageRating, 4);
+    assert.deepEqual(detail.myDiaries, [
+      {
+        id: 'newer-diary-id',
+        rating: 3.5,
+        title: '두 번째 기록',
+        contentPreview: '다시 보니 장면의 결이 달랐다.',
+        watchedDate: '2026.05.10',
+        updatedAt: '2026-05-10T10:00:00.000Z',
+      },
+      {
+        id: 'older-diary-id',
+        rating: 4.5,
+        title: '첫 번째 기록',
+        contentPreview: '처음 본 감상이 오래 남았다.',
+        watchedDate: '2026.05.09',
+        updatedAt: '2026-05-09T10:00:00.000Z',
+      },
+    ]);
   });
 
   it('includes the authenticated favorite state for the selected media detail', async () => {

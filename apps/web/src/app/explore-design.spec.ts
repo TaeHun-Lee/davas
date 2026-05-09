@@ -208,9 +208,13 @@ describe('Davas explore screen design', () => {
     assert.match(mediaDetailSectionsSource, /스틸 컷/);
     assert.match(mediaDetailSectionsSource, /기본 정보/);
     assert.match(mediaDetailSectionsSource, /나의 별점/);
-    assert.match(mediaApiSource, /myDiary\?:/);
-    assert.match(mediaDetailModalSource, /<MyRatingCard diary=\{media\.myDiary\}/);
-    assert.match(mediaDetailSectionsSource, /diary\.rating\.toFixed\(1\)/);
+    assert.match(mediaApiSource, /myDiaries\?:/);
+    assert.match(mediaApiSource, /myAverageRating\?:/);
+    assert.match(mediaDetailModalSource, /<MyRatingCard diaries=\{media\.myDiaries/);
+    assert.match(mediaDetailModalSource, /averageRating=\{media\.myAverageRating/);
+    assert.match(mediaDetailSectionsSource, /diaries\.map\(\(diary\)/);
+    assert.match(mediaDetailSectionsSource, /href=\{`\/diary\/\$\{diary\.id\}\/edit`\}/);
+    assert.match(mediaDetailSectionsSource, /평균 별점/);
     assert.match(mediaDetailSectionsSource, /diary\.contentPreview/);
     assert.doesNotMatch(mediaDetailSectionsSource, /export function MyRatingCard\(\{ currentRating = 0 \}/);
     assert.match(mediaDetailModalSource, /bg-\[#ff5a52\]/);
@@ -275,7 +279,7 @@ describe('Davas explore screen design', () => {
     assert.match(mediaDetailSectionsSource, /showChevron = false/);
     assert.doesNotMatch(mediaDetailSectionsSource, /<span className="text-\[#ff5a52\]">★<\/span><span className="text-\[#ff5a52\]">★/);
     assert.match(mediaDetailSectionsSource, /Array\.from\(\{ length: 5 \}/);
-    assert.match(mediaDetailSectionsSource, /const currentRating = diary\?\.rating \?\? 0/);
+    assert.match(mediaDetailSectionsSource, /const currentRating = averageRating \?\? 0/);
   });
 
   it('extracts reusable explore search and filter controls', () => {
