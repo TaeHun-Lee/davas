@@ -8,6 +8,8 @@ function source(path: string) {
 
 const profilePageSource = source('./profile/page.tsx');
 const profileDashboardSource = source('../components/profile/ProfileDashboard.tsx');
+const headerSource = source('../components/layout/DavasHeader.tsx');
+const defaultProfileAvatarSource = source('../components/profile/DefaultProfileAvatar.tsx');
 const profileHeaderSource = source('../components/profile/ProfileHeaderCard.tsx');
 const profileStatsSource = source('../components/profile/ProfileStatsGrid.tsx');
 const profileActivitySource = source('../components/profile/ProfileActivitySection.tsx');
@@ -56,7 +58,7 @@ describe('Davas profile tab design', () => {
     assert.match(profileDashboardSource, /프로필/);
     assert.match(profileHeaderSource, /data-design="profile-hero-card"/);
     assert.match(profileHeaderSource, /필름메이트/);
-    assert.match(profileHeaderSource, /Pro/);
+    assert.doesNotMatch(profileHeaderSource, />Pro<|\bPro\b/);
     assert.match(profileHeaderSource, /영화를 기록하고, 기억하고/);
     assert.match(profileDashboardSource, /기록한 영화/);
     assert.match(profileDashboardSource, /작성한 다이어리/);
@@ -85,6 +87,17 @@ describe('Davas profile tab design', () => {
     assert.match(profileStatsSource, /stat\.value \?\? stat\.unavailableLabel/);
     assert.match(profileActivitySource, /item\.value \?\? item\.unavailableLabel/);
     assert.doesNotMatch(profileDashboardSource, /receivedLikes:\s*126|following:\s*32/);
+  });
+
+  it('uses the same default profile thumbnail in the header, profile hero, and profile edit picker', () => {
+    assert.match(defaultProfileAvatarSource, /export function DefaultProfileAvatar/);
+    assert.match(defaultProfileAvatarSource, /viewBox="0 0 80 80"/);
+    assert.match(headerSource, /DefaultProfileAvatar/);
+    assert.doesNotMatch(headerSource, /function FallbackAvatar/);
+    assert.match(profileHeaderSource, /DefaultProfileAvatar/);
+    assert.doesNotMatch(profileHeaderSource, /displayName\.slice\(0, 1\)\.toUpperCase\(\)/);
+    assert.match(profileImagePickerSource, /DefaultProfileAvatar/);
+    assert.doesNotMatch(profileImagePickerSource, /displayName\.slice\(0, 1\)\.toUpperCase\(\)/);
   });
 
   it('uses the mobile visual treatment from the profile reference without horizontal overflow', () => {

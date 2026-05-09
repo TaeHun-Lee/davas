@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { normalizeProfileImageUrl } from '../../lib/api/auth';
+import { DefaultProfileAvatar } from './DefaultProfileAvatar';
 
 type ProfileImagePickerProps = {
   imageUrl?: string | null;
@@ -18,8 +19,8 @@ export function ProfileImagePicker({ imageUrl, displayName, onFileSelect }: Prof
   }, [previewUrl]);
 
   return (
-    <label className="mx-auto grid h-[108px] w-[108px] cursor-pointer place-items-center overflow-hidden rounded-full bg-[linear-gradient(145deg,#dbe7f8,#f7f0e6)] text-[34px] font-black text-[#2e5c9f] shadow-[0_16px_30px_rgba(31,65,114,0.16)]">
-      {visibleImageUrl ? <img src={visibleImageUrl} alt="" className="h-full w-full object-cover" /> : displayName.slice(0, 1).toUpperCase()}
+    <label aria-label={`${displayName} 프로필 사진 선택`} className="mx-auto grid h-[108px] w-[108px] cursor-pointer place-items-center overflow-hidden rounded-full bg-[#f8d8c9] shadow-[0_16px_30px_rgba(31,65,114,0.16)]">
+      {visibleImageUrl ? <img src={visibleImageUrl} alt="" className="h-full w-full object-cover" /> : <DefaultProfileAvatar />}
       <input
         type="file"
         accept="image/*"
