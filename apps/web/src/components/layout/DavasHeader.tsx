@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getMe, normalizeProfileImageUrl, type AuthenticatedUser } from '../../lib/api/auth';
+import { getMe, logout, normalizeProfileImageUrl, type AuthenticatedUser } from '../../lib/api/auth';
 import { DefaultProfileAvatar } from '../profile/DefaultProfileAvatar';
 
 const drawerItems = [
@@ -79,6 +80,7 @@ function ProfileAvatar({ user }: { user: AuthenticatedUser | null | undefined })
 }
 
 export function DavasHeader() {
+  const router = useRouter();
   const [isElevated, setIsElevated] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [user, setUser] = useState<AuthenticatedUser | null | undefined>(undefined);
@@ -101,6 +103,12 @@ export function DavasHeader() {
       .then((me) => setUser(me))
       .catch(() => setUser(null));
   }, []);
+
+  async function handleLogout() {
+    setIsDrawerOpen(false);
+    await logout();
+    router.replace('/login');
+  }
 
   const elevationClass = isElevated ? 'shadow-[0_8px_22px_rgba(31,42,68,0.06)]' : 'shadow-none';
 
@@ -169,6 +177,14 @@ export function DavasHeader() {
             </Link>
           ))}
         </nav>
+        <button
+          type="button"
+          aria-label="로그아웃"
+          onClick={handleLogout}
+          className="mt-5 flex h-[48px] w-full items-center justify-center rounded-[20px] bg-[#fff1f0] text-[14px] font-black text-[#e05247] transition hover:bg-[#ffe6e3]"
+        >
+          로그아웃
+        </button>
       </aside>
     </>
   );

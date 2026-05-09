@@ -1,4 +1,8 @@
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { logout } from '../../lib/api/auth';
 
 type SettingItem = {
   label: string;
@@ -31,6 +35,13 @@ function ChevronIcon() {
 }
 
 export function ProfileSettingsSection() {
+  const router = useRouter();
+
+  async function handleLogout() {
+    await logout();
+    router.replace('/login');
+  }
+
   return (
     <section className="mt-5" data-design="profile-settings-section">
       <h2 className="mb-3 text-[17px] font-black tracking-[-0.03em] text-[#284778]">설정</h2>
@@ -43,6 +54,14 @@ export function ProfileSettingsSection() {
           </Link>
         ))}
       </div>
+      <button
+        type="button"
+        aria-label="프로필에서 로그아웃"
+        onClick={handleLogout}
+        className="mt-4 h-[48px] w-full rounded-[18px] bg-[#fff1f0] text-[14px] font-black text-[#e05247] shadow-[0_10px_24px_rgba(224,82,71,0.10)]"
+      >
+        로그아웃
+      </button>
     </section>
   );
 }

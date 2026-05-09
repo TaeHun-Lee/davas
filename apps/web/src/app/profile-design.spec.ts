@@ -157,6 +157,27 @@ describe('Davas profile tab design', () => {
     assert.doesNotMatch(profilePageSource, /임시 페이지/);
   });
 
+  it('wires logout from the left drawer and the main profile screen', () => {
+    assert.match(authApiSource, /export async function logout/);
+    assert.match(authApiSource, /\/auth\/logout/);
+    assert.match(authApiSource, /method: 'POST'/);
+    assert.match(headerSource, /import \{ getMe, logout, normalizeProfileImageUrl/);
+    assert.match(headerSource, /const router = useRouter\(\)/);
+    assert.match(headerSource, /async function handleLogout/);
+    assert.match(headerSource, /await logout\(\)/);
+    assert.match(headerSource, /setIsDrawerOpen\(false\)/);
+    assert.match(headerSource, /router\.replace\('\/login'\)/);
+    assert.match(headerSource, /aria-label="로그아웃"/);
+    assert.match(headerSource, />\s*로그아웃\s*</);
+    assert.match(profileSettingsSource, /'use client'/);
+    assert.match(profileSettingsSource, /import \{ useRouter \} from 'next\/navigation'/);
+    assert.match(profileSettingsSource, /import \{ logout \} from '..\/..\/lib\/api\/auth'/);
+    assert.match(profileSettingsSource, /async function handleLogout/);
+    assert.match(profileSettingsSource, /await logout\(\)/);
+    assert.match(profileSettingsSource, /router\.replace\('\/login'\)/);
+    assert.match(profileSettingsSource, /aria-label="프로필에서 로그아웃"/);
+  });
+
   it('wires the profile chevron and settings rows to real profile feature routes', () => {
     assert.match(profileHeaderSource, /href="\/profile\/edit"/);
     assert.match(profileHeaderSource, /aria-label="프로필 편집"/);
