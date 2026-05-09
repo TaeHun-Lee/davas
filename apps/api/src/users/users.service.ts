@@ -97,6 +97,12 @@ export class UsersService {
     return this.toUserResponse(await this.users.save(user));
   }
 
+  async deleteProfileImage(accessToken: string | undefined) {
+    const user = await this.loadAuthenticatedUser(accessToken);
+    user.profileImageUrl = null;
+    return this.toUserResponse(await this.users.save(user));
+  }
+
   private async loadAuthenticatedUser(accessToken: string | undefined) {
     if (!accessToken) {
       throw new UnauthorizedException('인증이 필요합니다.');

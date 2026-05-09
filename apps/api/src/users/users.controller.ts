@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
@@ -25,6 +25,11 @@ export class UsersController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadProfileImage(@Req() request: Request, @UploadedFile() file?: ProfileImageFile) {
     return { user: await this.users.saveProfileImage(this.readCookie(request, ACCESS_TOKEN_COOKIE), file) };
+  }
+
+  @Delete('me/profile-image')
+  async deleteProfileImage(@Req() request: Request) {
+    return { user: await this.users.deleteProfileImage(this.readCookie(request, ACCESS_TOKEN_COOKIE)) };
   }
 
   private readCookie(request: Request, name: string): string | undefined {

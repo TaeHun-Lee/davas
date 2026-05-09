@@ -41,3 +41,16 @@ export async function uploadProfileImage(file: File) {
 
   return ((await response.json()) as UserResponse).user;
 }
+
+export async function deleteProfileImage() {
+  const response = await fetch(`${getApiBaseUrl()}/users/me/profile-image`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error('profile image delete failed');
+  }
+
+  return ((await response.json()) as UserResponse).user;
+}

@@ -140,6 +140,11 @@ describe('Davas profile tab design', () => {
   it('implements profile editing, image upload, and concrete settings behavior', () => {
     assert.match(profileEditScreenSource, /updateMe/);
     assert.match(profileEditScreenSource, /uploadProfileImage/);
+    assert.match(profileEditScreenSource, /deleteProfileImage/);
+    assert.match(profileEditScreenSource, /handleDeleteProfileImage/);
+    assert.match(profileEditScreenSource, /프로필 사진 삭제/);
+    assert.match(profileEditScreenSource, /setSelectedFile\(null\)/);
+    assert.match(profileEditScreenSource, /profileImageUrl: null/);
     assert.match(profileEditScreenSource, /ProfileImagePicker/);
     assert.match(profileImagePickerSource, /normalizeProfileImageUrl/);
     assert.match(profileImagePickerSource, /type="file"/);
@@ -147,6 +152,8 @@ describe('Davas profile tab design', () => {
     assert.match(profileImagePickerSource, /URL\.createObjectURL/);
     assert.match(usersApiSource, /\/users\/me/);
     assert.match(usersApiSource, /\/users\/me\/profile-image/);
+    assert.match(usersApiSource, /export async function deleteProfileImage/);
+    assert.match(usersApiSource, /method: 'DELETE'/);
     assert.match(usersApiSource, /FormData/);
     assert.match(usersApiSource, /credentials: 'include'/);
     assert.match(authApiSource, /normalizeProfileImageUrl/);

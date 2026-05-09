@@ -78,10 +78,14 @@ describe('UsersService', () => {
     await assert.rejects(() => service.updateMe('valid-token', { nickname: 'taken' }), ConflictException);
   });
 
-  it('stores the authenticated profile image URL', async () => {
-    const result = await service.updateProfileImage('valid-token', '/uploads/profile-images/user-1.png');
+  it('stores and deletes the authenticated profile image URL', async () => {
+    const stored = await service.updateProfileImage('valid-token', '/uploads/profile-images/user-1.png');
 
-    assert.equal(result.profileImageUrl, '/uploads/profile-images/user-1.png');
+    assert.equal(stored.profileImageUrl, '/uploads/profile-images/user-1.png');
+
+    const deleted = await service.deleteProfileImage('valid-token');
+
+    assert.equal(deleted.profileImageUrl, null);
   });
 
   it('rejects missing or invalid auth tokens', async () => {

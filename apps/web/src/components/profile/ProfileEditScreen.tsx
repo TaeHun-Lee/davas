@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import { getMe, type AuthenticatedUser } from '../../lib/api/auth';
-import { updateMe, uploadProfileImage } from '../../lib/api/users';
+import { deleteProfileImage, updateMe, uploadProfileImage } from '../../lib/api/users';
 import { AppShell } from '../layout/AppShell';
 import { MediaDetailLoadingIndicator } from '../media/MediaDetailLoadingIndicator';
 import { ProfileImagePicker } from './ProfileImagePicker';
@@ -46,6 +46,18 @@ export function ProfileEditScreen() {
     }
   }
 
+  async function handleDeleteProfileImage() {
+    setStatus('saving');
+    try {
+      const nextUser = await deleteProfileImage();
+      setSelectedFile(null);
+      setUser({ ...nextUser, profileImageUrl: null });
+      setStatus('ready');
+    } catch {
+      setStatus('error');
+    }
+  }
+
   if (!user || status === 'loading') return <MediaDetailLoadingIndicator label="프로필 편집 화면을 불러오는 중" />;
 
   return (
@@ -58,6 +70,16 @@ export function ProfileEditScreen() {
         </header>
         <div className="mt-4 rounded-[24px] bg-white p-5 shadow-[0_12px_28px_rgba(31,65,114,0.08)]">
           <ProfileImagePicker imageUrl={user.profileImageUrl} displayName={nickname || user.nickname} onFileSelect={setSelectedFile} />
+          {user.profileImageUrl ? (
+            <button
+              type="button"
+              onClick={handleDeleteProfileImage}
+              disabled={status === 'saving'}
+              className="mx-auto mt-3 block rounded-full bg-[#f3f6fb] px-4 py-2 text-[12px] font-extrabold text-[#d94f4f]"
+            >
+              프로필 사진 삭제
+            </button>
+          ) : null}
           <label className="mt-6 block text-[13px] font-black text-[#284778]">닉네임
             <input value={nickname} onChange={(event) => setNickname(event.target.value)} className="mt-2 h-[46px] w-full rounded-[16px] border border-[#dfe6f0] bg-[#f8fafd] px-4 text-[15px] font-bold outline-none" />
           </label>
