@@ -186,7 +186,7 @@ export function HomeDashboard({ user, view }: HomeDashboardProps) {
         />
         {view.recentRecords.length > 0 ? <RecentRecordsSection records={view.recentRecords} /> : null}
       </AppShell>
-      <MediaDetailModal media={selectedMedia} isOpen={isDetailOpen} onClose={closeHomeMediaDetail} returnTo="/" />
+      {selectedMedia ? <MediaDetailModal media={selectedMedia} isOpen={isDetailOpen} onClose={closeHomeMediaDetail} returnTo="/" /> : null}
     </>
   );
 }

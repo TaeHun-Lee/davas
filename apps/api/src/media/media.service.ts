@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DiaryEntity } from '../database/entities/diary.entity';
+import { MediaFavoriteEntity } from '../database/entities/media-favorite.entity';
 import { MediaEntity } from '../database/entities/media.entity';
 import { MediaSearchQueryDto } from './dto/media-search-query.dto';
 import { TmdbClient } from './tmdb.client';
@@ -41,6 +42,12 @@ export type MediaDetailResponse = {
   stillCuts: string[];
   certification: string | null;
   myDiary: MyMediaDiary | null;
+  isFavorite: boolean;
+};
+
+export type MediaFavoriteResponse = {
+  mediaId: string;
+  isFavorite: boolean;
 };
 
 function formatWatchedDate(dateString: string) {
@@ -59,6 +66,8 @@ export class MediaService {
     private readonly mediaRepository?: Repository<MediaEntity>,
     @InjectRepository(DiaryEntity)
     private readonly diaryRepository?: Repository<DiaryEntity>,
+    @InjectRepository(MediaFavoriteEntity)
+    private readonly favoriteRepository?: Repository<MediaFavoriteEntity>,
   ) {}
 
   async search(query: MediaSearchQueryDto) {
@@ -92,9 +101,10 @@ export class MediaService {
     }
 
     const myDiary = await this.findMyDiary(id, userId);
+    const isFavorite = await this.isFavorite(id, userId);
 
     if (media.externalProvider !== 'TMDB') {
-      return { ...this.fromCachedMedia(media), myDiary };
+      return { ...this.fromCachedMedia(media), myDiary, isFavorite };
     }
 
     const detail = await this.tmdbClient.detail({
@@ -129,7 +139,34 @@ export class MediaService {
       stillCuts: detail.stillCuts,
       certification: detail.certification,
       myDiary,
+      isFavorite,
     };
+  }
+
+  async toggleFavorite(mediaId: string, userId: string): Promise<MediaFavoriteResponse> {
+    const media = await this.mediaRepository?.findOne({ where: { id: mediaId } });
+    if (!media) {
+      throw new NotFoundException('Media not found');
+    }
+    if (!this.favoriteRepository) {
+      return { mediaId, isFavorite: false };
+    }
+
+    const existing = await this.favoriteRepository.findOne({ where: { userId, mediaId } });
+    if (existing) {
+      await this.favoriteRepository.delete({ userId, mediaId });
+      return { mediaId, isFavorite: false };
+    }
+
+    await this.favoriteRepository.save(this.favoriteRepository.create({ userId, mediaId }));
+    return { mediaId, isFavorite: true };
+  }
+
+  private async isFavorite(mediaId: string, userId?: string) {
+    if (!userId || !this.favoriteRepository) {
+      return false;
+    }
+    return Boolean(await this.favoriteRepository.findOne({ where: { userId, mediaId } }));
   }
 
   private async findMyDiary(mediaId: string, userId?: string): Promise<MyMediaDiary | null> {
@@ -182,6 +219,7 @@ export class MediaService {
       stillCuts: [],
       certification: null,
       myDiary: null,
+      isFavorite: false,
     };
   }
 }

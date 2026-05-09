@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UnauthorizedException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { AuthService } from '../auth/auth.service';
@@ -38,9 +38,22 @@ export class MediaController {
     return this.mediaService.findPersonCredits(personId, language ?? 'ko-KR');
   }
 
+  @Post(':id/favorite')
+  async toggleFavorite(@Param('id') id: string, @Req() request: Request) {
+    return this.mediaService.toggleFavorite(id, await this.getUserId(request));
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string, @Req() request: Request) {
     return this.mediaService.findDetail(id, await this.getOptionalUserId(request));
+  }
+
+  private async getUserId(request: Request) {
+    const user = await this.auth?.findMe(this.readCookie(request, ACCESS_TOKEN_COOKIE));
+    if (!user) {
+      throw new UnauthorizedException('인증이 필요합니다.');
+    }
+    return user.id;
   }
 
   private async getOptionalUserId(request: Request) {

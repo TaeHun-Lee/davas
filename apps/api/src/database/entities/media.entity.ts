@@ -1,6 +1,7 @@
 import { Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { MediaType } from '@davas/shared';
 import { DiaryEntity } from './diary.entity';
+import { MediaFavoriteEntity } from './media-favorite.entity';
 import { MediaImageEntity } from './media-image.entity';
 
 export type ExternalProvider = 'TMDB' | 'OMDB' | 'MANUAL';
@@ -56,6 +57,9 @@ export class MediaEntity {
 
   @OneToMany(() => MediaImageEntity, (image) => image.media)
   images!: MediaImageEntity[];
+
+  @OneToMany(() => MediaFavoriteEntity, (favorite) => favorite.media)
+  favorites?: MediaFavoriteEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

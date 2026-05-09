@@ -94,6 +94,31 @@ function fakeDiaryRepository(diary: Record<string, unknown> | null) {
   };
 }
 
+function fakeFavoriteRepository(favorite: Record<string, unknown> | null = null) {
+  const calls: Array<{ method: string; input?: unknown }> = [];
+  return {
+    calls,
+    async findOne(input?: unknown) {
+      calls.push({ method: 'findOne', input });
+      return favorite;
+    },
+    create(input: unknown) {
+      calls.push({ method: 'create', input });
+      return input;
+    },
+    async save(input: unknown) {
+      calls.push({ method: 'save', input });
+      favorite = input as Record<string, unknown>;
+      return favorite;
+    },
+    async delete(input: unknown) {
+      calls.push({ method: 'delete', input });
+      favorite = null;
+      return { affected: 1 };
+    },
+  };
+}
+
 describe('MediaService detail', () => {
   it('hydrates a selected TMDB media row with detail-only fields from TMDB', async () => {
     const tmdbClient = new FakeTmdbClient();
@@ -161,6 +186,42 @@ describe('MediaService detail', () => {
       watchedDate: '2026.05.09',
       updatedAt: '2026-05-09T10:00:00.000Z',
     });
+  });
+
+  it('includes the authenticated favorite state for the selected media detail', async () => {
+    const tmdbClient = new FakeTmdbClient();
+    const favorites = fakeFavoriteRepository({ id: 'favorite-id', userId: 'user-id', mediaId: 'media-id' });
+    const service = new MediaService(tmdbClient as never, fakeRepository({
+      id: 'media-id',
+      externalProvider: 'TMDB',
+      externalId: '1124566',
+      mediaType: 'MOVIE',
+      title: '센티멘탈 밸류',
+      originalTitle: 'Affeksjonsverdi',
+      overview: '검색 시놉시스',
+      posterUrl: null,
+      backdropUrl: null,
+      releaseDate: '2026-02-18',
+      genres: ['18'],
+      country: null,
+      runtime: null,
+    }) as never, fakeDiaryRepository(null) as never, favorites as never);
+
+    const detail = await service.findDetail('media-id', 'user-id');
+
+    assert.equal(detail.isFavorite, true);
+    assert.deepEqual(favorites.calls[0], { method: 'findOne', input: { where: { userId: 'user-id', mediaId: 'media-id' } } });
+  });
+
+  it('toggles a media favorite for the authenticated user', async () => {
+    const tmdbClient = new FakeTmdbClient();
+    const favorites = fakeFavoriteRepository(null);
+    const service = new MediaService(tmdbClient as never, fakeRepository({ id: 'media-id' }) as never, fakeDiaryRepository(null) as never, favorites as never);
+
+    const favorited = await service.toggleFavorite('media-id', 'user-id');
+
+    assert.deepEqual(favorited, { mediaId: 'media-id', isFavorite: true });
+    assert.deepEqual(favorites.calls.map((call) => call.method), ['findOne', 'create', 'save']);
   });
 });
 

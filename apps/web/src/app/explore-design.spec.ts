@@ -191,6 +191,17 @@ describe('Davas explore screen design', () => {
     assert.match(mediaDetailModalSource, /posterUrl/);
     assert.match(mediaDetailModalSource, /리뷰·다이어리 작성/);
     assert.match(mediaDetailModalSource, /찜하기/);
+    assert.match(mediaDetailModalSource, /toggleMediaFavorite/);
+    assert.match(mediaDetailModalSource, /const \[isFavorite, setIsFavorite\] = useState\(media\.isFavorite\)/);
+    assert.match(mediaDetailModalSource, /aria-pressed=\{isFavorite\}/);
+    assert.match(mediaDetailModalSource, /handleFavoriteToggle/);
+    assert.match(mediaDetailModalSource, /handleShare/);
+    assert.match(mediaDetailModalSource, /navigator\.share/);
+    assert.match(mediaDetailModalSource, /navigator\.clipboard\.writeText/);
+    assert.match(mediaApiSource, /isFavorite\?: boolean/);
+    assert.match(mediaApiSource, /export async function toggleMediaFavorite/);
+    assert.match(mediaApiSource, /\/media\/\$\{id\}\/favorite/);
+    assert.match(mediaApiSource, /method: 'POST'/);
     assert.match(mediaDetailModalSource, /시놉시스/);
     assert.doesNotMatch(mediaDetailModalSource, /TMDB 상세 정보/);
     assert.doesNotMatch(mediaDetailModalSource, /꿈과 현실, 장면과 감상이 겹치는 순간/);

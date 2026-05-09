@@ -1,6 +1,7 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { CommentEntity } from './comment.entity';
 import { DiaryEntity } from './diary.entity';
+import { MediaFavoriteEntity } from './media-favorite.entity';
 
 @Entity({ name: 'users' })
 export class UserEntity {
@@ -30,6 +31,9 @@ export class UserEntity {
 
   @OneToMany(() => CommentEntity, (comment) => comment.user)
   comments!: CommentEntity[];
+
+  @OneToMany(() => MediaFavoriteEntity, (favorite) => favorite.user)
+  mediaFavorites?: MediaFavoriteEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

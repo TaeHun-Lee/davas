@@ -66,6 +66,7 @@ export type MediaDetail = Omit<SelectedMedia, 'genreIds'> & {
     watchedDate: string;
     updatedAt: string;
   } | null;
+  isFavorite?: boolean;
   genreIds?: number[];
 };
 
@@ -192,4 +193,17 @@ export async function getMediaDetail(id: string) {
   }
 
   return (await response.json()) as MediaDetail;
+}
+
+export async function toggleMediaFavorite(id: string) {
+  const response = await fetch(`${getApiBaseUrl()}/media/${id}/favorite`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error('media favorite toggle failed');
+  }
+
+  return (await response.json()) as { mediaId: string; isFavorite: boolean };
 }

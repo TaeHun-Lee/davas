@@ -1,14 +1,20 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import type { MediaDetail } from '../../lib/api/media';
+import { useEffect, useState } from 'react';
+import { toggleMediaFavorite, type MediaDetail } from '../../lib/api/media';
 import { BasicInfoGrid, DetailInfoCard, MyRatingCard, StillCutStrip } from './media-detail-sections';
 import { getTmdbGenreNames } from './media-genres';
 
-function IconButton({ label, children, onClick }: { label: string; children: React.ReactNode; onClick?: () => void }) {
+function IconButton({ label, children, onClick, pressed }: { label: string; children: React.ReactNode; onClick?: () => void; pressed?: boolean }) {
   return (
-    <button type="button" aria-label={label} onClick={onClick} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#1f4e82] shadow-[0_8px_18px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8]">
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={pressed}
+      onClick={onClick}
+      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_8px_18px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8] transition ${pressed ? 'text-[#ff5a52]' : 'text-[#1f4e82]'}`}
+    >
       {children}
     </button>
   );
@@ -38,12 +44,23 @@ function StarIcon() {
   return <span className="text-[17px] leading-none text-[#ff5a52]">★</span>;
 }
 
+function BookmarkIcon({ filled = false }: { filled?: boolean }) {
+  return <svg width="18" height="18" viewBox="0 0 20 20" fill={filled ? 'currentColor' : 'none'} aria-hidden="true"><path d="M6 3.8h8A1.2 1.2 0 0 1 15.2 5v11L10 13.1 4.8 16V5A1.2 1.2 0 0 1 6 3.8Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>;
+}
+
+function ShareIcon() {
+  return <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 13V3.8m0 0L6.6 7.2M10 3.8l3.4 3.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><path d="M5 10.5v4.7h10v-4.7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>;
+}
+
 function fallbackOverview(media: MediaDetail) {
   return media.overview || '작품 소개가 아직 준비되지 않았어요. 다이어리를 작성하며 나만의 감상을 남겨보세요.';
 }
 
-export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: MediaDetail | null; isOpen: boolean; onClose: () => void; returnTo?: string }) {
+export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: MediaDetail; isOpen: boolean; onClose: () => void; returnTo?: string }) {
   const router = useRouter();
+  const [isFavorite, setIsFavorite] = useState(media.isFavorite);
+  const [isFavoritePending, setIsFavoritePending] = useState(false);
+  const [shareLabel, setShareLabel] = useState('공유하기');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -58,7 +75,12 @@ export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: 
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen || !media) {
+  useEffect(() => {
+    setIsFavorite(media.isFavorite);
+    setShareLabel('공유하기');
+  }, [media.id, media.isFavorite]);
+
+  if (!isOpen) {
     return null;
   }
 
@@ -67,7 +89,37 @@ export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: 
   const runtimeText = media.runtime ? `${media.runtime}분` : '러닝타임 준비 중';
   const overview = fallbackOverview(media);
   const tmdbRating = media.tmdbRating == null ? null : (media.tmdbRating / 2).toFixed(1);
+  const detailUrl = typeof window === 'undefined' ? returnTo ?? `/explore?detail=${media.id}` : `${window.location.origin}${returnTo ?? `/explore?detail=${media.id}`}`;
   const diaryUrl = `/diary/new?mediaId=${encodeURIComponent(media.id)}&returnTo=${encodeURIComponent(returnTo ?? `/explore?detail=${media.id}`)}`;
+
+  async function handleFavoriteToggle() {
+    if (isFavoritePending) return;
+    const previous = Boolean(isFavorite);
+    setIsFavorite(!previous);
+    setIsFavoritePending(true);
+    try {
+      const result = await toggleMediaFavorite(media.id);
+      setIsFavorite(result.isFavorite);
+    } catch {
+      setIsFavorite(previous);
+    } finally {
+      setIsFavoritePending(false);
+    }
+  }
+
+  async function handleShare() {
+    const shareData = { title: media.title, text: `${media.title} 상세 보기`, url: detailUrl };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(detailUrl);
+        setShareLabel('링크 복사됨');
+      }
+    } catch {
+      setShareLabel('공유 실패');
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-[80] flex justify-center overflow-hidden bg-[#172947]/35 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={detailTitle} data-design="media-detail-modal">
@@ -78,8 +130,8 @@ export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: 
           </IconButton>
           <h2 className="absolute left-1/2 -translate-x-1/2 text-[16px] font-black leading-[22px] tracking-[-0.025em] text-[#1f4e82]">{detailTitle}</h2>
           <div className="flex gap-2">
-            <IconButton label="찜하기"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M6 3.8h8A1.2 1.2 0 0 1 15.2 5v11L10 13.1 4.8 16V5A1.2 1.2 0 0 1 6 3.8Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg></IconButton>
-            <IconButton label="공유하기"><svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 13V3.8m0 0L6.6 7.2M10 3.8l3.4 3.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><path d="M5 10.5v4.7h10v-4.7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg></IconButton>
+            <IconButton label={isFavorite ? '찜 해제' : '찜하기'} onClick={() => void handleFavoriteToggle()} pressed={Boolean(isFavorite)}><BookmarkIcon filled={Boolean(isFavorite)} /></IconButton>
+            <IconButton label={shareLabel} onClick={() => void handleShare()}><ShareIcon /></IconButton>
           </div>
         </header>
 
@@ -102,8 +154,8 @@ export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: 
           <button type="button" onClick={() => router.push(diaryUrl)} className="flex h-[50px] items-center justify-center gap-2 rounded-[16px] bg-[#ff5a52] text-[13px] font-black text-white shadow-[0_12px_22px_rgba(255,90,82,0.28)]">
             <span aria-hidden="true">✎</span> 리뷰·다이어리 작성
           </button>
-          <button type="button" className="flex h-[50px] items-center justify-center gap-1.5 rounded-[16px] bg-white text-[13px] font-black text-[#1f4e82] shadow-[0_10px_22px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8]">
-            ♡ 찜하기
+          <button type="button" aria-pressed={isFavorite} disabled={isFavoritePending} onClick={() => void handleFavoriteToggle()} className={`flex h-[50px] items-center justify-center gap-1.5 rounded-[16px] bg-white text-[13px] font-black shadow-[0_10px_22px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8] transition ${isFavorite ? 'text-[#ff5a52]' : 'text-[#1f4e82]'}`}>
+            {isFavorite ? '♥ 찜함' : '♡ 찜하기'}
           </button>
         </div>
 
