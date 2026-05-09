@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DiaryEntity } from '../database/entities/diary.entity';
 import { MediaEntity } from '../database/entities/media.entity';
-import { resolveTmdbGenreLabel } from '../media/tmdb-genres';
+import { resolveTmdbGenreLabel, resolveTmdbGenreLabels } from '../media/tmdb-genres';
 import { CreateDiaryDto } from './dto/create-diary.dto';
 
 const DEFAULT_POSTER_GRADIENT = 'from-[#e9eef7] via-[#f6f8fc] to-[#dfe8f5]';
@@ -119,7 +119,7 @@ export class DiariesDashboardService {
       contentPreview: buildContentPreview(diary.content),
       posterUrl: diary.media?.posterUrl ?? null,
       posterGradient: DEFAULT_POSTER_GRADIENT,
-      genreNames: diary.media?.genres ?? [],
+      genreNames: resolveTmdbGenreLabels(diary.media?.genres ?? []),
     }));
 
     const now = new Date();

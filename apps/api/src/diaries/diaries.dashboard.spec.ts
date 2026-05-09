@@ -81,6 +81,7 @@ describe('Diaries dashboard API contract', () => {
     assert.equal(dashboard.recentItems[0]?.mediaTitle, '실제 작품');
     assert.equal(dashboard.recentItems[0]?.diaryTitle, '실제 기록 제목');
     assert.equal(dashboard.recentItems[0]?.posterUrl, 'https://image.tmdb.org/t/p/w342/poster.jpg');
+    assert.deepEqual(dashboard.recentItems[0]?.genreNames, ['드라마']);
     assert.equal(dashboard.calendar.markers[0]?.day, 8);
   });
 
@@ -99,6 +100,9 @@ describe('Diaries dashboard API contract', () => {
       dashboard.genreRatios.map((item) => item.genre),
       ['드라마', 'SF', '공포'],
     );
+    assert.deepEqual(dashboard.recentItems[0]?.genreNames, ['SF', '드라마']);
+    assert.deepEqual(dashboard.recentItems[1]?.genreNames, ['드라마']);
+    assert.deepEqual(dashboard.recentItems[2]?.genreNames, ['공포']);
     assert.deepEqual(dashboard.summary.topGenre, { name: '드라마', count: 2 });
     assert.ok(dashboard.genreRatios.every((item) => !/^\d+$/.test(item.genre)), 'numeric TMDB genre ids must not be rendered as genre labels');
   });
