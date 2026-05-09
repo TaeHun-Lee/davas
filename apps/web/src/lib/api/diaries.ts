@@ -10,6 +10,20 @@ export type CreateDiaryPayload = {
   tags: string[];
 };
 
+export type EditableDiary = CreateDiaryPayload & {
+  id: string;
+  media: {
+    id: string;
+    title: string;
+    originalTitle?: string | null;
+    posterUrl?: string | null;
+    releaseDate?: string | null;
+    runtime?: number | null;
+    mediaType: 'MOVIE' | 'TV';
+    genres: string[];
+  };
+};
+
 import type { DiaryDashboardView } from '../../components/diary/diary-dashboard-types';
 
 export type CreatedDiaryResponse = {
@@ -52,4 +66,33 @@ export async function createDiary(payload: CreateDiaryPayload) {
   }
 
   return (await response.json()) as CreatedDiaryResponse;
+}
+
+export async function getDiary(id: string) {
+  const response = await fetch(`${getApiBaseUrl()}/diaries/${encodeURIComponent(id)}`, {
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error('diary detail failed');
+  }
+
+  return ((await response.json()) as { diary: EditableDiary }).diary;
+}
+
+export async function updateDiary(id: string, payload: CreateDiaryPayload) {
+  const response = await fetch(`${getApiBaseUrl()}/diaries/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error('diary update failed');
+  }
+
+  return (await response.json()) as { diary: EditableDiary };
 }

@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DiaryEntity } from '../database/entities/diary.entity';
 import { MediaEntity } from '../database/entities/media.entity';
 import { resolveTmdbGenreLabel, resolveTmdbGenreLabels } from '../media/tmdb-genres';
 import { CreateDiaryDto } from './dto/create-diary.dto';
+import { UpdateDiaryDto } from './dto/update-diary.dto';
 
 const DEFAULT_POSTER_GRADIENT = 'from-[#e9eef7] via-[#f6f8fc] to-[#dfe8f5]';
 const GENRE_ICON_KINDS = ['sf', 'drama', 'thriller', 'action', 'etc'] as const;
@@ -86,8 +87,63 @@ export class DiariesDashboardService {
     return this.diaries.save(diary);
   }
 
-  private async saveRepresentativePoster(dto: CreateDiaryDto) {
-    if (!dto.mediaPosterUrl || !this.mediaRepository) {
+  async getDiaryForEdit(userId: string, id: string) {
+    const diary = await this.diaries.findOne({
+      where: { id, userId },
+      relations: { media: true },
+    });
+    if (!diary) {
+      throw new NotFoundException('다이어리를 찾을 수 없습니다.');
+    }
+
+    return this.toEditableDiary(diary);
+  }
+
+  async updateDiary(userId: string, id: string, dto: UpdateDiaryDto) {
+    const diary = await this.diaries.findOne({ where: { id, userId }, relations: { media: true } });
+    if (!diary) {
+      throw new NotFoundException('다이어리를 찾을 수 없습니다.');
+    }
+
+    if (dto.mediaId !== undefined) diary.mediaId = dto.mediaId;
+    if (dto.title !== undefined) diary.title = dto.title;
+    if (dto.content !== undefined) diary.content = dto.content;
+    if (dto.watchedDate !== undefined) diary.watchedDate = dto.watchedDate;
+    if (dto.rating !== undefined) diary.rating = dto.rating.toFixed(1);
+    if (dto.visibility !== undefined) diary.visibility = dto.visibility;
+    if (dto.hasSpoiler !== undefined) diary.hasSpoiler = dto.hasSpoiler;
+
+    await this.saveRepresentativePoster(dto);
+    return this.toEditableDiary(await this.diaries.save(diary));
+  }
+
+  private toEditableDiary(diary: DiaryEntity) {
+    const media = diary.media;
+    return {
+      id: diary.id,
+      mediaId: diary.mediaId,
+      title: diary.title,
+      content: diary.content,
+      watchedDate: diary.watchedDate,
+      rating: Number(diary.rating),
+      visibility: diary.visibility,
+      hasSpoiler: diary.hasSpoiler,
+      tags: [],
+      media: {
+        id: media?.id ?? diary.mediaId,
+        title: media?.title ?? '제목 없음',
+        originalTitle: media?.originalTitle ?? null,
+        posterUrl: media?.posterUrl ?? null,
+        releaseDate: media?.releaseDate ?? null,
+        runtime: media?.runtime ?? null,
+        mediaType: media?.mediaType ?? 'MOVIE',
+        genres: resolveTmdbGenreLabels(media?.genres ?? []),
+      },
+    };
+  }
+
+  private async saveRepresentativePoster(dto: { mediaId?: string; mediaPosterUrl?: string | null }) {
+    if (!dto.mediaId || !dto.mediaPosterUrl || !this.mediaRepository) {
       return;
     }
 

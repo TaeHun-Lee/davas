@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 
 function source(path: string) {
@@ -7,6 +7,8 @@ function source(path: string) {
 }
 
 const diaryNewPageSource = source('./diary/new/page.tsx');
+const diaryEditPagePath = new URL('./diary/[id]/edit/page.tsx', import.meta.url);
+const diaryEditPageSource = existsSync(diaryEditPagePath) ? readFileSync(diaryEditPagePath, 'utf8') : '';
 const composeScreenSource = source('../components/diary/DiaryComposeScreen.tsx');
 const headerSource = source('../components/diary/DiaryComposeHeader.tsx');
 const selectedMediaCardSource = source('../components/diary/SelectedMediaCard.tsx');
@@ -68,7 +70,7 @@ describe('Davas diary compose screen design', () => {
     assert.match(composeScreenSource, /getMediaDetail\(mediaId\)/);
     assert.match(composeScreenSource, /useEffect/);
     assert.match(composeScreenSource, /setSelectedMedia\(mapMediaDetailToDiaryMedia\(detail\)\)/);
-    assert.match(composeScreenSource, /const initialSelectedMedia = mediaId \? null : mockDiaryMedia/);
+    assert.match(composeScreenSource, /const initialSelectedMedia = mediaId \|\| diaryId \? null : mockDiaryMedia/);
     assert.match(composeScreenSource, /useState<DiaryComposeMedia \| null>\(initialSelectedMedia\)/);
     assert.match(composeScreenSource, /MediaDetailLoadingIndicator/);
     assert.doesNotMatch(composeScreenSource, /작품 정보를 불러오고 있어요/);
@@ -84,9 +86,9 @@ describe('Davas diary compose screen design', () => {
     assert.match(selectedMediaCardSource, /data-design="selected-media-placeholder"/);
     assert.match(selectedMediaCardSource, /aria-label="선택한 작품을 불러오는 중"/);
     assert.match(mediaDetailLoadingIndicatorSource, /animate-spin/);
-    assert.match(composeScreenSource, /mediaStatus === 'loading' && Boolean\(mediaId\) \? <MediaDetailLoadingIndicator \/> : null/);
+    assert.match(composeScreenSource, /mediaStatus === 'loading' && Boolean\(mediaId \|\| diaryId\) \? <MediaDetailLoadingIndicator \/> : null/);
     assert.doesNotMatch(composeScreenSource, /const mediaCard = selectedMedia \? selectedMedia : mockDiaryMedia/);
-    assert.match(composeScreenSource, /<SelectedMediaCard media=\{selectedMedia\} isLoading=\{mediaStatus === 'loading' && Boolean\(mediaId\)\}/);
+    assert.match(composeScreenSource, /<SelectedMediaCard media=\{selectedMedia\} isLoading=\{mediaStatus === 'loading' && Boolean\(mediaId \|\| diaryId\)\}/);
     assert.match(selectedMediaCardSource, /media: DiaryComposeMedia \| null/);
     assert.match(composeScreenSource, /fallbackTitle=\{selectedMedia\?\.title \?\? ''\}/);
     assert.doesNotMatch(selectedMediaCardSource, /<span className="text-\[15px\][^>]*>인셉션<\/span>/);
@@ -145,6 +147,25 @@ describe('Davas diary compose screen design', () => {
     assert.match(submitBarSource, /작성 완료/);
   });
 
+  it('opens my diary edit link in compose edit mode and saves through PATCH', () => {
+    assert.match(diaryEditPageSource, /DiaryComposeScreen/);
+    assert.match(diaryEditPageSource, /params\?: Promise<\{ id: string \}>/);
+    assert.match(diaryEditPageSource, /mode="edit"/);
+    assert.match(diaryEditPageSource, /diaryId=\{id\}/);
+    assert.match(diariesApiSource, /export async function getDiary/);
+    assert.match(diariesApiSource, /export async function updateDiary/);
+    assert.match(diariesApiSource, /fetch\(`\$\{getApiBaseUrl\(\)\}\/diaries\/\$\{encodeURIComponent\(id\)\}`/);
+    assert.match(diariesApiSource, /method: 'PATCH'/);
+    assert.match(composeScreenSource, /mode\?: 'create' \| 'edit'/);
+    assert.match(composeScreenSource, /diaryId\?: string/);
+    assert.match(composeScreenSource, /getDiary\(diaryId\)/);
+    assert.match(composeScreenSource, /setTitle\(diary\.title\)/);
+    assert.match(composeScreenSource, /setContent\(diary\.content\)/);
+    assert.match(composeScreenSource, /setRating\(diary\.rating\)/);
+    assert.match(composeScreenSource, /await updateDiary\(diaryId, payload\)/);
+    assert.match(submitBarSource, /수정 완료/);
+  });
+
   it('wraps diary option controls to keep spoiler switch within its pill on mobile', () => {
     assert.match(optionRowSource, /grid-cols-2/);
     assert.match(optionRowSource, /col-span-2/);
@@ -189,7 +210,7 @@ describe('Davas diary compose screen design', () => {
     assert.match(composeScreenSource, /useRouter/);
     assert.match(composeScreenSource, /const \[isSubmitting, setIsSubmitting\] = useState\(false\)/);
     assert.match(composeScreenSource, /const \[submitError, setSubmitError\]/);
-    assert.match(composeScreenSource, /await createDiary\(\{/);
+    assert.match(composeScreenSource, /await createDiary\(payload\)/);
     assert.match(composeScreenSource, /mediaId: selectedMedia\.id/);
     assert.match(composeScreenSource, /hasSpoiler: containsSpoiler/);
     assert.match(composeScreenSource, /content: content\.trim\(\)/);

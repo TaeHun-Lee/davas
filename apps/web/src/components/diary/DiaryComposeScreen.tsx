@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { createDiary } from '../../lib/api/diaries';
+import { createDiary, getDiary, updateDiary } from '../../lib/api/diaries';
 import { getMediaDetail } from '../../lib/api/media';
 import { MediaDetailLoadingIndicator } from '../media/MediaDetailLoadingIndicator';
 import { DiaryComposeHeader } from './DiaryComposeHeader';
@@ -18,14 +18,16 @@ import { mapMediaDetailToDiaryMedia, todayIsoDate, validateDiaryCompose } from '
 
 type DiaryComposeScreenProps = {
   mediaId?: string;
+  diaryId?: string;
+  mode?: 'create' | 'edit';
   returnTo?: string;
 };
 
-export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProps) {
+export function DiaryComposeScreen({ mediaId, diaryId, mode = 'create', returnTo }: DiaryComposeScreenProps) {
   const router = useRouter();
-  const initialSelectedMedia = mediaId ? null : mockDiaryMedia;
+  const initialSelectedMedia = mediaId || diaryId ? null : mockDiaryMedia;
   const [selectedMedia, setSelectedMedia] = useState<DiaryComposeMedia | null>(initialSelectedMedia);
-  const [mediaStatus, setMediaStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(mediaId ? 'loading' : 'idle');
+  const [mediaStatus, setMediaStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(mediaId || diaryId ? 'loading' : 'idle');
   const [rating, setRating] = useState(0);
   const [watchedDate, setWatchedDate] = useState(todayIsoDate());
   const [title, setTitle] = useState('');
@@ -37,6 +39,40 @@ export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProp
   const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
+    if (mode === 'edit' && diaryId) {
+      let cancelled = false;
+      setMediaStatus('loading');
+
+      getDiary(diaryId)
+        .then((diary) => {
+          if (cancelled) return;
+          setSelectedMedia({
+            id: diary.media.id,
+            title: diary.media.title,
+            originalTitle: diary.media.originalTitle,
+            posterUrl: diary.media.posterUrl,
+            meta: `${diary.media.releaseDate?.slice(0, 4) ?? '연도 미상'} · ${diary.media.runtime ? `${diary.media.runtime}분` : '러닝타임 준비 중'}`,
+            genres: diary.media.genres,
+          });
+          setRating(diary.rating);
+          setWatchedDate(diary.watchedDate);
+          setTitle(diary.title);
+          setContent(diary.content);
+          setContainsSpoiler(diary.hasSpoiler);
+          setVisibility(diary.visibility);
+          setMediaStatus('ready');
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setSelectedMedia(null);
+          setMediaStatus('error');
+        });
+
+      return () => {
+        cancelled = true;
+      };
+    }
+
     if (!mediaId) {
       setSelectedMedia(mockDiaryMedia);
       setMediaStatus('idle');
@@ -61,7 +97,7 @@ export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProp
     return () => {
       cancelled = true;
     };
-  }, [mediaId]);
+  }, [mediaId, diaryId, mode]);
 
   const effectiveTitle = title.trim() || selectedMedia?.title || '';
   const isValidDraft = validateDiaryCompose({
@@ -85,7 +121,7 @@ export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProp
     setSubmitError('');
 
     try {
-      await createDiary({
+      const payload = {
         mediaId: selectedMedia.id,
         mediaPosterUrl: selectedMedia.posterUrl,
         rating,
@@ -95,10 +131,16 @@ export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProp
         visibility,
         hasSpoiler: containsSpoiler,
         tags,
-      });
+      };
+
+      if (mode === 'edit' && diaryId) {
+        await updateDiary(diaryId, payload);
+      } else {
+        await createDiary(payload);
+      }
       router.push('/diary');
     } catch {
-      setSubmitError('다이어리를 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
+      setSubmitError(mode === 'edit' ? '다이어리를 수정하지 못했어요. 잠시 후 다시 시도해주세요.' : '다이어리를 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
     } finally {
       setIsSubmitting(false);
     }
@@ -110,13 +152,13 @@ export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProp
       <section data-design="diary-compose-shell" className="min-h-dvh w-full max-w-[430px] overflow-x-hidden bg-[#f8fafd] px-5 pb-28 shadow-[0_0_40px_rgba(15,23,42,0.18)]">
         <DiaryComposeHeader onBack={handleBack} />
         <div className="mx-auto flex w-full max-w-[430px] flex-col gap-4 pt-4">
-        {mediaStatus === 'loading' && Boolean(mediaId) ? <MediaDetailLoadingIndicator /> : null}
+        {mediaStatus === 'loading' && Boolean(mediaId || diaryId) ? <MediaDetailLoadingIndicator /> : null}
         {mediaStatus === 'error' ? (
           <p className="rounded-[20px] bg-white px-4 py-3 text-center text-[13px] font-bold text-[#ff5a52] shadow-[0_12px_28px_rgba(31,65,114,0.08)]">
             작품 정보를 불러오지 못했어요. 다시 선택해주세요.
           </p>
         ) : null}
-        <SelectedMediaCard media={selectedMedia} isLoading={mediaStatus === 'loading' && Boolean(mediaId)} />
+        <SelectedMediaCard media={selectedMedia} isLoading={mediaStatus === 'loading' && Boolean(mediaId || diaryId)} />
         <RatingInputCard value={rating} onChange={setRating} />
         <WatchedDateField value={watchedDate} onChange={setWatchedDate} />
         <DiaryTitleField value={title} fallbackTitle={selectedMedia?.title ?? ''} onChange={setTitle} />
@@ -136,7 +178,7 @@ export function DiaryComposeScreen({ mediaId, returnTo }: DiaryComposeScreenProp
         <DiaryPhotoAttachmentSection />
         </div>
       </section>
-      <DiarySubmitBar disabled={!canSubmit} isSubmitting={isSubmitting} onSubmit={handleSubmit} />
+      <DiarySubmitBar disabled={!canSubmit} isSubmitting={isSubmitting} mode={mode} onSubmit={handleSubmit} />
     </main>
   );
 }

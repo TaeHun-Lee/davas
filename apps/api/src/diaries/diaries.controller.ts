@@ -42,13 +42,15 @@ export class DiariesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return { id, message: 'diary detail endpoint contract ready' };
+  async findOne(@Req() request: AuthenticatedRequest, @Param('id') id: string) {
+    const diary = await this.diariesDashboardService.getDiaryForEdit(await this.getUserId(request), id);
+    return { diary };
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateDiaryDto) {
-    return { id, message: 'update diary endpoint contract ready', diary: dto };
+  async update(@Req() request: AuthenticatedRequest, @Param('id') id: string, @Body() dto: UpdateDiaryDto) {
+    const diary = await this.diariesDashboardService.updateDiary(await this.getUserId(request), id, dto);
+    return { diary };
   }
 
   @Delete(':id')

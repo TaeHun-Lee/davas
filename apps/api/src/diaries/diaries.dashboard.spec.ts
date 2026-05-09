@@ -23,6 +23,7 @@ const diaryEntitySource = apiSource('database/entities/diary.entity.ts');
 
 type FakeRepository = {
   find: (options?: unknown) => Promise<DiaryEntity[]>;
+  findOne?: (options?: unknown) => Promise<DiaryEntity | null>;
   create?: (input: Partial<DiaryEntity>) => DiaryEntity;
   save?: (input: DiaryEntity) => Promise<DiaryEntity>;
 };
@@ -258,6 +259,59 @@ describe('Diaries dashboard API contract', () => {
     });
 
     assert.equal(savedMedia?.posterUrl, 'https://image.tmdb.org/t/p/w500/monster.jpg');
+  });
+
+  it('loads an authenticated diary detail for edit mode with selected media fields', async () => {
+    const diary = makeDiary({
+      id: 'diary-edit',
+      userId: 'user-9',
+      media: { id: 'media-9', title: '괴물', originalTitle: 'Monster', posterUrl: 'https://image.tmdb.org/t/p/w500/monster.jpg', releaseDate: '2006-07-27', runtime: 119, mediaType: 'MOVIE', genres: ['27', '18'] } as MediaEntity,
+    });
+    let findOneOptions: unknown;
+    const repository: FakeRepository = {
+      find: async () => [],
+      findOne: async (options) => {
+        findOneOptions = options;
+        return diary;
+      },
+    };
+
+    const detail = await new DiariesDashboardService(repository as never).getDiaryForEdit('user-9', 'diary-edit');
+
+    assert.deepEqual(findOneOptions, { where: { id: 'diary-edit', userId: 'user-9' }, relations: { media: true } });
+    assert.equal(detail.id, 'diary-edit');
+    assert.equal(detail.title, '실제 기록 제목');
+    assert.equal(detail.media.title, '괴물');
+    assert.deepEqual(detail.media.genres, ['공포', '드라마']);
+  });
+
+  it('updates an authenticated diary row instead of returning the patch contract stub', async () => {
+    const diary = makeDiary({ id: 'diary-edit', userId: 'user-9', rating: '3.0' });
+    let savedDiary: DiaryEntity | undefined;
+    const repository: FakeRepository = {
+      find: async () => [],
+      findOne: async () => diary,
+      save: async (input) => {
+        savedDiary = input;
+        return input;
+      },
+    };
+
+    const result = await new DiariesDashboardService(repository as never).updateDiary('user-9', 'diary-edit', {
+      title: '수정한 기록',
+      content: '수정한 본문',
+      watchedDate: '2026-05-09',
+      rating: 4.1,
+      visibility: 'PRIVATE',
+      hasSpoiler: true,
+      tags: [],
+    });
+
+    assert.equal(savedDiary?.title, '수정한 기록');
+    assert.equal(savedDiary?.rating, '4.1');
+    assert.equal(savedDiary?.hasSpoiler, true);
+    assert.equal(result.id, 'diary-edit');
+    assert.doesNotMatch(controllerSource, /update diary endpoint contract ready/);
   });
 
 });
