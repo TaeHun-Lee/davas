@@ -14,9 +14,9 @@ const iconByKind = {
 
 export function DiaryGenreRatioCard({ items }: DiaryGenreRatioCardProps) {
   return (
-    <article className="rounded-[24px] bg-white p-4 shadow-[0_12px_30px_rgba(31,42,68,0.07)]">
-      <h3 className="mb-4 text-[15px] font-extrabold text-[#1f2a44]">장르별 기록 비율</h3>
-      <div className="space-y-3">
+    <article className="flex flex-col rounded-[24px] bg-white p-4 shadow-[0_12px_30px_rgba(31,42,68,0.07)] min-[390px]:max-h-[520px]">
+      <h3 className="mb-4 shrink-0 text-[15px] font-extrabold text-[#1f2a44]">장르별 기록 비율</h3>
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 overscroll-contain">
         {items.map((item) => (
           <div key={item.genre}>
             <div className="mb-1 flex items-center justify-between gap-3 text-[12px] font-bold">
