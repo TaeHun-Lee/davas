@@ -10,7 +10,6 @@ import { MediaDetailLoadingIndicator } from '../media/MediaDetailLoadingIndicato
 import { ProfileActivitySection } from './ProfileActivitySection';
 import { ProfileHeaderCard } from './ProfileHeaderCard';
 import { ProfileListsSection } from './ProfileListsSection';
-import { ProfileMembershipCard } from './ProfileMembershipCard';
 import { ProfileSettingsSection } from './ProfileSettingsSection';
 import { ProfileStatsGrid } from './ProfileStatsGrid';
 
@@ -125,7 +124,6 @@ export function ProfileDashboard() {
         </div>
         <ProfileHeaderCard user={view.user} />
         <ProfileStatsGrid stats={view.stats} />
-        <ProfileMembershipCard />
         <ProfileActivitySection activity={view.activity} />
         <ProfileListsSection lists={view.lists} />
         <ProfileSettingsSection />

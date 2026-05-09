@@ -10,7 +10,6 @@ const profilePageSource = source('./profile/page.tsx');
 const profileDashboardSource = source('../components/profile/ProfileDashboard.tsx');
 const profileHeaderSource = source('../components/profile/ProfileHeaderCard.tsx');
 const profileStatsSource = source('../components/profile/ProfileStatsGrid.tsx');
-const profileMembershipSource = source('../components/profile/ProfileMembershipCard.tsx');
 const profileActivitySource = source('../components/profile/ProfileActivitySection.tsx');
 const profileListsSource = source('../components/profile/ProfileListsSection.tsx');
 const profileSettingsSource = source('../components/profile/ProfileSettingsSection.tsx');
@@ -30,11 +29,10 @@ describe('Davas profile tab design', () => {
     assert.match(diaryApiSource, /\/diaries\/dashboard/);
   });
 
-  it('matches the supplied profile hero, stat row, membership, activity, list, and settings information architecture', () => {
+  it('matches the supplied profile hero, stat row, activity, list, and settings information architecture without the membership card', () => {
     for (const componentName of [
       'ProfileHeaderCard',
       'ProfileStatsGrid',
-      'ProfileMembershipCard',
       'ProfileActivitySection',
       'ProfileListsSection',
       'ProfileSettingsSection',
@@ -50,8 +48,7 @@ describe('Davas profile tab design', () => {
     assert.match(profileDashboardSource, /작성한 다이어리/);
     assert.match(profileDashboardSource, /받은 좋아요/);
     assert.match(profileDashboardSource, /팔로잉/);
-    assert.match(profileMembershipSource, /Davas Pro 멤버십/);
-    assert.match(profileMembershipSource, /혜택 보기/);
+    assert.doesNotMatch(profileDashboardSource, /ProfileMembershipCard|Davas Pro 멤버십|혜택 보기/);
     assert.match(profileActivitySource, /활동/);
     assert.match(profileListsSource, /나의 리스트/);
     assert.match(profileSettingsSource, /설정/);
@@ -84,11 +81,21 @@ describe('Davas profile tab design', () => {
     assert.match(profileHeaderSource, /data-design="profile-settings-button"/);
     assert.match(profileStatsSource, /grid-cols-4/);
     assert.match(profileStatsSource, /divide-x/);
-    assert.match(profileMembershipSource, /rounded-\[20px\]/);
-    assert.match(profileMembershipSource, /shadow-\[0_12px_28px_rgba\(31,65,114,0\.08\)\]/);
     assert.match(profileActivitySource, /grid-cols-4/);
     assert.match(profileListsSource, /-mx-4 overflow-x-auto px-4/);
     assert.match(profileSettingsSource, /rounded-\[20px\]/);
+  });
+
+  it('wires profile section header actions to real diary navigation instead of inert buttons', () => {
+    assert.match(profileActivitySource, /import Link from 'next\/link'/);
+    assert.match(profileActivitySource, /href="\/diary"/);
+    assert.match(profileActivitySource, /aria-label="활동 전체 보기"/);
+    assert.doesNotMatch(profileActivitySource, /<button[^>]*>더보기/);
+
+    assert.match(profileListsSource, /import Link from 'next\/link'/);
+    assert.match(profileListsSource, /href="\/diary"/);
+    assert.match(profileListsSource, /aria-label="나의 리스트 전체 보기"/);
+    assert.doesNotMatch(profileListsSource, /<button[^>]*>전체 보기/);
   });
 
   it('limits placeholder pages to unfinished tabs and removes profile from the temporary route contract', () => {

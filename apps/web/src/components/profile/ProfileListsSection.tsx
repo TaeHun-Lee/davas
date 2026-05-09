@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { ProfileListCard } from './ProfileDashboard';
 
 type ProfileListsSectionProps = {
@@ -39,7 +40,9 @@ export function ProfileListsSection({ lists }: ProfileListsSectionProps) {
     <section className="mt-5" data-design="profile-lists-section">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-[17px] font-black tracking-[-0.03em] text-[#284778]">나의 리스트</h2>
-        <button type="button" className="text-[12px] font-extrabold text-[#8a96a9]">전체 보기 ›</button>
+        <Link href="/diary" aria-label="나의 리스트 전체 보기" className="text-[12px] font-extrabold text-[#8a96a9]">
+          전체 보기 ›
+        </Link>
       </div>
       {lists.length > 0 ? (
         <div className="-mx-4 overflow-x-auto px-4 pb-1 min-[390px]:-mx-5 min-[390px]:px-5">
