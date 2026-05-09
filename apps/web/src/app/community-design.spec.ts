@@ -98,6 +98,15 @@ describe('Davas community screen design', () => {
     assert.match(detailSource, /내용 보기/);
   });
 
+  it('keeps compact popular diary cards from squeezing Korean metric labels', () => {
+    assert.match(cardSource, /compact \? 'w-\[200px\] overflow-hidden' : ''/);
+    assert.match(cardSource, /const metrics = \[/);
+    assert.match(cardSource, /\{compact \? \(/);
+    assert.match(cardSource, /grid grid-cols-3 gap-1/);
+    assert.match(cardSource, /whitespace-nowrap/);
+    assert.match(cardSource, /line-clamp-2/);
+  });
+
   it('supports Slice 5 actionable topic and popular diary navigation without inert controls', () => {
     assert.match(dashboardSource, /handleTopicSelect/);
     assert.match(dashboardSource, /<PopularTopicsSection topics=\{dashboard\.topics\} onTopicSelect=\{handleTopicSelect\} \/>/);
