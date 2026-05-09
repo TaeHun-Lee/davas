@@ -21,6 +21,7 @@ const recentRecordsSource = source('../components/home/RecentRecordsSection.tsx'
 const homeUtilsSource = source('../components/home/home-utils.ts');
 const placeholderSource = source('../components/layout/PlaceholderPage.tsx');
 const middlewareSource = source('../middleware.ts');
+const mediaDetailLoadingIndicatorSource = source('../components/media/MediaDetailLoadingIndicator.tsx');
 
 describe('Davas authenticated home design', () => {
   it('renders the authenticated landing through a live-data home dashboard without mock content', () => {
@@ -28,6 +29,10 @@ describe('Davas authenticated home design', () => {
     assert.match(landingSource, /getDiaryDashboard/);
     assert.match(archiveSectionSource, /For Your Archive/);
     assert.match(dashboardSource, /HomeDashboardView/);
+    assert.match(landingSource, /MediaDetailLoadingIndicator/);
+    assert.match(landingSource, /label="인증 상태를 확인하는 중"/);
+    assert.doesNotMatch(landingSource, /인증 상태를 확인하고 있습니다/);
+    assert.match(mediaDetailLoadingIndicatorSource, /fullScreen\?: boolean/);
     assert.match(dashboardSource, /ArchiveHighlightSection item=\{view\.archiveHighlight\}/);
     assert.match(dashboardSource, /HomeStatsGrid stats=\{view\.stats\}/);
     assert.match(dashboardSource, /FavoriteMoviesSection movies=\{view\.favorites\}/);

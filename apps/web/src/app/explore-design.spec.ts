@@ -109,7 +109,9 @@ describe('Davas explore screen design', () => {
     assert.match(useMediaSearchSource, /export function useMediaSearch/);
     assert.match(useMediaSearchSource, /searchMedia/);
     assert.match(mediaSearchResultsSource, /검색 결과/);
-    assert.match(mediaSearchResultsSource, /검색 중/);
+    assert.match(mediaSearchResultsSource, /MediaDetailLoadingIndicator/);
+    assert.match(mediaSearchResultsSource, /fullScreen=\{false\}/);
+    assert.doesNotMatch(mediaSearchResultsSource, /검색 중\.\.\./);
     assert.match(mediaSearchResultsSource, /검색 결과가 없어요/);
   });
 
@@ -133,11 +135,17 @@ describe('Davas explore screen design', () => {
     assert.match(personSearchResultsSource, /인물 검색 결과/);
     assert.match(personSearchResultsSource, /작품 보기/);
     assert.doesNotMatch(personSearchResultsSource, /배우 검색 결과/);
+    assert.match(personSearchResultsSource, /MediaDetailLoadingIndicator/);
+    assert.match(personSearchResultsSource, /label="인물 검색 중"/);
+    assert.doesNotMatch(personSearchResultsSource, /인물을 검색 중이에요/);
     assert.doesNotMatch(personSearchResultsSource, /배우를 검색 중이에요/);
     assert.doesNotMatch(personSearchResultsSource, /일치하는 배우가 없어요/);
     assert.match(personSearchResultsSource, /knownFor/);
     assert.match(personCreditResultsSource, /export function PersonCreditResults/);
     assert.match(personCreditResultsSource, /출연 작품/);
+    assert.match(personCreditResultsSource, /MediaDetailLoadingIndicator/);
+    assert.match(personCreditResultsSource, /label="출연 작품을 불러오는 중"/);
+    assert.doesNotMatch(personCreditResultsSource, /출연 작품을 불러오고 있어요/);
     assert.match(personCreditResultsSource, /작품 선택/);
     assert.match(personCreditResultsSource, /onSelect/);
     assert.match(exploreDashboardSource, /usePeopleSearch/);
@@ -416,7 +424,7 @@ describe('Davas explore screen design', () => {
   it('shows selected media loading as an animated indicator instead of bottom-page text', () => {
     assert.match(mediaDetailLoadingIndicatorSource, /export function MediaDetailLoadingIndicator/);
     assert.match(mediaDetailLoadingIndicatorSource, /role="status"/);
-    assert.match(mediaDetailLoadingIndicatorSource, /aria-label="상세 정보를 불러오는 중"/);
+    assert.match(mediaDetailLoadingIndicatorSource, /label = '상세 정보를 불러오는 중'/);
     assert.match(mediaDetailLoadingIndicatorSource, /animate-spin/);
     assert.match(mediaDetailLoadingIndicatorSource, /fixed inset-0/);
     assert.doesNotMatch(mediaDetailLoadingIndicatorSource, /불러오고 있어요/);

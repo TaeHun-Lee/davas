@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { DiaryDashboardView } from '../diary/diary-dashboard-types';
 import { getDiaryDashboard } from '../../lib/api/diaries';
+import { MediaDetailLoadingIndicator } from '../media/MediaDetailLoadingIndicator';
 import { HomeDashboard, buildHomeDashboardView } from '../home/HomeDashboard';
 
 type MeResponse = {
@@ -55,13 +56,7 @@ export function AuthenticatedLanding() {
   }, [router]);
 
   if (isLoading || !dashboard) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f5f7fb] px-6 text-[#7a8499]">
-        <section className="rounded-[24px] bg-white px-8 py-6 text-center shadow-[0_14px_32px_rgba(31,65,114,0.09)]">
-          인증 상태를 확인하고 있습니다...
-        </section>
-      </main>
-    );
+    return <MediaDetailLoadingIndicator label="인증 상태를 확인하는 중" />;
   }
 
   return <HomeDashboard user={user ?? undefined} view={buildHomeDashboardView(dashboard)} />;

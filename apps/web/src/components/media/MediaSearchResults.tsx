@@ -1,5 +1,6 @@
 import type { MediaSearchResult } from '../../lib/api/media';
 import type { MediaSearchStatus } from '../../hooks/useMediaSearch';
+import { MediaDetailLoadingIndicator } from './MediaDetailLoadingIndicator';
 import { getTmdbGenreNames } from './media-genres';
 
 function SearchResultPoster({ item }: { item: MediaSearchResult }) {
@@ -28,7 +29,7 @@ export function MediaSearchResults({
   return (
     <section className="mt-5">
       <h2 className="text-[16px] font-extrabold leading-[22px] tracking-[-0.02em] text-[#1f2a44]">검색 결과</h2>
-      {status === 'searching' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#8b96a8]">검색 중...</div> : null}
+      {status === 'searching' ? <MediaDetailLoadingIndicator label="검색 중" fullScreen={false} /> : null}
       {status === 'empty' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#8b96a8]">검색 결과가 없어요</div> : null}
       {status === 'error' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#ef4444]">검색을 불러오지 못했어요. TMDB API 설정을 확인해주세요.</div> : null}
       {status === 'results' ? (

@@ -1,5 +1,6 @@
 import type { PersonSearchResult } from '../../lib/api/media';
 import type { PeopleSearchStatus } from '../../hooks/usePeopleSearch';
+import { MediaDetailLoadingIndicator } from './MediaDetailLoadingIndicator';
 
 function PersonProfileImage({ person }: { person: PersonSearchResult }) {
   if (person.profileUrl) {
@@ -57,7 +58,7 @@ export function PersonSearchResults({
         <h2 className="text-[16px] font-extrabold leading-[22px] tracking-[-0.02em] text-[#1f2a44]">인물 검색 결과</h2>
         <span className="text-[11px] font-bold text-[#9aa6b8]">이름으로 작품 찾기</span>
       </div>
-      {status === 'searching' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#8b96a8]">인물을 검색 중이에요...</div> : null}
+      {status === 'searching' ? <MediaDetailLoadingIndicator label="인물 검색 중" fullScreen={false} /> : null}
       {status === 'empty' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#8b96a8]">일치하는 인물이 없어요</div> : null}
       {status === 'error' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#ef4444]">인물 검색을 불러오지 못했어요.</div> : null}
       {status === 'results' ? (

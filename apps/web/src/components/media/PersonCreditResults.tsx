@@ -1,5 +1,6 @@
 import type { MediaSearchResult } from '../../lib/api/media';
 import type { PersonCreditsStatus } from '../../hooks/usePeopleSearch';
+import { MediaDetailLoadingIndicator } from './MediaDetailLoadingIndicator';
 import { getTmdbGenreNames } from './media-genres';
 
 function CreditPoster({ item }: { item: MediaSearchResult }) {
@@ -43,7 +44,7 @@ export function PersonCreditResults({
         <h2 className="text-[16px] font-extrabold leading-[22px] tracking-[-0.02em] text-[#1f2a44]">출연 작품</h2>
         {personName ? <span className="truncate text-[11px] font-bold text-[#9aa6b8]">{personName}</span> : null}
       </div>
-      {status === 'loading' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#8b96a8]">출연 작품을 불러오고 있어요...</div> : null}
+      {status === 'loading' ? <MediaDetailLoadingIndicator label="출연 작품을 불러오는 중" fullScreen={false} /> : null}
       {status === 'empty' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#8b96a8]">선택 가능한 출연 작품이 없어요</div> : null}
       {status === 'error' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#ef4444]">출연 작품을 불러오지 못했어요.</div> : null}
       {status === 'results' ? (
