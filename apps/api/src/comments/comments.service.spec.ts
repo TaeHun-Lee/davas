@@ -51,7 +51,13 @@ function fakeCommentsRepository(rows: CommentEntity[] = []): FakeCommentsReposit
     },
     async findOne(input) {
       this.calls.push({ method: 'findOne', input });
-      return this.rows[0] ?? null;
+      const where = (input as { where?: Partial<CommentEntity> }).where ?? {};
+      return this.rows.find((row) => {
+        if (where.id && row.id !== where.id) return false;
+        if (where.userId && row.userId !== where.userId) return false;
+        if (where.diaryId && row.diaryId !== where.diaryId) return false;
+        return true;
+      }) ?? null;
     },
     async softDelete(input) {
       this.calls.push({ method: 'softDelete', input });
@@ -143,6 +149,22 @@ describe('CommentsService', () => {
     ]);
     assert.equal(updated.content, '수정 댓글');
     assert.deepEqual(comments.calls.at(-1), { method: 'softDelete', input: { id: 'comment-1', userId: 'user-1' } });
+  });
+
+  it('rejects update and delete attempts from a different authenticated user', async () => {
+    const comments = fakeCommentsRepository([makeComment({ id: 'comment-1', userId: 'owner-1' })]);
+    const diaries = fakeDiariesRepository({ id: 'diary-1', visibility: 'PUBLIC' } as DiaryEntity);
+    const service = new CommentsService(comments as never, diaries as never);
+
+    await assert.rejects(() => service.update('comment-1', 'intruder-1', '남의 댓글 수정'), NotFoundException);
+    await assert.rejects(() => service.remove('comment-1', 'intruder-1'), NotFoundException);
+
+    assert.deepEqual(comments.calls.filter((call) => call.method === 'findOne').map((call) => call.input), [
+      { where: { id: 'comment-1', userId: 'intruder-1' }, relations: { user: true, diary: true } },
+      { where: { id: 'comment-1', userId: 'intruder-1' }, relations: { user: true, diary: true } },
+    ]);
+    assert.equal(comments.calls.some((call) => call.method === 'save'), false);
+    assert.equal(comments.calls.some((call) => call.method === 'softDelete'), false);
   });
 
   it('rejects comments for missing or private diaries', async () => {
