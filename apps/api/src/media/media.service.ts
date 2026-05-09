@@ -52,6 +52,22 @@ export type MediaFavoriteResponse = {
   isFavorite: boolean;
 };
 
+export type FavoriteMediaItem = {
+  id: string;
+  mediaType: string;
+  title: string;
+  originalTitle: string | null;
+  posterUrl: string | null;
+  backdropUrl: string | null;
+  releaseDate: string | null;
+  genres: string[];
+  favoritedAt: string;
+};
+
+export type FavoriteMediaResponse = {
+  items: FavoriteMediaItem[];
+};
+
 function formatWatchedDate(dateString: string) {
   return dateString.split('-').join('.');
 }
@@ -166,6 +182,34 @@ export class MediaService {
 
     await this.favoriteRepository.save(this.favoriteRepository.create({ userId, mediaId }));
     return { mediaId, isFavorite: true };
+  }
+
+  async findFavorites(userId: string): Promise<FavoriteMediaResponse> {
+    if (!this.favoriteRepository) {
+      return { items: [] };
+    }
+
+    const favorites = await this.favoriteRepository.find({
+      where: { userId },
+      relations: { media: true },
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      items: favorites
+        .filter((favorite) => Boolean(favorite.media))
+        .map((favorite) => ({
+          id: favorite.media.id,
+          mediaType: favorite.media.mediaType,
+          title: favorite.media.title,
+          originalTitle: favorite.media.originalTitle,
+          posterUrl: favorite.media.posterUrl,
+          backdropUrl: favorite.media.backdropUrl,
+          releaseDate: favorite.media.releaseDate,
+          genres: favorite.media.genres,
+          favoritedAt: favorite.createdAt.toISOString(),
+        })),
+    };
   }
 
   private async isFavorite(mediaId: string, userId?: string) {

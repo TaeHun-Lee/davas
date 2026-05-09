@@ -40,4 +40,13 @@ describe('Media selection API contract', () => {
       'person credits route must be declared before @Get(:id)',
     );
   });
+
+  it('exposes authenticated favorite media list before the catch-all media detail route', () => {
+    assert.match(controllerSource, /@Get\('favorites'\)/);
+    assert.match(controllerSource, /mediaService\.findFavorites\(await this\.getUserId\(request\)\)/);
+    assert.ok(
+      controllerSource.indexOf("@Get('favorites')") < controllerSource.indexOf("@Get(':id')"),
+      'favorite list route must be declared before @Get(:id)',
+    );
+  });
 });

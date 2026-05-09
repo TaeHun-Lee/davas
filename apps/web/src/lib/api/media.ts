@@ -74,6 +74,22 @@ export type MediaDetail = Omit<SelectedMedia, 'genreIds'> & {
   genreIds?: number[];
 };
 
+export type FavoriteMediaItem = {
+  id: string;
+  mediaType: 'MOVIE' | 'TV' | string;
+  title: string;
+  originalTitle: string | null;
+  posterUrl: string | null;
+  backdropUrl: string | null;
+  releaseDate: string | null;
+  genres: string[];
+  favoritedAt: string;
+};
+
+export type FavoriteMediaResponse = {
+  items: FavoriteMediaItem[];
+};
+
 function getApiBaseUrl() {
   if (typeof window === 'undefined') {
     return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api';
@@ -197,6 +213,18 @@ export async function getMediaDetail(id: string) {
   }
 
   return (await response.json()) as MediaDetail;
+}
+
+export async function getFavoriteMedia() {
+  const response = await fetch(`${getApiBaseUrl()}/media/favorites`, {
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error('favorite media failed');
+  }
+
+  return (await response.json()) as FavoriteMediaResponse;
 }
 
 export async function toggleMediaFavorite(id: string) {

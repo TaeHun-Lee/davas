@@ -4,10 +4,12 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getMe, type AuthenticatedUser } from '../../lib/api/auth';
 import { getDiaryDashboard } from '../../lib/api/diaries';
+import { getFavoriteMedia, type FavoriteMediaItem } from '../../lib/api/media';
 import type { DiaryDashboardView, DiaryListItemView } from '../diary/diary-dashboard-types';
 import { AppShell } from '../layout/AppShell';
 import { MediaDetailLoadingIndicator } from '../media/MediaDetailLoadingIndicator';
 import { ProfileActivitySection } from './ProfileActivitySection';
+import { ProfileFavoriteMediaSection } from './ProfileFavoriteMediaSection';
 import { ProfileHeaderCard } from './ProfileHeaderCard';
 import { ProfileListsSection } from './ProfileListsSection';
 import { ProfileSettingsSection } from './ProfileSettingsSection';
@@ -43,6 +45,7 @@ export type ProfileView = {
     likedPosts: ProfileMetric;
   };
   lists: ProfileListCard[];
+  favoriteMedia: FavoriteMediaItem[];
 };
 
 function toMetric(label: string, value: number | null): ProfileMetric {
@@ -64,7 +67,7 @@ function buildRecentListCard(item: DiaryListItemView): ProfileListCard {
   };
 }
 
-export function buildProfileView(user: AuthenticatedUser, dashboard: DiaryDashboardView): ProfileView {
+export function buildProfileView(user: AuthenticatedUser, dashboard: DiaryDashboardView, favoriteMedia: FavoriteMediaItem[] = []): ProfileView {
   const diaryTotal = dashboard.summary.totalCount;
   const uniqueRecentMediaCount = new Set(dashboard.recentItems.map((item) => item.mediaId)).size;
   const recentListCards = dashboard.recentItems.slice(0, 4).map(buildRecentListCard);
@@ -84,6 +87,7 @@ export function buildProfileView(user: AuthenticatedUser, dashboard: DiaryDashbo
       likedPosts: toMetric('좋아요한 글', null),
     },
     lists: recentListCards,
+    favoriteMedia,
   };
 }
 
@@ -95,10 +99,10 @@ export function ProfileDashboard() {
   useEffect(() => {
     let mounted = true;
 
-    Promise.all([getMe(), getDiaryDashboard()])
-      .then(([user, dashboard]) => {
+    Promise.all([getMe(), getDiaryDashboard(), getFavoriteMedia()])
+      .then(([user, dashboard, favorites]) => {
         if (!mounted) return;
-        setView(buildProfileView(user, dashboard));
+        setView(buildProfileView(user, dashboard, favorites.items));
         setStatus('ready');
       })
       .catch(() => {
@@ -126,6 +130,7 @@ export function ProfileDashboard() {
         <ProfileStatsGrid stats={view.stats} />
         <ProfileActivitySection activity={view.activity} />
         <ProfileListsSection lists={view.lists} />
+        <ProfileFavoriteMediaSection items={view.favoriteMedia} />
         <ProfileSettingsSection />
       </div>
     </AppShell>

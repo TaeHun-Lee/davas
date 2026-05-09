@@ -38,6 +38,11 @@ export class MediaController {
     return this.mediaService.findPersonCredits(personId, language ?? 'ko-KR');
   }
 
+  @Get('favorites')
+  async findFavorites(@Req() request: Request) {
+    return this.mediaService.findFavorites(await this.getUserId(request));
+  }
+
   @Post(':id/favorite')
   async toggleFavorite(@Param('id') id: string, @Req() request: Request) {
     return this.mediaService.toggleFavorite(id, await this.getUserId(request));

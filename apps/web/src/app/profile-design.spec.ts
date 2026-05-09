@@ -14,6 +14,7 @@ const profileHeaderSource = source('../components/profile/ProfileHeaderCard.tsx'
 const profileStatsSource = source('../components/profile/ProfileStatsGrid.tsx');
 const profileActivitySource = source('../components/profile/ProfileActivitySection.tsx');
 const profileListsSource = source('../components/profile/ProfileListsSection.tsx');
+const profileFavoritesSource = source('../components/profile/ProfileFavoriteMediaSection.tsx');
 const profileSettingsSource = source('../components/profile/ProfileSettingsSection.tsx');
 const profileEditPageSource = source('./profile/edit/page.tsx');
 const profileAccountPageSource = source('./profile/account/page.tsx');
@@ -29,6 +30,7 @@ const profilePrivacyScreenSource = source('../components/profile/ProfilePrivacyS
 const profileSupportScreenSource = source('../components/profile/ProfileSupportScreen.tsx');
 const profileAboutScreenSource = source('../components/profile/ProfileAboutScreen.tsx');
 const usersApiSource = source('../lib/api/users.ts');
+const mediaApiSource = source('../lib/api/media.ts');
 const authApiSource = source('../lib/api/auth.ts');
 const diaryApiSource = source('../lib/api/diaries.ts');
 const placeholderSource = source('../components/layout/PlaceholderPage.tsx');
@@ -80,6 +82,23 @@ describe('Davas profile tab design', () => {
     assert.doesNotMatch(profileDashboardSource, /recordedMovies:\s*48|diaryCount:\s*12|receivedLikes:\s*126|following:\s*32/);
     assert.doesNotMatch(profileListsSource, /인생 영화|다시 보고 싶은 영화|영화 명대사 모음|2024 최고의 영화/);
     assert.doesNotMatch(profileListsSource, /\/images\/mock/);
+  });
+
+  it('shows a separate favorite media section below my lists using live favorite data', () => {
+    assert.match(profileDashboardSource, /getFavoriteMedia/);
+    assert.match(profileDashboardSource, /favoriteMedia/);
+    assert.match(profileDashboardSource, /<ProfileListsSection lists=\{view\.lists\} \/>[\s\S]*<ProfileFavoriteMediaSection items=\{view\.favoriteMedia\}/);
+    assert.match(mediaApiSource, /export type FavoriteMediaItem/);
+    assert.match(mediaApiSource, /export async function getFavoriteMedia/);
+    assert.match(mediaApiSource, /\/media\/favorites/);
+    assert.match(mediaApiSource, /credentials: 'include'/);
+    assert.match(profileFavoritesSource, /내가 찜한 컨텐츠/);
+    assert.match(profileFavoritesSource, /data-design="profile-favorite-media-section"/);
+    assert.match(profileFavoritesSource, /items\.map/);
+    assert.match(profileFavoritesSource, /item\.posterUrl/);
+    assert.match(profileFavoritesSource, /item\.genres\[0\]/);
+    assert.match(profileFavoritesSource, /아직 찜한 컨텐츠가 없어요/);
+    assert.doesNotMatch(profileFavoritesSource, /mock|인셉션|센티멘탈 밸류/);
   });
 
   it('keeps unavailable social metrics explicit instead of fabricating likes or following counts', () => {

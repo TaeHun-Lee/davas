@@ -130,6 +130,10 @@ function fakeFavoriteRepository(favorite: Record<string, unknown> | null = null)
       favorite = null;
       return { affected: 1 };
     },
+    async find(input?: unknown) {
+      calls.push({ method: 'find', input });
+      return favorite ? [favorite] : [];
+    },
   };
 }
 
@@ -298,6 +302,50 @@ describe('MediaService detail', () => {
 
     assert.deepEqual(favorited, { mediaId: 'media-id', isFavorite: true });
     assert.deepEqual(favorites.calls.map((call) => call.method), ['findOne', 'create', 'save']);
+  });
+
+  it('lists the authenticated user favorite media in recently favorited order', async () => {
+    const tmdbClient = new FakeTmdbClient();
+    const favoriteCreatedAt = new Date('2026-05-09T11:00:00.000Z');
+    const favorites = fakeFavoriteRepository({
+      id: 'favorite-id',
+      userId: 'user-id',
+      mediaId: 'media-id',
+      createdAt: favoriteCreatedAt,
+      media: {
+        id: 'media-id',
+        externalProvider: 'TMDB',
+        externalId: '1124566',
+        mediaType: 'MOVIE',
+        title: '센티멘탈 밸류',
+        originalTitle: 'Affeksjonsverdi',
+        overview: '검색 시놉시스',
+        posterUrl: 'https://image.tmdb.org/t/p/w500/poster.jpg',
+        backdropUrl: null,
+        releaseDate: '2026-02-18',
+        genres: ['드라마'],
+        country: 'NO',
+      },
+    });
+    const service = new MediaService(tmdbClient as never, fakeRepository(null) as never, fakeDiaryRepository(null) as never, favorites as never);
+
+    const result = await service.findFavorites('user-id');
+
+    assert.deepEqual(favorites.calls[0], {
+      method: 'find',
+      input: { where: { userId: 'user-id' }, relations: { media: true }, order: { createdAt: 'DESC' } },
+    });
+    assert.deepEqual(result.items, [{
+      id: 'media-id',
+      mediaType: 'MOVIE',
+      title: '센티멘탈 밸류',
+      originalTitle: 'Affeksjonsverdi',
+      posterUrl: 'https://image.tmdb.org/t/p/w500/poster.jpg',
+      backdropUrl: null,
+      releaseDate: '2026-02-18',
+      genres: ['드라마'],
+      favoritedAt: '2026-05-09T11:00:00.000Z',
+    }]);
   });
 });
 
