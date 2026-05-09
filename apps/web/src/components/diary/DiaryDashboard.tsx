@@ -8,7 +8,12 @@ import { DiaryInsightGrid } from './DiaryInsightGrid';
 import { DiaryRecentListSection } from './DiaryRecentListSection';
 import { DiarySearchBar } from './DiarySearchBar';
 import { DiarySummarySection } from './DiarySummarySection';
-import { filterDiaryItems, setDiaryDashboardQueryParam } from './diary-dashboard-utils';
+import {
+  filterDiaryItems,
+  getAdjacentDiaryMonth,
+  setDiaryDashboardQueryParam,
+  sortByWatchedDate,
+} from './diary-dashboard-utils';
 import type { DiaryDashboardView } from './diary-dashboard-types';
 
 export type DiaryDashboardStatus = 'loading' | 'ready' | 'error';
@@ -36,20 +41,28 @@ function toCalendarDay(value: string | null) {
   return Number.isInteger(day) && day >= 1 && day <= 31 ? day : undefined;
 }
 
+function toCalendarNumber(value: string | null) {
+  const numberValue = Number(value);
+  return Number.isInteger(numberValue) && numberValue > 0 ? numberValue : undefined;
+}
+
 export function DiaryDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [dashboard, setDashboard] = useState<DiaryDashboardView>(emptyDiaryDashboard);
   const [status, setStatus] = useState<DiaryDashboardStatus>('loading');
   const [query, setQuery] = useState(searchParams.get('q') ?? '');
+  const [calendarYear, setCalendarYear] = useState(toCalendarNumber(searchParams.get('year')) ?? emptyDiaryDashboard.calendar.year);
+  const [calendarMonth, setCalendarMonth] = useState(toCalendarNumber(searchParams.get('month')) ?? emptyDiaryDashboard.calendar.month);
   const [selectedCalendarDay, setSelectedCalendarDay] = useState<number | undefined>(
     toCalendarDay(searchParams.get('day')),
   );
+  const [showAllDiaries, setShowAllDiaries] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
-    getDiaryDashboard()
+    getDiaryDashboard({ year: calendarYear, month: calendarMonth, day: selectedCalendarDay })
       .then((nextDashboard) => {
         if (!mounted) return;
         setDashboard(nextDashboard);
@@ -63,36 +76,94 @@ export function DiaryDashboard() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [calendarYear, calendarMonth, selectedCalendarDay]);
 
   useEffect(() => {
     const nextQuery = searchParams.get('q') ?? '';
+    const nextYear = toCalendarNumber(searchParams.get('year'));
+    const nextMonth = toCalendarNumber(searchParams.get('month'));
     const nextDay = toCalendarDay(searchParams.get('day'));
     setQuery(nextQuery);
+    if (nextYear) setCalendarYear(nextYear);
+    if (nextMonth) setCalendarMonth(nextMonth);
     setSelectedCalendarDay(nextDay);
   }, [searchParams]);
 
+  const selectedCalendarDate = useMemo(
+    () => ({ year: dashboard.calendar.year, month: dashboard.calendar.month, day: selectedCalendarDay }),
+    [dashboard.calendar.year, dashboard.calendar.month, selectedCalendarDay],
+  );
+
   const visibleDiaries = useMemo(
-    () => filterDiaryItems(dashboard.recentItems, query, selectedCalendarDay),
-    [dashboard.recentItems, query, selectedCalendarDay],
+    () =>
+      showAllDiaries
+        ? sortByWatchedDate(filterDiaryItems(dashboard.recentItems, query))
+        : filterDiaryItems(dashboard.recentItems, query, selectedCalendarDate),
+    [dashboard.recentItems, query, selectedCalendarDate, showAllDiaries],
   );
 
   const shouldShowMyDiarySection = visibleDiaries.length > 0;
 
   const selectedCalendarDescription = selectedCalendarDay
-    ? `${dashboard.calendar.month}월 ${selectedCalendarDay}일에 작성한 기록만 모아봤어요.`
-    : undefined;
+    ? `${dashboard.calendar.year}년 ${dashboard.calendar.month}월 ${selectedCalendarDay}일에 작성한 기록만 모아봤어요.`
+    : showAllDiaries
+      ? '관람일 기준으로 전체 다이어리를 정렬했어요.'
+      : undefined;
 
   const handleQueryChange = (nextQuery: string) => {
     setQuery(nextQuery);
-    router.replace(setDiaryDashboardQueryParam(searchParams, { q: nextQuery, day: selectedCalendarDay }), {
+    router.replace(
+      setDiaryDashboardQueryParam(searchParams, {
+        q: nextQuery,
+        year: dashboard.calendar.year,
+        month: dashboard.calendar.month,
+        day: selectedCalendarDay,
+      }),
+      { scroll: false },
+    );
+  };
+
+  const handleCalendarDaySelect = (nextDay: number) => {
+    setShowAllDiaries(false);
+    setSelectedCalendarDay(nextDay);
+    router.replace(
+      setDiaryDashboardQueryParam(searchParams, {
+        q: query,
+        year: dashboard.calendar.year,
+        month: dashboard.calendar.month,
+        day: nextDay,
+      }),
+      { scroll: false },
+    );
+  };
+
+  const handleCalendarMonthChange = (offset: -1 | 1) => {
+    const nextMonth = getAdjacentDiaryMonth(dashboard.calendar.year, dashboard.calendar.month, offset);
+    setShowAllDiaries(false);
+    setCalendarYear(nextMonth.year);
+    setCalendarMonth(nextMonth.month);
+    setSelectedCalendarDay(undefined);
+    router.replace(setDiaryDashboardQueryParam(searchParams, { q: query, year: nextMonth.year, month: nextMonth.month }), {
       scroll: false,
     });
   };
 
-  const handleCalendarDaySelect = (nextDay: number) => {
-    setSelectedCalendarDay(nextDay);
-    router.replace(setDiaryDashboardQueryParam(searchParams, { q: query, day: nextDay }), { scroll: false });
+  const handleCalendarSelectAll = () => {
+    setShowAllDiaries(false);
+    setSelectedCalendarDay(undefined);
+    router.replace(
+      setDiaryDashboardQueryParam(searchParams, { q: query, year: dashboard.calendar.year, month: dashboard.calendar.month }),
+      { scroll: false },
+    );
+  };
+
+  const handleViewAllDiaries = () => {
+    setShowAllDiaries(true);
+    setSelectedCalendarDay(undefined);
+    router.replace(
+      setDiaryDashboardQueryParam(searchParams, { q: query, year: dashboard.calendar.year, month: dashboard.calendar.month }),
+      { scroll: false },
+    );
   };
 
   return (
@@ -112,12 +183,15 @@ export function DiaryDashboard() {
           calendarMarkers={dashboard.calendar.markers}
           genreRatios={dashboard.genreRatios}
           onDaySelect={handleCalendarDaySelect}
+          onMonthChange={handleCalendarMonthChange}
+          onSelectAll={handleCalendarSelectAll}
         />
         {shouldShowMyDiarySection ? (
           <DiaryRecentListSection
             items={visibleDiaries}
             title="내가 작성한 다이어리"
             description={selectedCalendarDescription}
+            onViewAll={handleViewAllDiaries}
           />
         ) : null}
       </div>

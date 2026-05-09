@@ -7,18 +7,53 @@ type DiaryMonthlyCalendarCardProps = {
   selectedDay?: number;
   markers: DiaryCalendarMarker[];
   onDaySelect?: (day: number) => void;
+  onMonthChange?: (offset: -1 | 1) => void;
+  onSelectAll?: () => void;
 };
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 
-export function DiaryMonthlyCalendarCard({ year, month, selectedDay, markers, onDaySelect }: DiaryMonthlyCalendarCardProps) {
+export function DiaryMonthlyCalendarCard({
+  year,
+  month,
+  selectedDay,
+  markers,
+  onDaySelect,
+  onMonthChange,
+  onSelectAll,
+}: DiaryMonthlyCalendarCardProps) {
   const days = getDiaryCalendarDays({ year, month, selectedDay, markers });
 
   return (
     <article className="rounded-[24px] bg-white p-4 shadow-[0_12px_30px_rgba(31,42,68,0.07)]">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-[15px] font-extrabold text-[#1f2a44]">이번 달 기록 캘린더</h3>
-        <span className="rounded-full bg-[#eef5ff] px-3 py-1 text-[11px] font-bold text-[#216bd8]">{month}월</span>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="이전 달 보기"
+            onClick={() => onMonthChange?.(-1)}
+            className="grid h-7 w-7 place-items-center rounded-full bg-[#f3f6fb] text-[14px] font-extrabold text-[#526078]"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            aria-label="달력 전체 선택"
+            onClick={onSelectAll}
+            className="rounded-full bg-[#eef5ff] px-2.5 py-1 text-[11px] font-bold text-[#216bd8]"
+          >
+            {month}월
+          </button>
+          <button
+            type="button"
+            aria-label="다음 달 보기"
+            onClick={() => onMonthChange?.(1)}
+            className="grid h-7 w-7 place-items-center rounded-full bg-[#f3f6fb] text-[14px] font-extrabold text-[#526078]"
+          >
+            ›
+          </button>
+        </div>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-[#a2acba]">
         {weekdays.map((weekday) => (

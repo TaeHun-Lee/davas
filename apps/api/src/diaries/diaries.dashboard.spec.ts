@@ -61,7 +61,7 @@ describe('Diaries dashboard API contract', () => {
   it('registers GET /api/diaries/dashboard before dynamic diary detail routes', () => {
     assert.match(controllerSource, /@Get\('dashboard'\)/);
     assert.ok(controllerSource.indexOf("@Get('dashboard')") < controllerSource.indexOf("@Get(':id')"));
-    assert.match(controllerSource, /dashboard\(@Req\(\) request: AuthenticatedRequest\)/);
+    assert.match(controllerSource, /async dashboard\(\s*@Req\(\) request: AuthenticatedRequest,\s*@Query\('year'\) year\?: string,\s*@Query\('month'\) month\?: string,\s*@Query\('day'\) day\?: string,\s*\)/);
     assert.match(controllerSource, /DiariesDashboardService/);
     assert.match(moduleSource, /DiariesDashboardService/);
   });
@@ -136,11 +136,28 @@ describe('Diaries dashboard API contract', () => {
       where: { userId: 'user-42' },
       relations: { media: true },
       order: { createdAt: 'DESC', watchedDate: 'DESC' },
-      take: 50,
     });
   });
 
+  it('builds calendar markers for the requested month while keeping summary stats over all records', async () => {
+    const repository: FakeRepository = {
+      find: async () => [
+        makeDiary({ id: 'april-action', watchedDate: '2026-04-10', rating: '5.0', media: { id: 'media-action', title: '액션', posterUrl: null, genres: ['28'] } as MediaEntity }),
+        makeDiary({ id: 'may-drama', watchedDate: '2026-05-03', rating: '3.0', media: { id: 'media-drama', title: '드라마', posterUrl: null, genres: ['18'] } as MediaEntity }),
+      ],
+    };
 
+    const dashboard = await new DiariesDashboardService(repository as never).getDashboard('user-1', { year: 2026, month: 4, day: 10 });
+
+    assert.equal(dashboard.calendar.year, 2026);
+    assert.equal(dashboard.calendar.month, 4);
+    assert.equal(dashboard.calendar.selectedDay, 10);
+    assert.deepEqual(dashboard.calendar.markers, [{ day: 10, count: 1 }]);
+    assert.equal(dashboard.summary.totalCount, 2);
+    assert.equal(dashboard.summary.monthlyCount, 1);
+    assert.equal(dashboard.summary.averageRating, 4);
+    assert.deepEqual(dashboard.genreRatios.map((item) => item.genre).sort(), ['드라마', '액션']);
+  });
 
   it('orders my written diary list by most recently created diary first', async () => {
     let findOptions: unknown;
@@ -157,7 +174,6 @@ describe('Diaries dashboard API contract', () => {
       where: { userId: 'user-42' },
       relations: { media: true },
       order: { createdAt: 'DESC', watchedDate: 'DESC' },
-      take: 50,
     });
   });
 

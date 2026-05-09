@@ -39,7 +39,13 @@ export function getDiaryCalendarDays({
   });
 }
 
-export function filterDiaryItems(items: DiaryListItemView[], query: string, selectedDay?: number) {
+export type DiaryDateSelection = {
+  year?: number;
+  month?: number;
+  day?: number;
+};
+
+export function filterDiaryItems(items: DiaryListItemView[], query: string, selectedDate?: DiaryDateSelection) {
   const normalizedQuery = query.trim().toLocaleLowerCase('ko-KR');
   const filteredItems = normalizedQuery
     ? items.filter((item) =>
@@ -50,8 +56,8 @@ export function filterDiaryItems(items: DiaryListItemView[], query: string, sele
       )
     : items;
 
-  const calendarItems = selectedDay
-    ? filteredItems.filter((item) => getWatchedDay(item.watchedDate) === selectedDay)
+  const calendarItems = selectedDate?.day
+    ? filteredItems.filter((item) => isSameWatchedDate(item.watchedDate, selectedDate))
     : filteredItems;
 
   return sortByRecentlyWritten(calendarItems);
@@ -61,14 +67,30 @@ export function sortByRecentlyWritten(items: DiaryListItemView[]) {
   return [...items].sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)));
 }
 
-function getWatchedDay(watchedDate: string) {
-  const day = Number(watchedDate.trim().split(/[.-]/).at(-1));
-  return Number.isFinite(day) ? day : undefined;
+export function sortByWatchedDate(items: DiaryListItemView[]) {
+  return [...items].sort((a, b) => {
+    const dateDiff = Number(new Date(toIsoWatchedDate(b.watchedDate))) - Number(new Date(toIsoWatchedDate(a.watchedDate)));
+    return dateDiff || Number(new Date(b.createdAt)) - Number(new Date(a.createdAt));
+  });
+}
+
+export function getAdjacentDiaryMonth(year: number, month: number, offset: -1 | 1) {
+  const nextDate = new Date(year, month - 1 + offset, 1);
+  return { year: nextDate.getFullYear(), month: nextDate.getMonth() + 1 };
+}
+
+function isSameWatchedDate(watchedDate: string, selectedDate: DiaryDateSelection) {
+  const [year, month, day] = watchedDate.trim().split(/[.-]/).map(Number);
+  return year === selectedDate.year && month === selectedDate.month && day === selectedDate.day;
+}
+
+function toIsoWatchedDate(watchedDate: string) {
+  return watchedDate.trim().replace(/\./g, '-');
 }
 
 export function setDiaryDashboardQueryParam(
   searchParams: URLSearchParams | ReadonlyURLSearchParamsLike,
-  { q, day }: { q: string; day?: number },
+  { q, year, month, day }: { q: string; year?: number; month?: number; day?: number },
 ) {
   const params = new URLSearchParams(searchParams.toString());
   const trimmedQuery = q.trim();
@@ -80,6 +102,14 @@ export function setDiaryDashboardQueryParam(
   }
 
   params.delete('tab');
+
+  if (year && month) {
+    params.set('year', String(year));
+    params.set('month', String(month));
+  } else {
+    params.delete('year');
+    params.delete('month');
+  }
 
   if (day) {
     params.set('day', String(day));

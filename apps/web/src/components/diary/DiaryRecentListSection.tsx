@@ -8,6 +8,7 @@ type DiaryRecentListSectionProps = {
   description?: string;
   emptyTitle?: string;
   emptyDescription?: string;
+  onViewAll?: () => void;
 };
 
 export function DiaryRecentListSection({
@@ -16,10 +17,11 @@ export function DiaryRecentListSection({
   description,
   emptyTitle = '검색 결과가 없어요',
   emptyDescription = '다른 제목이나 작품명으로 다시 검색해보세요',
+  onViewAll,
 }: DiaryRecentListSectionProps) {
   return (
     <section className="pb-24" aria-labelledby="recent-diaries-title">
-      <SectionTitle title={title} showAction={false} />
+      <SectionTitle title={title} actionLabel="전체 보기" onAction={onViewAll} showAction={Boolean(onViewAll)} />
       <h2 id="recent-diaries-title" className="sr-only">{title}</h2>
       {description ? <p className="mb-3 text-[12px] font-semibold text-[#8a95a5]">{description}</p> : null}
       {items.length > 0 ? (

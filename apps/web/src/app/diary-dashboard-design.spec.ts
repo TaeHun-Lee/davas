@@ -66,6 +66,9 @@ describe('Davas diary dashboard design', () => {
     }
     assert.match(diarySummarySectionSource, /나의 다이어리 요약/);
     assert.match(diaryMonthlyCalendarSource, /이번 달 기록 캘린더/);
+    assert.match(diaryMonthlyCalendarSource, /aria-label="이전 달 보기"/);
+    assert.match(diaryMonthlyCalendarSource, /aria-label="다음 달 보기"/);
+    assert.match(diaryMonthlyCalendarSource, /aria-label="달력 전체 선택"/);
     assert.match(diaryGenreRatioSource, /장르별 기록 비율/);
     assert.match(diaryRecentListSource, /내가 작성한 다이어리/);
     assert.doesNotMatch(diaryRecentListSource, /최근 작성한 다이어리/);
@@ -105,10 +108,14 @@ describe('Davas diary dashboard design', () => {
     assert.doesNotMatch(newDiaryFloatingButtonSource, /새 다이어리/);
   });
 
-  it('removes view-all actions from diary summary and recent diary sections', () => {
+  it('wires the recent diary view-all action to a watched-date sorted full list', () => {
     assert.match(sectionTitleSource, /showAction\?: boolean/);
     assert.match(diarySummarySectionSource, /<SectionTitle title="나의 다이어리 요약" showAction=\{false\} \/>/);
-    assert.match(diaryRecentListSource, /<SectionTitle title=\{title\} showAction=\{false\} \/>/);
+    assert.match(diaryRecentListSource, /onViewAll\?: \(\) => void/);
+    assert.match(diaryRecentListSource, /showAction=\{Boolean\(onViewAll\)\}/);
+    assert.match(diaryRecentListSource, /actionLabel="전체 보기"/);
+    assert.match(diaryDashboardSource, /showAllDiaries/);
+    assert.match(diaryDashboardSource, /sortByWatchedDate/);
   });
 
   it('uses only live diary data and removes mock-only dashboard UI affordances', () => {
@@ -148,10 +155,11 @@ describe('Davas diary dashboard design', () => {
 
   it('filters my written diaries by the selected calendar date', () => {
     assert.match(diaryDashboardSource, /handleCalendarDaySelect/);
-    assert.match(diaryDashboardSource, /setDiaryDashboardQueryParam\(searchParams, \{ q: query, day: nextDay \}\)/);
-    assert.match(diaryDashboardSource, /filterDiaryItems\(dashboard\.recentItems, query, selectedCalendarDay\)/);
+    assert.match(diaryDashboardSource, /day: nextDay/);
+    assert.match(diaryDashboardSource, /selectedCalendarDate/);
+    assert.match(diaryDashboardSource, /filterDiaryItems\(dashboard\.recentItems, query, selectedCalendarDate\)/);
     assert.match(diaryDashboardSource, /selectedCalendarDescription/);
-    assert.match(diaryUtilsSource, /selectedDay/);
+    assert.match(diaryUtilsSource, /selectedDate/);
   });
 
   it('uses diary dashboard utilities for calendar state instead of inline date math', () => {
@@ -166,7 +174,7 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryDashboardSource, /setDiaryDashboardQueryParam/);
     assert.doesNotMatch(diaryDashboardSource, /activeTab/);
     assert.doesNotMatch(diaryDashboardSource, /handleTabChange/);
-    assert.match(diaryDashboardSource, /filterDiaryItems\(dashboard\.recentItems, query, selectedCalendarDay\)/);
+    assert.match(diaryDashboardSource, /filterDiaryItems\(dashboard\.recentItems, query, selectedCalendarDate\)/);
     assert.match(diaryRecentListSource, /검색 결과가 없어요/);
     assert.match(diaryRecentListSource, /다른 제목이나 작품명으로 다시 검색해보세요/);
   });
@@ -187,13 +195,13 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryDashboardSource, /selectedCalendarDay/);
     assert.match(diaryDashboardSource, /toCalendarDay\(searchParams\.get\('day'\)\)/);
     assert.match(diaryDashboardSource, /handleCalendarDaySelect/);
-    assert.match(diaryDashboardSource, /setDiaryDashboardQueryParam\(searchParams, \{ q: query, day: nextDay \}\)/);
-    assert.match(diaryDashboardSource, /filterDiaryItems\(dashboard\.recentItems, query, selectedCalendarDay\)/);
+    assert.match(diaryDashboardSource, /day: nextDay/);
+    assert.match(diaryDashboardSource, /filterDiaryItems\(dashboard\.recentItems, query, selectedCalendarDate\)/);
     assert.match(diaryInsightGridSource, /onDaySelect/);
     assert.match(diaryMonthlyCalendarSource, /onDaySelect\?: \(day: number\) => void/);
     assert.match(diaryMonthlyCalendarSource, /disabled=\{!day\.currentMonth\}/);
     assert.match(diaryUtilsSource, /selectedDay\?: number/);
-    assert.match(diaryUtilsSource, /selectedDay/);
+    assert.match(diaryUtilsSource, /selectedDate/);
     assert.match(diaryUtilsSource, /params\.set\('day', String\(day\)\)/);
     assert.match(diaryUtilsSource, /params\.delete\('day'\)/);
     assert.match(diaryRecentListSource, /description\?: string/);

@@ -156,12 +156,11 @@ export class DiariesDashboardService {
     await this.mediaRepository.save(media);
   }
 
-  async getDashboard(userId: string) {
+  async getDashboard(userId: string, selectedDate: { year?: number; month?: number; day?: number } = {}) {
     const diaries = await this.diaries.find({
       where: { userId },
       relations: { media: true },
       order: { createdAt: 'DESC', watchedDate: 'DESC' },
-      take: 50,
     });
 
     const dashboardItems = diaries.map((diary): DiaryDashboardItem => ({
@@ -179,7 +178,12 @@ export class DiariesDashboardService {
     }));
 
     const now = new Date();
-    const baseDate = diaries[0]?.watchedDate ? toDateParts(diaries[0].watchedDate) : { year: now.getFullYear(), month: now.getMonth() + 1, day: undefined };
+    const latestDiaryDate = diaries[0]?.watchedDate ? toDateParts(diaries[0].watchedDate) : undefined;
+    const baseDate = {
+      year: selectedDate.year ?? latestDiaryDate?.year ?? now.getFullYear(),
+      month: selectedDate.month ?? latestDiaryDate?.month ?? now.getMonth() + 1,
+      day: selectedDate.day,
+    };
     const monthlyItems = diaries.filter((diary) => {
       const { year, month } = toDateParts(diary.watchedDate);
       return year === baseDate.year && month === baseDate.month;

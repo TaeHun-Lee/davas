@@ -39,8 +39,13 @@ function getApiBaseUrl() {
   return `${window.location.protocol}//${window.location.hostname}:4000/api`;
 }
 
-export async function getDiaryDashboard() {
-  const response = await fetch(`${getApiBaseUrl()}/diaries/dashboard`, {
+export async function getDiaryDashboard(params?: { year?: number; month?: number; day?: number }) {
+  const searchParams = new URLSearchParams();
+  if (params?.year) searchParams.set('year', String(params.year));
+  if (params?.month) searchParams.set('month', String(params.month));
+  if (params?.day) searchParams.set('day', String(params.day));
+  const queryString = searchParams.toString();
+  const response = await fetch(`${getApiBaseUrl()}/diaries/dashboard${queryString ? `?${queryString}` : ''}`, {
     credentials: 'include',
   });
 

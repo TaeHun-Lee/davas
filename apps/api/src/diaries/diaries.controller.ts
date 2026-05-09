@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UnauthorizedException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { AuthService } from '../auth/auth.service';
@@ -37,8 +37,17 @@ export class DiariesController {
   }
 
   @Get('dashboard')
-  async dashboard(@Req() request: AuthenticatedRequest) {
-    return this.diariesDashboardService.getDashboard(await this.getUserId(request));
+  async dashboard(
+    @Req() request: AuthenticatedRequest,
+    @Query('year') year?: string,
+    @Query('month') month?: string,
+    @Query('day') day?: string,
+  ) {
+    return this.diariesDashboardService.getDashboard(await this.getUserId(request), {
+      year: this.toPositiveNumber(year),
+      month: this.toPositiveNumber(month),
+      day: this.toPositiveNumber(day),
+    });
   }
 
   @Get(':id')
@@ -82,5 +91,10 @@ export class DiariesController {
       .map((part) => part.trim())
       .map((part) => part.split('='))
       .find(([key]) => key === name)?.[1];
+  }
+
+  private toPositiveNumber(value?: string) {
+    const parsedValue = Number(value);
+    return Number.isInteger(parsedValue) && parsedValue > 0 ? parsedValue : undefined;
   }
 }
