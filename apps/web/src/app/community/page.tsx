@@ -1,5 +1,10 @@
-import { PlaceholderPage } from '../../components/layout/PlaceholderPage';
+import { Suspense } from 'react';
+import { CommunityDashboard } from '../../components/community/CommunityDashboard';
 
 export default function CommunityPage() {
-  return <PlaceholderPage title="커뮤니티" description="다른 사용자의 공개 다이어리와 댓글 기능을 준비 중입니다." />;
+  return (
+    <Suspense fallback={null}>
+      <CommunityDashboard />
+    </Suspense>
+  );
 }
