@@ -8,6 +8,7 @@ import { createTypeOrmOptions } from './database/typeorm.config';
 import { DiariesModule } from './diaries/diaries.module';
 import { HealthController } from './health.controller';
 import { MediaModule } from './media/media.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 import { UsersModule } from './users/users.module';
 
@@ -22,6 +23,7 @@ import { UsersModule } from './users/users.module';
     DiariesModule,
     CommentsModule,
     CommunityModule,
+    NotificationsModule,
   ],
   controllers: [HealthController],
 })

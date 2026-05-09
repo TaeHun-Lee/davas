@@ -33,6 +33,7 @@ const usersApiSource = source('../lib/api/users.ts');
 const mediaApiSource = source('../lib/api/media.ts');
 const authApiSource = source('../lib/api/auth.ts');
 const diaryApiSource = source('../lib/api/diaries.ts');
+const notificationsApiSource = source('../lib/api/notifications.ts');
 const placeholderSource = source('../components/layout/PlaceholderPage.tsx');
 
 describe('Davas profile tab design', () => {
@@ -203,6 +204,13 @@ describe('Davas profile tab design', () => {
     assert.match(profileAccountScreenSource, /router\.replace\('\/login'\)/);
     assert.match(profileNotificationsScreenSource, /localStorage/);
     assert.match(profileNotificationsScreenSource, /davas\.notificationSettings/);
+    assert.match(profileNotificationsScreenSource, /getCommunityNotifications/);
+    assert.match(profileNotificationsScreenSource, /markCommunityNotificationRead/);
+    assert.match(profileNotificationsScreenSource, /커뮤니티 알림/);
+    assert.match(profileNotificationsScreenSource, /읽음 처리/);
+    assert.match(notificationsApiSource, /\/notifications/);
+    assert.match(notificationsApiSource, /\/notifications\/\$\{id\}\/read/);
+    assert.match(notificationsApiSource, /credentials: 'include'/);
     assert.match(profilePrivacyScreenSource, /localStorage/);
     assert.match(profilePrivacyScreenSource, /davas\.privacySettings/);
     assert.match(profileSupportScreenSource, /mailto:/);

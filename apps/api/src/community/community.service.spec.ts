@@ -173,7 +173,11 @@ describe('Community dashboard API', () => {
         return { affected: 1 };
       },
     };
-    const service = new CommunityService(repository as never, follows as never);
+    const notificationCalls: unknown[] = [];
+    const notifications = {
+      notifyAuthorFollowed: async (input: unknown) => notificationCalls.push(input),
+    };
+    const service = new CommunityService(repository as never, follows as never, undefined, undefined, notifications as never);
 
     const followed = await service.followDiaryAuthor('diary-1', 'viewer-1');
     const unfollowed = await service.unfollowDiaryAuthor('diary-1', 'viewer-1');
@@ -181,6 +185,7 @@ describe('Community dashboard API', () => {
     assert.deepEqual(followed, { followingId: 'author-1', isFollowed: true });
     assert.deepEqual(unfollowed, { followingId: 'author-1', isFollowed: false });
     assert.deepEqual(calls.map((call) => call.method), ['create', 'save', 'delete']);
+    assert.deepEqual(notificationCalls, [{ recipientId: 'author-1', actorId: 'viewer-1' }]);
     await assert.rejects(() => new CommunityService({ find: async () => [], findOne: async () => makeDiary({ userId: 'viewer-1' }) } as never, follows as never).followDiaryAuthor('mine', 'viewer-1'));
   });
 
@@ -228,7 +233,11 @@ describe('Community dashboard API', () => {
         return { affected: 1 };
       },
     };
-    const service = new CommunityService(repository as never, undefined, likes as never);
+    const notificationCalls: unknown[] = [];
+    const notifications = {
+      notifyDiaryLiked: async (input: unknown) => notificationCalls.push(input),
+    };
+    const service = new CommunityService(repository as never, undefined, likes as never, undefined, notifications as never);
 
     const liked = await service.likeDiary('public-diary', 'viewer-1');
     const unliked = await service.unlikeDiary('public-diary', 'viewer-1');
@@ -236,6 +245,7 @@ describe('Community dashboard API', () => {
     assert.deepEqual(liked, { diaryId: 'public-diary', isLiked: true });
     assert.deepEqual(unliked, { diaryId: 'public-diary', isLiked: false });
     assert.deepEqual(calls.map((call) => call.method), ['create', 'save', 'delete']);
+    assert.deepEqual(notificationCalls, [{ diaryId: 'public-diary', recipientId: 'user-1', actorId: 'viewer-1' }]);
   });
 
   it('loads an author public profile with only that author public feed', async () => {

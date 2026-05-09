@@ -4,5 +4,6 @@ export * from './diary.entity';
 export * from './media-favorite.entity';
 export * from './media-image.entity';
 export * from './media.entity';
+export * from './notification.entity';
 export * from './user-follow.entity';
 export * from './user.entity';

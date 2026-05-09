@@ -3,6 +3,7 @@ import { CommentEntity } from './comment.entity';
 import { DiaryLikeEntity } from './diary-like.entity';
 import { DiaryEntity } from './diary.entity';
 import { MediaFavoriteEntity } from './media-favorite.entity';
+import { NotificationEntity } from './notification.entity';
 import { UserFollowEntity } from './user-follow.entity';
 
 @Entity({ name: 'users' })
@@ -45,6 +46,12 @@ export class UserEntity {
 
   @OneToMany(() => UserFollowEntity, (follow) => follow.following)
   followers?: UserFollowEntity[];
+
+  @OneToMany(() => NotificationEntity, (notification) => notification.user)
+  notifications?: NotificationEntity[];
+
+  @OneToMany(() => NotificationEntity, (notification) => notification.actor)
+  triggeredNotifications?: NotificationEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

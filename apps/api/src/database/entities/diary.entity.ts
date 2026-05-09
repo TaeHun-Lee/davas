@@ -3,6 +3,7 @@ import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, JoinColumn, 
 import { CommentEntity } from './comment.entity';
 import { DiaryLikeEntity } from './diary-like.entity';
 import { MediaEntity } from './media.entity';
+import { NotificationEntity } from './notification.entity';
 import { UserEntity } from './user.entity';
 
 @Entity({ name: 'diaries' })
@@ -49,6 +50,9 @@ export class DiaryEntity {
 
   @OneToMany(() => DiaryLikeEntity, (like) => like.diary)
   likes?: DiaryLikeEntity[];
+
+  @OneToMany(() => NotificationEntity, (notification) => notification.diary)
+  notifications?: NotificationEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

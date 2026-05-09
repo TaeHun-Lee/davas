@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CommentEntity } from '../database/entities/comment.entity';
 import { DiaryEntity } from '../database/entities/diary.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 export type CommunityCommentView = {
   id: string;
@@ -33,6 +34,8 @@ export class CommentsService {
     private readonly comments: Repository<CommentEntity>,
     @InjectRepository(DiaryEntity)
     private readonly diaries: Repository<DiaryEntity>,
+    @Optional()
+    private readonly notifications?: NotificationsService,
   ) {}
 
   async listForDiary(diaryId: string, userId?: string) {
@@ -46,9 +49,10 @@ export class CommentsService {
   }
 
   async create(diaryId: string, userId: string, content: string) {
-    await this.ensurePublicDiary(diaryId);
+    const diary = await this.ensurePublicDiary(diaryId);
     const comment = this.comments.create({ diaryId, userId, content: normalizeContent(content) });
     const saved = await this.comments.save(comment);
+    await this.notifications?.notifyDiaryCommented({ diaryId, recipientId: diary.userId, actorId: userId });
     return this.toCommentView({ ...saved, user: saved.user ?? ({ id: userId, nickname: '나', profileImageUrl: null } as CommentEntity['user']) }, userId);
   }
 

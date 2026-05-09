@@ -6,6 +6,7 @@ import { DiaryLikeEntity } from '../database/entities/diary-like.entity';
 import { UserEntity } from '../database/entities/user.entity';
 import { UserFollowEntity } from '../database/entities/user-follow.entity';
 import { resolveTmdbGenreLabel } from '../media/tmdb-genres';
+import { NotificationsService } from '../notifications/notifications.service';
 
 export type CommunityTab = 'recommended' | 'popular' | 'following' | 'latest';
 
@@ -214,6 +215,8 @@ export class CommunityService {
     @Optional()
     @InjectRepository(UserEntity)
     private readonly users?: Repository<UserEntity>,
+    @Optional()
+    private readonly notifications?: NotificationsService,
   ) {}
 
   async getDashboard(query: CommunityDashboardQuery = {}): Promise<CommunityDashboardResponse> {
@@ -250,10 +253,11 @@ export class CommunityService {
   }
 
   async likeDiary(diaryId: string, userId: string): Promise<CommunityLikeResponse> {
-    await this.getPublicDiaryEntity(diaryId);
+    const diary = await this.getPublicDiaryEntity(diaryId);
     const existing = await this.likes?.findOne({ where: { userId, diaryId } });
     if (!existing) {
       await this.likes?.save(this.likes.create({ userId, diaryId }));
+      await this.notifications?.notifyDiaryLiked({ diaryId, recipientId: diary.userId ?? diary.user?.id, actorId: userId });
     }
     return { diaryId, isLiked: true };
   }
@@ -312,6 +316,7 @@ export class CommunityService {
     const existing = await this.follows?.findOne({ where: { followerId: userId, followingId } });
     if (!existing) {
       await this.follows?.save(this.follows.create({ followerId: userId, followingId }));
+      await this.notifications?.notifyAuthorFollowed({ recipientId: followingId, actorId: userId });
     }
     return { followingId, isFollowed: true };
   }
