@@ -19,6 +19,7 @@ export class CommentEntity {
   userId!: string;
 
   @ManyToOne(() => UserEntity, (user) => user.comments, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
   user!: UserEntity;
 
   @Column({ type: 'text' })

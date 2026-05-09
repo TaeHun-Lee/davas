@@ -53,7 +53,8 @@ export class CommentsService {
     const comment = this.comments.create({ diaryId, userId, content: normalizeContent(content) });
     const saved = await this.comments.save(comment);
     await this.notifications?.notifyDiaryCommented({ diaryId, recipientId: diary.userId, actorId: userId });
-    return this.toCommentView({ ...saved, user: saved.user ?? ({ id: userId, nickname: '나', profileImageUrl: null } as CommentEntity['user']) }, userId);
+    const savedWithUser = await this.comments.findOne({ where: { id: saved.id, userId }, relations: { user: true } });
+    return this.toCommentView(savedWithUser ?? saved, userId);
   }
 
   async update(commentId: string, userId: string, content: string) {

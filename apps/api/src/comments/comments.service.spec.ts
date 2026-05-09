@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it } from 'node:test';
 import { NotFoundException } from '@nestjs/common';
 import { CommentsService } from './comments.service';
@@ -97,10 +99,34 @@ describe('CommentsService', () => {
 
     const result = await new CommentsService(comments as never, diaries as never).create('diary-1', 'user-1', '  새 댓글  ');
 
-    assert.deepEqual(comments.calls.map((call) => call.method), ['create', 'save']);
+    assert.deepEqual(comments.calls.map((call) => call.method), ['create', 'save', 'findOne']);
     assert.equal((comments.calls[0].input as Partial<CommentEntity>).content, '새 댓글');
     assert.equal(result.content, '새 댓글');
     assert.equal(result.isMine, true);
+  });
+
+  it('reloads a created comment with the persisted user relation before returning author data', async () => {
+    const comments = fakeCommentsRepository([
+      makeComment({ content: '새 댓글', user: { id: 'user-1', nickname: '실제닉네임', profileImageUrl: '/uploads/me.jpg' } as UserEntity }),
+    ]);
+    const diaries = fakeDiariesRepository({ id: 'diary-1', userId: 'author-1', visibility: 'PUBLIC' } as DiaryEntity);
+
+    const result = await new CommentsService(comments as never, diaries as never).create('diary-1', 'user-1', '새 댓글');
+
+    assert.deepEqual(comments.calls.map((call) => call.method), ['create', 'save', 'findOne']);
+    assert.deepEqual(comments.calls.at(-1), {
+      method: 'findOne',
+      input: { where: { id: 'comment-1', userId: 'user-1' }, relations: { user: true } },
+    });
+    assert.deepEqual(result.author, { id: 'user-1', nickname: '실제닉네임', profileImageUrl: '/uploads/me.jpg' });
+  });
+
+  it('maps comment user relation through the persisted snake_case user_id column', () => {
+    const source = readFileSync(join(process.cwd(), 'src/database/entities/comment.entity.ts'), 'utf8');
+    assert.match(
+      source,
+      /@Column\(\{ name: 'user_id', type: 'uuid' \}\)\s+userId!: string;\s+@ManyToOne\(\(\) => UserEntity, \(user\) => user\.comments, \{ onDelete: 'CASCADE' \}\)\s+@JoinColumn\(\{ name: 'user_id' \}\)\s+user!: UserEntity;/,
+    );
   });
 
   it('updates and deletes only comments owned by the authenticated user', async () => {
