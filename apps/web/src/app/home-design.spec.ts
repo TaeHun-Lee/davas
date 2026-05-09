@@ -171,6 +171,15 @@ describe('Davas authenticated home design', () => {
     assert.doesNotMatch(dashboardSource + archiveSectionSource + statsGridSource, /icon: '[▤▶★◈]'/);
   });
 
+  it('keeps carousel drag pointer capture from hijacking archive action button clicks on desktop', () => {
+    assert.match(mediaHeroCarouselSource, /function isInteractivePointerTarget/);
+    assert.match(mediaHeroCarouselSource, /closest\('button, a, input, textarea, select, \[role="button"\]'\)/);
+    assert.match(mediaHeroCarouselSource, /if \(isInteractivePointerTarget\(event\.target\)\) \{/);
+    assert.match(mediaHeroCarouselSource, /pointerStartX\.current = null/);
+    assert.match(mediaHeroCarouselSource, /return;/);
+    assert.match(mediaHeroCarouselSource, /setPointerCapture\(event\.pointerId\)/);
+  });
+
   it('wires home archive, favorites, and recent record actions to real routes and modals', () => {
     assert.match(mediaHeroCarouselSource, /archive-primary-action/);
     assert.match(mediaHeroCarouselSource, /leading-\[34px\]/);

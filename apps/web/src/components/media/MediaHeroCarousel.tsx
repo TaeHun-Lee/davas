@@ -65,6 +65,10 @@ function actionClass(kind: MediaHeroCarouselAction['kind']) {
   return 'archive-secondary-action today-detail-button flex h-[36px] min-w-0 items-center justify-center whitespace-nowrap rounded-full border border-[#e8eef6] bg-white px-3 text-[11px] font-extrabold leading-[14px] text-[#536179] shadow-[0_5px_12px_rgba(31,65,114,0.05)]';
 }
 
+function isInteractivePointerTarget(target: EventTarget | null) {
+  return target instanceof Element && Boolean(target.closest('button, a, input, textarea, select, [role="button"]'));
+}
+
 export function MediaHeroCarousel({ items, cardLabel, actions, placeholder, autoPlay = false, autoPlayMs = 3000, className = '' }: MediaHeroCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const pointerStartX = useRef<number | null>(null);
@@ -88,6 +92,11 @@ export function MediaHeroCarousel({ items, cardLabel, actions, placeholder, auto
   }
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (isInteractivePointerTarget(event.target)) {
+      pointerStartX.current = null;
+      return;
+    }
+
     pointerStartX.current = event.clientX;
     event.currentTarget.setPointerCapture(event.pointerId);
   }
