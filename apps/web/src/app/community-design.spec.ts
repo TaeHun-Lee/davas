@@ -20,8 +20,12 @@ const popularSource = optionalSource('../components/community/PopularDiariesSect
 const feedSource = optionalSource('../components/community/CommunityFeedSection.tsx');
 const apiSource = optionalSource('../lib/api/community.ts');
 const hookSource = optionalSource('../hooks/useCommunityDashboard.ts');
+const utilsSource = optionalSource('../components/community/community-dashboard-utils.ts');
+const cardSource = optionalSource('../components/community/CommunityDiaryCard.tsx');
+const detailPageSource = optionalSource('./diary/[id]/page.tsx');
+const detailSource = optionalSource('../components/community/CommunityDiaryDetail.tsx');
 
-const combinedCommunitySource = [dashboardSource, searchBarSource, tabsSource, topicsSource, popularSource, feedSource, apiSource].join('\n');
+const combinedCommunitySource = [dashboardSource, searchBarSource, tabsSource, topicsSource, popularSource, feedSource, apiSource, utilsSource, cardSource, detailPageSource, detailSource].join('\n');
 
 describe('Davas community screen design', () => {
   it('routes /community to the designed community dashboard instead of a placeholder', () => {
@@ -63,5 +67,37 @@ describe('Davas community screen design', () => {
       assert.doesNotMatch(combinedCommunitySource, new RegExp(forbidden));
     }
     assert.doesNotMatch(combinedCommunitySource, /likeCount|bookmark|팔로우|좋아요/);
+  });
+
+  it('supports Slice 4 URL-addressable community search and tab state', () => {
+    assert.match(dashboardSource, /useSearchParams/);
+    assert.match(dashboardSource, /useRouter/);
+    assert.match(dashboardSource, /toCommunityTab\(searchParams\.get\('tab'\)\)/);
+    assert.match(dashboardSource, /searchParams\.get\('q'\) \?\? ''/);
+    assert.match(dashboardSource, /setCommunityDashboardQueryParam\(searchParams, \{ q: nextQuery, tab: activeTab \}\)/);
+    assert.match(dashboardSource, /setCommunityDashboardQueryParam\(searchParams, \{ q: query, tab: nextTab \}\)/);
+    assert.match(utilsSource, /export function toCommunityTab/);
+    assert.match(utilsSource, /export function setCommunityDashboardQueryParam/);
+    assert.match(utilsSource, /params\.set\('tab', tab\)/);
+    assert.match(utilsSource, /params\.delete\('q'\)/);
+  });
+
+  it('supports Slice 5 actionable topic and popular diary navigation without inert controls', () => {
+    assert.match(dashboardSource, /handleTopicSelect/);
+    assert.match(dashboardSource, /<PopularTopicsSection topics=\{dashboard\.topics\} onTopicSelect=\{handleTopicSelect\} \/>/);
+    assert.match(topicsSource, /onTopicSelect: \(topic: CommunityTopic\) => void/);
+    assert.match(topicsSource, /button/);
+    assert.match(topicsSource, /aria-label=\{`\$\{topic\.label\} 토픽으로 검색`\}/);
+    assert.match(popularSource, /import Link from 'next\/link'/);
+    assert.match(popularSource, /href="\/community\?tab=popular"/);
+    assert.doesNotMatch(popularSource, /<span className="text-\[12px\] font-extrabold text-\[#216bd8\]">전체 보기/);
+    assert.match(cardSource, /import Link from 'next\/link'/);
+    assert.match(cardSource, /href=\{`\/diary\/\$\{item\.id\}`\}/);
+    assert.doesNotMatch(cardSource, /\/edit/);
+    assert.match(detailPageSource, /CommunityDiaryDetail/);
+    assert.match(detailPageSource, /params\?: Promise<\{ id: string \}>/);
+    assert.match(detailSource, /getCommunityDiary/);
+    assert.match(apiSource, /export async function getCommunityDiary/);
+    assert.match(apiSource, /\/community\/diaries\/\$\{id\}/);
   });
 });

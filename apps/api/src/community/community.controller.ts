@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CommunityService, type CommunityTab } from './community.service';
 
@@ -10,5 +10,10 @@ export class CommunityController {
   @Get('dashboard')
   dashboard(@Query('tab') tab?: CommunityTab, @Query('q') q?: string) {
     return this.communityService.getDashboard({ tab, q });
+  }
+
+  @Get('diaries/:id')
+  diary(@Param('id') id: string) {
+    return this.communityService.getPublicDiary(id);
   }
 }

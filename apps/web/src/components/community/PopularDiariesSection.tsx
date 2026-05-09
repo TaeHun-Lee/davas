@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { CommunityDiaryCard } from './CommunityDiaryCard';
 import type { CommunityDiaryCard as CommunityDiaryCardType } from './community-types';
 
@@ -12,7 +13,9 @@ export function PopularDiariesSection({ items }: PopularDiariesSectionProps) {
     <section className="mb-7" aria-labelledby="popular-diaries-title">
       <div className="mb-3 flex items-center justify-between">
         <h2 id="popular-diaries-title" className="text-[16px] font-extrabold leading-[22px] tracking-[-0.02em] text-[#1f2a44]">인기 다이어리</h2>
-        <span className="text-[12px] font-extrabold text-[#216bd8]">전체 보기 ›</span>
+        <Link href="/community?tab=popular" className="text-[12px] font-extrabold text-[#216bd8]" aria-label="인기 다이어리 전체 보기">
+          전체 보기 ›
+        </Link>
       </div>
       <div className="-mx-4 overflow-x-auto px-4 min-[390px]:-mx-5 min-[390px]:px-5">
         <div className="flex w-max gap-3 pb-1">

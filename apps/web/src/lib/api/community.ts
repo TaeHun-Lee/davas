@@ -1,4 +1,4 @@
-import type { CommunityDashboardResponse, CommunityTab } from '../../components/community/community-types';
+import type { CommunityDashboardResponse, CommunityDiaryDetail, CommunityTab } from '../../components/community/community-types';
 
 function getApiBaseUrl() {
   if (typeof window === 'undefined') {
@@ -26,4 +26,16 @@ export async function getCommunityDashboard(params: CommunityDashboardParams = {
   }
 
   return (await response.json()) as CommunityDashboardResponse;
+}
+
+export async function getCommunityDiary(id: string) {
+  const response = await fetch(`${getApiBaseUrl()}/community/diaries/${id}`, {
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new Error('community diary failed');
+  }
+
+  return (await response.json()) as CommunityDiaryDetail;
 }

@@ -25,6 +25,15 @@ export type CommunityDiaryCard = {
   createdAt: string;
 };
 
+export type CommunityDiaryDetail = CommunityDiaryCard & {
+  content: string;
+  watchedDate: string;
+  hasSpoiler: boolean;
+  media: CommunityDiaryCard['media'] & {
+    genreNames: string[];
+  };
+};
+
 export type CommunityDashboardResponse = {
   tab: CommunityTab;
   topics: CommunityTopic[];

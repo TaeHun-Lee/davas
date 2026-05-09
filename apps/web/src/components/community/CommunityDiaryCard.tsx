@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { CommunityDiaryCard as CommunityDiaryCardType } from './community-types';
 
 type CommunityDiaryCardProps = {
@@ -26,21 +27,23 @@ function Avatar({ nickname, imageUrl }: { nickname: string; imageUrl: string | n
 export function CommunityDiaryCard({ item, compact = false }: CommunityDiaryCardProps) {
   return (
     <article className={`min-w-0 rounded-[22px] bg-white p-3 shadow-[0_12px_28px_rgba(31,65,114,0.08)] ${compact ? 'w-[184px]' : ''}`}>
-      <div className="flex gap-3">
-        <Poster title={item.media.title} posterUrl={item.media.posterUrl} className={`${compact ? 'h-[112px] w-[74px]' : 'h-[124px] w-[82px]'} shrink-0 overflow-hidden rounded-[16px]`} />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <Avatar nickname={item.author.nickname} imageUrl={item.author.profileImageUrl} />
-            <span className="truncate text-[11px] font-extrabold text-[#6d7890]">{item.author.nickname}</span>
-          </div>
-          <h3 className="mt-2 truncate text-[14px] font-extrabold leading-[18px] text-[#1f2a44]">{item.media.title}</h3>
-          <p className="mt-1 line-clamp-3 text-[11px] font-semibold leading-[16px] text-[#7f8aa0]">{item.contentPreview}</p>
-          <div className="mt-3 flex items-center gap-3 text-[11px] font-extrabold text-[#8a95a8]">
-            <span className="text-[#ff5a52]">★ {item.rating.toFixed(1)}</span>
-            <span>댓글 {item.commentCount}</span>
+      <Link href={`/diary/${item.id}`} className="block" aria-label={`${item.media.title} 다이어리 보기`}>
+        <div className="flex gap-3">
+          <Poster title={item.media.title} posterUrl={item.media.posterUrl} className={`${compact ? 'h-[112px] w-[74px]' : 'h-[124px] w-[82px]'} shrink-0 overflow-hidden rounded-[16px]`} />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <Avatar nickname={item.author.nickname} imageUrl={item.author.profileImageUrl} />
+              <span className="truncate text-[11px] font-extrabold text-[#6d7890]">{item.author.nickname}</span>
+            </div>
+            <h3 className="mt-2 truncate text-[14px] font-extrabold leading-[18px] text-[#1f2a44]">{item.media.title}</h3>
+            <p className="mt-1 line-clamp-3 text-[11px] font-semibold leading-[16px] text-[#7f8aa0]">{item.contentPreview}</p>
+            <div className="mt-3 flex items-center gap-3 text-[11px] font-extrabold text-[#8a95a8]">
+              <span className="text-[#ff5a52]">★ {item.rating.toFixed(1)}</span>
+              <span>댓글 {item.commentCount}</span>
+            </div>
           </div>
         </div>
-      </div>
+      </Link>
     </article>
   );
 }

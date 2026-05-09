@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DiaryEntity } from '../database/entities/diary.entity';
@@ -34,6 +34,15 @@ export type CommunityDiaryCard = {
   rating: number;
   commentCount: number;
   createdAt: string;
+};
+
+export type CommunityDiaryDetail = CommunityDiaryCard & {
+  content: string;
+  watchedDate: string;
+  hasSpoiler: boolean;
+  media: CommunityDiaryCard['media'] & {
+    genreNames: string[];
+  };
 };
 
 export type CommunityDashboardResponse = {
@@ -83,6 +92,19 @@ function toCommunityDiaryCard(diary: DiaryEntity): CommunityDiaryCard {
     rating: Number(diary.rating),
     commentCount: getCommentCount(diary),
     createdAt: diary.createdAt.toISOString(),
+  };
+}
+
+function toCommunityDiaryDetail(diary: DiaryEntity): CommunityDiaryDetail {
+  return {
+    ...toCommunityDiaryCard(diary),
+    content: diary.content,
+    watchedDate: diary.watchedDate,
+    hasSpoiler: diary.hasSpoiler,
+    media: {
+      ...toCommunityDiaryCard(diary).media,
+      genreNames: (diary.media?.genres ?? []).map(resolveTmdbGenreLabel),
+    },
   };
 }
 
@@ -139,5 +161,16 @@ export class CommunityService {
       popularDiaries,
       feed: feedSource.map(toCommunityDiaryCard),
     };
+  }
+
+  async getPublicDiary(id: string): Promise<CommunityDiaryDetail> {
+    const diary = await this.diaries.findOne({
+      where: { id, visibility: 'PUBLIC' },
+      relations: { media: true, user: true, comments: true },
+    });
+    if (!diary) {
+      throw new NotFoundException('공개 다이어리를 찾을 수 없습니다.');
+    }
+    return toCommunityDiaryDetail(diary);
   }
 }

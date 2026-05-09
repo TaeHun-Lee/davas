@@ -85,4 +85,26 @@ describe('Community dashboard API', () => {
     assert.ok(dashboard.feed.every((item) => !('likeCount' in item)));
     assert.ok(dashboard.feed.every((item) => !('bookmark' in item)));
   });
+
+  it('loads a public community diary detail without exposing private rows', async () => {
+    let findOneOptions: unknown;
+    const repository = {
+      find: async () => [],
+      findOne: async (options: unknown) => {
+        findOneOptions = options;
+        return makeDiary({ id: 'public-detail', title: '공개 상세 기록', content: '공개 다이어리 전문입니다.' });
+      },
+    };
+
+    const detail = await new CommunityService(repository as never).getPublicDiary('public-detail');
+
+    assert.deepEqual(findOneOptions, {
+      where: { id: 'public-detail', visibility: 'PUBLIC' },
+      relations: { media: true, user: true, comments: true },
+    });
+    assert.equal(detail.id, 'public-detail');
+    assert.equal(detail.content, '공개 다이어리 전문입니다.');
+    assert.equal(detail.commentCount, 2);
+    assert.ok(!('likeCount' in detail));
+  });
 });
