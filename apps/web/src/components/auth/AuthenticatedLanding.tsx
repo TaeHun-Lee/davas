@@ -2,7 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { HomeDashboard } from '../home/HomeDashboard';
+import type { DiaryDashboardView } from '../diary/diary-dashboard-types';
+import { getDiaryDashboard } from '../../lib/api/diaries';
+import { HomeDashboard, buildHomeDashboardView } from '../home/HomeDashboard';
 
 type MeResponse = {
   user: {
@@ -21,6 +23,7 @@ function getApiBaseUrl() {
 export function AuthenticatedLanding() {
   const router = useRouter();
   const [user, setUser] = useState<MeResponse['user'] | null>(null);
+  const [dashboard, setDashboard] = useState<DiaryDashboardView | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -34,8 +37,10 @@ export function AuthenticatedLanding() {
           return;
         }
         const data = (await response.json()) as MeResponse;
+        const diaryDashboard = await getDiaryDashboard();
         if (isMounted) {
           setUser(data.user);
+          setDashboard(diaryDashboard);
           setIsLoading(false);
         }
       } catch {
@@ -49,7 +54,7 @@ export function AuthenticatedLanding() {
     };
   }, [router]);
 
-  if (isLoading) {
+  if (isLoading || !dashboard) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f5f7fb] px-6 text-[#7a8499]">
         <section className="rounded-[24px] bg-white px-8 py-6 text-center shadow-[0_14px_32px_rgba(31,65,114,0.09)]">
@@ -59,5 +64,5 @@ export function AuthenticatedLanding() {
     );
   }
 
-  return <HomeDashboard user={user ?? undefined} />;
+  return <HomeDashboard user={user ?? undefined} view={buildHomeDashboardView(dashboard)} />;
 }

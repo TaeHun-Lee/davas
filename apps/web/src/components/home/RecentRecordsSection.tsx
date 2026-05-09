@@ -6,7 +6,8 @@ export type RecentRecord = {
   desc: string;
   date: string;
   rating: string;
-  gradient: string;
+  gradient?: string;
+  posterUrl?: string | null;
 };
 
 export type RecentRecordsSectionProps = {
@@ -20,7 +21,7 @@ export function RecentRecordsSection({ records }: RecentRecordsSectionProps) {
       <section className="space-y-3">
         {records.map((record) => (
           <article key={record.title} className="card-surface flex items-center gap-3 rounded-[18px] p-3 max-[374px]:gap-2.5">
-            <MoviePosterVisual gradient={record.gradient} className="h-12 w-[72px] shrink-0" />
+            <MoviePosterVisual gradient={record.gradient ?? 'from-[#e9eef7] via-[#f6f8fc] to-[#dfe8f5]'} imageUrl={record.posterUrl} className="h-12 w-[72px] shrink-0" />
             <div className="min-w-0 flex-1">
               <h3 className="text-sm font-extrabold text-[#26334a]">{record.title}</h3>
               <p className="mt-1 truncate text-[11px] font-semibold text-[#8b96a8]">{record.desc}</p>

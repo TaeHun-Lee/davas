@@ -23,15 +23,21 @@ const placeholderSource = source('../components/layout/PlaceholderPage.tsx');
 const middlewareSource = source('../middleware.ts');
 
 describe('Davas authenticated home design', () => {
-  it('renders the authenticated landing through the mock home dashboard', () => {
+  it('renders the authenticated landing through a live-data home dashboard without mock content', () => {
     assert.match(landingSource, /HomeDashboard/);
+    assert.match(landingSource, /getDiaryDashboard/);
     assert.match(archiveSectionSource, /For Your Archive/);
-    assert.match(dashboardSource, /인터스텔라/);
-    assert.match(dashboardSource, /전체 다이어리/);
+    assert.match(dashboardSource, /HomeDashboardView/);
+    assert.match(dashboardSource, /ArchiveHighlightSection item=\{view\.archiveHighlight\}/);
+    assert.match(dashboardSource, /HomeStatsGrid stats=\{view\.stats\}/);
+    assert.match(dashboardSource, /FavoriteMoviesSection movies=\{view\.favorites\}/);
+    assert.match(dashboardSource, /MonthlyWatchCalendarSection/);
+    assert.match(dashboardSource, /RecentRecordsSection records=\{view\.recentRecords\}/);
     assert.match(favoriteMoviesSource, /내가 가장 사랑한 영화/);
     assert.match(favoriteMoviesSource, /MediaPosterRowSection/);
     assert.match(monthlyCalendarSource, /이번 달 관람 기록/);
     assert.match(recentRecordsSource, /최근 기록/);
+    assert.doesNotMatch(dashboardSource, /\/images\/mock|인터스텔라|별빛이 머무는 밤|저 먼 우주에서|watchedDays = new Set|calendarDays = \[/);
   });
 
   it('splits reusable home regions into dedicated components with injectable props and utilities', () => {
@@ -117,7 +123,7 @@ describe('Davas authenticated home design', () => {
   it('uses designed SVG icons for archive buttons and statistic cards', () => {
     assert.match(statsGridSource, /function StatIcon/);
     assert.match(archiveSectionSource, /function ArchivePoster/);
-    assert.match(dashboardSource, /\/images\/mock\/interstellar-poster\.jpg/);
+    assert.match(dashboardSource, /posterUrl: item\.posterUrl/);
     assert.match(archiveSectionSource, /w-\[126px\]/);
     assert.match(archiveSectionSource, /h-\[154px\]/);
     assert.match(archiveSectionSource, /archive-action-row/);
@@ -164,7 +170,7 @@ describe('Davas authenticated home design', () => {
     assert.match(statsGridSource, /text-\[12px\] font-bold text-\[#243047\]/);
     assert.match(statsGridSource, /text-\[21px\] font-extrabold leading-\[24px\] tracking-\[-0\.03em\] text-\[#111827\]/);
     assert.match(statsGridSource, /text-\[10px\] font-semibold leading-\[12px\] text-\[#9aa4b2\]/);
-    assert.match(dashboardSource, /4\.6 \/ 5\.0/);
+    assert.match(dashboardSource, /averageRating\.toFixed\(1\)\} \/ 5\.0/);
     assert.doesNotMatch(dashboardSource + statsGridSource, /4\.6 \/5\.0/);
   });
 

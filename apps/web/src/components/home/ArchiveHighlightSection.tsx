@@ -1,3 +1,5 @@
+import { MoviePosterVisual } from './MoviePosterVisual';
+
 function ContinueWritingIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -7,21 +9,25 @@ function ContinueWritingIcon() {
   );
 }
 
-function ArchivePoster({ src, alt }: { src: string; alt: string }) {
+function ArchivePoster({ src, alt }: { src?: string | null; alt: string }) {
   return (
     <div data-design="archive-poster" className="relative h-[154px] w-[126px] shrink-0 overflow-hidden rounded-[14px] shadow-[0_12px_20px_rgba(22,43,75,0.18)] max-[374px]:h-[142px] max-[374px]:w-[112px]">
-      <img
-        src={src}
-        alt={alt}
-        className="h-full w-full object-cover object-center"
-        style={{ objectPosition: 'center center' }}
-      />
+      {src ? (
+        <img
+          src={src}
+          alt={alt}
+          className="h-full w-full object-cover object-center"
+          style={{ objectPosition: 'center center' }}
+        />
+      ) : (
+        <MoviePosterVisual gradient="from-[#e9eef7] via-[#f6f8fc] to-[#dfe8f5]" className="h-full w-full rounded-[14px]" />
+      )}
     </div>
   );
 }
 
 export type ArchiveHighlight = {
-  posterSrc: string;
+  posterSrc?: string | null;
   posterAlt: string;
   eyebrow: string;
   title: string;

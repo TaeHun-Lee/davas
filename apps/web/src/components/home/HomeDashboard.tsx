@@ -1,3 +1,4 @@
+import type { DiaryDashboardView, DiaryListItemView } from '../diary/diary-dashboard-types';
 import { ArchiveHighlight, ArchiveHighlightSection } from './ArchiveHighlightSection';
 import { FavoriteMovie, FavoriteMoviesSection } from './FavoriteMoviesSection';
 import { HomeStat, HomeStatsGrid } from './HomeStatsGrid';
@@ -5,47 +6,31 @@ import { MonthlyWatchCalendarSection } from './MonthlyWatchCalendarSection';
 import { RecentRecord, RecentRecordsSection } from './RecentRecordsSection';
 import { AppShell } from '../layout/AppShell';
 
+export type HomeDashboardView = {
+  archiveHighlight: ArchiveHighlight;
+  stats: HomeStat[];
+  favorites: FavoriteMovie[];
+  calendar: {
+    yearMonthLabel: string;
+    days: number[];
+    watchedDays: ReadonlySet<number>;
+    diaryDays: ReadonlySet<number>;
+    selectedDay: number;
+    leadingDays: number;
+    currentMonthDays: number;
+  };
+  recentRecords: RecentRecord[];
+};
+
 type HomeDashboardProps = {
   user?: {
     nickname: string;
     email: string;
   };
+  view: HomeDashboardView;
 };
 
-const archiveHighlight: ArchiveHighlight = {
-  posterSrc: '/images/mock/interstellar-poster.jpg',
-  posterAlt: '인터스텔라 포스터',
-  eyebrow: '최근에 본 영화',
-  title: '인터스텔라',
-  meta: 'SF · 2014',
-  quote: '우린 답을 찾을 것이다. 늘 그랬듯이.',
-};
-
-const stats: HomeStat[] = [
-  { label: '전체 다이어리', value: '128', unit: '개', helper: '모든 기록의 합계', kind: 'diary' },
-  { label: '이번 달 관람 수', value: '18', unit: '편', helper: '이번 달 기록한 작품 수', kind: 'watch' },
-  { label: '평균 평점', value: '4.6 / 5.0', helper: '지금까지의 평균 평점', kind: 'rating' },
-  { label: '최다 장르', value: '드라마', helper: '가장 많이 기록한 장르', kind: 'genre' },
-];
-
-const favorites: FavoriteMovie[] = [
-  { title: '별빛이 머무는 밤', meta: '드라마 · 2022', rating: '4.9', gradient: 'from-[#26245a] via-[#6c58bc] to-[#f7a7d8]' },
-  { title: '파도 너머로', meta: '드라마 · 2021', rating: '4.8', gradient: 'from-[#0c315e] via-[#3b82bd] to-[#f3d59c]' },
-  { title: '저 먼 우주에서', meta: 'SF · 2023', rating: '4.8', gradient: 'from-[#07111f] via-[#184a85] to-[#8cc7ff]' },
-  { title: '비 오는 오후', meta: '로맨스 · 2020', rating: '4.7', gradient: 'from-[#314057] via-[#8b715f] to-[#ffd7a8]' },
-  { title: '시네마 천국', meta: '드라마 · 1988', rating: '4.6', gradient: 'from-[#16171d] via-[#3f4656] to-[#bc8b62]' },
-];
-
-const recentRecords: RecentRecord[] = [
-  { title: '저 먼 우주에서', desc: '우주 속에서 인간의 외로움과 희망을 아름답게 그린 작품.', date: '2024.05.29', rating: '4.5', gradient: 'from-[#07111f] via-[#184a85] to-[#8cc7ff]' },
-  { title: '비 오는 오후', desc: '잔잔한 감성과 따뜻한 위로가 마음에 남았다.', date: '2024.05.27', rating: '4.0', gradient: 'from-[#314057] via-[#8b715f] to-[#ffd7a8]' },
-  { title: '파도 너머로', desc: '삶의 방향을 다시 생각하게 만든 영화.', date: '2024.05.24', rating: '4.5', gradient: 'from-[#0c315e] via-[#3b82bd] to-[#f3d59c]' },
-  { title: '별빛이 머무는 밤', desc: '섬세한 연출과 대사가 인상 깊었다.', date: '2024.05.21', rating: '4.0', gradient: 'from-[#26245a] via-[#6c58bc] to-[#f7a7d8]' },
-];
-
-const watchedDays = new Set([2, 6, 8, 11, 14, 17, 21, 24, 27, 29]);
-const diaryDays = new Set([2, 6, 14, 21, 24, 27]);
-const calendarDays = [28, 29, 30, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 1];
+const DEFAULT_POSTER_GRADIENT = 'from-[#e9eef7] via-[#f6f8fc] to-[#dfe8f5]';
 
 function SearchIcon() {
   return (
@@ -67,21 +52,109 @@ function HomeSearchBar() {
   );
 }
 
-export function HomeDashboard({ user }: HomeDashboardProps) {
+function formatRating(rating: number) {
+  return rating.toFixed(1);
+}
+
+function getPrimaryGenre(item: DiaryListItemView) {
+  return item.genreNames[0] ?? '장르 정보 없음';
+}
+
+function getMediaMeta(item: DiaryListItemView) {
+  return getPrimaryGenre(item);
+}
+
+function buildCalendarDays(year: number, month: number) {
+  const leadingDays = new Date(year, month - 1, 1).getDay();
+  const currentMonthDays = new Date(year, month, 0).getDate();
+  const previousMonthDays = new Date(year, month - 1, 0).getDate();
+  const totalSlots = Math.ceil((leadingDays + currentMonthDays) / 7) * 7;
+  const days = Array.from({ length: totalSlots }, (_, index) => {
+    if (index < leadingDays) return previousMonthDays - leadingDays + index + 1;
+    if (index < leadingDays + currentMonthDays) return index - leadingDays + 1;
+    return index - leadingDays - currentMonthDays + 1;
+  });
+
+  return { days, leadingDays, currentMonthDays };
+}
+
+export function buildHomeDashboardView(dashboard: DiaryDashboardView): HomeDashboardView {
+  const recentItems = dashboard.recentItems;
+  const latestItem = recentItems[0];
+  const topRatedItems = [...recentItems]
+    .sort((a, b) => b.rating - a.rating || Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)))
+    .slice(0, 10);
+  const calendar = buildCalendarDays(dashboard.calendar.year, dashboard.calendar.month);
+  const diaryDays = new Set(dashboard.calendar.markers.map((marker) => marker.day));
+
+  return {
+    archiveHighlight: latestItem
+      ? {
+          posterSrc: latestItem.posterUrl ?? null,
+          posterAlt: `${latestItem.mediaTitle} 포스터`,
+          eyebrow: '최근에 기록한 작품',
+          title: latestItem.mediaTitle,
+          meta: getMediaMeta(latestItem),
+          quote: latestItem.contentPreview || latestItem.diaryTitle,
+        }
+      : {
+          posterSrc: null,
+          posterAlt: '기록 대기 중인 포스터 영역',
+          eyebrow: '아직 기록이 없어요',
+          title: '첫 다이어리를 남겨보세요',
+          meta: '실제 기록이 생기면 이곳에 표시됩니다',
+          quote: '탐색 화면에서 작품을 고르고 감상을 기록해보세요.',
+        },
+    stats: [
+      { label: '전체 다이어리', value: String(dashboard.summary.totalCount), unit: '개', helper: '모든 기록의 합계', kind: 'diary' },
+      { label: '이번 달 관람 수', value: String(dashboard.summary.monthlyCount), unit: '편', helper: '이번 달 기록한 작품 수', kind: 'watch' },
+      { label: '평균 평점', value: `${dashboard.summary.averageRating.toFixed(1)} / 5.0`, helper: '지금까지의 평균 평점', kind: 'rating' },
+      { label: '최다 장르', value: dashboard.summary.topGenre?.name ?? '-', helper: '가장 많이 기록한 장르', kind: 'genre' },
+    ],
+    favorites: topRatedItems.map((item) => ({
+      title: item.mediaTitle,
+      meta: getMediaMeta(item),
+      rating: formatRating(item.rating),
+      gradient: item.posterGradient || DEFAULT_POSTER_GRADIENT,
+      posterUrl: item.posterUrl,
+    })),
+    calendar: {
+      yearMonthLabel: `${dashboard.calendar.year}년 ${dashboard.calendar.month}월`,
+      days: calendar.days,
+      watchedDays: diaryDays,
+      diaryDays,
+      selectedDay: dashboard.calendar.selectedDay ?? new Date().getDate(),
+      leadingDays: calendar.leadingDays,
+      currentMonthDays: calendar.currentMonthDays,
+    },
+    recentRecords: recentItems.slice(0, 5).map((item) => ({
+      title: item.mediaTitle,
+      desc: item.contentPreview || item.diaryTitle,
+      date: item.watchedDate,
+      rating: formatRating(item.rating),
+      gradient: item.posterGradient || DEFAULT_POSTER_GRADIENT,
+      posterUrl: item.posterUrl,
+    })),
+  };
+}
+
+export function HomeDashboard({ user, view }: HomeDashboardProps) {
   return (
     <AppShell nickname={user?.nickname}>
       <HomeSearchBar />
-      <ArchiveHighlightSection item={archiveHighlight} />
-      <HomeStatsGrid stats={stats} />
-      <FavoriteMoviesSection movies={favorites} />
+      <ArchiveHighlightSection item={view.archiveHighlight} />
+      <HomeStatsGrid stats={view.stats} />
+      {view.favorites.length > 0 ? <FavoriteMoviesSection movies={view.favorites} /> : null}
       <MonthlyWatchCalendarSection
-        yearMonthLabel="2024년 5월"
-        days={calendarDays}
-        watchedDays={watchedDays}
-        diaryDays={diaryDays}
-        selectedDay={29}
+        yearMonthLabel={view.calendar.yearMonthLabel}
+        days={view.calendar.days}
+        watchedDays={view.calendar.watchedDays}
+        diaryDays={view.calendar.diaryDays}
+        selectedDay={view.calendar.selectedDay}
+        leadingDays={view.calendar.leadingDays}
+        currentMonthDays={view.calendar.currentMonthDays}
       />
-      <RecentRecordsSection records={recentRecords} />
+      {view.recentRecords.length > 0 ? <RecentRecordsSection records={view.recentRecords} /> : null}
     </AppShell>
   );
 }
