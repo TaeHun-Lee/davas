@@ -1,3 +1,6 @@
+import { getApiBaseUrl } from './base-url';
+import type { DiaryDashboardView } from '../../components/diary/diary-dashboard-types';
+
 export type CreateDiaryPayload = {
   mediaId: string;
   mediaPosterUrl?: string | null;
@@ -24,20 +27,11 @@ export type EditableDiary = CreateDiaryPayload & {
   };
 };
 
-import type { DiaryDashboardView } from '../../components/diary/diary-dashboard-types';
-
 export type CreatedDiaryResponse = {
   message?: string;
   diary?: CreateDiaryPayload;
   id?: string;
 };
-
-function getApiBaseUrl() {
-  if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api';
-  }
-  return `${window.location.protocol}//${window.location.hostname}:4000/api`;
-}
 
 export async function getDiaryDashboard(params?: { year?: number; month?: number; day?: number }) {
   const searchParams = new URLSearchParams();

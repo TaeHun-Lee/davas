@@ -1,9 +1,4 @@
-function getApiBaseUrl() {
-  if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api';
-  }
-  return `${window.location.protocol}//${window.location.hostname}:4000/api`;
-}
+import { getApiBaseUrl } from './base-url';
 
 export type CommunityNotificationType = 'DIARY_LIKED' | 'DIARY_COMMENTED' | 'AUTHOR_FOLLOWED';
 

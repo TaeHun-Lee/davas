@@ -169,6 +169,7 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryDashboardSource, /filterDiaryItems\(dashboard\.recentItems, query, selectedCalendarDate\)/);
     assert.match(diaryDashboardSource, /selectedCalendarDescription/);
     assert.match(diaryUtilsSource, /selectedDate/);
+    assert.match(diaryUtilsSource, /isSameWatchedDate/);
   });
 
   it('uses diary dashboard utilities for calendar state instead of inline date math', () => {

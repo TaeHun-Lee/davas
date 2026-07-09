@@ -1,3 +1,5 @@
+import { getApiBaseUrl } from './base-url';
+
 export type AuthenticatedUser = {
   id?: string;
   email: string;
@@ -11,12 +13,7 @@ export type MeResponse = {
   user: AuthenticatedUser;
 };
 
-export function getApiBaseUrl() {
-  if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api';
-  }
-  return `${window.location.protocol}//${window.location.hostname}:4000/api`;
-}
+export { getApiBaseUrl };
 
 export function normalizeProfileImageUrl(imageUrl?: string | null) {
   if (!imageUrl) return null;

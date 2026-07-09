@@ -40,6 +40,9 @@ export class MediaEntity {
   @Column({ name: 'backdrop_url', type: 'varchar', nullable: true })
   backdropUrl!: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  tagline!: string | null;
+
   @Column({ name: 'release_date', type: 'date', nullable: true })
   releaseDate!: string | null;
 
@@ -49,8 +52,29 @@ export class MediaEntity {
   @Column({ type: 'varchar', nullable: true })
   country!: string | null;
 
+  @Column('text', { array: true, default: () => "'{}'" })
+  countries!: string[];
+
   @Column({ type: 'int', nullable: true })
   runtime!: number | null;
+
+  @Column({ name: 'tmdb_rating', type: 'decimal', precision: 3, scale: 1, nullable: true })
+  tmdbRating!: string | null;
+
+  @Column({ name: 'tmdb_vote_count', type: 'int', nullable: true })
+  tmdbVoteCount!: number | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  director!: string | null;
+
+  @Column('text', { array: true, default: () => "'{}'" })
+  creators!: string[];
+
+  @Column('text', { array: true, default: () => "'{}'" })
+  cast!: string[];
+
+  @Column({ type: 'varchar', nullable: true })
+  certification!: string | null;
 
   @OneToMany(() => DiaryEntity, (diary) => diary.media)
   diaries!: DiaryEntity[];

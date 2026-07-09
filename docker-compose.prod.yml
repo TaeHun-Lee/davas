@@ -1,0 +1,80 @@
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: davas-caddy
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - davas-caddy-data:/data
+      - davas-caddy-config:/config
+    depends_on:
+      - web
+      - api
+
+  db:
+    image: postgres:16-alpine
+    container_name: davas-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-davas}
+    volumes:
+      - davas-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-davas}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: davas-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_DATABASE: ${POSTGRES_DB:-davas}
+      TYPEORM_SYNC: ${TYPEORM_SYNC:-true}
+      TYPEORM_LOGGING: ${TYPEORM_LOGGING:-false}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      COOKIE_SECURE: "true"
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+      UPLOADS_DIR: /app/uploads
+    volumes:
+      - davas-api-uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+    container_name: davas-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+    depends_on:
+      - api
+
+volumes:
+  davas-caddy-data:
+  davas-caddy-config:
+  davas-postgres-data:
+  davas-api-uploads:

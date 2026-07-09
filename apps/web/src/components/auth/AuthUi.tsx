@@ -5,16 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { FormEvent, ReactNode } from 'react';
 import { useState } from 'react';
+import { getApiBaseUrl } from '../../lib/api/base-url';
 
 const cardClass =
   'w-full max-w-[430px] rounded-[30px] bg-white px-8 py-10 shadow-[0_18px_45px_rgba(52,76,103,0.16)] sm:px-10';
-
-function getApiBaseUrl() {
-  if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api';
-  }
-  return `${window.location.protocol}//${window.location.hostname}:4000/api`;
-}
 
 async function postAuth(path: '/auth/login' | '/auth/signup', body: object) {
   const response = await fetch(`${getApiBaseUrl()}${path}`, {

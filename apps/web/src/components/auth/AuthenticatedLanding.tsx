@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { DiaryDashboardView } from '../diary/diary-dashboard-types';
 import { getDiaryDashboard } from '../../lib/api/diaries';
+import { getApiBaseUrl } from '../../lib/api/base-url';
 import { MediaDetailLoadingIndicator } from '../media/MediaDetailLoadingIndicator';
 import { HomeDashboard, buildHomeDashboardView } from '../home/HomeDashboard';
 
@@ -13,13 +14,6 @@ type MeResponse = {
     nickname: string;
   };
 };
-
-function getApiBaseUrl() {
-  if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api';
-  }
-  return `${window.location.protocol}//${window.location.hostname}:4000/api`;
-}
 
 export function AuthenticatedLanding() {
   const router = useRouter();

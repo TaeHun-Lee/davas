@@ -1,4 +1,5 @@
 import type { MediaSearchResult } from './media';
+import { getApiBaseUrl } from './base-url';
 
 export type MediaRecommendationItem = MediaSearchResult & {
   voteAverage: number | null;
@@ -30,13 +31,6 @@ export type GenreRecommendationsResponse = RecommendationListResponse & {
 export type TodayRecommendationResponse = {
   items: MediaRecommendationItem[];
 };
-
-function getApiBaseUrl() {
-  if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api';
-  }
-  return `${window.location.protocol}//${window.location.hostname}:4000/api`;
-}
 
 async function fetchRecommendation<T>(path: string) {
   const response = await fetch(`${getApiBaseUrl()}${path}`, {

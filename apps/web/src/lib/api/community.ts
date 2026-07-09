@@ -1,11 +1,5 @@
 import type { CommunityAuthorProfileResponse, CommunityCommentsResponse, CommunityComment, CommunityDashboardResponse, CommunityDiaryDetail, CommunityTab } from '../../components/community/community-types';
-
-function getApiBaseUrl() {
-  if (typeof window === 'undefined') {
-    return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api';
-  }
-  return `${window.location.protocol}//${window.location.hostname}:4000/api`;
-}
+import { getApiBaseUrl } from './base-url';
 
 export type CommunityDashboardParams = {
   tab?: CommunityTab;
