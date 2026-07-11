@@ -1,10 +1,12 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { toggleMediaFavorite, type MediaDetail } from '../../lib/api/media';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { type MediaDetail } from '../../lib/api/media';
+import { addWatchlist, removeWatchlist } from '../../lib/api/watchlist';
 import { BasicInfoGrid, DetailInfoCard, MyRatingCard, StillCutStrip } from './media-detail-sections';
 import { getTmdbGenreNames } from './media-genres';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 function IconButton({ label, children, onClick, pressed }: { label: string; children: React.ReactNode; onClick?: () => void; pressed?: boolean }) {
   return (
@@ -13,7 +15,7 @@ function IconButton({ label, children, onClick, pressed }: { label: string; chil
       aria-label={label}
       aria-pressed={pressed}
       onClick={onClick}
-      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_8px_18px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8] transition ${pressed ? 'text-[#ff5a52]' : 'text-[#1f4e82]'}`}
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_8px_18px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8] transition ${pressed ? 'text-[#ff5a52]' : 'text-[#1f4e82]'}`}
     >
       {children}
     </button>
@@ -58,27 +60,25 @@ function fallbackOverview(media: MediaDetail) {
 
 export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: MediaDetail; isOpen: boolean; onClose: () => void; returnTo?: string }) {
   const router = useRouter();
-  const [isFavorite, setIsFavorite] = useState(media.isFavorite);
+  const [watchlistItemId, setWatchlistItemId] = useState(media.watchlistItemId ?? null);
   const [isFavoritePending, setIsFavoritePending] = useState(false);
   const [shareLabel, setShareLabel] = useState('공유하기');
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const closeDialog = useCallback(() => onClose(), [onClose]);
+  useFocusTrap(isOpen, dialogRef, closeDialog);
 
   useEffect(() => {
     if (!isOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
     document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', onKeyDown);
     return () => {
       document.body.style.overflow = '';
-      window.removeEventListener('keydown', onKeyDown);
     };
   }, [isOpen, onClose]);
 
   useEffect(() => {
-    setIsFavorite(media.isFavorite);
+    setWatchlistItemId(media.watchlistItemId ?? null);
     setShareLabel('공유하기');
-  }, [media.id, media.isFavorite]);
+  }, [media.id, media.watchlistItemId]);
 
   if (!isOpen) {
     return null;
@@ -94,14 +94,13 @@ export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: 
 
   async function handleFavoriteToggle() {
     if (isFavoritePending) return;
-    const previous = Boolean(isFavorite);
-    setIsFavorite(!previous);
+    const previous = watchlistItemId;
     setIsFavoritePending(true);
     try {
-      const result = await toggleMediaFavorite(media.id);
-      setIsFavorite(result.isFavorite);
+      if (watchlistItemId) { await removeWatchlist(watchlistItemId); setWatchlistItemId(null); }
+      else { const result = await addWatchlist(media.id); setWatchlistItemId(result.id); }
     } catch {
-      setIsFavorite(previous);
+      setWatchlistItemId(previous);
     } finally {
       setIsFavoritePending(false);
     }
@@ -122,7 +121,7 @@ export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: 
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex justify-center overflow-hidden bg-[#172947]/35 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={detailTitle} data-design="media-detail-modal">
+    <div ref={dialogRef} className="fixed inset-0 z-[80] flex justify-center overflow-hidden bg-[#172947]/35 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={detailTitle} data-design="media-detail-modal">
       <div data-design="media-detail-scroll-shell" className="relative h-dvh w-full max-w-[430px] overflow-x-hidden overflow-y-auto bg-[#f8fafd] px-4 pb-28 pt-0 shadow-[0_0_40px_rgba(15,23,42,0.18)] min-[390px]:px-5">
         <header className="sticky top-0 z-20 -mx-4 flex h-[62px] items-center justify-between bg-[#f8fafd]/95 px-4 shadow-[0_8px_24px_rgba(31,65,114,0.06)] backdrop-blur min-[390px]:-mx-5 min-[390px]:px-5">
           <IconButton label="상세 닫기" onClick={onClose}>
@@ -130,7 +129,7 @@ export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: 
           </IconButton>
           <h2 className="absolute left-1/2 -translate-x-1/2 text-[16px] font-black leading-[22px] tracking-[-0.025em] text-[#1f4e82]">{detailTitle}</h2>
           <div className="flex gap-2">
-            <IconButton label={isFavorite ? '찜 해제' : '찜하기'} onClick={() => void handleFavoriteToggle()} pressed={Boolean(isFavorite)}><BookmarkIcon filled={Boolean(isFavorite)} /></IconButton>
+            <IconButton label={watchlistItemId ? '보고 싶어요에서 제거' : '보고 싶어요에 추가'} onClick={() => void handleFavoriteToggle()} pressed={Boolean(watchlistItemId)}><BookmarkIcon filled={Boolean(watchlistItemId)} /></IconButton>
             <IconButton label={shareLabel} onClick={() => void handleShare()}><ShareIcon /></IconButton>
           </div>
         </header>
@@ -154,8 +153,8 @@ export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: 
           <button type="button" onClick={() => router.push(diaryUrl)} className="flex h-[50px] items-center justify-center gap-2 rounded-[16px] bg-[#ff5a52] text-[13px] font-black text-white shadow-[0_12px_22px_rgba(255,90,82,0.28)]">
             <span aria-hidden="true">✎</span> 리뷰·다이어리 작성
           </button>
-          <button type="button" aria-pressed={isFavorite} disabled={isFavoritePending} onClick={() => void handleFavoriteToggle()} className={`flex h-[50px] items-center justify-center gap-1.5 rounded-[16px] bg-white text-[13px] font-black shadow-[0_10px_22px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8] transition ${isFavorite ? 'text-[#ff5a52]' : 'text-[#1f4e82]'}`}>
-            {isFavorite ? '♥ 찜함' : '♡ 찜하기'}
+          <button type="button" aria-pressed={Boolean(watchlistItemId)} disabled={isFavoritePending} onClick={() => void handleFavoriteToggle()} className={`flex h-[50px] items-center justify-center gap-1.5 rounded-[16px] bg-white text-[13px] font-black shadow-[0_10px_22px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8] transition ${watchlistItemId ? 'text-[#ff5a52]' : 'text-[#1f4e82]'}`}>
+            {watchlistItemId ? '♥ 보고 싶어요' : '♡ 보고 싶어요'}
           </button>
         </div>
 

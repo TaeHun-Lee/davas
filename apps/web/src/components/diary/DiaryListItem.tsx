@@ -8,7 +8,8 @@ type DiaryListItemProps = {
 
 export function DiaryListItem({ item }: DiaryListItemProps) {
   return (
-    <article className="flex gap-3 rounded-[24px] bg-white p-3 shadow-[0_12px_30px_rgba(31,42,68,0.07)]">
+    <article className="relative flex gap-3 rounded-[24px] bg-white p-3 shadow-[0_12px_30px_rgba(31,42,68,0.07)]">
+      <Link href={`/diary/${item.id}`} aria-label={`${item.mediaTitle} 기록 상세 보기`} className="absolute inset-0 rounded-[24px]" />
       <MoviePosterVisual gradient={item.posterGradient} imageUrl={item.posterUrl} label={item.posterUrl ? undefined : item.mediaTitle} className="h-[104px] w-[72px] shrink-0 rounded-[18px]" />
       <div className="min-w-0 flex-1">
         <div className="min-w-0">
@@ -26,7 +27,7 @@ export function DiaryListItem({ item }: DiaryListItemProps) {
               <span key={genre} className="shrink-0 rounded-full bg-[#eef5ff] px-2 py-1 text-[10px] font-bold text-[#216bd8]">{genre}</span>
             ))}
           </div>
-          <Link href={`/diary/${item.id}/edit`} className="shrink-0 rounded-full bg-[#eef5ff] px-3 py-1 text-[11px] font-extrabold text-[#216bd8]">
+          <Link href={`/diary/${item.id}/edit`} className="relative z-10 flex min-h-11 shrink-0 items-center rounded-full bg-[#eef5ff] px-3 text-[11px] font-extrabold text-[#216bd8]">
             수정
           </Link>
         </div>

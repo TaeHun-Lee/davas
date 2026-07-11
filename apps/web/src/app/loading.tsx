@@ -1,0 +1,1 @@
+export default function Loading(){return <main className="grid min-h-dvh place-items-center bg-[#f6f8fc]" aria-label="화면을 불러오는 중"><div className="h-14 w-14 animate-pulse rounded-full bg-[#dce7f5]"/></main>}

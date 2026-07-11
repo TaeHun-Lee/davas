@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 const ACCESS_TOKEN_COOKIE = 'davas_access_token';
-const protectedRoutes = ['/', '/explore', '/community', '/diary', '/profile'];
+const protectedRoutes = ['/', '/explore', '/community', '/feed', '/diary', '/profile', '/watchlist', '/friends'];
 const guestOnlyRoutes = ['/login', '/signup'];
 
 export function middleware(request: NextRequest) {
@@ -21,5 +21,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/explore/:path*', '/community/:path*', '/diary/:path*', '/profile/:path*', '/login', '/signup'],
+  matcher: ['/', '/explore/:path*', '/community/:path*', '/feed/:path*', '/diary/:path*', '/profile/:path*', '/watchlist/:path*', '/friends/:path*', '/login', '/signup'],
 };

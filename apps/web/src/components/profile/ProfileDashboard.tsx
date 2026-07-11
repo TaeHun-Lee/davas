@@ -2,14 +2,14 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getMe, type AuthenticatedUser } from '../../lib/api/auth';
+import { ApiResponseError, getMe, type AuthenticatedUser } from '../../lib/api/auth';
 import { getDiaryDashboard } from '../../lib/api/diaries';
-import { getFavoriteMedia, type FavoriteMediaItem } from '../../lib/api/media';
+import { getWatchlist, type WatchlistItem } from '../../lib/api/watchlist';
 import type { DiaryDashboardView, DiaryListItemView } from '../diary/diary-dashboard-types';
 import { AppShell } from '../layout/AppShell';
 import { MediaDetailLoadingIndicator } from '../media/MediaDetailLoadingIndicator';
 import { ProfileActivitySection } from './ProfileActivitySection';
-import { ProfileFavoriteMediaSection } from './ProfileFavoriteMediaSection';
+import { ProfileWatchlistSection } from './ProfileWatchlistSection';
 import { ProfileHeaderCard } from './ProfileHeaderCard';
 import { ProfileListsSection } from './ProfileListsSection';
 import { ProfileSettingsSection } from './ProfileSettingsSection';
@@ -45,7 +45,7 @@ export type ProfileView = {
     likedPosts: ProfileMetric;
   };
   lists: ProfileListCard[];
-  favoriteMedia: FavoriteMediaItem[];
+  watchlist: WatchlistItem[];
 };
 
 function toMetric(label: string, value: number | null): ProfileMetric {
@@ -67,7 +67,7 @@ function buildRecentListCard(item: DiaryListItemView): ProfileListCard {
   };
 }
 
-export function buildProfileView(user: AuthenticatedUser, dashboard: DiaryDashboardView, favoriteMedia: FavoriteMediaItem[] = []): ProfileView {
+export function buildProfileView(user: AuthenticatedUser, dashboard: DiaryDashboardView, watchlist: WatchlistItem[] = []): ProfileView {
   const diaryTotal = dashboard.summary.totalCount;
   const uniqueRecentMediaCount = new Set(dashboard.recentItems.map((item) => item.mediaId)).size;
   const recentListCards = dashboard.recentItems.slice(0, 4).map(buildRecentListCard);
@@ -87,7 +87,7 @@ export function buildProfileView(user: AuthenticatedUser, dashboard: DiaryDashbo
       likedPosts: toMetric('좋아요한 글', null),
     },
     lists: recentListCards,
-    favoriteMedia,
+    watchlist,
   };
 }
 
@@ -95,26 +95,32 @@ export function ProfileDashboard() {
   const router = useRouter();
   const [view, setView] = useState<ProfileView | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let mounted = true;
 
-    Promise.all([getMe(), getDiaryDashboard(), getFavoriteMedia()])
-      .then(([user, dashboard, favorites]) => {
+    setStatus('loading');
+    Promise.all([getMe(), getDiaryDashboard(), getWatchlist('ACTIVE')])
+      .then(([user, dashboard, watchlist]) => {
         if (!mounted) return;
-        setView(buildProfileView(user, dashboard, favorites.items));
+        setView(buildProfileView(user, dashboard, watchlist.items));
         setStatus('ready');
       })
-      .catch(() => {
+      .catch((error) => {
         if (!mounted) return;
-        setStatus('error');
-        router.replace('/login');
+        if (error instanceof ApiResponseError && error.status === 401) router.replace('/login');
+        else setStatus('error');
       });
 
     return () => {
       mounted = false;
     };
-  }, [router]);
+  }, [router, retryKey]);
+
+  if (status === 'error') {
+    return <AppShell><section className="rounded-[24px] bg-white p-8 text-center"><h1 className="text-[18px] font-black text-[#23426f]">프로필을 불러오지 못했어요</h1><p className="mt-2 text-[13px] font-bold text-[#65758a]">로그인 상태는 유지돼요.</p><button type="button" onClick={() => setRetryKey((value) => value + 1)} className="mt-5 min-h-11 rounded-[16px] bg-[#284778] px-5 text-[13px] font-black text-white">다시 시도</button></section></AppShell>;
+  }
 
   if (status === 'loading' || !view) {
     return <MediaDetailLoadingIndicator label="프로필을 불러오는 중" />;
@@ -130,7 +136,7 @@ export function ProfileDashboard() {
         <ProfileStatsGrid stats={view.stats} />
         <ProfileActivitySection activity={view.activity} />
         <ProfileListsSection lists={view.lists} />
-        <ProfileFavoriteMediaSection items={view.favoriteMedia} />
+        <ProfileWatchlistSection items={view.watchlist} />
         <ProfileSettingsSection />
       </div>
     </AppShell>

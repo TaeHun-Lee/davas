@@ -111,7 +111,7 @@ describe('Davas diary dashboard design', () => {
     assert.doesNotMatch(diaryFilterTabsSource, /aria-label=\{`\$\{tab\} 다이어리 필터`\}/);
     assert.match(diaryGenreRatioSource, /role="progressbar"/);
     assert.match(diaryGenreRatioSource, /aria-valuenow=\{item\.percentage\}/);
-    assert.match(diaryMonthlyCalendarSource, /aria-selected=\{day\.selected\}/);
+    assert.match(diaryMonthlyCalendarSource, /aria-pressed=\{day\.selected\}/);
     assert.doesNotMatch(diaryDashboardSource, /<NewDiaryFloatingButton \/>/);
     assert.doesNotMatch(newDiaryFloatingButtonSource, /href="\/diary\/new"/);
     assert.doesNotMatch(newDiaryFloatingButtonSource, /새 다이어리/);
@@ -197,7 +197,8 @@ describe('Davas diary dashboard design', () => {
     assert.match(diaryDashboardSource, /getDiaryDashboard/);
     assert.match(diaryDashboardSource, /DiaryDashboardStatus/);
     assert.match(diaryDashboardSource, /useEffect/);
-    assert.match(diaryDashboardSource, /다이어리 데이터를 불러오지 못했어요/);
+    assert.match(diaryDashboardSource, /다이어리를 불러오지 못했어요/);
+    assert.match(diaryDashboardSource, /다시 시도/);
     assert.doesNotMatch(diaryDashboardSource, /const data = dashboard \? dashboard : fixtureDiaryDashboard/);
   });
 

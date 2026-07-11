@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { PwaStatus } from '../components/pwa/PwaStatus';
 
 export const metadata: Metadata = {
   title: 'Davas',
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body>{children}<PwaStatus /></body>
     </html>
   );
 }

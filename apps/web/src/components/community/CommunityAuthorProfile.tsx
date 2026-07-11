@@ -44,25 +44,17 @@ export function CommunityAuthorProfile({ authorId }: { authorId: string }) {
                   <p className="mt-1 text-[12px] font-bold text-[#7d8798]">{profile.author.bio ?? '소개가 아직 없어요.'}</p>
                 </div>
               </div>
-              <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+              <div className="mt-5 text-center">
                 <div className="rounded-[18px] bg-[#f5f8fd] px-2 py-3">
                   <p className="text-[16px] font-black text-[#1f2a44]">{profile.stats.publicDiaryCount}</p>
-                  <p className="text-[10px] font-extrabold text-[#8a95a8]">공개 기록</p>
-                </div>
-                <div className="rounded-[18px] bg-[#f5f8fd] px-2 py-3">
-                  <p className="text-[16px] font-black text-[#1f2a44]">{profile.stats.followerCount}</p>
-                  <p className="text-[10px] font-extrabold text-[#8a95a8]">팔로워</p>
-                </div>
-                <div className="rounded-[18px] bg-[#f5f8fd] px-2 py-3">
-                  <p className="text-[16px] font-black text-[#1f2a44]">{profile.stats.followingCount}</p>
-                  <p className="text-[10px] font-extrabold text-[#8a95a8]">팔로잉</p>
+                  <p className="text-[10px] font-extrabold text-[#65758a]">나에게 공유된 기록</p>
                 </div>
               </div>
             </header>
             <section className="mt-6">
-              <h2 className="px-1 text-[16px] font-black tracking-[-0.02em] text-[#1f2a44]">작성자의 공개 기록</h2>
+              <h2 className="px-1 text-[16px] font-black tracking-[-0.02em] text-[#1f2a44]">나에게 공유된 기록</h2>
               <div className="mt-3 space-y-3">
-                {profile.feed.length > 0 ? profile.feed.map((item) => <CommunityDiaryCard key={item.id} item={item} />) : <p className="rounded-[24px] bg-white px-5 py-8 text-center text-[13px] font-bold text-[#8a95a8]">공개 기록이 아직 없어요.</p>}
+                {profile.feed.length > 0 ? profile.feed.map((item) => <CommunityDiaryCard key={item.id} item={item} />) : <p className="rounded-[24px] bg-white px-5 py-8 text-center text-[13px] font-bold text-[#65758a]">현재 나에게 공유된 기록이 없어요.</p>}
               </div>
             </section>
           </>

@@ -1,4 +1,4 @@
-import { CommunityDiaryDetail } from '../../../components/community/CommunityDiaryDetail';
+import { DiaryDetailScreen } from '../../../components/diary/DiaryDetailScreen';
 
 type DiaryDetailPageProps = {
   params?: Promise<{ id: string }>;
@@ -6,5 +6,5 @@ type DiaryDetailPageProps = {
 
 export default async function DiaryDetailPage({ params }: DiaryDetailPageProps) {
   const { id } = await params!;
-  return <CommunityDiaryDetail diaryId={id} />;
+  return <DiaryDetailScreen diaryId={id} />;
 }

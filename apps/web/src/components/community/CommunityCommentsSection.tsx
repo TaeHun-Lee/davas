@@ -26,6 +26,9 @@ export function CommunityCommentsSection({ diaryId }: CommunityCommentsSectionPr
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [pending, setPending] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+  const [commentPendingId, setCommentPendingId] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -43,10 +46,11 @@ export function CommunityCommentsSection({ diaryId }: CommunityCommentsSectionPr
     return () => {
       mounted = false;
     };
-  }, [diaryId]);
+  }, [diaryId, retryKey]);
 
   async function handleCreate() {
-    if (!content.trim()) return;
+    if (!content.trim() || pending) return;
+    setPending(true);
     setErrorMessage('');
     try {
       const nextComment = await createDiaryComment(diaryId, content);
@@ -54,11 +58,12 @@ export function CommunityCommentsSection({ diaryId }: CommunityCommentsSectionPr
       setContent('');
     } catch {
       setErrorMessage('로그인 후 댓글을 작성할 수 있어요.');
-    }
+    } finally { setPending(false); }
   }
 
   async function handleUpdate(commentId: string) {
-    if (!editingContent.trim()) return;
+    if (!editingContent.trim() || commentPendingId) return;
+    setCommentPendingId(commentId);
     setErrorMessage('');
     try {
       const nextComment = await updateDiaryComment(commentId, editingContent);
@@ -67,17 +72,19 @@ export function CommunityCommentsSection({ diaryId }: CommunityCommentsSectionPr
       setEditingContent('');
     } catch {
       setErrorMessage('댓글을 수정하지 못했어요.');
-    }
+    } finally { setCommentPendingId(null); }
   }
 
   async function handleDelete(commentId: string) {
+    if (commentPendingId) return;
+    setCommentPendingId(commentId);
     setErrorMessage('');
     try {
       await deleteDiaryComment(commentId);
       setComments((current) => current.filter((comment) => comment.id !== commentId));
     } catch {
       setErrorMessage('댓글을 삭제하지 못했어요.');
-    }
+    } finally { setCommentPendingId(null); }
   }
 
   return (
@@ -93,13 +100,13 @@ export function CommunityCommentsSection({ diaryId }: CommunityCommentsSectionPr
           placeholder="댓글을 작성해보세요"
           className="min-h-[76px] flex-1 resize-none rounded-[20px] bg-[#f6f8fc] px-4 py-3 text-[13px] font-semibold text-[#34415a] outline-none placeholder:text-[#a8b1c1]"
         />
-        <button type="button" onClick={handleCreate} className="self-end rounded-full bg-[#216bd8] px-4 py-3 text-[12px] font-black text-white">
-          등록
+        <button type="button" disabled={pending || !content.trim()} onClick={handleCreate} className="min-h-11 self-end rounded-full bg-[#216bd8] px-4 py-3 text-[12px] font-black text-white disabled:opacity-55">
+          {pending ? '등록 중' : '등록'}
         </button>
       </div>
       {errorMessage ? <p className="mt-2 text-[12px] font-bold text-[#e85b6a]">{errorMessage}</p> : null}
       {status === 'loading' ? <div className="mt-4 h-16 rounded-[20px] bg-[#f6f8fc]" aria-label="댓글을 불러오는 중" /> : null}
-      {status === 'error' ? <p className="mt-4 text-[12px] font-bold text-[#e85b6a]">댓글을 불러오지 못했어요.</p> : null}
+      {status === 'error' ? <div className="mt-4 flex items-center justify-between gap-2"><p className="text-[12px] font-bold text-[#a93530]">댓글을 불러오지 못했어요.</p><button type="button" onClick={() => setRetryKey((value) => value + 1)} className="min-h-11 px-2 text-[12px] font-black text-[#a93530]">다시 시도</button></div> : null}
       {status === 'ready' && comments.length === 0 ? <p className="mt-4 text-[12px] font-bold text-[#8a95a8]">아직 댓글이 없어요.</p> : null}
       <div className="mt-4 space-y-4">
         {comments.map((comment) => (
@@ -111,18 +118,19 @@ export function CommunityCommentsSection({ diaryId }: CommunityCommentsSectionPr
                 <p className="text-[10px] font-bold text-[#9aa5b7]">{new Date(comment.createdAt).toLocaleDateString('ko-KR')}</p>
               </div>
               {comment.isMine ? (
-                <div className="flex gap-2 text-[11px] font-black text-[#216bd8]">
+                <div className="flex gap-1 text-[11px] font-black text-[#216bd8]">
                   <button
                     type="button"
                     onClick={() => {
                       setEditingId(comment.id);
                       setEditingContent(comment.content);
                     }}
+                    className="min-h-11 px-2"
                   >
                     수정
                   </button>
-                  <button type="button" onClick={() => handleDelete(comment.id)}>
-                    삭제
+                  <button type="button" disabled={commentPendingId === comment.id} onClick={() => handleDelete(comment.id)} className="min-h-11 px-2">
+                    {commentPendingId === comment.id ? '처리 중' : '삭제'}
                   </button>
                 </div>
               ) : null}
@@ -136,7 +144,7 @@ export function CommunityCommentsSection({ diaryId }: CommunityCommentsSectionPr
                 />
                 <div className="mt-2 flex justify-end gap-2 text-[11px] font-black">
                   <button type="button" onClick={() => setEditingId(null)} className="rounded-full bg-[#edf2f8] px-3 py-2 text-[#66758c]">취소</button>
-                  <button type="button" onClick={() => handleUpdate(comment.id)} className="rounded-full bg-[#216bd8] px-3 py-2 text-white">저장</button>
+                  <button type="button" disabled={commentPendingId === comment.id} onClick={() => handleUpdate(comment.id)} className="min-h-11 rounded-full bg-[#216bd8] px-3 py-2 text-white">{commentPendingId === comment.id ? '저장 중' : '저장'}</button>
                 </div>
               </div>
             ) : (

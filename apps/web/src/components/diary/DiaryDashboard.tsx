@@ -58,6 +58,7 @@ export function DiaryDashboard() {
     toCalendarDay(searchParams.get('day')),
   );
   const [showAllDiaries, setShowAllDiaries] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -76,7 +77,7 @@ export function DiaryDashboard() {
     return () => {
       mounted = false;
     };
-  }, [calendarYear, calendarMonth, selectedCalendarDay]);
+  }, [calendarYear, calendarMonth, selectedCalendarDay, retryKey]);
 
   useEffect(() => {
     const nextQuery = searchParams.get('q') ?? '';
@@ -176,15 +177,18 @@ export function DiaryDashboard() {
     );
   };
 
+  if (status === 'loading') {
+    return <AppShell><div className="space-y-4" aria-label="다이어리를 불러오는 중"><div className="h-12 animate-pulse rounded-[18px] bg-white" /><div className="h-48 animate-pulse rounded-[24px] bg-white" /><div className="h-72 animate-pulse rounded-[24px] bg-white" /></div></AppShell>;
+  }
+
+  if (status === 'error') {
+    return <AppShell><section className="rounded-[24px] bg-white px-5 py-8 text-center"><h1 className="text-[17px] font-black text-[#23426f]">다이어리를 불러오지 못했어요</h1><p className="mt-2 text-[13px] font-bold text-[#65758a]">로그인 문제와 네트워크 문제를 구분해 다시 확인해주세요.</p><button type="button" onClick={() => { setStatus('loading'); setRetryKey((value) => value + 1); }} className="mt-5 min-h-11 rounded-[16px] bg-[#284778] px-5 text-[13px] font-black text-white">다시 시도</button></section></AppShell>;
+  }
+
   return (
     <AppShell>
       <div className="overflow-x-hidden pb-8" data-design="diary-dashboard">
         <DiarySearchBar value={query} onChange={handleQueryChange} />
-        {status === 'error' ? (
-          <div className="mb-4 rounded-[24px] bg-white px-5 py-4 text-[13px] font-bold text-[#e85b6a] shadow-[0_14px_34px_rgba(31,42,68,0.07)]">
-            다이어리 데이터를 불러오지 못했어요. 잠시 후 다시 시도해주세요.
-          </div>
-        ) : null}
         <DiarySummarySection summary={dashboard.summary} />
         <DiaryInsightGrid
           year={dashboard.calendar.year}
@@ -204,7 +208,7 @@ export function DiaryDashboard() {
             description={selectedCalendarDescription}
             onViewAll={handleViewAllDiaries}
           />
-        ) : null}
+        ) : dashboard.recentItems.length === 0 ? <section className="mt-5 rounded-[24px] bg-white px-5 py-8 text-center"><h2 className="text-[16px] font-black text-[#23426f]">아직 감상 기록이 없어요</h2><p className="mt-2 text-[13px] font-bold text-[#65758a]">마음에 남은 작품부터 하나 골라보세요.</p><button type="button" onClick={() => router.push('/explore?intent=record')} className="mt-5 min-h-11 rounded-[16px] bg-[#ff5a52] px-5 text-[13px] font-black text-white">작품 찾아 기록하기</button></section> : <DiaryRecentListSection items={[]} />}
       </div>
     </AppShell>
   );

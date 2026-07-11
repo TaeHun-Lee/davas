@@ -14,7 +14,7 @@ const profileHeaderSource = source('../components/profile/ProfileHeaderCard.tsx'
 const profileStatsSource = source('../components/profile/ProfileStatsGrid.tsx');
 const profileActivitySource = source('../components/profile/ProfileActivitySection.tsx');
 const profileListsSource = source('../components/profile/ProfileListsSection.tsx');
-const profileFavoritesSource = source('../components/profile/ProfileFavoriteMediaSection.tsx');
+const profileWatchlistSource = source('../components/profile/ProfileWatchlistSection.tsx');
 const profileSettingsSource = source('../components/profile/ProfileSettingsSection.tsx');
 const profileEditPageSource = source('./profile/edit/page.tsx');
 const profileAccountPageSource = source('./profile/account/page.tsx');
@@ -30,7 +30,6 @@ const profilePrivacyScreenSource = source('../components/profile/ProfilePrivacyS
 const profileSupportScreenSource = source('../components/profile/ProfileSupportScreen.tsx');
 const profileAboutScreenSource = source('../components/profile/ProfileAboutScreen.tsx');
 const usersApiSource = source('../lib/api/users.ts');
-const mediaApiSource = source('../lib/api/media.ts');
 const authApiSource = source('../lib/api/auth.ts');
 const diaryApiSource = source('../lib/api/diaries.ts');
 const notificationsApiSource = source('../lib/api/notifications.ts');
@@ -85,21 +84,15 @@ describe('Davas profile tab design', () => {
     assert.doesNotMatch(profileListsSource, /\/images\/mock/);
   });
 
-  it('shows a separate favorite media section below my lists using live favorite data', () => {
-    assert.match(profileDashboardSource, /getFavoriteMedia/);
-    assert.match(profileDashboardSource, /favoriteMedia/);
-    assert.match(profileDashboardSource, /<ProfileListsSection lists=\{view\.lists\} \/>[\s\S]*<ProfileFavoriteMediaSection items=\{view\.favoriteMedia\}/);
-    assert.match(mediaApiSource, /export type FavoriteMediaItem/);
-    assert.match(mediaApiSource, /export async function getFavoriteMedia/);
-    assert.match(mediaApiSource, /\/media\/favorites/);
-    assert.match(mediaApiSource, /credentials: 'include'/);
-    assert.match(profileFavoritesSource, /내가 찜한 컨텐츠/);
-    assert.match(profileFavoritesSource, /data-design="profile-favorite-media-section"/);
-    assert.match(profileFavoritesSource, /items\.map/);
-    assert.match(profileFavoritesSource, /item\.posterUrl/);
-    assert.match(profileFavoritesSource, /item\.genres\[0\]/);
-    assert.match(profileFavoritesSource, /아직 찜한 컨텐츠가 없어요/);
-    assert.doesNotMatch(profileFavoritesSource, /mock|인셉션|센티멘탈 밸류/);
+  it('shows a small watchlist preview below my lists using live watchlist data', () => {
+    assert.match(profileDashboardSource, /getWatchlist\('ACTIVE'\)/);
+    assert.match(profileDashboardSource, /watchlist/);
+    assert.match(profileDashboardSource, /<ProfileListsSection lists=\{view\.lists\} \/>[\s\S]*<ProfileWatchlistSection items=\{view\.watchlist\}/);
+    assert.match(profileWatchlistSource, /href="\/watchlist"/);
+    assert.match(profileWatchlistSource, /items\.slice\(0, 6\)\.map/);
+    assert.match(profileWatchlistSource, /item\.media\?\.posterUrl/);
+    assert.match(profileWatchlistSource, /보고 싶은 작품/);
+    assert.doesNotMatch(profileWatchlistSource, /mock/);
   });
 
   it('keeps unavailable social metrics explicit instead of fabricating likes or following counts', () => {
@@ -161,7 +154,8 @@ describe('Davas profile tab design', () => {
     assert.match(authApiSource, /export async function logout/);
     assert.match(authApiSource, /\/auth\/logout/);
     assert.match(authApiSource, /method: 'POST'/);
-    assert.match(headerSource, /import \{ getMe, logout, normalizeProfileImageUrl/);
+    assert.match(headerSource, /import \{ ApiResponseError, getMe, logout, normalizeProfileImageUrl/);
+    assert.match(headerSource, /error instanceof ApiResponseError && error\.status === 401/);
     assert.match(headerSource, /const router = useRouter\(\)/);
     assert.match(headerSource, /async function handleLogout/);
     assert.match(headerSource, /await logout\(\)/);
@@ -223,17 +217,19 @@ describe('Davas profile tab design', () => {
 
     assert.match(profileAccountScreenSource, /logout/);
     assert.match(profileAccountScreenSource, /router\.replace\('\/login'\)/);
-    assert.match(profileNotificationsScreenSource, /localStorage/);
-    assert.match(profileNotificationsScreenSource, /davas\.notificationSettings/);
+    assert.doesNotMatch(profileNotificationsScreenSource, /localStorage|davas\.notificationSettings/);
+    assert.match(profileNotificationsScreenSource, /서버에서 효력이 없는 푸시 알림 토글은 표시하지 않습니다/);
     assert.match(profileNotificationsScreenSource, /getCommunityNotifications/);
     assert.match(profileNotificationsScreenSource, /markCommunityNotificationRead/);
     assert.match(profileNotificationsScreenSource, /커뮤니티 알림/);
     assert.match(profileNotificationsScreenSource, /읽음 처리/);
+    assert.match(profileNotificationsScreenSource, /href=\{`\/diary\/\$\{item\.diary\.id\}`\}/);
     assert.match(notificationsApiSource, /\/notifications/);
     assert.match(notificationsApiSource, /\/notifications\/\$\{id\}\/read/);
     assert.match(notificationsApiSource, /credentials: 'include'/);
-    assert.match(profilePrivacyScreenSource, /localStorage/);
-    assert.match(profilePrivacyScreenSource, /davas\.privacySettings/);
+    assert.doesNotMatch(profilePrivacyScreenSource, /localStorage|davas\.privacySettings/);
+    assert.match(profilePrivacyScreenSource, /새 기록은 항상 나만 보기로 시작합니다/);
+    assert.match(profilePrivacyScreenSource, /서버 정책과 연결되기 전까지 제공하지 않습니다/);
     assert.match(profileSupportScreenSource, /mailto:/);
     assert.match(profileAboutScreenSource, /NEXT_PUBLIC_APP_VERSION/);
   });

@@ -1,0 +1,7 @@
+import { getApiBaseUrl } from './base-url';
+export type WatchlistItem={id:string;mediaId:string;priority:'HIGH'|'MEDIUM'|'LOW';memo:string;plannedWith:string;status:'ACTIVE'|'WATCHED';createdAt:string;updatedAt:string;media:{id:string;title:string;posterUrl:string|null;releaseDate:string|null;mediaType:string}|null};
+async function json<T>(response:Response){if(!response.ok)throw Object.assign(new Error('watchlist request failed'),{status:response.status});return response.json() as Promise<T>}
+export async function getWatchlist(status?:'ACTIVE'|'WATCHED'){return json<{items:WatchlistItem[]}>(await fetch(`${getApiBaseUrl()}/watchlist${status?`?status=${status}`:''}`,{credentials:'include'}))}
+export async function addWatchlist(mediaId:string){return json<WatchlistItem>(await fetch(`${getApiBaseUrl()}/watchlist`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({mediaId})}))}
+export async function updateWatchlist(id:string,input:Partial<Pick<WatchlistItem,'priority'|'memo'|'plannedWith'|'status'>>){return json<WatchlistItem>(await fetch(`${getApiBaseUrl()}/watchlist/${id}`,{method:'PATCH',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)}))}
+export async function removeWatchlist(id:string){return json<{id:string;deleted:true}>(await fetch(`${getApiBaseUrl()}/watchlist/${id}`,{method:'DELETE',credentials:'include'}))}
