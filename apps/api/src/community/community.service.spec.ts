@@ -1,281 +1,64 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { ForbiddenException } from '@nestjs/common';
+import type { DiaryEntity, MediaEntity, UserEntity } from '../database/entities';
 import { CommunityService } from './community.service';
-import type { DiaryEntity } from '../database/entities/diary.entity';
-import type { MediaEntity } from '../database/entities/media.entity';
-import type { UserEntity } from '../database/entities/user.entity';
 
-type FakeRepository = {
-  find: (options?: unknown) => Promise<DiaryEntity[]>;
-};
-
-function makeDiary(overrides: Partial<DiaryEntity> = {}): DiaryEntity {
+function diary(id: string, userId: string, visibility: 'FRIENDS' | 'SELECTED'): DiaryEntity {
   return {
-    id: 'diary-1',
-    userId: 'user-1',
-    mediaId: 'media-1',
-    title: '실제 기록 제목',
-    content: '실제 사용자가 작성한 공개 다이어리 본문입니다.',
-    watchedDate: '2026-05-08',
-    rating: '4.5',
-    visibility: 'PUBLIC',
-    hasSpoiler: false,
-    user: {
-      id: 'user-1',
-      nickname: '실제사용자',
-      profileImageUrl: null,
-    } as UserEntity,
-    media: {
-      id: 'media-1',
-      title: '실제 작품',
-      posterUrl: 'https://image.tmdb.org/t/p/w342/poster.jpg',
-      releaseDate: '2026-01-02',
-      genres: ['18'],
-    } as MediaEntity,
-    comments: [{ id: 'comment-1' }, { id: 'comment-2' }] as never,
-    createdAt: new Date('2026-05-09T03:00:00.000Z'),
-    updatedAt: new Date('2026-05-09T03:00:00.000Z'),
-    deletedAt: null,
-    ...overrides,
-  } as DiaryEntity;
+    id, userId, mediaId: `media-${id}`, title: `기록 ${id}`, content: '친구와 나누는 기록', watchedDate: '2026-07-11',
+    rating: '4.5', visibility, hasSpoiler: false,
+    user: { id: userId, nickname: userId, profileImageUrl: null } as UserEntity,
+    media: { id: `media-${id}`, title: `작품 ${id}`, posterUrl: null, releaseDate: '2026-01-01', genres: ['18'] } as MediaEntity,
+    comments: [], likes: [], createdAt: new Date('2026-07-11'), updatedAt: new Date('2026-07-11'), deletedAt: null,
+  } as unknown as DiaryEntity;
 }
 
-describe('Community dashboard API', () => {
-  it('builds the community dashboard from public diary rows and real comment counts', async () => {
-    let findOptions: unknown;
-    const repository: FakeRepository = {
-      find: async (options) => {
-        findOptions = options;
-        return [
-          makeDiary({ id: 'older', rating: '3.5', createdAt: new Date('2026-05-08T00:00:00.000Z'), comments: [] as never }),
-          makeDiary({ id: 'popular', rating: '4.8', title: '가장 인기 있는 공개 기록', comments: [{ id: 'c1' }, { id: 'c2' }, { id: 'c3' }] as never }),
-        ];
-      },
-    };
-
-    const dashboard = await new CommunityService(repository as never).getDashboard({ tab: 'popular' });
-
-    assert.deepEqual(findOptions, {
-      where: { visibility: 'PUBLIC' },
-      relations: { media: true, user: true, comments: true, likes: true },
-      order: { createdAt: 'DESC' },
-      take: 100,
-    });
-    assert.equal(dashboard.tab, 'popular');
-    assert.equal(dashboard.feed[0]?.id, 'popular');
-    assert.equal(dashboard.feed[0]?.commentCount, 3);
-    assert.equal(dashboard.feed[0]?.author.nickname, '실제사용자');
-    assert.equal(dashboard.feed[0]?.media.title, '실제 작품');
-    assert.deepEqual(dashboard.topics[0], { label: '#드라마', count: 2 });
-    assert.equal(dashboard.popularDiaries[0]?.id, 'popular');
+describe('friend feed privacy', () => {
+  it('queries only FRIENDS and SELECTED candidates then filters every row through the shared access policy', async () => {
+    let options: unknown;
+    const rows = [diary('friend', 'friend-1', 'FRIENDS'), diary('selected', 'stranger', 'SELECTED'), diary('denied', 'stranger', 'FRIENDS')];
+    const repo = { find: async (input: unknown) => { options = input; return rows; } };
+    const access = { canView: async (row: DiaryEntity) => row.id !== 'denied' };
+    const result = await new CommunityService(repo as never, undefined, access as never).getDashboard({ userId: 'viewer' });
+    assert.deepEqual((options as { where: unknown }).where, [{ visibility: 'FRIENDS' }, { visibility: 'SELECTED' }]);
+    assert.deepEqual(result.feed.map((row) => row.id), ['friend', 'selected']);
+    assert.deepEqual(result.popularDiaries, []);
   });
 
-  it('filters community feed by real diary, media, and author text without returning fabricated engagement', async () => {
-    const repository: FakeRepository = {
-      find: async () => [
-        makeDiary({ id: 'match-title', title: '검색 대상 기록' }),
-        makeDiary({ id: 'match-media', media: { id: 'media-2', title: '찾는 작품', posterUrl: null, releaseDate: null, genres: ['878'] } as MediaEntity }),
-        makeDiary({ id: 'no-match', title: '다른 기록', content: '다른 본문', user: { id: 'user-2', nickname: '다른사용자', profileImageUrl: null } as UserEntity, media: { id: 'media-3', title: '다른 작품', posterUrl: null, releaseDate: null, genres: [] } as unknown as MediaEntity }),
-      ],
-    };
-
-    const dashboard = await new CommunityService(repository as never).getDashboard({ q: '찾는' });
-
-    assert.deepEqual(dashboard.feed.map((item) => item.id), ['match-media']);
-    assert.equal(dashboard.feed[0]?.likeCount, 0);
-    assert.equal(dashboard.feed[0]?.isLiked, false);
-    assert.ok(dashboard.feed.every((item) => !('bookmark' in item)));
+  it('uses the same policy for direct detail URLs', async () => {
+    const row = diary('locked', 'friend-1', 'FRIENDS');
+    const repo = { findOne: async () => row };
+    const access = { assertCanView: async () => { throw new ForbiddenException(); } };
+    await assert.rejects(
+      () => new CommunityService(repo as never, undefined, access as never).getPublicDiary('locked', 'intruder'),
+      ForbiddenException,
+    );
   });
 
-  it('filters topic clicks by persisted media genres instead of text search only', async () => {
-    const repository: FakeRepository = {
-      find: async () => [
-        makeDiary({ id: 'genre-match', title: '북유럽 가족 이야기', content: '장르 단어 없는 본문', media: { id: 'media-genre', title: '센티멘탈 밸류', posterUrl: null, releaseDate: null, genres: ['18'] } as MediaEntity }),
-        makeDiary({ id: 'text-only', title: '드라마라는 단어만 있는 기록', content: '하지만 장르는 SF', media: { id: 'media-sf', title: '우주 영화', posterUrl: null, releaseDate: null, genres: ['878'] } as MediaEntity }),
-      ],
-    };
-
-    const dashboard = await new CommunityService(repository as never).getDashboard({ topic: '드라마' });
-
-    assert.deepEqual(dashboard.feed.map((item) => item.id), ['genre-match']);
-    assert.equal(dashboard.topic, '드라마');
+  it('revokes cached feed eligibility when friendship or selection policy changes', async () => {
+    const row = diary('friend', 'friend-1', 'FRIENDS');
+    let allowed = true;
+    const repo = { find: async () => [row] };
+    const access = { canView: async () => allowed };
+    const service = new CommunityService(repo as never, undefined, access as never);
+    assert.equal((await service.getDashboard({ userId: 'viewer' })).feed.length, 1);
+    allowed = false;
+    assert.equal((await service.getDashboard({ userId: 'viewer' })).feed.length, 0);
   });
 
-  it('marks spoiler public diaries so cards can hide previews before reveal', async () => {
-    const repository: FakeRepository = {
-      find: async () => [makeDiary({ id: 'spoiler-card', hasSpoiler: true, content: '범인의 정체를 적은 본문입니다.' })],
-    };
-
-    const dashboard = await new CommunityService(repository as never).getDashboard();
-
-    assert.equal(dashboard.feed[0]?.hasSpoiler, true);
-  });
-
-  it('loads a public community diary detail without exposing private rows', async () => {
-    let findOneOptions: unknown;
-    const repository = {
-      find: async () => [],
-      findOne: async (options: unknown) => {
-        findOneOptions = options;
-        return makeDiary({ id: 'public-detail', title: '공개 상세 기록', content: '공개 다이어리 전문입니다.' });
-      },
-    };
-
-    const detail = await new CommunityService(repository as never).getPublicDiary('public-detail');
-
-    assert.deepEqual(findOneOptions, {
-      where: { id: 'public-detail', visibility: 'PUBLIC' },
-      relations: { media: true, user: true, comments: true, likes: true },
-    });
-    assert.equal(detail.id, 'public-detail');
-    assert.equal(detail.content, '공개 다이어리 전문입니다.');
-    assert.equal(detail.commentCount, 2);
-    assert.equal(detail.likeCount, 0);
-    assert.equal(detail.isLiked, false);
-  });
-
-  it('builds the following tab from persisted follow relationships for the authenticated user', async () => {
-    const repository: FakeRepository = {
-      find: async () => [
-        makeDiary({ id: 'followed-author-diary', userId: 'author-followed', user: { id: 'author-followed', nickname: '팔로우작가', profileImageUrl: null } as UserEntity }),
-        makeDiary({ id: 'other-author-diary', userId: 'author-other', user: { id: 'author-other', nickname: '다른작가', profileImageUrl: null } as UserEntity }),
-      ],
-    };
-    const follows = {
-      find: async () => [{ followingId: 'author-followed' }],
-    };
-
-    const dashboard = await new CommunityService(repository as never, follows as never).getDashboard({ tab: 'following', userId: 'viewer-1' });
-
-    assert.deepEqual(dashboard.feed.map((item) => item.id), ['followed-author-diary']);
-    assert.equal(dashboard.feed[0]?.author.isFollowed, true);
-  });
-
-  it('follows and unfollows public diary authors without allowing self-follow', async () => {
-    const repository = {
-      find: async () => [],
-      findOne: async () => makeDiary({ userId: 'author-1', user: { id: 'author-1', nickname: '작성자', profileImageUrl: null } as UserEntity }),
-    };
-    const calls: Array<{ method: string; input: unknown }> = [];
-    const follows = {
-      find: async () => [],
-      findOne: async () => null,
-      create: (input: unknown) => {
-        calls.push({ method: 'create', input });
-        return input;
-      },
-      save: async (input: unknown) => {
-        calls.push({ method: 'save', input });
-        return input;
-      },
-      delete: async (input: unknown) => {
-        calls.push({ method: 'delete', input });
-        return { affected: 1 };
-      },
-    };
-    const notificationCalls: unknown[] = [];
-    const notifications = {
-      notifyAuthorFollowed: async (input: unknown) => notificationCalls.push(input),
-    };
-    const service = new CommunityService(repository as never, follows as never, undefined, undefined, notifications as never);
-
-    const followed = await service.followDiaryAuthor('diary-1', 'viewer-1');
-    const unfollowed = await service.unfollowDiaryAuthor('diary-1', 'viewer-1');
-
-    assert.deepEqual(followed, { followingId: 'author-1', isFollowed: true });
-    assert.deepEqual(unfollowed, { followingId: 'author-1', isFollowed: false });
-    assert.deepEqual(calls.map((call) => call.method), ['create', 'save', 'delete']);
-    assert.deepEqual(notificationCalls, [{ recipientId: 'author-1', actorId: 'viewer-1' }]);
-    await assert.rejects(() => new CommunityService({ find: async () => [], findOne: async () => makeDiary({ userId: 'viewer-1' }) } as never, follows as never).followDiaryAuthor('mine', 'viewer-1'));
-  });
-
-  it('sorts popular community diaries by persisted likes and exposes viewer like state', async () => {
-    const repository: FakeRepository = {
-      find: async () => [
-        makeDiary({ id: 'comment-only', comments: [{ id: 'c1' }, { id: 'c2' }, { id: 'c3' }] as never, likes: [] as never }),
-        makeDiary({ id: 'liked-diary', comments: [] as never, likes: [{ userId: 'viewer-1' }, { userId: 'viewer-2' }] as never }),
-      ],
-    };
-    const likes = {
-      find: async () => [{ diaryId: 'liked-diary' }],
-      findOne: async () => null,
-      create: (input: unknown) => input,
-      save: async (input: unknown) => input,
-      delete: async () => ({ affected: 1 }),
-    };
-
-    const dashboard = await new CommunityService(repository as never, undefined, likes as never).getDashboard({ tab: 'popular', userId: 'viewer-1' });
-
-    assert.deepEqual(dashboard.feed.map((item) => item.id), ['liked-diary', 'comment-only']);
-    assert.equal(dashboard.feed[0]?.likeCount, 2);
-    assert.equal(dashboard.feed[0]?.isLiked, true);
-  });
-
-  it('likes and unlikes public community diaries for the authenticated viewer', async () => {
-    const repository = {
-      find: async () => [],
-      findOne: async () => makeDiary({ id: 'public-diary' }),
-    };
-    const calls: Array<{ method: string; input: unknown }> = [];
-    const likes = {
-      find: async () => [],
-      findOne: async () => null,
-      create: (input: unknown) => {
-        calls.push({ method: 'create', input });
-        return input;
-      },
-      save: async (input: unknown) => {
-        calls.push({ method: 'save', input });
-        return input;
-      },
-      delete: async (input: unknown) => {
-        calls.push({ method: 'delete', input });
-        return { affected: 1 };
-      },
-    };
-    const notificationCalls: unknown[] = [];
-    const notifications = {
-      notifyDiaryLiked: async (input: unknown) => notificationCalls.push(input),
-    };
-    const service = new CommunityService(repository as never, undefined, likes as never, undefined, notifications as never);
-
-    const liked = await service.likeDiary('public-diary', 'viewer-1');
-    const unliked = await service.unlikeDiary('public-diary', 'viewer-1');
-
-    assert.deepEqual(liked, { diaryId: 'public-diary', isLiked: true });
-    assert.deepEqual(unliked, { diaryId: 'public-diary', isLiked: false });
-    assert.deepEqual(calls.map((call) => call.method), ['create', 'save', 'delete']);
-    assert.deepEqual(notificationCalls, [{ diaryId: 'public-diary', recipientId: 'user-1', actorId: 'viewer-1' }]);
-  });
-
-  it('loads an author public profile with only that author public feed', async () => {
-    const repository: FakeRepository = {
-      find: async (options) => {
-        assert.deepEqual(options, {
-          where: { userId: 'author-1', visibility: 'PUBLIC' },
-          relations: { media: true, user: true, comments: true, likes: true },
-          order: { createdAt: 'DESC' },
-          take: 100,
-        });
-        return [makeDiary({ id: 'author-public', userId: 'author-1', user: { id: 'author-1', nickname: '공개작가', profileImageUrl: null, bio: '소개' } as UserEntity })];
-      },
-    };
-    const follows = {
-      find: async () => [{ followingId: 'author-1' }],
-      count: async (options: unknown) => (JSON.stringify(options).includes('followingId') ? 7 : 3),
-    };
-    const users = {
-      findOne: async () => ({ id: 'author-1', nickname: '공개작가', profileImageUrl: null, bio: '소개' }),
-    };
-
-    const profile = await new CommunityService(repository as never, follows as never, undefined, users as never).getAuthorProfile('author-1', 'viewer-1');
-
-    assert.equal(profile.author.nickname, '공개작가');
-    assert.equal(profile.author.bio, '소개');
-    assert.equal(profile.author.isFollowed, true);
-    assert.equal(profile.stats.publicDiaryCount, 1);
-    assert.equal(profile.stats.followerCount, 7);
-    assert.equal(profile.stats.followingCount, 3);
-    assert.deepEqual(profile.feed.map((item) => item.id), ['author-public']);
+  it('does not expose legacy public-SNS like, follow, popularity, or topic signals', async () => {
+    const row = diary('friend', 'friend-1', 'FRIENDS');
+    row.likes = [{ userId: 'viewer' }] as never;
+    const repo = { find: async () => [row] };
+    const access = { canView: async () => true };
+    const result = await new CommunityService(repo as never, undefined, access as never).getDashboard({ userId: 'viewer' });
+    const card = result.feed[0] as unknown as Record<string, unknown>;
+    const author = card.author as Record<string, unknown>;
+    assert.equal('likeCount' in card, false);
+    assert.equal('isLiked' in card, false);
+    assert.equal('isFollowed' in author, false);
+    assert.deepEqual(result.topics, []);
+    assert.deepEqual(result.popularDiaries, []);
   });
 });

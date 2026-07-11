@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { DiaryEntity } from '../database/entities/diary.entity';
 import { MediaFavoriteEntity } from '../database/entities/media-favorite.entity';
 import { MediaEntity } from '../database/entities/media.entity';
+import { WatchlistItemEntity } from '../database/entities';
 import { MediaSearchQueryDto } from './dto/media-search-query.dto';
 import { TmdbClient } from './tmdb.client';
 import { resolveTmdbGenreLabels } from './tmdb-genres';
@@ -45,7 +46,8 @@ export type MediaDetailResponse = {
   myDiary: MyMediaDiary | null;
   myDiaries: MyMediaDiary[];
   myAverageRating: number | null;
-  isFavorite: boolean;
+  watchlistItemId: string | null;
+  watchlistStatus: 'ACTIVE' | 'WATCHED' | null;
 };
 
 export type MediaFavoriteResponse = {
@@ -87,6 +89,7 @@ export class MediaService {
     private readonly diaryRepository?: Repository<DiaryEntity>,
     @InjectRepository(MediaFavoriteEntity)
     private readonly favoriteRepository?: Repository<MediaFavoriteEntity>,
+    @InjectRepository(WatchlistItemEntity) private readonly watchlistRepository?: Repository<WatchlistItemEntity>,
   ) {}
 
   async search(query: MediaSearchQueryDto) {
@@ -122,10 +125,10 @@ export class MediaService {
     const myDiaries = await this.findMyDiaries(id, userId);
     const myDiary = myDiaries[0] ?? null;
     const myAverageRating = this.calculateAverageRating(myDiaries);
-    const isFavorite = await this.isFavorite(id, userId);
+    const watchlist = userId ? await this.watchlistRepository?.findOne({ where: { userId, mediaId: id } }) : null;
 
     if (media.externalProvider !== 'TMDB') {
-      return { ...this.fromCachedMedia(media), myDiary, myDiaries, myAverageRating, isFavorite };
+      return { ...this.fromCachedMedia(media), myDiary, myDiaries, myAverageRating, watchlistItemId: watchlist?.id ?? null, watchlistStatus: watchlist?.status ?? null };
     }
 
     const detail = await this.tmdbClient.detail({
@@ -162,7 +165,8 @@ export class MediaService {
       myDiary,
       myDiaries,
       myAverageRating,
-      isFavorite,
+      watchlistItemId: watchlist?.id ?? null,
+      watchlistStatus: watchlist?.status ?? null,
     };
   }
 
@@ -279,7 +283,8 @@ export class MediaService {
       myDiary: null,
       myDiaries: [],
       myAverageRating: null,
-      isFavorite: false,
+      watchlistItemId: null,
+      watchlistStatus: null,
     };
   }
 }

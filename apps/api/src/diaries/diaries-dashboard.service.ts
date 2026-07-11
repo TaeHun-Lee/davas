@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, GoneException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { DiaryEntity } from '../database/entities/diary.entity';
-import { MediaEntity } from '../database/entities/media.entity';
+import { DiaryCompanionEntity, DiaryEntity, DiaryShareEntity, MediaEntity, WatchlistItemEntity } from '../database/entities';
 import { resolveTmdbGenreLabel, resolveTmdbGenreLabels } from '../media/tmdb-genres';
 import { CreateDiaryDto } from './dto/create-diary.dto';
 import { UpdateDiaryDto } from './dto/update-diary.dto';
+import { DiaryAccessService } from './diary-access.service';
 
 const DEFAULT_POSTER_GRADIENT = 'from-[#e9eef7] via-[#f6f8fc] to-[#dfe8f5]';
 const GENRE_ICON_KINDS = ['sf', 'drama', 'thriller', 'action', 'etc'] as const;
@@ -68,12 +68,36 @@ export class DiariesDashboardService {
     private readonly diaries: Repository<DiaryEntity>,
     @InjectRepository(MediaEntity)
     private readonly mediaRepository?: Repository<MediaEntity>,
+    @Optional() @InjectRepository(DiaryCompanionEntity) private readonly companionRepository?: Repository<DiaryCompanionEntity>,
+    @Optional() @InjectRepository(DiaryShareEntity) private readonly shareRepository?: Repository<DiaryShareEntity>,
+    @Optional() @InjectRepository(WatchlistItemEntity) private readonly watchlistRepository?: Repository<WatchlistItemEntity>,
+    @Optional() private readonly access?: DiaryAccessService,
   ) {}
 
   async createDiary(userId: string, dto: CreateDiaryDto) {
     await this.saveRepresentativePoster(dto);
+    const relatedDto = this.normalizeRelatedRows(dto.visibility, dto);
+    const connection = this.diaries.manager?.connection;
+    if (connection?.isInitialized && this.companionRepository && this.shareRepository && this.watchlistRepository) {
+      return connection.transaction(async (manager) => {
+        const diaryRepository = manager.getRepository(DiaryEntity);
+        const saved = await diaryRepository.save(this.createDiaryEntity(diaryRepository, userId, dto));
+        await this.replaceRelatedRows(saved.id, relatedDto, manager.getRepository(DiaryCompanionEntity), manager.getRepository(DiaryShareEntity));
+        const watchlistRepository = manager.getRepository(WatchlistItemEntity);
+        const watchlist = await watchlistRepository.findOne({ where: { userId, mediaId: saved.mediaId } });
+        if (watchlist) { watchlist.status = 'WATCHED'; await watchlistRepository.save(watchlist); }
+        return saved;
+      });
+    }
+    const saved = await this.diaries.save(this.createDiaryEntity(this.diaries, userId, dto));
+    await this.replaceRelatedRows(saved.id, relatedDto);
+    const watchlist = await this.watchlistRepository?.findOne({ where: { userId, mediaId: saved.mediaId } });
+    if (watchlist) { watchlist.status = 'WATCHED'; await this.watchlistRepository?.save(watchlist); }
+    return saved;
+  }
 
-    const diary = this.diaries.create({
+  private createDiaryEntity(repository: Repository<DiaryEntity>, userId: string, dto: CreateDiaryDto) {
+    return repository.create({
       userId,
       mediaId: dto.mediaId,
       title: dto.title,
@@ -82,9 +106,10 @@ export class DiariesDashboardService {
       rating: dto.rating.toFixed(1),
       visibility: dto.visibility,
       hasSpoiler: dto.hasSpoiler,
+      watchedPlace: dto.watchedPlace?.trim() || null,
+      mood: dto.mood?.trim() || null,
+      memoryNote: dto.memoryNote?.trim() || null,
     });
-
-    return this.diaries.save(diary);
   }
 
   async getDiaryForEdit(userId: string, id: string) {
@@ -97,6 +122,21 @@ export class DiariesDashboardService {
     }
 
     return this.toEditableDiary(diary);
+  }
+
+  async getDiary(userId: string, id: string) {
+    const diary = await this.diaries.findOne({
+      where: { id },
+      withDeleted: true,
+      relations: { media: true, user: true, companions: { user: true }, selectedShares: true, comments: true, reactions: true } as never,
+    });
+    if (diary?.deletedAt) {
+      if (diary.userId === userId) throw new GoneException('삭제된 기록입니다.');
+      throw new NotFoundException('기록을 찾을 수 없습니다.');
+    }
+    await this.access?.assertCanView(diary, userId);
+    if (!this.access && (!diary || diary.userId !== userId)) throw new NotFoundException('다이어리를 찾을 수 없습니다.');
+    return this.toDiaryDetail(diary!, userId);
   }
 
   async updateDiary(userId: string, id: string, dto: UpdateDiaryDto) {
@@ -112,9 +152,52 @@ export class DiariesDashboardService {
     if (dto.rating !== undefined) diary.rating = dto.rating.toFixed(1);
     if (dto.visibility !== undefined) diary.visibility = dto.visibility;
     if (dto.hasSpoiler !== undefined) diary.hasSpoiler = dto.hasSpoiler;
+    if (dto.watchedPlace !== undefined) diary.watchedPlace = dto.watchedPlace.trim() || null;
+    if (dto.mood !== undefined) diary.mood = dto.mood.trim() || null;
+    if (dto.memoryNote !== undefined) diary.memoryNote = dto.memoryNote.trim() || null;
+
+    const relatedDto = this.normalizeRelatedRows(diary.visibility, dto);
 
     await this.saveRepresentativePoster(dto);
-    return this.toEditableDiary(await this.diaries.save(diary));
+    const connection = this.diaries.manager?.connection;
+    if (connection?.isInitialized && this.companionRepository && this.shareRepository) {
+      const saved = await connection.transaction(async (manager) => {
+        const row = await manager.getRepository(DiaryEntity).save(diary);
+        await this.replaceRelatedRows(id, relatedDto, manager.getRepository(DiaryCompanionEntity), manager.getRepository(DiaryShareEntity));
+        return row;
+      });
+      return this.toEditableDiary(saved);
+    }
+    const saved = await this.diaries.save(diary);
+    await this.replaceRelatedRows(id, relatedDto);
+    return this.toEditableDiary(saved);
+  }
+
+  async removeDiary(userId: string, id: string) {
+    const repository = this.diaries as Repository<DiaryEntity> & { findOne: Repository<DiaryEntity>['findOne']; softDelete: Repository<DiaryEntity>['softDelete'] };
+    const diary = await repository.findOne({ where: { id }, withDeleted: true });
+    if (!diary) throw new NotFoundException('기록을 찾을 수 없습니다.');
+    if (diary.deletedAt) throw new GoneException('이미 삭제된 기록입니다.');
+    if (diary.userId !== userId) throw new ForbiddenException('기록을 삭제할 권한이 없습니다.');
+    await repository.softDelete({ id, userId });
+    return { id, deleted: true };
+  }
+
+  async getMyDiaries(userId: string) {
+    const rows = await this.diaries.find({ where: { userId }, relations: { media: true }, order: { createdAt: 'DESC' } });
+    return rows.map((diary) => this.toDiaryDetail(diary, userId));
+  }
+
+  async getFeed(userId: string) {
+    const rows = await this.diaries.find({
+      where: [{ visibility: 'FRIENDS' }, { visibility: 'SELECTED' }],
+      relations: { media: true, user: true, comments: true, reactions: true } as never,
+      order: { createdAt: 'DESC' },
+      take: 100,
+    });
+    const visible: DiaryEntity[] = [];
+    for (const row of rows) if (await this.access?.canView(row, userId)) visible.push(row);
+    return visible.map((diary) => this.toDiaryDetail(diary, userId));
   }
 
   private toEditableDiary(diary: DiaryEntity) {
@@ -128,6 +211,11 @@ export class DiariesDashboardService {
       rating: Number(diary.rating),
       visibility: diary.visibility,
       hasSpoiler: diary.hasSpoiler,
+      watchedPlace: diary.watchedPlace ?? null,
+      mood: diary.mood ?? null,
+      memoryNote: diary.memoryNote ?? null,
+      companions: diary.companions?.map((item) => ({ id: item.id, userId: item.userId, displayName: item.displayName })) ?? [],
+      selectedUserIds: diary.selectedShares?.map((item) => item.userId) ?? [],
       tags: [],
       media: {
         id: media?.id ?? diary.mediaId,
@@ -139,6 +227,41 @@ export class DiariesDashboardService {
         mediaType: media?.mediaType ?? 'MOVIE',
         genres: resolveTmdbGenreLabels(media?.genres ?? []),
       },
+    };
+  }
+
+  private toDiaryDetail(diary: DiaryEntity, viewerId: string) {
+    return {
+      ...this.toEditableDiary(diary),
+      ownerMode: diary.userId === viewerId,
+      author: { id: diary.user?.id ?? diary.userId, nickname: diary.user?.nickname ?? '나' },
+      commentCount: diary.comments?.length ?? 0,
+      reactions: diary.reactions?.map((reaction) => ({ id: reaction.id, emoji: reaction.emoji, userId: reaction.userId })) ?? [],
+    };
+  }
+
+  private async replaceRelatedRows(diaryId: string, dto: { companions?: CreateDiaryDto['companions']; selectedUserIds?: CreateDiaryDto['selectedUserIds'] }, companionRepository = this.companionRepository, shareRepository = this.shareRepository) {
+    if (dto.companions !== undefined && companionRepository) {
+      await companionRepository.delete({ diaryId });
+      const companions = dto.companions
+        .map((item) => ({ userId: item.userId ?? null, displayName: item.displayName.trim() }))
+        .filter((item) => item.displayName);
+      if (companions.length) await companionRepository.save(companions.map((item) => companionRepository.create({ diaryId, ...item })));
+    }
+    if (dto.selectedUserIds !== undefined && shareRepository) {
+      await shareRepository.delete({ diaryId });
+      const ids = [...new Set(dto.selectedUserIds)];
+      if (ids.length) await shareRepository.save(ids.map((userId) => shareRepository.create({ diaryId, userId })));
+    }
+  }
+
+  private normalizeRelatedRows(
+    visibility: DiaryEntity['visibility'],
+    dto: { companions?: CreateDiaryDto['companions']; selectedUserIds?: CreateDiaryDto['selectedUserIds'] },
+  ) {
+    return {
+      companions: dto.companions,
+      selectedUserIds: visibility === 'SELECTED' ? dto.selectedUserIds : [],
     };
   }
 

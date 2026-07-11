@@ -1,10 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DiaryVisibility } from '@davas/shared';
-import { IsArray, IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString, Length, Max, MaxLength, Min } from 'class-validator';
+import { DIARY_VISIBILITIES, DiaryVisibility } from '@davas/shared';
+import { Type } from 'class-transformer';
+import { ArrayMinSize, IsArray, IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Length, Max, MaxLength, Min, ValidateIf, ValidateNested } from 'class-validator';
+
+export class DiaryCompanionDto {
+  @IsOptional() @IsUUID() userId?: string;
+  @IsString() @Length(1, 60) displayName!: string;
+}
 
 export class CreateDiaryDto {
   @ApiProperty({ example: 'clx-media-id' })
-  @IsString()
+  @IsUUID()
   mediaId!: string;
 
   @ApiPropertyOptional({ example: 'https://image.tmdb.org/t/p/w500/poster.jpg' })
@@ -33,10 +39,10 @@ export class CreateDiaryDto {
   @Max(5)
   rating!: number;
 
-  @ApiPropertyOptional({ enum: ['PUBLIC', 'PRIVATE'], default: 'PUBLIC' })
+  @ApiPropertyOptional({ enum: DIARY_VISIBILITIES, default: 'PRIVATE' })
   @IsOptional()
-  @IsEnum(['PUBLIC', 'PRIVATE'])
-  visibility: DiaryVisibility = 'PUBLIC';
+  @IsEnum(DIARY_VISIBILITIES)
+  visibility: DiaryVisibility = 'PRIVATE';
 
   @ApiPropertyOptional({ default: false })
   @IsOptional()
@@ -48,4 +54,15 @@ export class CreateDiaryDto {
   @IsArray()
   @IsString({ each: true })
   tags: string[] = [];
+
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(160) watchedPlace?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(80) mood?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(1000) memoryNote?: string;
+  @ApiPropertyOptional({ type: [DiaryCompanionDto] }) @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => DiaryCompanionDto) companions?: DiaryCompanionDto[];
+  @ApiPropertyOptional({ type: [String] })
+  @ValidateIf((dto: CreateDiaryDto) => dto.visibility === 'SELECTED')
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsUUID('4', { each: true })
+  selectedUserIds?: string[];
 }

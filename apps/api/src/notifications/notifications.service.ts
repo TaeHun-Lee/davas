@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { NotificationEntity, type NotificationType } from '../database/entities/notification.entity';
 
 export type CreateNotificationInput = {
@@ -34,7 +34,7 @@ export class NotificationsService {
 
   async listForUser(userId: string) {
     const rows = await this.notifications.find({
-      where: { userId },
+      where: { userId, type: Not('AUTHOR_FOLLOWED') },
       relations: { actor: true, diary: true },
       order: { createdAt: 'DESC' },
       take: 50,
@@ -53,13 +53,12 @@ export class NotificationsService {
     return this.createForOtherUser({ ...input, diaryId: input.diaryId ?? null, type: 'DIARY_COMMENTED' });
   }
 
-  async notifyAuthorFollowed(input: Omit<CreateNotificationInput, 'diaryId'>) {
-    return this.createForOtherUser({ ...input, diaryId: null, type: 'AUTHOR_FOLLOWED' });
-  }
+  async notifyFriendRequested(input: Omit<CreateNotificationInput, 'diaryId'>) { return this.createForOtherUser({ ...input, diaryId: null, type: 'FRIEND_REQUESTED' }); }
+  async notifyFriendAccepted(input: Omit<CreateNotificationInput, 'diaryId'>) { return this.createForOtherUser({ ...input, diaryId: null, type: 'FRIEND_ACCEPTED' }); }
 
   async markRead(notificationId: string, userId: string) {
     const notification = await this.notifications.findOne({
-      where: { id: notificationId, userId },
+      where: { id: notificationId, userId, type: Not('AUTHOR_FOLLOWED') },
       relations: { actor: true, diary: true },
     });
     if (!notification) {

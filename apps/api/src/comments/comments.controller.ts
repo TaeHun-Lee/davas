@@ -25,7 +25,7 @@ export class CommentsController {
 
   @Get('diaries/:diaryId/comments')
   async findByDiary(@Req() request: AuthenticatedRequest, @Param('diaryId') diaryId: string) {
-    return this.commentsService.listForDiary(diaryId, await this.getOptionalUserId(request));
+    return this.commentsService.listForDiary(diaryId, await this.getUserId(request));
   }
 
   @Patch('comments/:commentId')

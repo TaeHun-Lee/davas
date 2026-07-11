@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { CommentEntity } from '../database/entities/comment.entity';
 import { DiaryEntity } from '../database/entities/diary.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { DiaryAccessService } from '../diaries/diary-access.service';
 
 export type CommunityCommentView = {
   id: string;
@@ -34,12 +35,13 @@ export class CommentsService {
     private readonly comments: Repository<CommentEntity>,
     @InjectRepository(DiaryEntity)
     private readonly diaries: Repository<DiaryEntity>,
+    private readonly access: DiaryAccessService,
     @Optional()
     private readonly notifications?: NotificationsService,
   ) {}
 
-  async listForDiary(diaryId: string, userId?: string) {
-    await this.ensurePublicDiary(diaryId);
+  async listForDiary(diaryId: string, userId = '') {
+    await this.ensureAccessibleDiary(diaryId, userId);
     const comments = await this.comments.find({
       where: { diaryId },
       relations: { user: true },
@@ -49,7 +51,7 @@ export class CommentsService {
   }
 
   async create(diaryId: string, userId: string, content: string) {
-    const diary = await this.ensurePublicDiary(diaryId);
+    const diary = await this.ensureAccessibleDiary(diaryId, userId);
     const comment = this.comments.create({ diaryId, userId, content: normalizeContent(content) });
     const saved = await this.comments.save(comment);
     await this.notifications?.notifyDiaryCommented({ diaryId, recipientId: diary.userId, actorId: userId });
@@ -58,33 +60,32 @@ export class CommentsService {
   }
 
   async update(commentId: string, userId: string, content: string) {
-    const comment = await this.findOwnedPublicComment(commentId, userId);
+    const comment = await this.findOwnedAccessibleComment(commentId, userId);
     comment.content = normalizeContent(content);
     return this.toCommentView(await this.comments.save(comment), userId);
   }
 
   async remove(commentId: string, userId: string) {
-    await this.findOwnedPublicComment(commentId, userId);
+    await this.findOwnedAccessibleComment(commentId, userId);
     await this.comments.softDelete({ id: commentId, userId });
     return { id: commentId, deleted: true };
   }
 
-  private async ensurePublicDiary(diaryId: string) {
-    const diary = await this.diaries.findOne({ where: { id: diaryId, visibility: 'PUBLIC' } });
-    if (!diary) {
-      throw new NotFoundException('공개 다이어리를 찾을 수 없습니다.');
-    }
-    return diary;
+  private async ensureAccessibleDiary(diaryId: string, userId: string) {
+    const diary = await this.diaries.findOne({ where: { id: diaryId } });
+    await this.access.assertCanView(diary, userId);
+    return diary!;
   }
 
-  private async findOwnedPublicComment(commentId: string, userId: string) {
+  private async findOwnedAccessibleComment(commentId: string, userId: string) {
     const comment = await this.comments.findOne({
       where: { id: commentId, userId },
       relations: { user: true, diary: true },
     });
-    if (!comment || comment.diary?.visibility !== 'PUBLIC') {
+    if (!comment) {
       throw new NotFoundException('댓글을 찾을 수 없습니다.');
     }
+    await this.access.assertCanView(comment.diary, userId);
     return comment;
   }
 

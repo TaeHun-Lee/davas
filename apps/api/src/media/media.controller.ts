@@ -24,7 +24,8 @@ export class MediaController {
   }
 
   @Post('selections')
-  select(@Body() selection: MediaSelectionDto) {
+  async select(@Body() selection: MediaSelectionDto, @Req() request: Request) {
+    await this.getUserId(request);
     return this.mediaSelectionService.select(selection);
   }
 
@@ -36,16 +37,6 @@ export class MediaController {
   @Get('people/:personId/credits')
   findPersonCredits(@Param('personId') personId: string, @Query('language') language?: string) {
     return this.mediaService.findPersonCredits(personId, language ?? 'ko-KR');
-  }
-
-  @Get('favorites')
-  async findFavorites(@Req() request: Request) {
-    return this.mediaService.findFavorites(await this.getUserId(request));
-  }
-
-  @Post(':id/favorite')
-  async toggleFavorite(@Param('id') id: string, @Req() request: Request) {
-    return this.mediaService.toggleFavorite(id, await this.getUserId(request));
   }
 
   @Get(':id')

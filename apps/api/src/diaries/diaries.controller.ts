@@ -27,13 +27,13 @@ export class DiariesController {
   }
 
   @Get('feed')
-  feed() {
-    return { items: [] };
+  async feed(@Req() request: AuthenticatedRequest) {
+    return { items: await this.diariesDashboardService.getFeed(await this.getUserId(request)) };
   }
 
   @Get('me')
-  myDiaries() {
-    return { items: [] };
+  async myDiaries(@Req() request: AuthenticatedRequest) {
+    return { items: await this.diariesDashboardService.getMyDiaries(await this.getUserId(request)) };
   }
 
   @Get('dashboard')
@@ -52,7 +52,7 @@ export class DiariesController {
 
   @Get(':id')
   async findOne(@Req() request: AuthenticatedRequest, @Param('id') id: string) {
-    const diary = await this.diariesDashboardService.getDiaryForEdit(await this.getUserId(request), id);
+    const diary = await this.diariesDashboardService.getDiary(await this.getUserId(request), id);
     return { diary };
   }
 
@@ -63,8 +63,8 @@ export class DiariesController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return { id, message: 'delete diary endpoint contract ready' };
+  async remove(@Req() request: AuthenticatedRequest, @Param('id') id: string) {
+    return this.diariesDashboardService.removeDiary(await this.getUserId(request), id);
   }
 
   private async getUserId(request: AuthenticatedRequest) {
