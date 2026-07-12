@@ -5,11 +5,12 @@ import { DiaryCompanionEntity, DiaryEntity, DiaryShareEntity, FriendshipEntity, 
 import { DiaryAccessService } from './diary-access.service';
 import { DiariesDashboardService } from './diaries-dashboard.service';
 import { DiariesController } from './diaries.controller';
+import { DiariesService } from './diaries.service';
 
 @Module({
   imports: [AuthModule, TypeOrmModule.forFeature([DiaryEntity, MediaEntity, DiaryCompanionEntity, DiaryShareEntity, FriendshipEntity, WatchlistItemEntity])],
   controllers: [DiariesController],
-  providers: [DiariesDashboardService, DiaryAccessService],
+  providers: [DiariesDashboardService, DiariesService, DiaryAccessService],
   exports: [DiaryAccessService],
 })
 export class DiariesModule {}

@@ -1,78 +1,43 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { CreateDiaryDto } from './dto/create-diary.dto';
 
-describe('CreateDiaryDto', () => {
-  it('accepts a valid diary creation payload', async () => {
-    const dto = plainToInstance(CreateDiaryDto, {
-      mediaId: '11111111-1111-4111-8111-111111111111',
-      title: '묵직한 여운이 남은 작품',
-      content: '장면마다 감정의 결이 좋았다.',
-      watchedDate: '2026-05-05',
-      rating: 4.5,
-      visibility: 'PRIVATE',
-      hasSpoiler: false,
-    });
+const valid = {
+  mediaId: '11111111-1111-4111-8111-111111111111',
+  viewingMethod: 'OTT', watchedDate: '2026-05-05', visibility: 'FRIENDS',
+  clientRequestId: '22222222-2222-4222-8222-222222222222',
+};
 
-    const errors = await validate(dto);
-
-    assert.equal(errors.length, 0);
+describe('CreateDiaryDto core contract', () => {
+  it('accepts the three required record fields with optional nullable rating and review', async () => {
+    assert.equal((await validate(plainToInstance(CreateDiaryDto, valid))).length, 0);
+    assert.equal((await validate(plainToInstance(CreateDiaryDto, { ...valid, rating: null, content: '' }))).length, 0);
+    assert.equal((await validate(plainToInstance(CreateDiaryDto, { ...valid, rating: 5, content: '좋았어요.' }))).length, 0);
   });
 
-  it('accepts optional content and tags from the compose screen contract', async () => {
-    const dto = plainToInstance(CreateDiaryDto, {
-      mediaId: '11111111-1111-4111-8111-111111111111',
-      title: '제목만 남긴 다이어리',
-      content: '',
-      watchedDate: '2026-05-05',
-      rating: 0,
-      visibility: 'PRIVATE',
-      hasSpoiler: true,
-      tags: ['극장', '재관람'],
-    });
-
-    const errors = await validate(dto);
-
-    assert.equal(errors.length, 0);
+  it('requires a viewing method and request UUID', async () => {
+    const errors = await validate(plainToInstance(CreateDiaryDto, { ...valid, viewingMethod: undefined, clientRequestId: undefined }));
+    assert.ok(errors.some((error) => error.property === 'viewingMethod'));
+    assert.ok(errors.some((error) => error.property === 'clientRequestId'));
   });
 
-  it('rejects ratings outside 0 to 5 range', async () => {
-    const dto = plainToInstance(CreateDiaryDto, {
-      mediaId: '11111111-1111-4111-8111-111111111111',
-      title: '평점 오류',
-      content: '평점은 5점을 넘을 수 없다.',
-      watchedDate: '2026-05-05',
-      rating: 6,
-      visibility: 'PRIVATE',
-    });
-
-    const errors = await validate(dto);
-
-    assert.ok(errors.some((error) => error.property === 'rating'));
+  it('accepts only integer ratings from 1 to 5', async () => {
+    for (const rating of [0, 4.5, 6]) {
+      const errors = await validate(plainToInstance(CreateDiaryDto, { ...valid, rating }));
+      assert.ok(errors.some((error) => error.property === 'rating'));
+    }
   });
-  it('rejects a fabricated or malformed media id before persistence', async () => {
-    const dto = plainToInstance(CreateDiaryDto, {
-      mediaId: 'mock-inception',
-      title: '잘못된 작품',
-      watchedDate: '2026-05-05',
-      rating: 4,
-    });
-    const errors = await validate(dto);
+
+  it('rejects new SELECTED records and reviews over 500 characters', async () => {
+    const errors = await validate(plainToInstance(CreateDiaryDto, { ...valid, visibility: 'SELECTED', content: 'a'.repeat(501) }));
+    assert.ok(errors.some((error) => error.property === 'visibility'));
+    assert.ok(errors.some((error) => error.property === 'content'));
+  });
+
+  it('rejects malformed internal media ids', async () => {
+    const errors = await validate(plainToInstance(CreateDiaryDto, { ...valid, mediaId: 'mock-inception' }));
     assert.ok(errors.some((error) => error.property === 'mediaId'));
-  });
-
-  it('requires at least one target for SELECTED visibility', async () => {
-    const dto = plainToInstance(CreateDiaryDto, {
-      mediaId: '11111111-1111-4111-8111-111111111111',
-      title: '선택 공개 기록',
-      watchedDate: '2026-05-05',
-      rating: 4,
-      visibility: 'SELECTED',
-      selectedUserIds: [],
-    });
-    const errors = await validate(dto);
-    assert.ok(errors.some((error) => error.property === 'selectedUserIds'));
   });
 });

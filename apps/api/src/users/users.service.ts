@@ -1,11 +1,13 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, Optional, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { unlink } from 'node:fs/promises';
 import { extname, join } from 'node:path';
-import { Repository } from 'typeorm';
-import { UserEntity } from '../database/entities';
+import { DataSource, Repository } from 'typeorm';
+import { FileCleanupJobEntity, UserEntity } from '../database/entities';
+import * as bcrypt from 'bcrypt';
 
 export type UserProfileResponse = {
   id: string;
@@ -42,6 +44,7 @@ export class UsersService {
     @InjectRepository(UserEntity)
     private readonly users: Repository<UserEntity>,
     private readonly jwt: JwtService,
+    @Optional() private readonly dataSource?: DataSource,
   ) {}
 
   async updateMe(accessToken: string | undefined, dto: UpdateMeDto) {
@@ -101,6 +104,35 @@ export class UsersService {
     const user = await this.loadAuthenticatedUser(accessToken);
     user.profileImageUrl = null;
     return this.toUserResponse(await this.users.save(user));
+  }
+
+  async deleteMe(accessToken: string | undefined, password: string) {
+    const user = await this.loadAuthenticatedUser(accessToken);
+    if (!(await bcrypt.compare(password, user.passwordHash))) throw new UnauthorizedException('비밀번호가 맞지 않아요.');
+    if (!this.dataSource?.isInitialized) throw new ConflictException('계정 삭제를 지금 처리할 수 없습니다.');
+    const profileImageUrl = user.profileImageUrl;
+    await this.dataSource.transaction(async (manager) => {
+      const now = new Date();
+      await manager.query(`UPDATE "diaries" SET "deleted_at" = $1 WHERE "user_id" = $2 AND "deleted_at" IS NULL`, [now, user.id]);
+      await manager.query(`UPDATE "comments" SET "deleted_at" = $1 WHERE "user_id" = $2 AND "deleted_at" IS NULL`, [now, user.id]);
+      await manager.query(`UPDATE "diary_companions" SET "user_id" = NULL, "display_name" = '탈퇴한 사용자' WHERE "user_id" = $1`, [user.id]);
+      for (const [table, clause] of [
+        ['friendships', '"requester_id" = $1 OR "receiver_id" = $1'], ['diary_shares', '"user_id" = $1'],
+        ['diary_reactions', '"user_id" = $1'], ['diary_likes', '"user_id" = $1'],
+        ['notifications', '"user_id" = $1 OR "actor_id" = $1'], ['user_follows', '"follower_id" = $1 OR "following_id" = $1'],
+        ['watchlist_items', '"user_id" = $1'], ['media_favorites', '"user_id" = $1'],
+      ] as const) await manager.query(`DELETE FROM "${table}" WHERE ${clause}`, [user.id]);
+      await manager.query(`UPDATE "friend_invites" SET "revoked_at" = $1 WHERE "inviter_id" = $2 AND "used_at" IS NULL`, [now, user.id]);
+      await manager.getRepository(UserEntity).update({ id: user.id }, { email: `deleted-${user.id}@deleted.invalid`, nickname: `탈퇴한-사용자-${user.id.slice(0, 8)}`, profileImageUrl: null, bio: null, preferredGenres: [], deletedAt: now });
+    });
+    if (profileImageUrl?.startsWith('/uploads/profile-images/')) {
+      const uploadRoot = process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads');
+      const path = join(uploadRoot, 'profile-images', profileImageUrl.split('/').at(-1)!);
+      try { await unlink(path); } catch (error) {
+        await this.dataSource.getRepository(FileCleanupJobEntity).save({ userId: user.id, kind: 'PROFILE_IMAGE', path, attempts: 1, lastError: String(error), completedAt: null });
+        console.warn('profile-image-cleanup-pending', { userId: user.id });
+      }
+    }
   }
 
   private async loadAuthenticatedUser(accessToken: string | undefined) {

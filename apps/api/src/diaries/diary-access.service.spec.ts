@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { DiaryAccessService } from './diary-access.service';
 
 function setup() {
@@ -48,9 +48,9 @@ describe('DiaryAccessService permission matrix', () => {
     assert.equal(await service.canView({ id: 'd', userId: 'owner', visibility: 'SELECTED' }, 'selected'), false);
   });
 
-  it('distinguishes missing records from forbidden direct URLs', async () => {
+  it('hides both missing records and forbidden direct URLs behind RECORD_NOT_FOUND', async () => {
     const { service } = setup();
     await assert.rejects(() => service.assertCanView(null, 'intruder'), NotFoundException);
-    await assert.rejects(() => service.assertCanView({ id: 'd', userId: 'owner', visibility: 'PRIVATE' }, 'intruder'), ForbiddenException);
+    await assert.rejects(() => service.assertCanView({ id: 'd', userId: 'owner', visibility: 'PRIVATE' }, 'intruder'), NotFoundException);
   });
 });

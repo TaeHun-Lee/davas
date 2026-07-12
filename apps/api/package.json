@@ -9,9 +9,12 @@
     "test": "node --test --import tsx \"src/**/*.spec.ts\"",
     "lint": "tsc --noEmit -p tsconfig.json",
     "typeorm": "typeorm-ts-node-commonjs",
-    "migration:run": "npm run typeorm -- migration:run -d src/database/data-source.ts",
-    "migration:revert": "npm run typeorm -- migration:revert -d src/database/data-source.ts",
-    "migration:show": "npm run typeorm -- migration:show -d src/database/data-source.ts"
+    "migration:run": "typeorm migration:run -d dist/database/data-source.js",
+    "migration:revert": "typeorm migration:revert -d dist/database/data-source.js",
+    "migration:show": "typeorm migration:show -d dist/database/data-source.js",
+    "migration:run:src": "npm run typeorm -- migration:run -d src/database/data-source.ts",
+    "migration:revert:src": "npm run typeorm -- migration:revert -d src/database/data-source.ts",
+    "migration:show:src": "npm run typeorm -- migration:show -d src/database/data-source.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",

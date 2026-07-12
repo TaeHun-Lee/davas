@@ -1,4 +1,4 @@
-import { DiaryVisibility } from '@davas/shared';
+import { DiaryVisibility, ViewingMethod } from '@davas/shared';
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { CommentEntity } from './comment.entity';
 import { DiaryLikeEntity } from './diary-like.entity';
@@ -39,14 +39,26 @@ export class DiaryEntity {
   @Column({ name: 'watched_date', type: 'date' })
   watchedDate!: string;
 
-  @Column({ type: 'decimal', precision: 2, scale: 1 })
-  rating!: string;
+  @Column({ type: 'decimal', precision: 2, scale: 1, nullable: true })
+  rating!: string | null;
 
   @Column({ type: 'varchar', length: 20, default: 'PRIVATE' })
   visibility!: DiaryVisibility;
 
   @Column({ name: 'has_spoiler', type: 'boolean', default: false })
   hasSpoiler!: boolean;
+
+  @Column({ name: 'viewing_method', type: 'varchar', length: 20, nullable: true })
+  viewingMethod!: ViewingMethod | null;
+
+  @Column({ name: 'shared_at', type: 'timestamp', nullable: true })
+  sharedAt!: Date | null;
+
+  @Column({ name: 'client_request_id', type: 'uuid', nullable: true })
+  clientRequestId!: string | null;
+
+  @Column({ name: 'client_request_fingerprint', type: 'varchar', length: 64, nullable: true })
+  clientRequestFingerprint!: string | null;
 
   @Column({ name: 'watched_place', type: 'varchar', length: 160, nullable: true })
   watchedPlace!: string | null;

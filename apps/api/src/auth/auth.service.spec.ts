@@ -3,6 +3,9 @@ import { beforeEach, describe, it } from 'node:test';
 import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { InviteCodeEntity, InviteUseEntity, UserEntity } from '../database/entities';
+import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from '@davas/shared';
+
+const legal = { termsAccepted: true as const, termsVersion: CURRENT_TERMS_VERSION, privacyVersion: CURRENT_PRIVACY_VERSION };
 
 type SavedUser = UserEntity & { id: string };
 
@@ -70,7 +73,7 @@ describe('AuthService', () => {
   });
 
   it('registers a new user with a hashed password and returns a token', async () => {
-    const result = await service.signup({ inviteCode: 'DAVAS-TEST', email: 'USER@Example.com', nickname: 'cinephile', password: 'password123' });
+    const result = await service.signup({ ...legal, inviteCode: 'DAVAS-TEST', email: 'USER@Example.com', nickname: 'cinephile', password: 'password123' });
 
     assert.equal(result.user.email, 'user@example.com');
     assert.equal(result.user.nickname, 'cinephile');
@@ -79,16 +82,16 @@ describe('AuthService', () => {
   });
 
   it('rejects duplicate email or nickname during signup', async () => {
-    await service.signup({ inviteCode: 'DAVAS-TEST', email: 'user@example.com', nickname: 'cinephile', password: 'password123' });
+    await service.signup({ ...legal, inviteCode: 'DAVAS-TEST', email: 'user@example.com', nickname: 'cinephile', password: 'password123' });
 
     await assert.rejects(
-      () => service.signup({ inviteCode: 'DAVAS-TEST', email: 'user@example.com', nickname: 'other', password: 'password123' }),
+      () => service.signup({ ...legal, inviteCode: 'DAVAS-TEST', email: 'user@example.com', nickname: 'other', password: 'password123' }),
       ConflictException,
     );
   });
 
   it('logs in with valid credentials and rejects invalid passwords', async () => {
-    await service.signup({ inviteCode: 'DAVAS-TEST', email: 'user@example.com', nickname: 'cinephile', password: 'password123' });
+    await service.signup({ ...legal, inviteCode: 'DAVAS-TEST', email: 'user@example.com', nickname: 'cinephile', password: 'password123' });
 
     const login = await service.login({ email: 'USER@example.com', password: 'password123' });
     assert.equal(login.user.email, 'user@example.com');
@@ -98,17 +101,17 @@ describe('AuthService', () => {
   });
 
   it('rejects signup without a valid invite code', async () => {
-    await assert.rejects(() => service.signup({ email: 'new@example.com', nickname: 'newbie', password: 'password123' }), BadRequestException);
+    await assert.rejects(() => service.signup({ ...legal, email: 'new@example.com', nickname: 'newbie', password: 'password123' }), BadRequestException);
   });
 
   it('serializes concurrent use of a single-use invite', async () => {
     const inviteRepository = new FakeInviteRepository();
     inviteRepository.invite.maxUses = 1;
     const uses = new FakeInviteUseRepository();
-    const transactional = new AuthService(users as never, new FakeJwtService() as never, inviteRepository as never, uses as never, new SerializedDataSource(users, inviteRepository, uses) as never);
+    const transactional = new AuthService(users as never, new FakeJwtService() as never, inviteRepository as never, uses as never, undefined, undefined, undefined, new SerializedDataSource(users, inviteRepository, uses) as never);
     const results = await Promise.allSettled([
-      transactional.signup({ inviteCode: 'DAVAS-TEST', email: 'one@example.com', nickname: 'one', password: 'password123' }),
-      transactional.signup({ inviteCode: 'DAVAS-TEST', email: 'two@example.com', nickname: 'two', password: 'password123' }),
+      transactional.signup({ ...legal, inviteCode: 'DAVAS-TEST', email: 'one@example.com', nickname: 'one', password: 'password123' }),
+      transactional.signup({ ...legal, inviteCode: 'DAVAS-TEST', email: 'two@example.com', nickname: 'two', password: 'password123' }),
     ]);
     assert.equal(results.filter((result) => result.status === 'fulfilled').length, 1);
     assert.equal(results.filter((result) => result.status === 'rejected' && result.reason instanceof ConflictException).length, 1);

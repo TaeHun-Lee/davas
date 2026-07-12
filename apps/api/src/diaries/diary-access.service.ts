@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DiaryEntity, DiaryShareEntity, FriendshipEntity } from '../database/entities';
@@ -24,7 +24,8 @@ export class DiaryAccessService {
   }
 
   async assertCanView(diary: Pick<DiaryEntity, 'id' | 'userId' | 'visibility'> | null, viewerId: string) {
-    if (!diary) throw new NotFoundException('기록을 찾을 수 없습니다.');
-    if (!(await this.canView(diary, viewerId))) throw new ForbiddenException('이 기록을 볼 권한이 없습니다.');
+    if (!diary || !(await this.canView(diary, viewerId))) {
+      throw new NotFoundException({ statusCode: 404, code: 'RECORD_NOT_FOUND', message: '기록을 찾을 수 없어요.' });
+    }
   }
 }

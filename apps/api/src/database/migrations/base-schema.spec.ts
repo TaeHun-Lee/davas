@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it } from 'node:test';
 import type { QueryRunner } from 'typeorm';
 import { BaseSchema1720670300000 } from './1720670300000-BaseSchema';
@@ -33,5 +35,18 @@ describe('database migrations', () => {
     const { runner, statements } = queryRecorder();
     await new BaseSchema1720670300000().down(runner);
     assert.deepEqual(statements, []);
+  });
+
+  it('runs production migrations from compiled files retained in the runtime image', () => {
+    const packageJson = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')) as {
+      scripts: Record<string, string>;
+    };
+    const dockerfile = readFileSync(join(process.cwd(), 'Dockerfile'), 'utf8');
+
+    for (const script of ['migration:show', 'migration:run', 'migration:revert']) {
+      assert.match(packageJson.scripts[script], /typeorm migration:(?:show|run|revert) -d dist\/database\/data-source\.js/);
+      assert.doesNotMatch(packageJson.scripts[script], /typeorm-ts-node|src\/database/);
+    }
+    assert.match(dockerfile, /COPY --from=builder \/app\/apps\/api\/dist \.\/apps\/api\/dist/);
   });
 });

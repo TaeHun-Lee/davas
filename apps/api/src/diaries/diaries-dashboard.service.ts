@@ -7,6 +7,15 @@ import { CreateDiaryDto } from './dto/create-diary.dto';
 import { UpdateDiaryDto } from './dto/update-diary.dto';
 import { DiaryAccessService } from './diary-access.service';
 
+type LegacyCreateDiaryDto = {
+  mediaId: string; mediaPosterUrl?: string | null; title: string; content?: string; watchedDate: string;
+  rating: number | null; visibility: DiaryEntity['visibility']; hasSpoiler?: boolean;
+  watchedPlace?: string; mood?: string; memoryNote?: string;
+  companions?: Array<{ userId?: string; displayName: string }>; selectedUserIds?: string[];
+  tags?: string[];
+};
+type LegacyUpdateDiaryDto = Partial<LegacyCreateDiaryDto>;
+
 const DEFAULT_POSTER_GRADIENT = 'from-[#e9eef7] via-[#f6f8fc] to-[#dfe8f5]';
 const GENRE_ICON_KINDS = ['sf', 'drama', 'thriller', 'action', 'etc'] as const;
 
@@ -74,7 +83,7 @@ export class DiariesDashboardService {
     @Optional() private readonly access?: DiaryAccessService,
   ) {}
 
-  async createDiary(userId: string, dto: CreateDiaryDto) {
+  async createDiary(userId: string, dto: LegacyCreateDiaryDto) {
     await this.saveRepresentativePoster(dto);
     const relatedDto = this.normalizeRelatedRows(dto.visibility, dto);
     const connection = this.diaries.manager?.connection;
@@ -96,14 +105,14 @@ export class DiariesDashboardService {
     return saved;
   }
 
-  private createDiaryEntity(repository: Repository<DiaryEntity>, userId: string, dto: CreateDiaryDto) {
+  private createDiaryEntity(repository: Repository<DiaryEntity>, userId: string, dto: LegacyCreateDiaryDto) {
     return repository.create({
       userId,
       mediaId: dto.mediaId,
       title: dto.title,
       content: dto.content ?? '',
       watchedDate: dto.watchedDate,
-      rating: dto.rating.toFixed(1),
+      rating: dto.rating === null ? null : dto.rating.toFixed(1),
       visibility: dto.visibility,
       hasSpoiler: dto.hasSpoiler,
       watchedPlace: dto.watchedPlace?.trim() || null,
@@ -139,7 +148,7 @@ export class DiariesDashboardService {
     return this.toDiaryDetail(diary!, userId);
   }
 
-  async updateDiary(userId: string, id: string, dto: UpdateDiaryDto) {
+  async updateDiary(userId: string, id: string, dto: LegacyUpdateDiaryDto) {
     const diary = await this.diaries.findOne({ where: { id, userId }, relations: { media: true } });
     if (!diary) {
       throw new NotFoundException('다이어리를 찾을 수 없습니다.');
@@ -149,7 +158,7 @@ export class DiariesDashboardService {
     if (dto.title !== undefined) diary.title = dto.title;
     if (dto.content !== undefined) diary.content = dto.content;
     if (dto.watchedDate !== undefined) diary.watchedDate = dto.watchedDate;
-    if (dto.rating !== undefined) diary.rating = dto.rating.toFixed(1);
+    if (dto.rating !== undefined) diary.rating = dto.rating === null ? null : dto.rating.toFixed(1);
     if (dto.visibility !== undefined) diary.visibility = dto.visibility;
     if (dto.hasSpoiler !== undefined) diary.hasSpoiler = dto.hasSpoiler;
     if (dto.watchedPlace !== undefined) diary.watchedPlace = dto.watchedPlace.trim() || null;
@@ -208,7 +217,7 @@ export class DiariesDashboardService {
       title: diary.title,
       content: diary.content,
       watchedDate: diary.watchedDate,
-      rating: Number(diary.rating),
+      rating: diary.rating === null ? null : Number(diary.rating),
       visibility: diary.visibility,
       hasSpoiler: diary.hasSpoiler,
       watchedPlace: diary.watchedPlace ?? null,
@@ -240,7 +249,7 @@ export class DiariesDashboardService {
     };
   }
 
-  private async replaceRelatedRows(diaryId: string, dto: { companions?: CreateDiaryDto['companions']; selectedUserIds?: CreateDiaryDto['selectedUserIds'] }, companionRepository = this.companionRepository, shareRepository = this.shareRepository) {
+  private async replaceRelatedRows(diaryId: string, dto: { companions?: LegacyCreateDiaryDto['companions']; selectedUserIds?: LegacyCreateDiaryDto['selectedUserIds'] }, companionRepository = this.companionRepository, shareRepository = this.shareRepository) {
     if (dto.companions !== undefined && companionRepository) {
       await companionRepository.delete({ diaryId });
       const companions = dto.companions
@@ -257,7 +266,7 @@ export class DiariesDashboardService {
 
   private normalizeRelatedRows(
     visibility: DiaryEntity['visibility'],
-    dto: { companions?: CreateDiaryDto['companions']; selectedUserIds?: CreateDiaryDto['selectedUserIds'] },
+    dto: { companions?: LegacyCreateDiaryDto['companions']; selectedUserIds?: LegacyCreateDiaryDto['selectedUserIds'] },
   ) {
     return {
       companions: dto.companions,
@@ -293,7 +302,7 @@ export class DiariesDashboardService {
       diaryTitle: diary.title,
       watchedDate: formatWatchedDate(diary.watchedDate),
       createdAt: diary.createdAt.toISOString(),
-      rating: Number(diary.rating),
+      rating: diary.rating === null ? 0 : Number(diary.rating),
       contentPreview: buildContentPreview(diary.content),
       posterUrl: diary.media?.posterUrl ?? null,
       posterGradient: DEFAULT_POSTER_GRADIENT,
@@ -311,7 +320,8 @@ export class DiariesDashboardService {
       const { year, month } = toDateParts(diary.watchedDate);
       return year === baseDate.year && month === baseDate.month;
     });
-    const averageRating = diaries.length > 0 ? diaries.reduce((sum, diary) => sum + Number(diary.rating), 0) / diaries.length : 0;
+    const ratedDiaries = diaries.filter((diary) => diary.rating !== null);
+    const averageRating = ratedDiaries.length > 0 ? ratedDiaries.reduce((sum, diary) => sum + Number(diary.rating), 0) / ratedDiaries.length : 0;
     const genreRatios = buildGenreRatios(dashboardItems);
     const markerCounts = new Map<number, number>();
     for (const diary of monthlyItems) {

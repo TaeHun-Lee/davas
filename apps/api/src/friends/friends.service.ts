@@ -57,8 +57,14 @@ export class FriendsService {
   }
   async search(userId: string, q: string) {
     const query = q.trim(); if (query.length < 2) return { items: [] };
-    const users = await this.users.find({ where: [{ nickname: ILike(`%${query}%`) }, { email: ILike(`%${query}%`) }], take: 10 });
-    return { items: users.filter((x) => x.id !== userId).map((x) => this.userView(x)) };
+    const users = await this.users.find({ where: [{ nickname: ILike(`%${query}%`) }, { email: query.toLowerCase() }], take: 10 });
+    const rows = await this.friendships.find({ where: [{ requesterId: userId }, { receiverId: userId }] });
+    const byOther = new Map(rows.map((row) => [row.requesterId === userId ? row.receiverId : row.requesterId, row]));
+    return { items: users.filter((x) => x.id !== userId).map((x) => {
+      const row = byOther.get(x.id);
+      const relationship = !row ? 'NONE' : row.status === 'ACCEPTED' ? 'FRIEND' : row.status !== 'PENDING' ? 'NONE' : row.requesterId === userId ? 'SENT' : 'RECEIVED';
+      return { ...this.userView(x), relationship, requestId: row?.status === 'PENDING' ? row.id : null };
+    }) };
   }
   private findPair(a: string, b: string) { return this.friendships.findOne({ where: [{ requesterId: a, receiverId: b }, { requesterId: b, receiverId: a }] }); }
   private userView(user: UserEntity) { return { id: user.id, nickname: user.nickname, profileImageUrl: user.profileImageUrl ?? null }; }
