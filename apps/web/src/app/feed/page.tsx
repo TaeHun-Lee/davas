@@ -1,1 +1,1 @@
-import { CommunityDashboard } from '../../components/community/CommunityDashboard'; export default function FeedPage(){return <CommunityDashboard/>}
+import { redirect } from 'next/navigation'; export default function LegacyFeed() { redirect('/'); }

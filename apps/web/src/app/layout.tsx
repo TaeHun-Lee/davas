@@ -4,7 +4,7 @@ import { PwaStatus } from '../components/pwa/PwaStatus';
 
 export const metadata: Metadata = {
   title: 'Davas',
-  description: 'Movie and drama review diary',
+  description: '친한 사람들과 영화·드라마 기록과 리뷰를 나누는 공간',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

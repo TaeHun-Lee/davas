@@ -1,10 +1,1 @@
-import { Suspense } from 'react';
-import { ExploreDashboard } from '../../components/explore/ExploreDashboard';
-
-export default function ExplorePage() {
-  return (
-    <Suspense fallback={null}>
-      <ExploreDashboard />
-    </Suspense>
-  );
-}
+import { redirect } from 'next/navigation'; export default function LegacyExplore() { redirect('/records/new'); }

@@ -1,1 +1,1 @@
-import { WatchlistScreen } from '../../components/watchlist/WatchlistScreen'; export default function WatchlistPage(){return <WatchlistScreen/>}
+import { redirect } from 'next/navigation'; export default function LegacyWatchlist() { redirect('/me'); }

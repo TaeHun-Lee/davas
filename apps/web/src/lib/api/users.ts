@@ -54,3 +54,8 @@ export async function deleteProfileImage() {
 
   return ((await response.json()) as UserResponse).user;
 }
+
+export async function deleteMe(password: string) {
+  const response = await fetch(`${getApiBaseUrl()}/users/me`, { method: 'DELETE', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) });
+  if (!response.ok) { const body = await response.json().catch(() => ({})); throw new Error(body.message || '계정을 삭제하지 못했어요.'); }
+}

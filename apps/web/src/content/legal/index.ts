@@ -1,0 +1,2 @@
+import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from '@davas/shared';
+export const legalDocuments={terms:{title:'이용약관',version:CURRENT_TERMS_VERSION,fixture:true,sections:[{heading:'개발용 문서',body:'운영자가 승인한 이용약관 원문이 아직 제공되지 않았습니다. 이 문서는 화면과 동의 버전 연동을 검증하기 위한 개발용 fixture이며 배포에 사용할 수 없습니다.'}]},privacy:{title:'개인정보처리방침',version:CURRENT_PRIVACY_VERSION,fixture:true,sections:[{heading:'개발용 문서',body:'운영자가 승인한 개인정보처리방침 원문이 아직 제공되지 않았습니다. 이 문서는 화면과 동의 버전 연동을 검증하기 위한 개발용 fixture이며 배포에 사용할 수 없습니다.'}]}} as const;

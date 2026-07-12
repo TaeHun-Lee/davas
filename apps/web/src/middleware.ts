@@ -1,25 +1,4 @@
-import { NextResponse, type NextRequest } from 'next/server';
-
-const ACCESS_TOKEN_COOKIE = 'davas_access_token';
-const protectedRoutes = ['/', '/explore', '/community', '/feed', '/diary', '/profile', '/watchlist', '/friends'];
-const guestOnlyRoutes = ['/login', '/signup'];
-
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const hasAccessToken = Boolean(request.cookies.get(ACCESS_TOKEN_COOKIE)?.value);
-  const isProtectedRoute = pathname === '/' || protectedRoutes.some((route) => route !== '/' && pathname.startsWith(route));
-
-  if (isProtectedRoute && !hasAccessToken) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
-  if (guestOnlyRoutes.includes(pathname) && hasAccessToken) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
-  return NextResponse.next();
-}
-
-export const config = {
-  matcher: ['/', '/explore/:path*', '/community/:path*', '/feed/:path*', '/diary/:path*', '/profile/:path*', '/watchlist/:path*', '/friends/:path*', '/login', '/signup'],
-};
+import { NextResponse,type NextRequest } from 'next/server';
+const ACCESS_TOKEN_COOKIE='davas_access_token';
+export function middleware(request:NextRequest){const{pathname,search}=request.nextUrl;const legacy=pathname.startsWith('/profile')?'/settings':pathname.startsWith('/community/authors')?'/':pathname==='/watchlist'?'/me':pathname==='/explore'?'/records/new':pathname.startsWith('/diary/')?pathname.replace(/^\/diary/,'/records'):null;if(legacy)return NextResponse.redirect(new URL(legacy,request.url));const publicInvite=pathname.startsWith('/friends/invite/');const protectedPath=pathname==='/'||pathname==='/me'||pathname==='/search'||pathname==='/settings'||pathname==='/friends'||pathname.startsWith('/records/');if(protectedPath&&!publicInvite&&!request.cookies.get(ACCESS_TOKEN_COOKIE)?.value){const login=new URL('/login',request.url);login.searchParams.set('returnTo',`${pathname}${search}`);return NextResponse.redirect(login)}return NextResponse.next()}
+export const config={matcher:['/','/me','/search','/settings','/friends/:path*','/records/:path*','/login','/signup','/profile/:path*','/community/authors/:path*','/watchlist','/explore','/diary/:path*']};

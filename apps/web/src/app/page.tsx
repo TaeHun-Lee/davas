@@ -1,10 +1,2 @@
-import { Suspense } from 'react';
-import { AuthenticatedLanding } from '../components/auth/AuthenticatedLanding';
-
-export default function HomePage() {
-  return (
-    <Suspense fallback={null}>
-      <AuthenticatedLanding />
-    </Suspense>
-  );
-}
+import { FeedScreen } from '../components/core/RecordScreens';
+export default function HomePage() { return <FeedScreen />; }

@@ -1,1 +1,1 @@
-import { redirect } from 'next/navigation'; export default function CommunityPage(){redirect('/feed')}
+import { redirect } from 'next/navigation'; export default function LegacyCommunity() { redirect('/'); }
