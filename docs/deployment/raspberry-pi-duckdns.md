@@ -30,20 +30,30 @@ Edit `.env.production` and replace at least:
 - `JWT_ACCESS_SECRET`
 - `TMDB_API_KEY`, if media search should use TMDB
 
-Then start the production stack:
+Start PostgreSQL and build the release images, but do not open the new Web/API traffic before its schema migration:
 
 ```bash
-docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d db
+docker compose --env-file .env.production -f docker-compose.prod.yml build api web
 ```
 
-Before the first start or each schema-changing release, back up the database and uploads, then run migrations from the API image. Never enable `TYPEORM_SYNC` in production.
+Before the first start or each schema-changing release, back up the database and uploads, then run migrations from the newly built API image. The production command uses the compiled `dist/database/data-source.js`; the runtime image intentionally does not contain TypeScript source or `ts-node`. Never enable `TYPEORM_SYNC` in production.
 
 ```bash
 docker compose --env-file .env.production -f docker-compose.prod.yml run --rm api npm run migration:show
 docker compose --env-file .env.production -f docker-compose.prod.yml run --rm api npm run migration:run
+docker compose --env-file .env.production -f docker-compose.prod.yml run --rm api npm run migration:show
+```
+
+Only after `migration:show` reports no pending migration should the release receive traffic:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 ```
 
 `BaseSchema1720670300000` first creates missing legacy tables with additive `CREATE ... IF NOT EXISTS` statements, so a brand-new PostgreSQL volume and a synchronize-created legacy database use the same migration chain. `HighValueFlows1720670400000` then narrows legacy `PUBLIC` diaries to `PRIVATE`, copies favorites to active watchlist items, and copies likes to `HEART` reactions. Review row counts before opening the updated service.
+
+If authentication still works but Home, Diary, Friend Feed, Watchlist, and Profile all show load errors immediately after an update, check the API logs for `column ... does not exist` or `relation ... does not exist`. That pattern means the new application image is querying the pre-migration schema. Back up first, run the commands above, restart the API, and verify the five read-only screens. Do not temporarily enable `TYPEORM_SYNC` as a recovery shortcut.
 
 The baseline migration intentionally has a no-op `down` because those tables may contain data that predates TypeORM migrations. Never attempt an exact rollback by dropping them; restore the matching pre-migration dump instead.
 
