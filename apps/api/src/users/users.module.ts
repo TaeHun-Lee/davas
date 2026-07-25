@@ -1,16 +1,20 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from '../auth/auth.module';
 import { UserEntity } from '../database/entities';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
 @Module({
   imports: [
+    AuthModule,
     TypeOrmModule.forFeature([UserEntity]),
     JwtModule.register({
       secret: process.env.JWT_ACCESS_SECRET ?? 'dev-only-secret',
-      signOptions: { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '7d' },
+      signOptions: {
+        expiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '7d',
+      },
     }),
   ],
   controllers: [UsersController],
