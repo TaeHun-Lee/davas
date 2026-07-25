@@ -10,19 +10,19 @@ import {
   Req,
   Res,
   UploadedFile,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import {
   ACCESS_TOKEN_COOKIE,
   type AuthenticatedRequest,
-  JwtCookieAuthGuard,
 } from '../auth/jwt-cookie-auth.guard';
 import { DeleteMeDto } from './dto/delete-me.dto';
 import { PROFILE_IMAGE_UPLOAD_OPTIONS } from './profile-image-upload';
+import { UploadConcurrencyInterceptor } from './upload-concurrency.interceptor';
 import {
   type ProfileImageFile,
   type UpdateMeDto,
@@ -50,8 +50,13 @@ export class UsersController {
   }
 
   @Post('me/profile-image')
-  @UseGuards(JwtCookieAuthGuard)
-  @UseInterceptors(FileInterceptor('file', PROFILE_IMAGE_UPLOAD_OPTIONS))
+  @Throttle({
+    default: { limit: 5, ttl: 60_000, blockDuration: 60_000 },
+  })
+  @UseInterceptors(
+    UploadConcurrencyInterceptor,
+    FileInterceptor('file', PROFILE_IMAGE_UPLOAD_OPTIONS),
+  )
   async uploadProfileImage(
     @Req() request: AuthenticatedRequest,
     @UploadedFile() file?: ProfileImageFile,

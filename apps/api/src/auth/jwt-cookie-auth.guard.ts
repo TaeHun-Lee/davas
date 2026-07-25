@@ -4,8 +4,10 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { AuthService, type AuthenticatedUser } from './auth.service';
+import { IS_PUBLIC_KEY } from './public.decorator';
 
 export const ACCESS_TOKEN_COOKIE = 'davas_access_token';
 
@@ -28,9 +30,18 @@ function readCookie(request: Request, name: string): string | undefined {
 
 @Injectable()
 export class JwtCookieAuthGuard implements CanActivate {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly reflector: Reflector,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const accessToken = readCookie(request, ACCESS_TOKEN_COOKIE);
     if (!accessToken) {

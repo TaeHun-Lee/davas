@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { DataSource, Repository } from 'typeorm';
 import {
   FileCleanupJobEntity,
@@ -99,15 +99,33 @@ export class UsersService {
     const imageDirectory = join(uploadRoot, 'profile-images');
     await mkdir(imageDirectory, { recursive: true });
     const filename = `${user.id}-${randomUUID()}.${validated.extension}`;
-    await writeFile(join(imageDirectory, filename), file.buffer);
-    user.profileImageUrl = `/uploads/profile-images/${filename}`;
-    return this.toUserResponse(await this.users.save(user));
+    const imagePath = join(imageDirectory, filename);
+    const imageUrl = `/uploads/profile-images/${filename}`;
+    const previousImageUrl = user.profileImageUrl;
+    await writeFile(imagePath, file.buffer);
+    user.profileImageUrl = imageUrl;
+
+    let savedUser: UserEntity;
+    try {
+      savedUser = await this.users.save(user);
+    } catch (error) {
+      await this.cleanupProfileImage(imageUrl, user.id);
+      throw error;
+    }
+
+    if (previousImageUrl && previousImageUrl !== imageUrl) {
+      await this.cleanupProfileImage(previousImageUrl, user.id);
+    }
+    return this.toUserResponse(savedUser);
   }
 
   async deleteProfileImage(accessToken: string | undefined) {
     const user = await this.loadAuthenticatedUser(accessToken);
+    const previousImageUrl = user.profileImageUrl;
     user.profileImageUrl = null;
-    return this.toUserResponse(await this.users.save(user));
+    const savedUser = await this.users.save(user);
+    await this.cleanupProfileImage(previousImageUrl, user.id);
+    return this.toUserResponse(savedUser);
   }
 
   async deleteMe(accessToken: string | undefined, password: string) {
@@ -170,28 +188,34 @@ export class UsersService {
         },
       );
     });
-    if (profileImageUrl?.startsWith('/uploads/profile-images/')) {
-      const uploadRoot = process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads');
-      const path = join(
-        uploadRoot,
-        'profile-images',
-        profileImageUrl.split('/').at(-1)!,
-      );
-      try {
-        await unlink(path);
-      } catch (error) {
-        await this.dataSource
-          .getRepository(FileCleanupJobEntity)
-          .save({
-            userId: user.id,
-            kind: 'PROFILE_IMAGE',
-            path,
-            attempts: 1,
-            lastError: String(error),
-            completedAt: null,
-          });
-        console.warn('profile-image-cleanup-pending', { userId: user.id });
+    await this.cleanupProfileImage(profileImageUrl, user.id);
+  }
+
+  private async cleanupProfileImage(
+    profileImageUrl: string | null | undefined,
+    userId: string,
+  ): Promise<void> {
+    if (!profileImageUrl?.startsWith('/uploads/profile-images/')) return;
+    const filename = profileImageUrl.split('/').at(-1);
+    if (!filename || basename(filename) !== filename) return;
+
+    const uploadRoot = process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads');
+    const path = join(uploadRoot, 'profile-images', filename);
+    try {
+      await unlink(path);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+      if (this.dataSource?.isInitialized) {
+        await this.dataSource.getRepository(FileCleanupJobEntity).save({
+          userId,
+          kind: 'PROFILE_IMAGE',
+          path,
+          attempts: 1,
+          lastError: String(error),
+          completedAt: null,
+        });
       }
+      console.warn('profile-image-cleanup-pending', { userId });
     }
   }
 

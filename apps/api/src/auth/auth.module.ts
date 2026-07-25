@@ -10,8 +10,9 @@ import {
   UserEntity,
 } from '../database/entities';
 import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { parseJwtExpirySeconds } from './jwt-config';
 import { JwtCookieAuthGuard } from './jwt-cookie-auth.guard';
+import { AuthService } from './auth.service';
 
 @Module({
   imports: [
@@ -24,9 +25,9 @@ import { JwtCookieAuthGuard } from './jwt-cookie-auth.guard';
       InviteUseEntity,
     ]),
     JwtModule.register({
-      secret: process.env.JWT_ACCESS_SECRET ?? 'dev-only-secret',
+      secret: process.env.JWT_SECRET ?? 'dev-secret-change-me',
       signOptions: {
-        expiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '7d',
+        expiresIn: parseJwtExpirySeconds(process.env.JWT_ACCESS_EXPIRES_IN),
       },
     }),
   ],

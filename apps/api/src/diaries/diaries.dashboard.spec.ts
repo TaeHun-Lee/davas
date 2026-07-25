@@ -20,6 +20,7 @@ const controllerSource = source('diaries.controller.ts');
 const moduleSource = source('diaries.module.ts');
 const serviceSource = source('diaries-dashboard.service.ts');
 const authControllerSource = apiSource('auth/auth.controller.ts');
+const authBoundarySource = apiSource('auth/jwt-cookie-auth.guard.ts');
 const diaryEntitySource = apiSource('database/entities/diary.entity.ts');
 
 type FakeRepository = {
@@ -187,11 +188,19 @@ describe('Diaries dashboard API contract', () => {
   });
 
   it('uses the same auth cookie as the login flow so created diaries appear on my diary dashboard', () => {
-    const authCookieName = authControllerSource.match(/const ACCESS_TOKEN_COOKIE\s*=\s*'([^']+)'/)?.[1];
-    const diaryCookieName = controllerSource.match(/const ACCESS_TOKEN_COOKIE\s*=\s*'([^']+)'/)?.[1];
+    const authCookieName = authBoundarySource.match(
+      /export const ACCESS_TOKEN_COOKIE\s*=\s*'([^']+)'/,
+    )?.[1];
 
     assert.ok(authCookieName);
-    assert.equal(diaryCookieName, authCookieName);
+    assert.match(
+      authControllerSource,
+      /ACCESS_TOKEN_COOKIE,[\s\S]*from '\.\/jwt-cookie-auth\.guard'/,
+    );
+    assert.match(
+      controllerSource,
+      /ACCESS_TOKEN_COOKIE,[\s\S]*from '\.\.\/auth\/jwt-cookie-auth\.guard'/,
+    );
     assert.match(controllerSource, /this\.auth\?\.findMe\(accessToken\)/);
   });
 

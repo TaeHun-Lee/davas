@@ -2,22 +2,33 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
-import { UserEntity } from '../database/entities';
+import { parseJwtExpirySeconds } from '../auth/jwt-config';
+import {
+  FileCleanupJobEntity,
+  UserEntity,
+} from '../database/entities';
+import { FileCleanupService } from './file-cleanup.service';
+import { UploadConcurrencyInterceptor } from './upload-concurrency.interceptor';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
 @Module({
   imports: [
     AuthModule,
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([UserEntity, FileCleanupJobEntity]),
     JwtModule.register({
-      secret: process.env.JWT_ACCESS_SECRET ?? 'dev-only-secret',
+      secret: process.env.JWT_SECRET ?? 'dev-secret-change-me',
       signOptions: {
-        expiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '7d',
+        expiresIn: parseJwtExpirySeconds(process.env.JWT_ACCESS_EXPIRES_IN),
       },
     }),
   ],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [
+    UsersService,
+    UploadConcurrencyInterceptor,
+    FileCleanupService,
+  ],
+  exports: [UsersService],
 })
 export class UsersModule {}
