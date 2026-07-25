@@ -37,6 +37,13 @@ export function RatingInputCard({ value, onChange }: { value: number; onChange: 
             aria-valuemax={5}
             aria-valuenow={clampedValue}
             tabIndex={0}
+            onKeyDown={(event) => {
+              if (!['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+              event.preventDefault();
+              if (event.key === 'Home') onChange(0);
+              else if (event.key === 'End') onChange(5);
+              else onChange(clampRating(clampedValue + (event.key === 'ArrowRight' || event.key === 'ArrowUp' ? 0.5 : -0.5)));
+            }}
             onPointerDown={(event) => {
               event.currentTarget.setPointerCapture(event.pointerId);
               updateRatingFromPointer(event.clientX);
@@ -45,22 +52,13 @@ export function RatingInputCard({ value, onChange }: { value: number; onChange: 
               if (event.buttons !== 1) return;
               updateRatingFromPointer(event.clientX);
             }}
-            className="flex touch-none select-none gap-1"
+            className="flex min-h-11 touch-none select-none items-center gap-1 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#216bd8]"
           >
             {Array.from({ length: 5 }).map((_, index) => {
               const fillPercent = Math.min(100, Math.max(0, (clampedValue - index) * 100));
               return <Star key={index} fillPercent={fillPercent} />;
             })}
           </div>
-          <input
-            type="range"
-            min={0}
-            max={5}
-            step={0.1}
-            value={clampedValue}
-            onChange={(event) => onChange(clampRating(Number(event.target.value)))}
-            className="sr-only"
-          />
         </div>
         <div className="h-12 w-px bg-[#e8eef6]" />
         <output className="min-w-[52px] text-right text-[28px] font-black tracking-[-0.04em] text-[#2f6fb4]">{clampedValue.toFixed(1)}</output>

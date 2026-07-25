@@ -2,14 +2,17 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { getMe, logout, normalizeProfileImageUrl, type AuthenticatedUser } from '../../lib/api/auth';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ApiResponseError, getMe, logout, normalizeProfileImageUrl, type AuthenticatedUser } from '../../lib/api/auth';
 import { DefaultProfileAvatar } from '../profile/DefaultProfileAvatar';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 const drawerItems = [
   { href: '/', label: '홈', description: '나의 기록 홈' },
   { href: '/explore', label: '탐색', description: '작품 검색과 추천' },
-  { href: '/community', label: '커뮤니티', description: '다른 사람의 기록' },
+  { href: '/feed', label: '친구 피드', description: '허용된 친구의 기록' },
+  { href: '/friends', label: '친구 관리', description: '요청과 친구 목록' },
+  { href: '/watchlist', label: '보고 싶은 목록', description: '다음 작품 계획' },
   { href: '/diary', label: '다이어리', description: '내 감상 기록' },
   { href: '/profile', label: '프로필', description: '계정과 설정' },
 ];
@@ -84,6 +87,9 @@ export function DavasHeader() {
   const [isElevated, setIsElevated] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [user, setUser] = useState<AuthenticatedUser | null | undefined>(undefined);
+  const drawerRef = useRef<HTMLElement | null>(null);
+  const closeDrawer = useCallback(() => setIsDrawerOpen(false), []);
+  useFocusTrap(isDrawerOpen, drawerRef, closeDrawer);
 
   useEffect(() => {
     const updateHeaderElevation = () => {
@@ -101,8 +107,11 @@ export function DavasHeader() {
   useEffect(() => {
     getMe()
       .then((me) => setUser(me))
-      .catch(() => setUser(null));
-  }, []);
+      .catch((error) => {
+        setUser(null);
+        if (error instanceof ApiResponseError && error.status === 401) router.replace('/login');
+      });
+  }, [router]);
 
   async function handleLogout() {
     setIsDrawerOpen(false);
@@ -122,7 +131,7 @@ export function DavasHeader() {
           type="button"
           aria-label="메뉴 열기"
           onClick={() => setIsDrawerOpen(true)}
-          className="flex h-10 w-10 items-center justify-center rounded-2xl text-[#58677d] transition hover:bg-white/80"
+          className="flex h-11 w-11 items-center justify-center rounded-2xl text-[#58677d] transition hover:bg-white/80"
         >
           <MenuIcon />
         </button>
@@ -131,7 +140,7 @@ export function DavasHeader() {
           <DavasLogoMark />
         </div>
 
-        <Link href="/profile" aria-label="프로필 화면으로 이동" className="flex h-10 w-10 items-center justify-center rounded-full">
+        <Link href="/profile" aria-label="프로필 화면으로 이동" className="flex h-11 w-11 items-center justify-center rounded-full">
           <ProfileAvatar user={user} />
         </Link>
 
@@ -149,8 +158,10 @@ export function DavasHeader() {
         className={`fixed inset-0 z-[70] bg-[#16233c]/32 transition-opacity duration-200 ${isDrawerOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
       />
       <aside
+        ref={drawerRef}
         data-design="left-drawer-panel"
         aria-label="왼쪽 메뉴"
+        aria-hidden={!isDrawerOpen}
         className={`fixed left-0 top-0 z-[71] h-screen w-[300px] max-w-[82vw] bg-white px-5 pb-8 pt-5 shadow-[18px_0_40px_rgba(20,38,70,0.18)] transition-transform duration-300 ${isDrawerOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="flex items-center justify-between">
@@ -159,7 +170,7 @@ export function DavasHeader() {
             type="button"
             aria-label="메뉴 닫기"
             onClick={() => setIsDrawerOpen(false)}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#f4f7fb] text-[#6f7c91]"
+            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f4f7fb] text-[#6f7c91]"
           >
             <CloseIcon />
           </button>

@@ -23,7 +23,7 @@ export function RecentRecordsSection({ records }: RecentRecordsSectionProps) {
 
   function openRecord(record: RecentRecord) {
     if (!record.diaryId) return;
-    router.push(`/diary/${record.diaryId}/edit`);
+    router.push(`/diary/${record.diaryId}`);
   }
 
   return (
@@ -32,7 +32,7 @@ export function RecentRecordsSection({ records }: RecentRecordsSectionProps) {
       <section className="space-y-3">
         {records.map((record) => (
           <article key={record.diaryId ?? record.title} className="card-surface rounded-[18px] max-[374px]:gap-2.5">
-            <button type="button" aria-label={`${record.title} 다이어리 수정하기`} className="flex w-full items-center gap-3 p-3 text-left max-[374px]:gap-2.5" onClick={() => openRecord(record)}>
+            <button type="button" aria-label={`${record.title} 다이어리 상세 보기`} className="flex min-h-11 w-full items-center gap-3 p-3 text-left max-[374px]:gap-2.5" onClick={() => openRecord(record)}>
               <MoviePosterVisual gradient={record.gradient ?? 'from-[#e9eef7] via-[#f6f8fc] to-[#dfe8f5]'} imageUrl={record.posterUrl} className="h-12 w-[72px] shrink-0" />
               <div className="min-w-0 flex-1">
                 <h3 className="text-sm font-extrabold text-[#26334a]">{record.title}</h3>

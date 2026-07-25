@@ -1,5 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
+import { Not } from 'typeorm';
 import type { DiaryEntity } from '../database/entities/diary.entity';
 import type { NotificationEntity } from '../database/entities/notification.entity';
 import type { UserEntity } from '../database/entities/user.entity';
@@ -54,7 +55,7 @@ describe('NotificationsService', () => {
     assert.deepEqual(repository.calls[0], {
       method: 'find',
       input: {
-        where: { userId: 'recipient-1' },
+        where: { userId: 'recipient-1', type: Not('AUTHOR_FOLLOWED') },
         relations: { actor: true, diary: true },
         order: { createdAt: 'DESC' },
         take: 50,
@@ -71,13 +72,12 @@ describe('NotificationsService', () => {
     });
   });
 
-  it('creates diary like, comment, and follow notifications without notifying self-actions', async () => {
+  it('creates reaction and comment notifications without notifying self-actions', async () => {
     const repository = fakeNotificationsRepository();
     const service = new NotificationsService(repository as never);
 
     await service.notifyDiaryLiked({ diaryId: 'diary-1', recipientId: 'author-1', actorId: 'viewer-1' });
     await service.notifyDiaryCommented({ diaryId: 'diary-1', recipientId: 'author-1', actorId: 'viewer-1' });
-    await service.notifyAuthorFollowed({ recipientId: 'author-1', actorId: 'viewer-1' });
     await service.notifyDiaryLiked({ diaryId: 'mine', recipientId: 'viewer-1', actorId: 'viewer-1' });
 
     assert.deepEqual(
@@ -85,7 +85,6 @@ describe('NotificationsService', () => {
       [
         { userId: 'author-1', actorId: 'viewer-1', diaryId: 'diary-1', type: 'DIARY_LIKED' },
         { userId: 'author-1', actorId: 'viewer-1', diaryId: 'diary-1', type: 'DIARY_COMMENTED' },
-        { userId: 'author-1', actorId: 'viewer-1', diaryId: null, type: 'AUTHOR_FOLLOWED' },
       ],
     );
   });
@@ -96,7 +95,7 @@ describe('NotificationsService', () => {
 
     const result = await new NotificationsService(repository as never).markRead('notice-1', 'recipient-1');
 
-    assert.deepEqual(repository.calls[0], { method: 'findOne', input: { where: { id: 'notice-1', userId: 'recipient-1' }, relations: { actor: true, diary: true } } });
+    assert.deepEqual(repository.calls[0], { method: 'findOne', input: { where: { id: 'notice-1', userId: 'recipient-1', type: Not('AUTHOR_FOLLOWED') }, relations: { actor: true, diary: true } } });
     assert.ok(notification.readAt instanceof Date);
     assert.equal(result.id, 'notice-1');
     assert.notEqual(result.readAt, null);

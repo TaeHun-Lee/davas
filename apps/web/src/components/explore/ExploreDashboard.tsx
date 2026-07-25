@@ -40,6 +40,7 @@ export function ExploreDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const detailMediaId = searchParams.get('detail');
+  const recordIntent = searchParams.get('intent') === 'record';
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMedia, setSelectedMedia] = useState<MediaDetail | null>(null);
   const [isSelectingMedia, setIsSelectingMedia] = useState(false);
@@ -100,7 +101,14 @@ export function ExploreDashboard() {
     getMediaDetail(detailMediaId)
       .then((detail) => {
         if (cancelled) return;
-        openMediaDetail(detail);
+        setSelectedMedia(detail);
+        setIsDetailModalOpen(true);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSelectedMedia(null);
+          setIsDetailModalOpen(false);
+        }
       })
       .finally(() => {
         if (!cancelled) setIsSelectingMedia(false);
@@ -109,12 +117,16 @@ export function ExploreDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [detailMediaId]);
+  }, [detailMediaId, selectedMedia?.id]);
 
   async function handleSelectMedia(item: MediaSearchResult) {
     setIsSelectingMedia(true);
     try {
       const media = await selectMedia(item);
+      if (recordIntent) {
+        router.push(`/diary/new?mediaId=${encodeURIComponent(media.id)}&returnTo=${encodeURIComponent('/explore?intent=record')}`);
+        return;
+      }
       const detail = await getMediaDetail(media.id);
       openMediaDetail(detail);
     } finally {
@@ -126,6 +138,10 @@ export function ExploreDashboard() {
     setIsSelectingMedia(true);
     try {
       const media = await selectMedia(item);
+      if (recordIntent) {
+        router.push(`/diary/new?mediaId=${encodeURIComponent(media.id)}&returnTo=${encodeURIComponent('/explore?intent=record')}`);
+        return;
+      }
       const detail = await getMediaDetail(media.id);
       openMediaDetail(detail);
     } finally {
@@ -141,6 +157,10 @@ export function ExploreDashboard() {
     setIsSelectingMedia(true);
     try {
       const media = await selectMedia(item);
+      if (recordIntent) {
+        router.push(`/diary/new?mediaId=${encodeURIComponent(media.id)}&returnTo=${encodeURIComponent('/explore?intent=record')}`);
+        return;
+      }
       const detail = await getMediaDetail(media.id);
       openMediaDetail(detail);
     } finally {
@@ -200,7 +220,7 @@ export function ExploreDashboard() {
             <div className="today-overview-list card-surface mt-3 rounded-[20px] p-3 shadow-[0_10px_24px_rgba(31,65,114,0.07)]">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-[13px] font-extrabold text-[#1f2a44]">오늘의 추천 전체</p>
-                <button type="button" onClick={() => setShowAllToday(false)} className="text-[11px] font-bold text-[#8d98aa]">접기</button>
+                <button type="button" onClick={() => setShowAllToday(false)} className="min-h-11 rounded-full px-3 text-[11px] font-bold text-[#65758a]">접기</button>
               </div>
               <div className="space-y-2">
                 {recommendations.todayItems.map((item) => (

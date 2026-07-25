@@ -1,7 +1,7 @@
-import { Controller, Delete, Get, Param, Post, Query, Req } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
-import { AuthService, type AuthenticatedUser } from '../auth/auth.service';
+import { AuthService } from '../auth/auth.service';
 import { CommunityService, type CommunityTab } from './community.service';
 
 const ACCESS_TOKEN_COOKIE = 'davas_access_token';
@@ -16,52 +16,20 @@ export class CommunityController {
 
   @Get('dashboard')
   async dashboard(@Req() request: Request, @Query('tab') tab?: CommunityTab, @Query('q') q?: string, @Query('topic') topic?: string) {
-    const viewer = await this.resolveOptionalUser(request);
-    return this.communityService.getDashboard({ tab, q, topic, userId: viewer?.id });
+    const viewer = await this.resolveRequiredUser(request);
+    return this.communityService.getDashboard({ tab, q, topic, userId: viewer.id });
   }
 
   @Get('diaries/:id')
   async diary(@Req() request: Request, @Param('id') id: string) {
-    const viewer = await this.resolveOptionalUser(request);
-    return this.communityService.getPublicDiary(id, viewer?.id);
+    const viewer = await this.resolveRequiredUser(request);
+    return this.communityService.getPublicDiary(id, viewer.id);
   }
 
   @Get('authors/:id')
   async authorProfile(@Req() request: Request, @Param('id') id: string) {
-    const viewer = await this.resolveOptionalUser(request);
-    return this.communityService.getAuthorProfile(id, viewer?.id);
-  }
-
-  @Post('diaries/:id/like')
-  async likeDiary(@Req() request: Request, @Param('id') id: string) {
     const viewer = await this.resolveRequiredUser(request);
-    return this.communityService.likeDiary(id, viewer.id);
-  }
-
-  @Delete('diaries/:id/like')
-  async unlikeDiary(@Req() request: Request, @Param('id') id: string) {
-    const viewer = await this.resolveRequiredUser(request);
-    return this.communityService.unlikeDiary(id, viewer.id);
-  }
-
-  @Post('diaries/:id/follow')
-  async followDiaryAuthor(@Req() request: Request, @Param('id') id: string) {
-    const viewer = await this.resolveRequiredUser(request);
-    return this.communityService.followDiaryAuthor(id, viewer.id);
-  }
-
-  @Delete('diaries/:id/follow')
-  async unfollowDiaryAuthor(@Req() request: Request, @Param('id') id: string) {
-    const viewer = await this.resolveRequiredUser(request);
-    return this.communityService.unfollowDiaryAuthor(id, viewer.id);
-  }
-
-  private async resolveOptionalUser(request: Request): Promise<AuthenticatedUser | undefined> {
-    try {
-      return await this.resolveRequiredUser(request);
-    } catch {
-      return undefined;
-    }
+    return this.communityService.getAuthorProfile(id, viewer.id);
   }
 
   private resolveRequiredUser(request: Request) {

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
+import { GoneException, NotFoundException } from '@nestjs/common';
 import { DiaryEntity } from '../database/entities/diary.entity';
 import { MediaEntity } from '../database/entities/media.entity';
 import { DiariesController } from './diaries.controller';
@@ -67,7 +68,7 @@ describe('Diaries dashboard API contract', () => {
   });
 
   it('loads the dashboard from persisted diary and media rows instead of mock fixtures', async () => {
-    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[DiaryEntity, MediaEntity\]\)/);
+    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[DiaryEntity, MediaEntity,/);
     assert.match(serviceSource, /@InjectRepository\(DiaryEntity\)/);
     assert.doesNotMatch(serviceSource, /mock-interstellar|mock-inception|mock-shawshank|const recentItems/);
 
@@ -228,13 +229,16 @@ describe('Diaries dashboard API contract', () => {
       rating: '4.2',
       visibility: 'PRIVATE',
       hasSpoiler: true,
+      watchedPlace: null,
+      mood: null,
+      memoryNote: null,
     });
     assert.equal(result.diary.id, 'created-diary');
     assert.doesNotMatch(controllerSource, /create diary endpoint contract ready/);
   });
 
   it('stores the selected media representative poster on the server before showing diary thumbnails', async () => {
-    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[DiaryEntity, MediaEntity\]\)/);
+    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[DiaryEntity, MediaEntity,/);
     assert.match(serviceSource, /@InjectRepository\(MediaEntity\)/);
     assert.match(serviceSource, /mediaPosterUrl/);
     assert.match(serviceSource, /media\.posterUrl = dto\.mediaPosterUrl/);
@@ -328,6 +332,69 @@ describe('Diaries dashboard API contract', () => {
     assert.equal(savedDiary?.hasSpoiler, true);
     assert.equal(result.id, 'diary-edit');
     assert.doesNotMatch(controllerSource, /update diary endpoint contract ready/);
+  });
+
+  it('returns 410 for the owner of a soft-deleted diary without disclosing it to other users', async () => {
+    const deletedDiary = makeDiary({ deletedAt: new Date('2026-05-10T00:00:00.000Z') });
+    const repository: FakeRepository = { find: async () => [], findOne: async () => deletedDiary };
+    const service = new DiariesDashboardService(repository as never);
+
+    await assert.rejects(() => service.getDiary('user-1', deletedDiary.id), GoneException);
+    await assert.rejects(() => service.getDiary('other-user', deletedDiary.id), NotFoundException);
+  });
+
+  it('clears stale selected-share rows whenever a diary is not SELECTED', async () => {
+    const diary = makeDiary({ id: 'diary-private', visibility: 'SELECTED' });
+    const repository: FakeRepository = {
+      find: async () => [],
+      findOne: async () => diary,
+      create: (input) => ({ ...diary, ...input }) as DiaryEntity,
+      save: async (input) => input,
+    };
+    const calls: Array<{ method: string; input: unknown }> = [];
+    const shares = {
+      delete: async (input: unknown) => { calls.push({ method: 'delete', input }); },
+      create: (input: unknown) => input,
+      save: async (input: unknown) => { calls.push({ method: 'save', input }); return input; },
+    };
+    const service = new DiariesDashboardService(repository as never, undefined, undefined, shares as never);
+
+    await service.createDiary('user-1', {
+      mediaId: '11111111-1111-4111-8111-111111111111',
+      title: '비공개 기록', content: '', watchedDate: '2026-05-08', rating: 4,
+      visibility: 'PRIVATE', hasSpoiler: false, tags: [], selectedUserIds: ['target-user'],
+    });
+    await service.updateDiary('user-1', diary.id, { visibility: 'PRIVATE' });
+
+    assert.deepEqual(calls, [
+      { method: 'delete', input: { diaryId: 'diary-private' } },
+      { method: 'delete', input: { diaryId: 'diary-private' } },
+    ]);
+  });
+
+  it('marks the matching watchlist item WATCHED only after a diary is persisted', async () => {
+    const persisted = makeDiary({ id: 'diary-created', mediaId: '11111111-1111-4111-8111-111111111111' });
+    const order: string[] = [];
+    const repository: FakeRepository = {
+      find: async () => [],
+      create: (input) => ({ ...persisted, ...input }) as DiaryEntity,
+      save: async (input) => { order.push('diary-save'); return input; },
+    };
+    const watchlistRow = { id: 'watch-1', userId: 'user-1', mediaId: persisted.mediaId, status: 'ACTIVE' };
+    const watchlist = {
+      findOne: async (input: unknown) => { order.push('watchlist-find'); assert.deepEqual(input, { where: { userId: 'user-1', mediaId: persisted.mediaId } }); return watchlistRow; },
+      save: async (input: unknown) => { order.push('watchlist-save'); return input; },
+    };
+    const service = new DiariesDashboardService(repository as never, undefined, undefined, undefined, watchlist as never);
+
+    await service.createDiary('user-1', {
+      mediaId: persisted.mediaId,
+      title: '관람 완료', content: '', watchedDate: '2026-05-08', rating: 4,
+      visibility: 'PRIVATE', hasSpoiler: false, tags: [],
+    });
+
+    assert.deepEqual(order, ['diary-save', 'watchlist-find', 'watchlist-save']);
+    assert.equal(watchlistRow.status, 'WATCHED');
   });
 
 });

@@ -74,38 +74,6 @@ export async function deleteDiaryComment(commentId: string) {
   return parseJsonResponse<{ id: string; deleted: boolean }>(response, 'delete diary comment failed');
 }
 
-export async function followCommunityDiaryAuthor(diaryId: string) {
-  const response = await fetch(`${getApiBaseUrl()}/community/diaries/${diaryId}/follow`, {
-    method: 'POST',
-    credentials: 'include',
-  });
-  return parseJsonResponse<{ followingId: string; isFollowed: boolean }>(response, 'follow community author failed');
-}
-
-export async function unfollowCommunityDiaryAuthor(diaryId: string) {
-  const response = await fetch(`${getApiBaseUrl()}/community/diaries/${diaryId}/follow`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
-  return parseJsonResponse<{ followingId: string; isFollowed: boolean }>(response, 'unfollow community author failed');
-}
-
-export async function likeCommunityDiary(diaryId: string) {
-  const response = await fetch(`${getApiBaseUrl()}/community/diaries/${diaryId}/like`, {
-    method: 'POST',
-    credentials: 'include',
-  });
-  return parseJsonResponse<{ diaryId: string; isLiked: boolean }>(response, 'like community diary failed');
-}
-
-export async function unlikeCommunityDiary(diaryId: string) {
-  const response = await fetch(`${getApiBaseUrl()}/community/diaries/${diaryId}/like`, {
-    method: 'DELETE',
-    credentials: 'include',
-  });
-  return parseJsonResponse<{ diaryId: string; isLiked: boolean }>(response, 'unlike community diary failed');
-}
-
 export async function getCommunityAuthorProfile(authorId: string) {
   const response = await fetch(`${getApiBaseUrl()}/community/authors/${authorId}`, {
     credentials: 'include',

@@ -11,7 +11,6 @@ export type CommunityDiaryCard = {
     id: string;
     nickname: string;
     profileImageUrl: string | null;
-    isFollowed: boolean;
     isMine: boolean;
   };
   media: {
@@ -24,8 +23,6 @@ export type CommunityDiaryCard = {
   contentPreview: string;
   rating: number;
   commentCount: number;
-  likeCount: number;
-  isLiked: boolean;
   hasSpoiler: boolean;
   createdAt: string;
 };
@@ -72,8 +69,6 @@ export type CommunityAuthorProfileResponse = {
   };
   stats: {
     publicDiaryCount: number;
-    followerCount: number;
-    followingCount: number;
   };
   feed: CommunityDiaryCard[];
 };

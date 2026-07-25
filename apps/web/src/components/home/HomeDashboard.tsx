@@ -12,6 +12,8 @@ import { AppShell } from '../layout/AppShell';
 import { SearchEntry } from '../common/SearchField';
 import { MediaDetailModal } from '../media/MediaDetailModal';
 import { getMediaDetail, type MediaDetail } from '../../lib/api/media';
+import type { WatchlistItem } from '../../lib/api/watchlist';
+import { ProfileWatchlistSection } from '../profile/ProfileWatchlistSection';
 
 export type HomeDashboardView = {
   archiveHighlight: ArchiveHighlight;
@@ -35,6 +37,7 @@ type HomeDashboardProps = {
     email: string;
   };
   view: HomeDashboardView;
+  watchlist?: WatchlistItem[];
 };
 
 const DEFAULT_POSTER_GRADIENT = 'from-[#e9eef7] via-[#f6f8fc] to-[#dfe8f5]';
@@ -129,7 +132,7 @@ export function buildHomeDashboardView(dashboard: DiaryDashboardView): HomeDashb
   };
 }
 
-export function HomeDashboard({ user, view }: HomeDashboardProps) {
+export function HomeDashboard({ user, view, watchlist = [] }: HomeDashboardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const detailMediaId = searchParams.get('detail');
@@ -145,10 +148,16 @@ export function HomeDashboard({ user, view }: HomeDashboardProps) {
         setSelectedMedia(null);
         return;
       }
-      const mediaDetail = await getMediaDetail(detailMediaId);
-      if (!isMounted) return;
-      setSelectedMedia(mediaDetail);
-      setIsDetailOpen(true);
+      try {
+        const mediaDetail = await getMediaDetail(detailMediaId);
+        if (!isMounted) return;
+        setSelectedMedia(mediaDetail);
+        setIsDetailOpen(true);
+      } catch {
+        if (!isMounted) return;
+        setSelectedMedia(null);
+        setIsDetailOpen(false);
+      }
     }
 
     void loadDetail();
@@ -174,6 +183,7 @@ export function HomeDashboard({ user, view }: HomeDashboardProps) {
         <SearchEntry href="/explore" placeholder="영화나 드라마를 검색해보세요" ariaLabel="탐색에서 영화나 드라마 검색하기" className="text-[13px] font-semibold leading-[18px] text-[#9aa6b8]" />
         <ArchiveHighlightSection item={view.archiveHighlight} onDetailSelect={openHomeMediaDetail} />
         <HomeStatsGrid stats={view.stats} />
+        <ProfileWatchlistSection items={watchlist} />
         {view.favorites.length > 0 ? <FavoriteMoviesSection movies={view.favorites} onDetailSelect={openHomeMediaDetail} /> : null}
         <MonthlyWatchCalendarSection
           yearMonthLabel={view.calendar.yearMonthLabel}

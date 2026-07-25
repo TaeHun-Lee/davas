@@ -72,25 +72,11 @@ export type MediaDetail = Omit<SelectedMedia, 'genreIds'> & {
   myDiary?: MyMediaDiary | null;
   myDiaries?: MyMediaDiary[];
   myAverageRating?: number | null;
-  isFavorite?: boolean;
+  watchlistItemId?: string | null;
+  watchlistStatus?: 'ACTIVE' | 'WATCHED' | null;
   genreIds?: number[];
 };
 
-export type FavoriteMediaItem = {
-  id: string;
-  mediaType: 'MOVIE' | 'TV' | string;
-  title: string;
-  originalTitle: string | null;
-  posterUrl: string | null;
-  backdropUrl: string | null;
-  releaseDate: string | null;
-  genres: string[];
-  favoritedAt: string;
-};
-
-export type FavoriteMediaResponse = {
-  items: FavoriteMediaItem[];
-};
 
 export async function searchMedia({
   query,
@@ -119,7 +105,6 @@ export async function searchMedia({
 
   return (await response.json()) as MediaSearchResponse;
 }
-
 export async function searchPeople({
   query,
   page = 1,
@@ -208,29 +193,4 @@ export async function getMediaDetail(id: string) {
   }
 
   return (await response.json()) as MediaDetail;
-}
-
-export async function getFavoriteMedia() {
-  const response = await fetch(`${getApiBaseUrl()}/media/favorites`, {
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new Error('favorite media failed');
-  }
-
-  return (await response.json()) as FavoriteMediaResponse;
-}
-
-export async function toggleMediaFavorite(id: string) {
-  const response = await fetch(`${getApiBaseUrl()}/media/${id}/favorite`, {
-    method: 'POST',
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new Error('media favorite toggle failed');
-  }
-
-  return (await response.json()) as { mediaId: string; isFavorite: boolean };
 }

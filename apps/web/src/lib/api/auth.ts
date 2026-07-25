@@ -15,6 +15,13 @@ export type MeResponse = {
 
 export { getApiBaseUrl };
 
+export class ApiResponseError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = 'ApiResponseError';
+  }
+}
+
 export function normalizeProfileImageUrl(imageUrl?: string | null) {
   if (!imageUrl) return null;
   if (/^(https?:|blob:|data:)/.test(imageUrl)) return imageUrl;
@@ -30,7 +37,7 @@ export async function getMe() {
   });
 
   if (!response.ok) {
-    throw new Error('auth me failed');
+    throw new ApiResponseError('auth me failed', response.status);
   }
 
   return ((await response.json()) as MeResponse).user;

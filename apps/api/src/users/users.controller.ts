@@ -1,8 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Req, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
+import type { Response } from 'express';
 import { UpdateMeDto, UsersService, type ProfileImageFile } from './users.service';
+import { DeleteMeDto } from './dto/delete-me.dto';
 
 const ACCESS_TOKEN_COOKIE = 'davas_access_token';
 
@@ -30,6 +32,13 @@ export class UsersController {
   @Delete('me/profile-image')
   async deleteProfileImage(@Req() request: Request) {
     return { user: await this.users.deleteProfileImage(this.readCookie(request, ACCESS_TOKEN_COOKIE)) };
+  }
+
+  @Delete('me')
+  @HttpCode(204)
+  async deleteMe(@Req() request: Request, @Res({ passthrough: true }) response: Response, @Body() body: DeleteMeDto) {
+    await this.users.deleteMe(this.readCookie(request, ACCESS_TOKEN_COOKIE), body.password);
+    response.clearCookie(ACCESS_TOKEN_COOKIE, { httpOnly: true, sameSite: 'lax', secure: process.env.COOKIE_SECURE === 'true', path: '/' });
   }
 
   private readCookie(request: Request, name: string): string | undefined {

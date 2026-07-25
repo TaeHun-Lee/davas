@@ -45,6 +45,7 @@ export function ArchiveHighlightSection({ item, onDetailSelect }: ArchiveHighlig
       items={buildArchiveHeroItems(item)}
       className="mt-4 bg-[linear-gradient(145deg,#ffffff_0%,#f7fbff_48%,#eef6ff_100%)] px-4 pb-3 pt-4 ring-[#eaf0f8] max-[374px]:px-3.5"
       actions={(item) => [
+        ...(!item.diaryId && !item.mediaId ? [{ label: '첫 기록 남기기', kind: 'primary' as const, onClick: () => router.push('/explore?intent=record') }] : []),
         ...(item.diaryId ? [{ label: '수정하기', kind: 'primary' as const, onClick: () => router.push(`/diary/${item.diaryId}/edit`) }] : []),
         ...(item.mediaId ? [{ label: '상세보기', kind: 'secondary' as const, onClick: () => onDetailSelect(item.mediaId) }] : []),
       ]}

@@ -7,10 +7,11 @@ import { MediaEntity } from '../database/entities/media.entity';
 import { MediaController } from './media.controller';
 import { MediaSelectionService } from './media-selection.service';
 import { MediaService } from './media.service';
+import { WatchlistItemEntity } from '../database/entities';
 import { TmdbClient } from './tmdb.client';
 
 @Module({
-  imports: [AuthModule, TypeOrmModule.forFeature([MediaEntity, DiaryEntity, MediaFavoriteEntity])],
+  imports: [AuthModule, TypeOrmModule.forFeature([MediaEntity, DiaryEntity, MediaFavoriteEntity, WatchlistItemEntity])],
   controllers: [MediaController],
   providers: [MediaService, MediaSelectionService, TmdbClient],
 })

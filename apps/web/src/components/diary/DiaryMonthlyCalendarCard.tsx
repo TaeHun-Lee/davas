@@ -49,7 +49,7 @@ export function DiaryMonthlyCalendarCard({
             type="button"
             aria-label="이전 달 보기"
             onClick={() => onMonthChange?.(-1)}
-            className="grid h-8 w-8 place-items-center rounded-full bg-[#f3f6fb] text-[14px] font-extrabold text-[#526078]"
+            className="grid h-11 w-11 place-items-center rounded-full bg-[#f3f6fb] text-[14px] font-extrabold text-[#526078]"
           >
             ‹
           </button>
@@ -58,7 +58,7 @@ export function DiaryMonthlyCalendarCard({
             aria-label="월 선택 팝업 열기"
             aria-expanded={monthPickerOpen}
             onClick={handleMonthPickerToggle}
-            className="min-w-[64px] rounded-full bg-[#eef5ff] px-3 py-1.5 text-[12px] font-extrabold leading-none text-[#216bd8]"
+            className="min-h-11 min-w-[72px] rounded-full bg-[#eef5ff] px-3 py-1.5 text-[12px] font-extrabold leading-none text-[#216bd8]"
           >
             {month}월
           </button>
@@ -66,7 +66,7 @@ export function DiaryMonthlyCalendarCard({
             type="button"
             aria-label="다음 달 보기"
             onClick={() => onMonthChange?.(1)}
-            className="grid h-8 w-8 place-items-center rounded-full bg-[#f3f6fb] text-[14px] font-extrabold text-[#526078]"
+            className="grid h-11 w-11 place-items-center rounded-full bg-[#f3f6fb] text-[14px] font-extrabold text-[#526078]"
           >
             ›
           </button>
@@ -81,7 +81,7 @@ export function DiaryMonthlyCalendarCard({
                   type="button"
                   aria-label="이전 연도 보기"
                   onClick={() => setPickerYear((currentYear) => currentYear - 1)}
-                  className="grid h-7 w-7 place-items-center rounded-full bg-[#f3f6fb] text-[13px] font-extrabold text-[#526078]"
+                  className="grid h-11 w-11 place-items-center rounded-full bg-[#f3f6fb] text-[13px] font-extrabold text-[#526078]"
                 >
                   ‹
                 </button>
@@ -90,7 +90,7 @@ export function DiaryMonthlyCalendarCard({
                   type="button"
                   aria-label="다음 연도 보기"
                   onClick={() => setPickerYear((currentYear) => currentYear + 1)}
-                  className="grid h-7 w-7 place-items-center rounded-full bg-[#f3f6fb] text-[13px] font-extrabold text-[#526078]"
+                  className="grid h-11 w-11 place-items-center rounded-full bg-[#f3f6fb] text-[13px] font-extrabold text-[#526078]"
                 >
                   ›
                 </button>
@@ -104,8 +104,8 @@ export function DiaryMonthlyCalendarCard({
                     onClick={() => handleMonthSelect(monthOption)}
                     className={
                       pickerYear === year && monthOption === month
-                        ? 'rounded-full bg-[#216bd8] px-2 py-1.5 text-[11px] font-extrabold text-white'
-                        : 'rounded-full bg-[#f6f8fc] px-2 py-1.5 text-[11px] font-bold text-[#526078]'
+                        ? 'min-h-11 rounded-full bg-[#216bd8] px-2 py-1.5 text-[11px] font-extrabold text-white'
+                        : 'min-h-11 rounded-full bg-[#f6f8fc] px-2 py-1.5 text-[11px] font-bold text-[#526078]'
                     }
                   >
                     {monthOption}월
@@ -119,7 +119,7 @@ export function DiaryMonthlyCalendarCard({
           type="button"
           aria-label="달력 전체 선택"
           onClick={onSelectAll}
-          className="self-center rounded-full bg-[#f8fbff] px-3 py-1 text-[11px] font-bold text-[#6f7b8f]"
+          className="min-h-11 self-center rounded-full bg-[#f8fbff] px-3 py-1 text-[11px] font-bold text-[#526078]"
         >
           월 전체 보기
         </button>
@@ -136,14 +136,14 @@ export function DiaryMonthlyCalendarCard({
             type="button"
             disabled={!day.currentMonth}
             onClick={() => day.currentMonth && onDaySelect?.(day.day)}
-            aria-selected={day.selected}
+            aria-pressed={day.selected}
             aria-label={`${day.day}일 기록 ${day.entryCount}개`}
             className={
               day.selected
-                ? 'relative grid h-8 place-items-center rounded-full bg-[#216bd8] text-[12px] font-extrabold text-white'
+                ? 'relative grid h-11 place-items-center rounded-full bg-[#216bd8] text-[12px] font-extrabold text-white'
                 : day.currentMonth
-                  ? 'relative grid h-8 place-items-center rounded-full text-[12px] font-bold text-[#4b5875]'
-                  : 'relative grid h-8 place-items-center rounded-full text-[12px] font-semibold text-[#c5ccd8]'
+                  ? 'relative grid h-11 place-items-center rounded-full text-[12px] font-bold text-[#4b5875]'
+                  : 'relative grid h-11 place-items-center rounded-full text-[12px] font-semibold text-[#9aa6b8]'
             }
           >
             {day.day}

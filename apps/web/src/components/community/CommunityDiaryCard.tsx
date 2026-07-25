@@ -30,11 +30,10 @@ export function CommunityDiaryCard({ item, compact = false }: CommunityDiaryCard
   const metrics = [
     { label: `★ ${item.rating.toFixed(1)}`, className: 'text-[#ff5a52]' },
     { label: `댓글 ${item.commentCount}`, className: '' },
-    { label: `좋아요 ${item.likeCount}`, className: item.isLiked ? 'text-[#216bd8]' : '' },
   ];
 
   const metricsClassName = compact
-    ? 'mt-3 grid grid-cols-3 gap-1 text-center text-[10px] font-extrabold text-[#8a95a8]'
+    ? 'mt-3 grid grid-cols-2 gap-1 text-center text-[10px] font-extrabold text-[#65758a]'
     : 'mt-3 flex items-center gap-3 text-[11px] font-extrabold text-[#8a95a8]';
 
   return (

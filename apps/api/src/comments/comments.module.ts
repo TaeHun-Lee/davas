@@ -6,9 +6,10 @@ import { DiaryEntity } from '../database/entities/diary.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { CommentsController } from './comments.controller';
 import { CommentsService } from './comments.service';
+import { DiariesModule } from '../diaries/diaries.module';
 
 @Module({
-  imports: [AuthModule, NotificationsModule, TypeOrmModule.forFeature([CommentEntity, DiaryEntity])],
+  imports: [AuthModule, NotificationsModule, DiariesModule, TypeOrmModule.forFeature([CommentEntity, DiaryEntity])],
   controllers: [CommentsController],
   providers: [CommentsService],
 })

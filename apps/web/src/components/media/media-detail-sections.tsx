@@ -20,7 +20,6 @@ export function StillCutStrip({ media }: { media: MediaDetail }) {
     <section className="mt-5">
       <div className="flex items-center justify-between">
         <h3 className="text-[16px] font-black leading-[22px] tracking-[-0.025em] text-[#1f4e82]">스틸 컷</h3>
-        <button type="button" className="text-[12px] font-extrabold text-[#7d889a]">더보기 &gt;</button>
       </div>
       {stills.length > 0 ? (
         <div className="mt-3 grid grid-cols-3 gap-2.5 max-[374px]:grid-cols-2">

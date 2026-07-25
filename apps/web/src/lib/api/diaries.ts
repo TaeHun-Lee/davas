@@ -8,9 +8,14 @@ export type CreateDiaryPayload = {
   watchedDate: string;
   title: string;
   content: string;
-  visibility: 'PUBLIC' | 'PRIVATE';
+  visibility: 'PRIVATE' | 'FRIENDS' | 'SELECTED';
   hasSpoiler: boolean;
   tags: string[];
+  companions?: Array<{ id?: string; userId?: string; displayName: string }>;
+  watchedPlace?: string | null;
+  mood?: string | null;
+  memoryNote?: string | null;
+  selectedUserIds?: string[];
 };
 
 export type EditableDiary = CreateDiaryPayload & {
@@ -25,6 +30,10 @@ export type EditableDiary = CreateDiaryPayload & {
     mediaType: 'MOVIE' | 'TV';
     genres: string[];
   };
+  ownerMode?: boolean;
+  author?: { id: string; nickname: string };
+  commentCount?: number;
+  reactions?: Array<{ id: string; emoji: string; userId: string }>;
 };
 
 export type CreatedDiaryResponse = {
@@ -72,11 +81,15 @@ export async function getDiary(id: string) {
     credentials: 'include',
   });
 
-  if (!response.ok) {
-    throw new Error('diary detail failed');
-  }
+  if (!response.ok) throw Object.assign(new Error('diary detail failed'), { status: response.status });
 
   return ((await response.json()) as { diary: EditableDiary }).diary;
+}
+
+export async function deleteDiary(id: string) {
+  const response = await fetch(`${getApiBaseUrl()}/diaries/${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
+  if (!response.ok) throw Object.assign(new Error('diary delete failed'), { status: response.status });
+  return response.json() as Promise<{ id: string; deleted: true }>;
 }
 
 export async function updateDiary(id: string, payload: CreateDiaryPayload) {

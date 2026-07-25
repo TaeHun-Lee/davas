@@ -12,7 +12,6 @@ function PosterPlaceholder() {
     <div className="h-[126px] w-[86px] shrink-0 overflow-hidden rounded-[16px] bg-gradient-to-br from-[#07111f] via-[#194c85] to-[#8ba9d6] shadow-[0_12px_22px_rgba(21,38,69,0.18)]" />
   );
 }
-
 function SelectedMediaLoadingPlaceholder() {
   return (
     <section data-design="selected-media-placeholder" aria-label="선택한 작품을 불러오는 중" className="card-surface flex gap-4 rounded-[24px] p-4 shadow-[0_14px_32px_rgba(31,65,114,0.09)]">
@@ -29,7 +28,6 @@ function SelectedMediaLoadingPlaceholder() {
     </section>
   );
 }
-
 export function SelectedMediaCard({ media, isLoading = false }: { media: DiaryComposeMedia | null; isLoading?: boolean }) {
   if (isLoading || !media) {
     return <SelectedMediaLoadingPlaceholder />;
@@ -57,12 +55,3 @@ export function SelectedMediaCard({ media, isLoading = false }: { media: DiaryCo
     </section>
   );
 }
-
-export const mockDiaryMedia: DiaryComposeMedia = {
-  id: 'mock-inception',
-  title: '인셉션',
-  originalTitle: 'Inception',
-  posterUrl: null,
-  meta: '2010 · 148분',
-  genres: ['SF', '스릴러'],
-};

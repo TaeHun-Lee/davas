@@ -6,9 +6,15 @@
     "dev": "nest start --watch",
     "build": "nest build",
     "start": "node dist/main.js",
-    "test": "node --test --import tsx \"src/**/*.spec.ts\"",
+    "test": "node ../../scripts/run-tests.mjs api",
     "lint": "tsc --noEmit -p tsconfig.json",
-    "typeorm": "typeorm-ts-node-commonjs"
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:run": "typeorm migration:run -d dist/database/data-source.js",
+    "migration:revert": "typeorm migration:revert -d dist/database/data-source.js",
+    "migration:show": "typeorm migration:show -d dist/database/data-source.js",
+    "migration:run:src": "npm run typeorm -- migration:run -d src/database/data-source.ts",
+    "migration:revert:src": "npm run typeorm -- migration:revert -d src/database/data-source.ts",
+    "migration:show:src": "npm run typeorm -- migration:show -d src/database/data-source.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",
@@ -36,6 +42,7 @@
     "@types/passport-jwt": "^4.0.1",
     "tsx": "^4.19.2",
     "@types/pg": "^8.11.10",
-    "sql.js": "^1.12.0"
+    "sql.js": "^1.12.0",
+    "ts-node": "^10.9.2"
   }
 }

@@ -62,7 +62,7 @@ function actionClass(kind: MediaHeroCarouselAction['kind']) {
   if (kind === 'primary') {
     return 'archive-primary-action flex h-[34px] flex-[1.2] items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-[#2f7eea] px-3 text-[11px] font-extrabold leading-[34px] text-white shadow-[0_9px_18px_rgba(47,126,234,0.28)]';
   }
-  return 'archive-secondary-action today-detail-button flex h-[36px] min-w-0 items-center justify-center whitespace-nowrap rounded-full border border-[#e8eef6] bg-white px-3 text-[11px] font-extrabold leading-[14px] text-[#536179] shadow-[0_5px_12px_rgba(31,65,114,0.05)]';
+  return 'archive-secondary-action today-detail-button flex min-h-11 min-w-0 items-center justify-center whitespace-nowrap rounded-full border border-[#e8eef6] bg-white px-3 text-[11px] font-extrabold leading-[14px] text-[#536179] shadow-[0_5px_12px_rgba(31,65,114,0.05)]';
 }
 
 function isInteractivePointerTarget(target: EventTarget | null) {
@@ -71,17 +71,18 @@ function isInteractivePointerTarget(target: EventTarget | null) {
 
 export function MediaHeroCarousel({ items, cardLabel, actions, placeholder, autoPlay = false, autoPlayMs = 3000, className = '' }: MediaHeroCarouselProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const pointerStartX = useRef<number | null>(null);
   const carouselItems = items;
   const dragThreshold = 42;
 
   useEffect(() => {
-    if (!autoPlay || carouselItems.length <= 1) return;
+    if (!autoPlay || isPaused || carouselItems.length <= 1 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const timer = setInterval(() => {
       setActiveIndex((index) => (index + 1) % carouselItems.length);
     }, autoPlayMs);
     return () => clearInterval(timer);
-  }, [autoPlay, autoPlayMs, carouselItems.length]);
+  }, [autoPlay, autoPlayMs, carouselItems.length, isPaused]);
 
   function goPrevious() {
     setActiveIndex((index) => (index - 1 + carouselItems.length) % carouselItems.length);
@@ -163,6 +164,7 @@ export function MediaHeroCarousel({ items, cardLabel, actions, placeholder, auto
           ))}
         </div>
       ) : null}
+      {autoPlay && carouselItems.length > 1 ? <button type="button" onClick={() => setIsPaused((value) => !value)} className="mx-auto mt-2 flex min-h-11 items-center rounded-full px-4 text-[11px] font-extrabold text-[#526078]">{isPaused ? '자동 넘김 시작' : '자동 넘김 정지'}</button> : null}
     </section>
   );
 }

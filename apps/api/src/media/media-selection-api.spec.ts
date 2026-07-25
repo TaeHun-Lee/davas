@@ -10,6 +10,7 @@ function source(path: string) {
 const controllerSource = source('media.controller.ts');
 const moduleSource = source('media.module.ts');
 const dtoSource = source('dto/media-selection.dto.ts');
+const watchlistControllerSource = readFileSync(join(process.cwd(), 'src/watchlist/watchlist.controller.ts'), 'utf8');
 
 describe('Media selection API contract', () => {
   it('exposes POST /api/media/selections through a dedicated selection DTO and service', () => {
@@ -17,7 +18,7 @@ describe('Media selection API contract', () => {
     assert.match(controllerSource, /MediaSelectionDto/);
     assert.match(controllerSource, /mediaSelectionService\.select/);
     assert.match(moduleSource, /MediaSelectionService/);
-    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[MediaEntity, DiaryEntity, MediaFavoriteEntity\]\)/);
+    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[MediaEntity, DiaryEntity, MediaFavoriteEntity, WatchlistItemEntity\]\)/);
     assert.match(dtoSource, /externalProvider/);
     assert.match(dtoSource, /externalId/);
     assert.match(dtoSource, /mediaType/);
@@ -41,12 +42,10 @@ describe('Media selection API contract', () => {
     );
   });
 
-  it('exposes authenticated favorite media list before the catch-all media detail route', () => {
-    assert.match(controllerSource, /@Get\('favorites'\)/);
-    assert.match(controllerSource, /mediaService\.findFavorites\(await this\.getUserId\(request\)\)/);
-    assert.ok(
-      controllerSource.indexOf("@Get('favorites')") < controllerSource.indexOf("@Get(':id')"),
-      'favorite list route must be declared before @Get(:id)',
-    );
+  it('removes legacy favorite mutations and exposes watchlist as the single planning contract', () => {
+    assert.doesNotMatch(controllerSource, /favorites|:id\/favorite|toggleFavorite|findFavorites/);
+    assert.match(watchlistControllerSource, /@Controller\('watchlist'\)/);
+    assert.match(watchlistControllerSource, /CreateWatchlistDto/);
+    assert.match(watchlistControllerSource, /UpdateWatchlistDto/);
   });
 });

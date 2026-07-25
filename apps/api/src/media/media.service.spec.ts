@@ -268,9 +268,9 @@ describe('MediaService detail', () => {
     ]);
   });
 
-  it('includes the authenticated favorite state for the selected media detail', async () => {
+  it('includes the authenticated watchlist state without exposing legacy favorite state', async () => {
     const tmdbClient = new FakeTmdbClient();
-    const favorites = fakeFavoriteRepository({ id: 'favorite-id', userId: 'user-id', mediaId: 'media-id' });
+    const watchlist = { findOne: async () => ({ id: 'watchlist-id', status: 'ACTIVE' }) };
     const service = new MediaService(tmdbClient as never, fakeRepository({
       id: 'media-id',
       externalProvider: 'TMDB',
@@ -285,12 +285,13 @@ describe('MediaService detail', () => {
       genres: ['18'],
       country: null,
       runtime: null,
-    }) as never, fakeDiaryRepository(null) as never, favorites as never);
+    }) as never, fakeDiaryRepository(null) as never, fakeFavoriteRepository(null) as never, watchlist as never);
 
     const detail = await service.findDetail('media-id', 'user-id');
 
-    assert.equal(detail.isFavorite, true);
-    assert.deepEqual(favorites.calls[0], { method: 'findOne', input: { where: { userId: 'user-id', mediaId: 'media-id' } } });
+    assert.equal(detail.watchlistItemId, 'watchlist-id');
+    assert.equal(detail.watchlistStatus, 'ACTIVE');
+    assert.equal('isFavorite' in detail, false);
   });
 
   it('toggles a media favorite for the authenticated user', async () => {

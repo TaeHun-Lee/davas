@@ -14,7 +14,7 @@ type TabItem = {
 const tabs: TabItem[] = [
   { href: '/', label: '홈', name: 'home' },
   { href: '/explore', label: '탐색', name: 'explore' },
-  { href: '/community', label: '커뮤니티', name: 'community' },
+  { href: '/feed', label: '친구 피드', name: 'community' },
   { href: '/diary', label: '다이어리', name: 'diary' },
   { href: '/profile', label: '프로필', name: 'profile' },
 ];
@@ -74,13 +74,13 @@ export function BottomTabBar() {
     <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-[430px] -translate-x-1/2 rounded-t-[30px] bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+8px)] pt-3 shadow-[0_-16px_36px_rgba(33,62,105,0.16)] backdrop-blur">
       <div className="grid grid-cols-5">
         {tabs.map((tab) => {
-          const isActive = pathname === tab.href;
+          const isActive = tab.href === '/' ? pathname === '/' : tab.href === '/feed' ? pathname.startsWith('/feed') || pathname.startsWith('/community') : pathname === tab.href || pathname.startsWith(`${tab.href}/`);
           return (
             <Link
               key={tab.href}
               href={tab.href}
               className={`relative flex h-[62px] flex-col items-center justify-center gap-1 text-[11px] font-bold leading-[14px] transition ${
-                isActive ? 'text-[#216bd8]' : 'text-[#8e9aaf]'
+                isActive ? 'text-[#216bd8]' : 'text-[#65758a]'
               }`}
               aria-current={isActive ? 'page' : undefined}
             >

@@ -26,7 +26,7 @@ export function DiaryInsightGrid({
   onSelectAll,
 }: DiaryInsightGridProps) {
   return (
-    <section className="mt-5 grid grid-cols-1 gap-4 min-[390px]:grid-cols-2" aria-label="다이어리 통계">
+    <section className="mt-5 grid grid-cols-1 gap-4" aria-label="다이어리 통계">
       <DiaryMonthlyCalendarCard
         year={year}
         month={month}

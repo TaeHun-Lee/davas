@@ -1,10 +1,1 @@
-import { Suspense } from 'react';
-import { DiaryDashboard } from '../../components/diary/DiaryDashboard';
-
-export default function DiaryPage() {
-  return (
-    <Suspense fallback={null}>
-      <DiaryDashboard />
-    </Suspense>
-  );
-}
+import { redirect } from 'next/navigation'; export default function LegacyDiary() { redirect('/me'); }
