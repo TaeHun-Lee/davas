@@ -8,3 +8,10 @@ coverage/
 !.env.*.example
 .DS_Store
 npm-debug.log*
+
+# Runtime data and database dumps must stay outside the repository.
+/backups/
+/uploads/
+*.sql
+*.dump
+*.backup
