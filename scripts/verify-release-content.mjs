@@ -2,21 +2,13 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const root = process.cwd();
-const legalSource = readFileSync(
-  join(root, 'apps/web/src/content/legal/index.ts'),
-  'utf8',
-);
-const sharedSource = readFileSync(
-  join(root, 'packages/shared/src/index.ts'),
-  'utf8',
-);
+const legalSource = readFileSync(join(root, 'apps/web/src/content/legal/index.ts'), 'utf8');
+const sharedSource = readFileSync(join(root, 'packages/shared/src/index.ts'), 'utf8');
 
 const violations = [];
 const fixturePattern = /fixture\s*:\s*true/;
-const placeholderPattern =
-  /개발용 문서|개발용 fixture|배포에 사용할 수 없습니다|TODO|PLACEHOLDER/i;
-const versionPattern =
-  /CURRENT_(?:TERMS|PRIVACY)_VERSION\s*=\s*['"]([^'"]+)['"]/g;
+const placeholderPattern = /개발용 문서|개발용 fixture|배포에 사용할 수 없습니다|TODO|PLACEHOLDER/i;
+const versionPattern = /CURRENT_(?:TERMS|PRIVACY)_VERSION\s*=\s*['"]([^'"]+)['"]/g;
 const versions = [...sharedSource.matchAll(versionPattern)].map((match) => match[1]);
 
 if (fixturePattern.test(legalSource)) {

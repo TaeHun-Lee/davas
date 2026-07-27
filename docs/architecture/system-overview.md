@@ -1,7 +1,7 @@
 ---
 title: Davas System Overview
 status: active
-last-verified: 2026-07-25
+last-verified: 2026-07-26
 ---
 
 # Davas System Overview
@@ -38,20 +38,20 @@ scripts/                  Deterministic test/docs harness
 
 ## Core Web routes
 
-| Route | 역할 |
-| --- | --- |
-| `/` | 친구와 본인의 최신 친구 공개 기록 |
-| `/records/new` | 작품 찾기 + 기록 작성 |
-| `/records/:id` | 기록 상세 |
-| `/records/:id/edit` | 내 기록 수정 |
-| `/search?scope=friends|mine` | 두 축 기록 검색 |
-| `/me` | 내 기록 |
-| `/friends` | 친구 요청·목록·초대 |
-| `/friends/invite/:token` | 친구 초대 확인 |
-| `/settings` | 프로필·계정 설정 |
-| `/login`, `/signup` | 인증과 가입 초대 |
-| `/terms`, `/privacy` | 공개 legal route |
-| `/offline` | PWA offline 안내 |
+| Route                                           | 역할                              |
+| ----------------------------------------------- | --------------------------------- |
+| `/`                                             | 친구와 본인의 최신 친구 공개 기록 |
+| `/records/new`                                  | 작품 찾기 + 기록 작성             |
+| `/records/:id`                                  | 기록 상세                         |
+| `/records/:id/edit`                             | 내 기록 수정                      |
+| `/search?scope=friends` or `/search?scope=mine` | 두 축 기록 검색                   |
+| `/me`                                           | 내 기록                           |
+| `/friends`                                      | 친구 요청·목록·초대               |
+| `/friends/invite/:token`                        | 친구 초대 확인                    |
+| `/settings`                                     | 프로필·계정 설정                  |
+| `/login`, `/signup`                             | 인증과 가입 초대                  |
+| `/terms`, `/privacy`                            | 공개 legal route                  |
+| `/offline`                                      | PWA offline 안내                  |
 
 Legacy `/diary`, `/community`, `/feed`, `/explore`, `/watchlist`, `/profile` route는 새 IA로 redirect한다. 새 기능의 근거로 사용하지 않는다.
 
@@ -71,19 +71,29 @@ Legacy `/diary`, `/community`, `/feed`, `/explore`, `/watchlist`, `/profile` rou
 - Global prefix: `/api`
 - Global validation: whitelist + transform + forbid non-whitelisted
 - API responses: `Cache-Control: private, no-store`
-- Swagger: `/api/docs`
+- Swagger: `/api/docs` in development only; production does not register the route
 
 현재 핵심 module:
 
-| Module | 책임 |
-| --- | --- |
-| `auth` / `invites` | login, signup, 가입 초대 code, cookie session |
-| `media` | TMDB search/detail, internal media selection |
-| `diaries` | create/detail/update/delete, feed/me filters, access policy |
-| `friends` | request state, search, one-time friend invite token |
-| `users` | profile update and account deletion |
+| Module             | 책임                                                        |
+| ------------------ | ----------------------------------------------------------- |
+| `auth` / `invites` | login, signup, 가입 초대 code, cookie session               |
+| `media`            | TMDB search/detail, internal media selection                |
+| `diaries`          | create/detail/update/delete, feed/me filters, access policy |
+| `friends`          | request state, search, one-time friend invite token         |
+| `users`            | profile update and account deletion                         |
 
-Legacy comments, reactions, notifications, recommendations, watchlist module은 schema/API compatibility를 위해 남아 있지만 core IA에는 노출하지 않는다.
+Legacy source와 schema는 파괴적으로 삭제하지 않지만 controller는 production runtime graph에 등록하지 않는다.
+
+| Legacy 영역                      | Runtime 상태                         | 보존 범위                                                     |
+| -------------------------------- | ------------------------------------ | ------------------------------------------------------------- |
+| comments / reactions / community | disabled, route 404                  | source, table, migration                                      |
+| recommendations                  | disabled, route 404                  | source only                                                   |
+| watchlist / media favorites      | disabled, route 404                  | source, table, migration                                      |
+| notifications                    | HTTP controller disabled             | friend workflow가 사용하는 persistence service, table, source |
+| person search / credits          | media controller에서 제거, route 404 | TMDB client helper source                                     |
+
+이 영역을 다시 노출하려면 제품 문서를 먼저 바꾸고 `core-runtime-surface.spec.ts`와 privacy 검증을 함께 갱신해야 한다.
 
 ## Data contract
 
@@ -112,6 +122,16 @@ Order is fixed in `apps/api/src/database/typeorm.config.ts`.
    - `viewing_method`, nullable rating, `shared_at`, idempotency and cursor indexes
 4. `FriendInvitesAndConsents1720670600000`
    - Friend invite tokens, legal consent, file cleanup jobs
+5. `MediaCanonicalIdentity1720670700000`
+   - Media provider/external ID canonical identity and deduplication
+6. `CoreQueryIndexes1720670800000`
+   - Friendship lookups and measured visible-feed cursor index
+7. `FeedIndexSharedAtPredicate1720670900000`
+   - Aligns the feed index predicate with the non-null `sharedAt` query contract
+8. `LegacyTmdbImageSafety1720671000000`
+   - Clears unsafe legacy TMDB image paths before strict image URL mapping
+9. `DropLegacyMediaIdentityIndex1720671100000`
+   - Removes a legacy standalone two-column media identity index using PostgreSQL catalog key columns
 
 기존 migration을 수정하지 않는다. Schema 변경은 새 additive migration으로 추가한다.
 

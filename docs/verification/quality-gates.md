@@ -12,10 +12,14 @@ last-verified: 2026-07-25
 
 ```bash
 npm ci
+npm run format:check
 npm run docs:check
+npm run verify:deployment
 npm test
 npm run lint
 npm run build
+npm run verify:auth
+npm run verify:upload
 ```
 
 한 번에 실행:
@@ -24,7 +28,7 @@ npm run build
 npm run verify
 ```
 
-`npm run verify`는 docs → tests → type/lint → production build 순서로 중단한다. 앞 gate가 실패하면 뒤 gate 결과를 완료 증거로 사용하지 않는다.
+`npm run verify`의 실제 chain은 formatting/line endings → docs → deployment contracts → tests → type/lint → production build → authenticated HTTP → upload HTTP 순서다. 앞 gate가 실패하면 뒤 gate 결과를 완료 증거로 사용하지 않는다.
 
 Production release 전 dependency advisory까지 포함한다.
 
@@ -32,19 +36,25 @@ Production release 전 dependency advisory까지 포함한다.
 npm run verify:release
 ```
 
-`verify:release`는 deterministic gate 후 `npm run audit:prod`를 실행한다. High/Critical advisory가 있으면 dependency upgrade가 별도 변경을 요구하더라도 release는 차단하고 결과를 보고한다.
+`verify:release`의 실제 chain은 `verify` → `verify:caddy` → `audit:prod`다. Caddy verifier는 real Caddy container와 mock upstream으로 browser-facing header가 누락·중복되지 않는지 확인한다. 현재 비공식 self-host release는 legal 원문을 검사하지 않는다.
+
+`audit:prod`가 non-zero를 반환하면 dependency upgrade가 별도 변경을 요구하더라도 release는 차단하고 결과를 보고한다.
 
 ## What each gate proves
 
-| Gate | Command | 증명하는 것 | 증명하지 않는 것 |
-| --- | --- | --- | --- |
-| Docs | `npm run docs:check` | 필수 문서·Skill 존재, UTF-8, relative links, 금지된 stale 문서 부재 | 내용의 제품 타당성 |
-| Unit/contract | `npm test` | 발견된 Shared/API/Web test files의 실행 결과 | PostgreSQL·TMDB·browser E2E |
-| Type/lint | `npm run lint` | API TypeScript와 Web ESLint gate | runtime behavior |
-| Build | `npm run build` | Shared, Nest, Next production artifacts 생성 | production DB migration |
-| Production audit | `npm run audit:prod` | 설치된 production dependency의 known advisory | application-specific exploitability |
-| Migration | `migration:show/run` | 실제 PostgreSQL schema chain | browser UX |
-| Manual mobile | 360/390/430px | overflow, fixed nav/CTA, keyboard, focus | server access control 전체 |
+| Gate             | Command                                              | 증명하는 것                                                             | 증명하지 않는 것                     |
+| ---------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------ |
+| Docs             | `npm run docs:check`                                 | 필수 문서·Skill 존재, UTF-8, relative links, 금지된 stale 문서 부재     | 내용의 제품 타당성                   |
+| Deployment       | `npm run verify:deployment`                          | root scripts, runtime ignores, Web Docker API URL, migration docs 계약  | real container/network/DB 상태       |
+| Unit/contract    | `npm test`                                           | 발견된 Shared/API/Web test files의 실행 결과                            | PostgreSQL·TMDB·browser E2E          |
+| Type/lint        | `npm run lint`                                       | API TypeScript와 Web ESLint gate                                        | runtime behavior                     |
+| Build            | `npm run build`                                      | Shared, Nest, Next production artifacts 생성                            | production DB migration              |
+| Auth HTTP        | `npm run verify:auth`                                | compiled API의 cookie auth HTTP contract                                | public proxy/TLS 경계                |
+| Upload HTTP      | `npm run verify:upload`                              | compiled API의 upload HTTP contract                                     | production uploads volume durability |
+| Caddy            | `npm run verify:caddy`                               | real Caddy routing과 security-header replacement                        | public DNS·certificate issuance      |
+| Production audit | `npm run audit:prod`                                 | 설치된 production dependency의 known advisory                           | application-specific exploitability  |
+| Migration        | `migration:show` and `migration:run` in `@davas/api` | compiled 실제 PostgreSQL schema chain                                   | browser UX                           |
+| Manual mobile    | 360/390/430px                                        | overflow, fixed nav/CTA, keyboard, focus                                | server access control 전체           |
 
 ## Targeted tests
 

@@ -11,22 +11,13 @@ const {
   ACCESS_TOKEN_COOKIE,
   JwtCookieAuthGuard,
 } = require('../apps/api/dist/auth/jwt-cookie-auth.guard.js');
-const {
-  IS_PUBLIC_KEY,
-  Public,
-} = require('../apps/api/dist/auth/public.decorator.js');
-const {
-  AuthController,
-} = require('../apps/api/dist/auth/auth.controller.js');
-const {
-  InvitesController,
-} = require('../apps/api/dist/invites/invites.controller.js');
+const { IS_PUBLIC_KEY, Public } = require('../apps/api/dist/auth/public.decorator.js');
+const { AuthController } = require('../apps/api/dist/auth/auth.controller.js');
+const { InvitesController } = require('../apps/api/dist/invites/invites.controller.js');
 const {
   FriendInvitesController,
 } = require('../apps/api/dist/friends/friend-invites.controller.js');
-const {
-  HealthController,
-} = require('../apps/api/dist/health.controller.js');
+const { HealthController } = require('../apps/api/dist/health.controller.js');
 
 function publicMetadata(controller, method) {
   return Reflect.getMetadata(
@@ -38,7 +29,7 @@ function publicMetadata(controller, method) {
 assert.equal(publicMetadata(HealthController, 'check'), true);
 assert.equal(publicMetadata(AuthController, 'signup'), true);
 assert.equal(publicMetadata(AuthController, 'login'), true);
-assert.notEqual(publicMetadata(AuthController, 'logout'), true);
+assert.equal(publicMetadata(AuthController, 'logout'), true);
 assert.notEqual(publicMetadata(AuthController, 'me'), true);
 assert.equal(publicMetadata(InvitesController, 'validate'), true);
 assert.notEqual(publicMetadata(InvitesController, 'create'), true);
@@ -61,10 +52,7 @@ for (const [method, path, isPublic] of [
   ['publicRoute', 'public', true],
   ['privateRoute', 'private', false],
 ]) {
-  const descriptor = Object.getOwnPropertyDescriptor(
-    BoundaryController.prototype,
-    method,
-  );
+  const descriptor = Object.getOwnPropertyDescriptor(BoundaryController.prototype, method);
   Get(path)(BoundaryController.prototype, method, descriptor);
   if (isPublic) Public()(BoundaryController.prototype, method, descriptor);
 }
