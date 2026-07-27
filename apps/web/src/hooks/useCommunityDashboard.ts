@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { getCommunityDashboard } from '../lib/api/community';
-import type { CommunityDashboardResponse, CommunityTab } from '../components/community/community-types';
+import type {
+  CommunityDashboardResponse,
+  CommunityTab,
+} from '../components/community/community-types';
 
 export type CommunityDashboardStatus = 'loading' | 'ready' | 'error';
 

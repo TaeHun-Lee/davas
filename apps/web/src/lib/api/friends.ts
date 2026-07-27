@@ -1,8 +1,68 @@
-import { getApiBaseUrl } from './base-url';
-export type FriendUser={id:string;nickname:string;profileImageUrl:string|null;relationship?:'NONE'|'FRIEND'|'SENT'|'RECEIVED';requestId?:string|null}; export type FriendRow={id:string;status:'PENDING'|'ACCEPTED'|'REJECTED';direction:'SENT'|'RECEIVED';user:FriendUser}; export type FriendsResponse={friends:FriendRow[];received:FriendRow[];sent:FriendRow[]};
-async function json<T>(r:Response){if(!r.ok)throw new Error('friends request failed');return r.json() as Promise<T>}
-export async function getFriends(){return json<FriendsResponse>(await fetch(`${getApiBaseUrl()}/friends`,{credentials:'include'}))} export async function searchFriends(q:string){return json<{items:FriendUser[]}>(await fetch(`${getApiBaseUrl()}/friends/search?q=${encodeURIComponent(q)}`,{credentials:'include'}))} export async function requestFriend(userId:string){return json<FriendRow>(await fetch(`${getApiBaseUrl()}/friends/requests`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId})}))} export async function acceptFriend(id:string){return json<FriendRow>(await fetch(`${getApiBaseUrl()}/friends/requests/${id}/accept`,{method:'PATCH',credentials:'include'}))} export async function rejectFriend(id:string){return json<FriendRow>(await fetch(`${getApiBaseUrl()}/friends/requests/${id}/reject`,{method:'PATCH',credentials:'include'}))} export async function cancelFriend(id:string){return json<{deleted:true}>(await fetch(`${getApiBaseUrl()}/friends/requests/${id}`,{method:'DELETE',credentials:'include'}))} export async function removeFriend(id:string){return json<{deleted:true}>(await fetch(`${getApiBaseUrl()}/friends/${id}`,{method:'DELETE',credentials:'include'}))}
-export async function createFriendInvite(){return json<{token:string;expiresAt:string}>(await fetch(`${getApiBaseUrl()}/friends/invites`,{method:'POST',credentials:'include'}))}
-export type FriendInviteState={status:'VALID'|'EXPIRED'|'SELF'|'ALREADY_FRIENDS';inviter?:FriendUser;expiresAt?:string};
-export async function inspectFriendInvite(token:string){return json<FriendInviteState>(await fetch(`${getApiBaseUrl()}/friends/invites/${encodeURIComponent(token)}`,{credentials:'include'}))}
-export async function acceptFriendInvite(token:string){return json<{connected:true;inviter:FriendUser}>(await fetch(`${getApiBaseUrl()}/friends/invites/${encodeURIComponent(token)}/accept`,{method:'POST',credentials:'include'}))}
+import type {
+  DeleteResult,
+  FriendInviteState,
+  FriendshipMutationResponse,
+  FriendsResponse,
+  FriendUser,
+} from '@davas/shared';
+import { coreFetch } from './core';
+
+export type { FriendInviteState, FriendRow, FriendsResponse, FriendUser } from '@davas/shared';
+
+export function getFriends() {
+  return coreFetch<FriendsResponse>('/friends');
+}
+
+export function searchFriends(q: string) {
+  return coreFetch<{ items: FriendUser[] }>(`/friends/search?q=${encodeURIComponent(q)}`);
+}
+
+export function requestFriend(userId: string) {
+  return coreFetch<FriendshipMutationResponse>('/friends/requests', {
+    method: 'POST',
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export function acceptFriend(id: string) {
+  return coreFetch<FriendshipMutationResponse>(`/friends/requests/${id}/accept`, {
+    method: 'PATCH',
+  });
+}
+
+export function rejectFriend(id: string) {
+  return coreFetch<FriendshipMutationResponse>(`/friends/requests/${id}/reject`, {
+    method: 'PATCH',
+  });
+}
+
+export function cancelFriend(id: string) {
+  return coreFetch<DeleteResult>(`/friends/requests/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+export function removeFriend(id: string) {
+  return coreFetch<DeleteResult>(`/friends/${id}`, { method: 'DELETE' });
+}
+
+export function createFriendInvite() {
+  return coreFetch<{ token: string; expiresAt: string }>('/friends/invites', {
+    method: 'POST',
+  });
+}
+
+export function inspectFriendInvite(token: string) {
+  return coreFetch<FriendInviteState>(
+    `/friends/invites/${encodeURIComponent(token)}`,
+    {},
+    { auth: 'optional' },
+  );
+}
+
+export function acceptFriendInvite(token: string) {
+  return coreFetch<{ connected: true; inviter: FriendUser }>(
+    `/friends/invites/${encodeURIComponent(token)}/accept`,
+    { method: 'POST' },
+  );
+}

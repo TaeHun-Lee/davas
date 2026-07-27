@@ -8,8 +8,18 @@ function ClapperBadge({ label }: { label: string }) {
   return (
     <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/45 px-2 py-1 text-[11px] font-black text-white backdrop-blur">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M4 8h16v11H4zM4 8l15-3 1 3" stroke="white" strokeWidth="1.8" strokeLinejoin="round" />
-        <path d="M8 7.2 10 4.5M13 6.4 15 3.8" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+        <path
+          d="M4 8h16v11H4zM4 8l15-3 1 3"
+          stroke="white"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M8 7.2 10 4.5M13 6.4 15 3.8"
+          stroke="white"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
       </svg>
       {label}
     </span>
@@ -18,7 +28,10 @@ function ClapperBadge({ label }: { label: string }) {
 
 function ProfileListTile({ item }: { item: ProfileListCard }) {
   return (
-    <article className="relative h-[126px] w-[160px] shrink-0 overflow-hidden rounded-[14px] bg-[#d9e4f2] shadow-[0_12px_26px_rgba(31,65,114,0.14)]" data-design="profile-list-card">
+    <article
+      className="relative h-[126px] w-[160px] shrink-0 overflow-hidden rounded-[14px] bg-[#d9e4f2] shadow-[0_12px_26px_rgba(31,65,114,0.14)]"
+      data-design="profile-list-card"
+    >
       {item.posterUrl ? (
         <img src={item.posterUrl} alt="" className="h-full w-full object-cover" />
       ) : (
@@ -27,7 +40,9 @@ function ProfileListTile({ item }: { item: ProfileListCard }) {
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,16,30,0.06)_0%,rgba(9,16,30,0.82)_100%)]" />
       <ClapperBadge label={item.countLabel} />
       <div className="absolute inset-x-0 bottom-0 p-3 text-white">
-        <h3 className="line-clamp-2 text-[13px] font-black leading-[17px] tracking-[-0.03em]">{item.title}</h3>
+        <h3 className="line-clamp-2 text-[13px] font-black leading-[17px] tracking-[-0.03em]">
+          {item.title}
+        </h3>
         <p className="mt-1 line-clamp-1 text-[11px] font-bold text-white/82">{item.subtitle}</p>
       </div>
     </article>
@@ -50,7 +65,9 @@ export function ProfileListsSection({ lists }: ProfileListsSectionProps) {
         </div>
       ) : (
         <div className="card-surface rounded-[20px] bg-white px-5 py-6 text-center shadow-[0_12px_28px_rgba(31,65,114,0.08)]">
-          <p className="text-[13px] font-bold leading-5 text-[#8a96a9]">아직 리스트로 보여줄 기록이 없어요.</p>
+          <p className="text-[13px] font-bold leading-5 text-[#8a96a9]">
+            아직 리스트로 보여줄 기록이 없어요.
+          </p>
         </div>
       )}
     </section>

@@ -10,9 +10,9 @@ describe('Davas PWA', () => {
     assert.ok(existsSync(join(process.cwd(), 'src/app/icon.jpg')));
     const manifest = read('src/app/manifest.ts');
     assert.match(manifest, /\/icon\.jpg/);
-    assert.match(manifest, /start_url:'\/'/);
-    assert.match(manifest, /scope:'\/'/);
-    assert.match(manifest, /display:'standalone'/);
+    assert.match(manifest, /start_url:\s*'\/'/);
+    assert.match(manifest, /scope:\s*'\/'/);
+    assert.match(manifest, /display:\s*'standalone'/);
     assert.match(manifest, /#f6f8fc/);
     assert.match(manifest, /#284778/);
   });
@@ -20,7 +20,8 @@ describe('Davas PWA', () => {
   it('waits for explicit consent before activating an update and reloads after controller change', () => {
     const worker = read('public/sw.js');
     const status = read('src/components/pwa/PwaStatus.tsx');
-    const installHandler = worker.match(/self\.addEventListener\('install',[\s\S]*?\n\}\);/)?.[0] ?? '';
+    const installHandler =
+      worker.match(/self\.addEventListener\('install',[\s\S]*?\n\}\);/)?.[0] ?? '';
     assert.match(worker, /event\.data\?\.type === 'SKIP_WAITING'/);
     assert.doesNotMatch(installHandler, /self\.skipWaiting\(\)/);
     assert.match(status, /nextRegistration\.waiting/);

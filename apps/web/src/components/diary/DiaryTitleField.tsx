@@ -1,4 +1,12 @@
-export function DiaryTitleField({ value, fallbackTitle, onChange }: { value: string; fallbackTitle: string; onChange: (value: string) => void }) {
+export function DiaryTitleField({
+  value,
+  fallbackTitle,
+  onChange,
+}: {
+  value: string;
+  fallbackTitle: string;
+  onChange: (value: string) => void;
+}) {
   return (
     <label className="block rounded-[22px] bg-white p-4 shadow-[0_12px_28px_rgba(31,65,114,0.06)]">
       <span className="text-[14px] font-black text-[#1f2a44]">다이어리 제목</span>

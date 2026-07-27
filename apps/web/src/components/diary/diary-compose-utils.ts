@@ -6,7 +6,15 @@ export function clampRating(value: number) {
   return Math.min(5, Math.max(0, Math.round(value * 10) / 10));
 }
 
-export function ratingFromPointer({ clientX, left, width }: { clientX: number; left: number; width: number }) {
+export function ratingFromPointer({
+  clientX,
+  left,
+  width,
+}: {
+  clientX: number;
+  left: number;
+  width: number;
+}) {
   if (width <= 0) return 0;
   const ratio = Math.min(1, Math.max(0, (clientX - left) / width));
   return clampRating(ratio * 5);
@@ -17,7 +25,12 @@ export function formatDisplayDate(value: string) {
 }
 
 export function todayIsoDate(now = new Date()) {
-  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now);
   const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   return `${value.year}-${value.month}-${value.day}`;
 }
@@ -35,7 +48,12 @@ type ValidateDiaryComposeInput = {
   content: string;
 };
 
-export function validateDiaryCompose({ rating, watchedDate, effectiveTitle, content }: ValidateDiaryComposeInput) {
+export function validateDiaryCompose({
+  rating,
+  watchedDate,
+  effectiveTitle,
+  content,
+}: ValidateDiaryComposeInput) {
   return (
     rating >= 0 &&
     rating <= 5 &&

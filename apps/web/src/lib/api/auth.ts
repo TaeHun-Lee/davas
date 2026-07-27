@@ -1,26 +1,10 @@
+import type { AuthenticatedUser, LogoutResponse, MeResponse } from '@davas/shared';
 import { getApiBaseUrl } from './base-url';
+import { coreFetch, type CoreFetchOptions } from './core';
 
-export type AuthenticatedUser = {
-  id?: string;
-  email: string;
-  nickname: string;
-  profileImageUrl?: string | null;
-  bio?: string | null;
-  preferredGenres?: string[];
-};
-
-export type MeResponse = {
-  user: AuthenticatedUser;
-};
-
+export type { AuthenticatedUser } from '@davas/shared';
+export { CoreApiError as ApiResponseError } from './core';
 export { getApiBaseUrl };
-
-export class ApiResponseError extends Error {
-  constructor(message: string, public readonly status: number) {
-    super(message);
-    this.name = 'ApiResponseError';
-  }
-}
 
 export function normalizeProfileImageUrl(imageUrl?: string | null) {
   if (!imageUrl) return null;
@@ -31,27 +15,10 @@ export function normalizeProfileImageUrl(imageUrl?: string | null) {
   return imageUrl;
 }
 
-export async function getMe() {
-  const response = await fetch(`${getApiBaseUrl()}/auth/me`, {
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new ApiResponseError('auth me failed', response.status);
-  }
-
-  return ((await response.json()) as MeResponse).user;
+export function getMe(options?: CoreFetchOptions): Promise<AuthenticatedUser> {
+  return coreFetch<MeResponse>('/auth/me', {}, options).then((response) => response.user);
 }
 
-export async function logout() {
-  const response = await fetch(`${getApiBaseUrl()}/auth/logout`, {
-    method: 'POST',
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new Error('logout failed');
-  }
-
-  return response.json() as Promise<{ ok: boolean }>;
+export function logout() {
+  return coreFetch<LogoutResponse>('/auth/logout', { method: 'POST' });
 }

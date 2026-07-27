@@ -7,7 +7,14 @@ type SearchIconProps = {
 
 function SearchIcon({ className }: SearchIconProps) {
   return (
-    <svg className={className} width="19" height="19" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <svg
+      className={className}
+      width="19"
+      height="19"
+      viewBox="0 0 20 20"
+      fill="none"
+      aria-hidden="true"
+    >
       <circle cx="8.8" cy="8.8" r="5.7" stroke="currentColor" strokeWidth="2" />
       <path d="m13.3 13.3 3.6 3.6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
     </svg>
@@ -28,8 +35,10 @@ export type SearchFieldProps = {
   disabled?: boolean;
 };
 
-const rootClassName = 'flex h-[52px] items-center rounded-[22px] bg-white px-4 text-[#216bd8] shadow-[0_12px_30px_rgba(31,42,68,0.07)]';
-const inputClassName = 'min-w-0 flex-1 bg-transparent px-3 text-[13px] font-semibold leading-[18px] text-[#1f2a44] outline-none placeholder:text-[#9aa6b8] disabled:cursor-not-allowed disabled:opacity-60';
+const rootClassName =
+  'flex h-[52px] items-center rounded-[22px] bg-white px-4 text-[#216bd8] shadow-[0_12px_30px_rgba(31,42,68,0.07)]';
+const inputClassName =
+  'min-w-0 flex-1 bg-transparent px-3 text-[13px] font-semibold leading-[18px] text-[#1f2a44] outline-none placeholder:text-[#9aa6b8] disabled:cursor-not-allowed disabled:opacity-60';
 
 export function SearchField({
   value,
@@ -61,7 +70,9 @@ export function SearchField({
       />
       {trailing ? (
         <>
-          {trailingDivider ? <span className="mr-3 h-6 w-px bg-[#e5ebf4]" aria-hidden="true" /> : null}
+          {trailingDivider ? (
+            <span className="mr-3 h-6 w-px bg-[#e5ebf4]" aria-hidden="true" />
+          ) : null}
           <span className="shrink-0 text-[#8e9aaf]">{trailing}</span>
         </>
       ) : null}

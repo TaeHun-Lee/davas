@@ -3,7 +3,13 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ApiResponseError, getMe, logout, normalizeProfileImageUrl, type AuthenticatedUser } from '../../lib/api/auth';
+import {
+  ApiResponseError,
+  getMe,
+  logout,
+  normalizeProfileImageUrl,
+  type AuthenticatedUser,
+} from '../../lib/api/auth';
 import { DefaultProfileAvatar } from '../profile/DefaultProfileAvatar';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
@@ -140,7 +146,11 @@ export function DavasHeader() {
           <DavasLogoMark />
         </div>
 
-        <Link href="/profile" aria-label="프로필 화면으로 이동" className="flex h-11 w-11 items-center justify-center rounded-full">
+        <Link
+          href="/profile"
+          aria-label="프로필 화면으로 이동"
+          className="flex h-11 w-11 items-center justify-center rounded-full"
+        >
           <ProfileAvatar user={user} />
         </Link>
 
@@ -184,7 +194,9 @@ export function DavasHeader() {
               className="block rounded-[20px] bg-[#f7f9fd] px-4 py-3 text-[#1f2a44] transition hover:bg-[#edf3fb]"
             >
               <span className="block text-[15px] font-black tracking-[-0.02em]">{item.label}</span>
-              <span className="mt-1 block text-[12px] font-bold text-[#8b96a8]">{item.description}</span>
+              <span className="mt-1 block text-[12px] font-bold text-[#8b96a8]">
+                {item.description}
+              </span>
             </Link>
           ))}
         </nav>

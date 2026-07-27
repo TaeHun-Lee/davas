@@ -8,5 +8,11 @@ export type FavoriteMoviesSectionProps = {
 };
 
 export function FavoriteMoviesSection({ movies, onDetailSelect }: FavoriteMoviesSectionProps) {
-  return <MediaPosterRowSection title="내가 가장 사랑한 컨텐츠" items={movies} onItemClick={(item) => onDetailSelect(item.mediaId)} />;
+  return (
+    <MediaPosterRowSection
+      title="내가 가장 사랑한 컨텐츠"
+      items={movies}
+      onItemClick={(item) => onDetailSelect(item.mediaId)}
+    />
+  );
 }

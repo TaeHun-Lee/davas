@@ -43,7 +43,9 @@ export function DiaryMonthlyCalendarCard({
   return (
     <article className="rounded-[24px] bg-white p-4 shadow-[0_12px_30px_rgba(31,42,68,0.07)]">
       <div className="mb-4 flex flex-col gap-3">
-        <h3 className="text-[15px] font-extrabold leading-snug text-[#1f2a44]">이번 달 기록 캘린더</h3>
+        <h3 className="text-[15px] font-extrabold leading-snug text-[#1f2a44]">
+          이번 달 기록 캘린더
+        </h3>
         <div className="relative flex items-center justify-center gap-2">
           <button
             type="button"
@@ -147,7 +149,9 @@ export function DiaryMonthlyCalendarCard({
             }
           >
             {day.day}
-            {day.entryCount > 0 ? <span className="absolute bottom-1 h-1 w-1 rounded-full bg-[#ef5870]" /> : null}
+            {day.entryCount > 0 ? (
+              <span className="absolute bottom-1 h-1 w-1 rounded-full bg-[#ef5870]" />
+            ) : null}
           </button>
         ))}
       </div>

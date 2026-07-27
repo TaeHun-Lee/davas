@@ -52,8 +52,12 @@ export function DiaryDashboard() {
   const [dashboard, setDashboard] = useState<DiaryDashboardView>(emptyDiaryDashboard);
   const [status, setStatus] = useState<DiaryDashboardStatus>('loading');
   const [query, setQuery] = useState(searchParams.get('q') ?? '');
-  const [calendarYear, setCalendarYear] = useState(toCalendarNumber(searchParams.get('year')) ?? emptyDiaryDashboard.calendar.year);
-  const [calendarMonth, setCalendarMonth] = useState(toCalendarNumber(searchParams.get('month')) ?? emptyDiaryDashboard.calendar.month);
+  const [calendarYear, setCalendarYear] = useState(
+    toCalendarNumber(searchParams.get('year')) ?? emptyDiaryDashboard.calendar.year,
+  );
+  const [calendarMonth, setCalendarMonth] = useState(
+    toCalendarNumber(searchParams.get('month')) ?? emptyDiaryDashboard.calendar.month,
+  );
   const [selectedCalendarDay, setSelectedCalendarDay] = useState<number | undefined>(
     toCalendarDay(searchParams.get('day')),
   );
@@ -91,7 +95,11 @@ export function DiaryDashboard() {
   }, [searchParams]);
 
   const selectedCalendarDate = useMemo(
-    () => ({ year: dashboard.calendar.year, month: dashboard.calendar.month, day: selectedCalendarDay }),
+    () => ({
+      year: dashboard.calendar.year,
+      month: dashboard.calendar.month,
+      day: selectedCalendarDay,
+    }),
     [dashboard.calendar.year, dashboard.calendar.month, selectedCalendarDay],
   );
 
@@ -139,14 +147,25 @@ export function DiaryDashboard() {
   };
 
   const handleCalendarMonthChange = (offset: -1 | 1) => {
-    const nextMonth = getAdjacentDiaryMonth(dashboard.calendar.year, dashboard.calendar.month, offset);
+    const nextMonth = getAdjacentDiaryMonth(
+      dashboard.calendar.year,
+      dashboard.calendar.month,
+      offset,
+    );
     setShowAllDiaries(false);
     setCalendarYear(nextMonth.year);
     setCalendarMonth(nextMonth.month);
     setSelectedCalendarDay(undefined);
-    router.replace(setDiaryDashboardQueryParam(searchParams, { q: query, year: nextMonth.year, month: nextMonth.month }), {
-      scroll: false,
-    });
+    router.replace(
+      setDiaryDashboardQueryParam(searchParams, {
+        q: query,
+        year: nextMonth.year,
+        month: nextMonth.month,
+      }),
+      {
+        scroll: false,
+      },
+    );
   };
 
   const handleCalendarMonthSelect = (nextYear: number, nextMonth: number) => {
@@ -154,16 +173,23 @@ export function DiaryDashboard() {
     setCalendarYear(nextYear);
     setCalendarMonth(nextMonth);
     setSelectedCalendarDay(undefined);
-    router.replace(setDiaryDashboardQueryParam(searchParams, { q: query, year: nextYear, month: nextMonth }), {
-      scroll: false,
-    });
+    router.replace(
+      setDiaryDashboardQueryParam(searchParams, { q: query, year: nextYear, month: nextMonth }),
+      {
+        scroll: false,
+      },
+    );
   };
 
   const handleCalendarSelectAll = () => {
     setShowAllDiaries(false);
     setSelectedCalendarDay(undefined);
     router.replace(
-      setDiaryDashboardQueryParam(searchParams, { q: query, year: dashboard.calendar.year, month: dashboard.calendar.month }),
+      setDiaryDashboardQueryParam(searchParams, {
+        q: query,
+        year: dashboard.calendar.year,
+        month: dashboard.calendar.month,
+      }),
       { scroll: false },
     );
   };
@@ -172,17 +198,48 @@ export function DiaryDashboard() {
     setShowAllDiaries(true);
     setSelectedCalendarDay(undefined);
     router.replace(
-      setDiaryDashboardQueryParam(searchParams, { q: query, year: dashboard.calendar.year, month: dashboard.calendar.month }),
+      setDiaryDashboardQueryParam(searchParams, {
+        q: query,
+        year: dashboard.calendar.year,
+        month: dashboard.calendar.month,
+      }),
       { scroll: false },
     );
   };
 
   if (status === 'loading') {
-    return <AppShell><div className="space-y-4" aria-label="다이어리를 불러오는 중"><div className="h-12 animate-pulse rounded-[18px] bg-white" /><div className="h-48 animate-pulse rounded-[24px] bg-white" /><div className="h-72 animate-pulse rounded-[24px] bg-white" /></div></AppShell>;
+    return (
+      <AppShell>
+        <div className="space-y-4" aria-label="다이어리를 불러오는 중">
+          <div className="h-12 animate-pulse rounded-[18px] bg-white" />
+          <div className="h-48 animate-pulse rounded-[24px] bg-white" />
+          <div className="h-72 animate-pulse rounded-[24px] bg-white" />
+        </div>
+      </AppShell>
+    );
   }
 
   if (status === 'error') {
-    return <AppShell><section className="rounded-[24px] bg-white px-5 py-8 text-center"><h1 className="text-[17px] font-black text-[#23426f]">다이어리를 불러오지 못했어요</h1><p className="mt-2 text-[13px] font-bold text-[#65758a]">로그인 문제와 네트워크 문제를 구분해 다시 확인해주세요.</p><button type="button" onClick={() => { setStatus('loading'); setRetryKey((value) => value + 1); }} className="mt-5 min-h-11 rounded-[16px] bg-[#284778] px-5 text-[13px] font-black text-white">다시 시도</button></section></AppShell>;
+    return (
+      <AppShell>
+        <section className="rounded-[24px] bg-white px-5 py-8 text-center">
+          <h1 className="text-[17px] font-black text-[#23426f]">다이어리를 불러오지 못했어요</h1>
+          <p className="mt-2 text-[13px] font-bold text-[#65758a]">
+            로그인 문제와 네트워크 문제를 구분해 다시 확인해주세요.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus('loading');
+              setRetryKey((value) => value + 1);
+            }}
+            className="mt-5 min-h-11 rounded-[16px] bg-[#284778] px-5 text-[13px] font-black text-white"
+          >
+            다시 시도
+          </button>
+        </section>
+      </AppShell>
+    );
   }
 
   return (
@@ -208,7 +265,23 @@ export function DiaryDashboard() {
             description={selectedCalendarDescription}
             onViewAll={handleViewAllDiaries}
           />
-        ) : dashboard.recentItems.length === 0 ? <section className="mt-5 rounded-[24px] bg-white px-5 py-8 text-center"><h2 className="text-[16px] font-black text-[#23426f]">아직 감상 기록이 없어요</h2><p className="mt-2 text-[13px] font-bold text-[#65758a]">마음에 남은 작품부터 하나 골라보세요.</p><button type="button" onClick={() => router.push('/explore?intent=record')} className="mt-5 min-h-11 rounded-[16px] bg-[#ff5a52] px-5 text-[13px] font-black text-white">작품 찾아 기록하기</button></section> : <DiaryRecentListSection items={[]} />}
+        ) : dashboard.recentItems.length === 0 ? (
+          <section className="mt-5 rounded-[24px] bg-white px-5 py-8 text-center">
+            <h2 className="text-[16px] font-black text-[#23426f]">아직 감상 기록이 없어요</h2>
+            <p className="mt-2 text-[13px] font-bold text-[#65758a]">
+              마음에 남은 작품부터 하나 골라보세요.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push('/explore?intent=record')}
+              className="mt-5 min-h-11 rounded-[16px] bg-[#ff5a52] px-5 text-[13px] font-black text-white"
+            >
+              작품 찾아 기록하기
+            </button>
+          </section>
+        ) : (
+          <DiaryRecentListSection items={[]} />
+        )}
       </div>
     </AppShell>
   );

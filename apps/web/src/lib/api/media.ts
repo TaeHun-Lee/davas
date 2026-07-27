@@ -1,91 +1,28 @@
-import { getApiBaseUrl } from './base-url';
+import type {
+  MediaDetail,
+  MediaSelectionResponse,
+  MediaSearchResponse,
+  MediaSearchResult,
+  MediaSearchType,
+} from '@davas/shared';
+import { coreFetch } from './core';
 
-export type MediaSearchResult = {
-  externalProvider: 'TMDB';
-  externalId: string;
-  mediaType: 'MOVIE' | 'TV';
-  title: string;
-  originalTitle: string;
-  overview: string;
-  posterUrl: string | null;
-  backdropUrl: string | null;
-  releaseDate: string | null;
-  genreIds: number[];
-  country: string | null;
-};
+export type {
+  MediaDetail,
+  MediaSearchResponse,
+  MediaSearchResult,
+  MyMediaDiary,
+  SelectedMedia,
+} from '@davas/shared';
 
-export type MediaSearchResponse = {
-  query: string;
-  page: number;
-  totalPages: number;
-  items: MediaSearchResult[];
-};
-
-export type PersonSearchResult = {
-  id: string;
-  name: string;
-  profileUrl: string | null;
-  knownForDepartment: string | null;
-  knownFor: MediaSearchResult[];
-};
-
-export type PersonSearchResponse = {
-  query: string;
-  page: number;
-  totalPages: number;
-  items: PersonSearchResult[];
-};
-
-export type PersonCreditsResponse = {
-  personId: string;
-  items: MediaSearchResult[];
-};
-
-export type SelectedMedia = MediaSearchResult & {
-  id: string;
-  genres?: string[];
-};
-
-export type MyMediaDiary = {
-  id: string;
-  rating: number;
-  title: string;
-  contentPreview: string;
-  watchedDate: string;
-  updatedAt: string;
-};
-
-export type MediaDetail = Omit<SelectedMedia, 'genreIds'> & {
-  tagline: string | null;
-  runtime: number | null;
-  genres: string[];
-  countries: string[];
-  tmdbRating: number | null;
-  tmdbVoteCount: number | null;
-  director: string | null;
-  creators: string[];
-  numberOfEpisodes: number | null;
-  numberOfSeasons: number | null;
-  cast: string[];
-  stillCuts: string[];
-  certification: string | null;
-  myDiary?: MyMediaDiary | null;
-  myDiaries?: MyMediaDiary[];
-  myAverageRating?: number | null;
-  watchlistItemId?: string | null;
-  watchlistStatus?: 'ACTIVE' | 'WATCHED' | null;
-  genreIds?: number[];
-};
-
-
-export async function searchMedia({
+export function searchMedia({
   query,
   type = 'multi',
   page = 1,
   language = 'ko-KR',
 }: {
   query: string;
-  type?: 'movie' | 'tv' | 'multi';
+  type?: MediaSearchType;
   page?: number;
   language?: string;
 }) {
@@ -94,103 +31,25 @@ export async function searchMedia({
   params.set('type', type);
   params.set('page', String(page));
   params.set('language', language);
-
-  const response = await fetch(`${getApiBaseUrl()}/media/search?${params.toString()}`, {
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new Error('media search failed');
-  }
-
-  return (await response.json()) as MediaSearchResponse;
-}
-export async function searchPeople({
-  query,
-  page = 1,
-  language = 'ko-KR',
-}: {
-  query: string;
-  page?: number;
-  language?: string;
-}) {
-  const params = new URLSearchParams();
-  params.set('q', query);
-  params.set('page', String(page));
-  params.set('language', language);
-
-  const response = await fetch(`${getApiBaseUrl()}/media/people/search?${params.toString()}`, {
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new Error('person search failed');
-  }
-
-  return (await response.json()) as PersonSearchResponse;
+  return coreFetch<MediaSearchResponse>(`/media/search?${params.toString()}`);
 }
 
-export async function getPersonCredits(personId: string, { language = 'ko-KR' }: { language?: string } = {}) {
-  const params = new URLSearchParams();
-  params.set('language', language);
-
-  const response = await fetch(`${getApiBaseUrl()}/media/people/${personId}/credits?${params.toString()}`, {
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new Error('person credits failed');
-  }
-
-  return (await response.json()) as PersonCreditsResponse;
-}
-
-function toMediaSelectionPayload(selection: MediaSearchResult): MediaSearchResult {
+function toMediaSelectionPayload(selection: MediaSearchResult) {
   return {
     externalProvider: selection.externalProvider,
     externalId: selection.externalId,
     mediaType: selection.mediaType,
-    title: selection.title,
-    originalTitle: selection.originalTitle,
-    overview: selection.overview,
-    posterUrl: selection.posterUrl,
-    backdropUrl: selection.backdropUrl,
-    releaseDate: selection.releaseDate,
-    genreIds: selection.genreIds,
-    country: selection.country,
-  };
+  } as const;
 }
 
 export async function selectMedia(selection: MediaSearchResult) {
-  const response = await fetch(`${getApiBaseUrl()}/media/selections`, {
+  const selected = await coreFetch<MediaSelectionResponse>('/media/selections', {
     method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(toMediaSelectionPayload(selection)),
   });
-
-  if (!response.ok) {
-    throw new Error('media selection failed');
-  }
-
-  const selected = (await response.json()) as SelectedMedia;
-  return {
-    ...selection,
-    ...selected,
-    genreIds: selection.genreIds,
-  } as SelectedMedia;
+  return selected;
 }
 
-export async function getMediaDetail(id: string) {
-  const response = await fetch(`${getApiBaseUrl()}/media/${id}`, {
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new Error('media detail failed');
-  }
-
-  return (await response.json()) as MediaDetail;
+export function getMediaDetail(id: string) {
+  return coreFetch<MediaDetail>(`/media/${encodeURIComponent(id)}`);
 }

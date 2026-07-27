@@ -12,8 +12,17 @@ export function PopularDiariesSection({ items }: PopularDiariesSectionProps) {
   return (
     <section className="mb-7" aria-labelledby="popular-diaries-title">
       <div className="mb-3 flex items-center justify-between">
-        <h2 id="popular-diaries-title" className="text-[16px] font-extrabold leading-[22px] tracking-[-0.02em] text-[#1f2a44]">인기 다이어리</h2>
-        <Link href="/community?tab=popular" className="text-[12px] font-extrabold text-[#216bd8]" aria-label="인기 다이어리 전체 보기">
+        <h2
+          id="popular-diaries-title"
+          className="text-[16px] font-extrabold leading-[22px] tracking-[-0.02em] text-[#1f2a44]"
+        >
+          인기 다이어리
+        </h2>
+        <Link
+          href="/community?tab=popular"
+          className="text-[12px] font-extrabold text-[#216bd8]"
+          aria-label="인기 다이어리 전체 보기"
+        >
           전체 보기 ›
         </Link>
       </div>

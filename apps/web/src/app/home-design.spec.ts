@@ -1,2 +1,29 @@
-import assert from'node:assert/strict';import{readFileSync}from'node:fs';import{join}from'node:path';import{describe,it}from'node:test';const src=(p:string)=>readFileSync(join(process.cwd(),'src',p),'utf8');
-describe('four-tab core shell',()=>{it('renders exactly the four new navigation labels and no drawer',()=>{const code=src('components/core/CoreUi.tsx');const tabContract=code.slice(code.indexOf('const tabs'),code.indexOf('export function CoreHeader'));for(const label of['친구 기록','기록하기','내 기록','친구'])assert.match(tabContract,new RegExp(label));assert.equal((tabContract.match(/label:/g)??[]).length,4);assert.doesNotMatch(code,/hamburger|drawer|추천|찜|알림/)});it('keeps the 430px shell, safe area and focus treatment in shared styles',()=>{const css=src('app/globals.css');assert.match(css,/max-width: 430px/);assert.match(css,/safe-area-inset-bottom/);assert.match(css,/:focus-visible/);assert.match(css,/--commit: #d83b35/)})});
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, it } from 'node:test';
+
+const source = (path: string) => readFileSync(join(process.cwd(), 'src', path), 'utf8');
+
+describe('four-tab core shell', () => {
+  it('renders exactly the four navigation labels and no drawer', () => {
+    const code = source('components/core/CoreShell.tsx');
+    const tabContract = code.slice(
+      code.indexOf('const tabs'),
+      code.indexOf('export function CoreHeader'),
+    );
+    for (const label of ['친구 기록', '기록하기', '내 기록', '친구']) {
+      assert.match(tabContract, new RegExp(label));
+    }
+    assert.equal((tabContract.match(/label:/g) ?? []).length, 4);
+    assert.doesNotMatch(code, /hamburger|drawer|추천|찜|알림/);
+  });
+
+  it('keeps shell width, safe area and focus treatment in shared styles', () => {
+    const css = source('app/globals.css');
+    assert.match(css, /max-width: 430px/);
+    assert.match(css, /safe-area-inset-bottom/);
+    assert.match(css, /:focus-visible/);
+    assert.match(css, /--commit: #d83b35/);
+  });
+});

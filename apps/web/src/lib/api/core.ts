@@ -1,16 +1,29 @@
 import type {
+  ApiErrorBody,
+  CursorPage,
   DiaryVisibility,
   MediaType,
+  RecordCardData,
+  RecordCreateInput,
+  RecordDetailData,
+  RecordFilters,
+  RecordUpdateInput,
   ViewingMethod,
 } from '@davas/shared';
+import { safeCoreReturnTo } from '../core-routes';
 import { getApiBaseUrl } from './base-url';
 
-export type ApiErrorBody = {
-  statusCode: number;
-  code: string;
-  message: string;
-  details?: Record<string, unknown>;
-};
+export type {
+  ApiErrorBody,
+  CursorPage,
+  RecordCardData,
+  RecordDetailData,
+  RecordFilters,
+} from '@davas/shared';
+export type {
+  RecordCreateInput as RecordCreatePayload,
+  RecordUpdateInput as RecordUpdatePayload,
+} from '@davas/shared';
 
 export class CoreApiError extends Error {
   constructor(
@@ -29,34 +42,59 @@ export function purgeSessionDrafts() {
   }
 }
 
+function isFormDataBody(body: BodyInit | null | undefined) {
+  return typeof FormData !== 'undefined' && body instanceof FormData;
+}
+
+export type CoreFetchOptions = {
+  auth?: 'required' | 'optional';
+};
+
+export function coreFetch(
+  path: string,
+  init?: RequestInit,
+  options?: CoreFetchOptions,
+): Promise<void>;
+export function coreFetch<T>(
+  path: string,
+  init?: RequestInit,
+  options?: CoreFetchOptions,
+): Promise<T>;
 export async function coreFetch<T>(
   path: string,
   init: RequestInit = {},
-): Promise<T> {
+  options: CoreFetchOptions = {},
+): Promise<T | void> {
+  const hasJsonBody = Boolean(init.body) && !isFormDataBody(init.body);
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
     ...init,
     credentials: 'include',
     headers: {
-      ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(hasJsonBody ? { 'Content-Type': 'application/json' } : {}),
       ...init.headers,
     },
   });
-  if (response.status === 401 && typeof window !== 'undefined') {
-    await fetch(`${getApiBaseUrl()}/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
-    }).catch(() => undefined);
+
+  if (response.status === 401 && options.auth !== 'optional' && typeof window !== 'undefined') {
+    try {
+      await fetch(`${getApiBaseUrl()}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {
+      // If the API is unreachable it cannot clear the HttpOnly cookie. Continue
+      // with local recovery so the browser does not preserve authenticated UI.
+    }
     purgeSessionDrafts();
-    const returnTo = `${location.pathname}${location.search}`;
-    location.assign(
-      `/login?returnTo=${encodeURIComponent(returnTo.startsWith('/') ? returnTo : '/')}`,
-    );
+    const returnTo = safeCoreReturnTo(`${location.pathname}${location.search}`, '/');
+    location.assign(`/login?returnTo=${encodeURIComponent(returnTo)}`);
     throw new CoreApiError(401, {
       statusCode: 401,
       code: 'UNAUTHORIZED',
       message: '다시 로그인해 주세요.',
     });
   }
+
   if (!response.ok) {
     const body = (await response.json().catch(() => ({
       statusCode: response.status,
@@ -65,51 +103,10 @@ export async function coreFetch<T>(
     }))) as ApiErrorBody;
     throw new CoreApiError(response.status, body);
   }
-  if (response.status === 204) return undefined as T;
+
+  if (response.status === 204) return;
   return response.json() as Promise<T>;
 }
-
-export type RecordCardData = {
-  id: string;
-  author: { id: string; nickname: string; profileImageUrl: string | null };
-  media: {
-    id: string;
-    title: string;
-    originalTitle: string | null;
-    posterUrl: string | null;
-    releaseYear: string | null;
-    mediaType: MediaType;
-  };
-  viewingMethod: ViewingMethod | null;
-  watchedDate: string;
-  rating: number | null;
-  reviewPreview: string | null;
-  hasSpoiler: boolean;
-  visibility: DiaryVisibility;
-  sharedAt: string | null;
-  createdAt: string;
-  isMine: boolean;
-};
-
-export type RecordDetailData = RecordCardData & {
-  content: string;
-  updatedAt: string;
-  selectedUserIds?: string[];
-};
-
-export type CursorPage<T> = {
-  items: T[];
-  nextCursor: string | null;
-  hasMore: boolean;
-};
-
-export type RecordFilters = {
-  q?: string;
-  mediaType?: MediaType;
-  viewingMethod?: ViewingMethod;
-  cursor?: string;
-  limit?: number;
-};
 
 const query = (filters: RecordFilters) => {
   const parameters = new URLSearchParams();
@@ -121,54 +118,22 @@ const query = (filters: RecordFilters) => {
   return parameters.toString();
 };
 
-export function listRecords(
-  scope: 'friends' | 'mine',
-  filters: RecordFilters,
-) {
+export function listRecords(scope: 'friends' | 'mine', filters: RecordFilters) {
   return coreFetch<CursorPage<RecordCardData>>(
     `/diaries/${scope === 'friends' ? 'feed' : 'me'}?${query(filters)}`,
   );
 }
 
 export function getRecord(id: string) {
-  return coreFetch<{ diary: RecordDetailData }>(
-    `/diaries/${encodeURIComponent(id)}`,
-  ).then((value) => value.diary);
+  return coreFetch<{ diary: RecordDetailData }>(`/diaries/${encodeURIComponent(id)}`).then(
+    (value) => value.diary,
+  );
 }
 
-export type RecordCreatePayload = {
-  mediaId: string;
-  viewingMethod: ViewingMethod;
-  watchedDate: string;
-  rating: number | null;
-  content: string;
-  hasSpoiler: boolean;
-  visibility: 'FRIENDS' | 'PRIVATE';
-  clientRequestId: string;
-  allowDuplicate?: boolean;
-};
+export type RecordWritePayload = RecordCreateInput;
 
-// Kept as a compatibility alias for the composer while create/update call sites
-// are migrated independently. Runtime update projection below is authoritative.
-export type RecordWritePayload = RecordCreatePayload;
-
-export type RecordUpdatePayload = Partial<
-  Pick<
-    RecordCreatePayload,
-    | 'mediaId'
-    | 'viewingMethod'
-    | 'watchedDate'
-    | 'rating'
-    | 'content'
-    | 'hasSpoiler'
-    | 'visibility'
-  >
->;
-
-export function toRecordUpdatePayload(
-  payload: RecordUpdatePayload,
-): RecordUpdatePayload {
-  const projected: RecordUpdatePayload = {};
+export function toRecordUpdatePayload(payload: RecordUpdateInput): RecordUpdateInput {
+  const projected: RecordUpdateInput = {};
 
   if (payload.mediaId !== undefined) projected.mediaId = payload.mediaId;
   if (payload.viewingMethod !== undefined) {
@@ -189,35 +154,27 @@ export function toRecordUpdatePayload(
   return projected;
 }
 
-export function createRecord(payload: RecordCreatePayload) {
-  return coreFetch<{ diary: RecordDetailData; deduplicated: boolean }>(
-    '/diaries',
-    { method: 'POST', body: JSON.stringify(payload) },
-  );
+export function createRecord(payload: RecordCreateInput) {
+  return coreFetch<{ diary: RecordDetailData; deduplicated: boolean }>('/diaries', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
 
-export function updateRecord(
-  id: string,
-  payload: RecordUpdatePayload,
-) {
-  return coreFetch<{ diary: RecordDetailData }>(
-    `/diaries/${encodeURIComponent(id)}`,
-    {
-      method: 'PATCH',
-      body: JSON.stringify(toRecordUpdatePayload(payload)),
-    },
-  );
+export function updateRecord(id: string, payload: RecordUpdateInput) {
+  return coreFetch<{ diary: RecordDetailData }>(`/diaries/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(toRecordUpdatePayload(payload)),
+  });
 }
 
 export function deleteRecord(id: string) {
-  return coreFetch<{ id: string; deleted: true }>(
-    `/diaries/${encodeURIComponent(id)}`,
-    { method: 'DELETE' },
-  );
+  return coreFetch<{ id: string; deleted: true }>(`/diaries/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
 }
 
-export const mediaTypeLabel = (value: MediaType) =>
-  value === 'MOVIE' ? '영화' : '드라마';
+export const mediaTypeLabel = (value: MediaType) => (value === 'MOVIE' ? '영화' : '드라마');
 
 export const viewingMethodLabel = (value: ViewingMethod | null) =>
   value === 'THEATER' ? '영화관' : value === 'OTT' ? 'OTT' : '본 곳 미입력';

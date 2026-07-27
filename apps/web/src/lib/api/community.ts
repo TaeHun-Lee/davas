@@ -1,4 +1,11 @@
-import type { CommunityAuthorProfileResponse, CommunityCommentsResponse, CommunityComment, CommunityDashboardResponse, CommunityDiaryDetail, CommunityTab } from '../../components/community/community-types';
+import type {
+  CommunityAuthorProfileResponse,
+  CommunityCommentsResponse,
+  CommunityComment,
+  CommunityDashboardResponse,
+  CommunityDiaryDetail,
+  CommunityTab,
+} from '../../components/community/community-types';
 import { getApiBaseUrl } from './base-url';
 
 export type CommunityDashboardParams = {
@@ -13,9 +20,12 @@ export async function getCommunityDashboard(params: CommunityDashboardParams = {
   if (params.q?.trim()) searchParams.set('q', params.q.trim());
   if (params.topic?.trim()) searchParams.set('topic', params.topic.trim());
   const query = searchParams.toString();
-  const response = await fetch(`${getApiBaseUrl()}/community/dashboard${query ? `?${query}` : ''}`, {
-    credentials: 'include',
-  });
+  const response = await fetch(
+    `${getApiBaseUrl()}/community/dashboard${query ? `?${query}` : ''}`,
+    {
+      credentials: 'include',
+    },
+  );
 
   if (!response.ok) {
     throw new Error('community dashboard failed');
@@ -71,12 +81,18 @@ export async function deleteDiaryComment(commentId: string) {
     method: 'DELETE',
     credentials: 'include',
   });
-  return parseJsonResponse<{ id: string; deleted: boolean }>(response, 'delete diary comment failed');
+  return parseJsonResponse<{ id: string; deleted: boolean }>(
+    response,
+    'delete diary comment failed',
+  );
 }
 
 export async function getCommunityAuthorProfile(authorId: string) {
   const response = await fetch(`${getApiBaseUrl()}/community/authors/${authorId}`, {
     credentials: 'include',
   });
-  return parseJsonResponse<CommunityAuthorProfileResponse>(response, 'community author profile failed');
+  return parseJsonResponse<CommunityAuthorProfileResponse>(
+    response,
+    'community author profile failed',
+  );
 }

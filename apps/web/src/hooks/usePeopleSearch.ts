@@ -1,12 +1,8 @@
-"use client";
+'use client';
 
+import type { MediaSearchResult } from '@davas/shared';
 import { useEffect, useState } from 'react';
-import {
-  getPersonCredits,
-  searchPeople,
-  type MediaSearchResult,
-  type PersonSearchResult,
-} from '../lib/api/media';
+import { getPersonCredits, searchPeople, type PersonSearchResult } from '../lib/api/media-legacy';
 
 export type PeopleSearchStatus = 'idle' | 'searching' | 'results' | 'empty' | 'error';
 export type PersonCreditsStatus = 'idle' | 'loading' | 'results' | 'empty' | 'error';
@@ -34,7 +30,10 @@ export function usePeopleSearch(query: string) {
     setStatus('searching');
     const timeout = window.setTimeout(async () => {
       try {
-        const result = await searchPeople({ query: trimmedQuery, language: 'ko-KR' });
+        const result = await searchPeople({
+          query: trimmedQuery,
+          language: 'ko-KR',
+        });
         if (!isActive) return;
         setItems(result.items);
         setStatus(result.items.length > 0 ? 'results' : 'empty');
