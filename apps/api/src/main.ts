@@ -6,10 +6,12 @@ import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { configureHttpSecurity } from './common/app-security';
+import { configureHttpSecurity, validateProductionConfiguration } from './common/app-security';
 import { configureHttpServerTimeouts } from './common/http-server-timeouts';
+import { shouldEnableSwagger } from './common/swagger-config';
 
 async function bootstrap() {
+  validateProductionConfiguration();
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.setGlobalPrefix('api');
   configureHttpSecurity(app);
@@ -25,14 +27,16 @@ async function bootstrap() {
   mkdirSync(uploadsDir, { recursive: true });
   app.useStaticAssets(uploadsDir, { prefix: '/uploads/' });
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Davas API')
-    .setDescription('Davas backend API')
-    .setVersion('0.1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document);
+  if (shouldEnableSwagger()) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Davas API')
+      .setDescription('Davas backend API')
+      .setVersion('0.1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   const port = Number(process.env.PORT ?? 4000);
   const server = await app.listen(port, '0.0.0.0');

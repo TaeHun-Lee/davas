@@ -94,7 +94,10 @@ function getCommentCount(diary: DiaryEntity) {
 }
 
 function matchesQuery(diary: DiaryEntity, query: string) {
-  const target = [diary.title, diary.content, diary.media?.title, diary.user?.nickname].filter(Boolean).join(' ').toLowerCase();
+  const target = [diary.title, diary.content, diary.media?.title, diary.user?.nickname]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
   return target.includes(query.toLowerCase());
 }
 
@@ -132,7 +135,10 @@ function toCommunityDiaryCard(diary: DiaryEntity, viewer: ViewerContext = {}): C
   };
 }
 
-function toCommunityDiaryDetail(diary: DiaryEntity, viewer: ViewerContext = {}): CommunityDiaryDetail {
+function toCommunityDiaryDetail(
+  diary: DiaryEntity,
+  viewer: ViewerContext = {},
+): CommunityDiaryDetail {
   const card = toCommunityDiaryCard(diary, viewer);
   return {
     ...card,
@@ -177,8 +183,12 @@ export class CommunityService {
       if (!query.userId) continue;
       if (await this.access.canView(diary, query.userId)) publicDiaries.push(diary);
     }
-    const topicDiaries = topic ? publicDiaries.filter((diary) => matchesTopic(diary, topic)) : publicDiaries;
-    const searchedDiaries = q ? topicDiaries.filter((diary) => matchesQuery(diary, q)) : topicDiaries;
+    const topicDiaries = topic
+      ? publicDiaries.filter((diary) => matchesTopic(diary, topic))
+      : publicDiaries;
+    const searchedDiaries = q
+      ? topicDiaries.filter((diary) => matchesQuery(diary, q))
+      : topicDiaries;
     const feedCandidates = searchedDiaries;
     const feedSource = [...feedCandidates].sort(sortByLatest);
 
@@ -196,18 +206,25 @@ export class CommunityService {
     return toCommunityDiaryDetail(diary, { userId });
   }
 
-  async getAuthorProfile(authorId: string, userId?: string): Promise<CommunityAuthorProfileResponse> {
+  async getAuthorProfile(
+    authorId: string,
+    userId?: string,
+  ): Promise<CommunityAuthorProfileResponse> {
     const [author, feed] = await Promise.all([
       this.users?.findOne({ where: { id: authorId } }),
       this.diaries.find({
-        where: [{ userId: authorId, visibility: 'FRIENDS' }, { userId: authorId, visibility: 'SELECTED' }],
+        where: [
+          { userId: authorId, visibility: 'FRIENDS' },
+          { userId: authorId, visibility: 'SELECTED' },
+        ],
         relations: { media: true, user: true, comments: true },
         order: { createdAt: 'DESC' },
         take: 100,
       }),
     ]);
     const accessibleFeed: DiaryEntity[] = [];
-    for (const diary of feed) if (userId && await this.access.canView(diary, userId)) accessibleFeed.push(diary);
+    for (const diary of feed)
+      if (userId && (await this.access.canView(diary, userId))) accessibleFeed.push(diary);
     const profileAuthor = author ?? accessibleFeed[0]?.user;
     if (!profileAuthor) {
       throw new NotFoundException('작성자를 찾을 수 없습니다.');
@@ -244,5 +261,4 @@ export class CommunityService {
     await this.access.assertCanView(diary, userId);
     return diary;
   }
-
 }

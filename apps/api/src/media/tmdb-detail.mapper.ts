@@ -87,12 +87,16 @@ function imageUrl(size: 'w500' | 'w780', path?: string | null): string | null {
 }
 
 function firstRuntime(payload: TmdbDetailPayload, mediaType: MediaType) {
-  return mediaType === 'TV' ? payload.episode_run_time?.[0] ?? payload.last_episode_to_air?.runtime ?? null : payload.runtime ?? null;
+  return mediaType === 'TV'
+    ? (payload.episode_run_time?.[0] ?? payload.last_episode_to_air?.runtime ?? null)
+    : (payload.runtime ?? null);
 }
 
 function koreanCertification(payload: TmdbDetailPayload, mediaType: MediaType) {
   if (mediaType === 'TV') {
-    return payload.content_ratings?.results?.find((result) => result.iso_3166_1 === 'KR')?.rating || null;
+    return (
+      payload.content_ratings?.results?.find((result) => result.iso_3166_1 === 'KR')?.rating || null
+    );
   }
 
   const korea = payload.release_dates?.results?.find((result) => result.iso_3166_1 === 'KR');
@@ -104,9 +108,16 @@ export function mapTmdbDetail(payload: TmdbDetailPayload, mediaType: MediaType):
   const title = isTv ? payload.name : payload.title;
   const originalTitle = isTv ? payload.original_name : payload.original_title;
   const releaseDate = isTv ? payload.first_air_date : payload.release_date;
-  const countries = payload.production_countries?.map((country) => country.name).filter(Boolean) ?? payload.origin_country ?? [];
-  const creators = (payload.created_by ?? []).map((person) => person.name).filter((name): name is string => Boolean(name));
-  const director = isTv ? creators[0] ?? null : payload.credits?.crew?.find((person) => person.job === 'Director')?.name ?? null;
+  const countries =
+    payload.production_countries?.map((country) => country.name).filter(Boolean) ??
+    payload.origin_country ??
+    [];
+  const creators = (payload.created_by ?? [])
+    .map((person) => person.name)
+    .filter((name): name is string => Boolean(name));
+  const director = isTv
+    ? (creators[0] ?? null)
+    : (payload.credits?.crew?.find((person) => person.job === 'Director')?.name ?? null);
   const cast = (payload.credits?.cast ?? [])
     .slice()
     .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))

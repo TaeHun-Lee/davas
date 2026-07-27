@@ -11,7 +11,10 @@ import { WatchlistItemEntity } from '../database/entities';
 import { TmdbClient } from './tmdb.client';
 
 @Module({
-  imports: [AuthModule, TypeOrmModule.forFeature([MediaEntity, DiaryEntity, MediaFavoriteEntity, WatchlistItemEntity])],
+  imports: [
+    AuthModule,
+    TypeOrmModule.forFeature([MediaEntity, DiaryEntity, MediaFavoriteEntity, WatchlistItemEntity]),
+  ],
   controllers: [MediaController],
   providers: [MediaService, MediaSelectionService, TmdbClient],
 })

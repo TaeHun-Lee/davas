@@ -16,7 +16,11 @@ function makeNotification(overrides: Partial<NotificationEntity> = {}): Notifica
     readAt: null,
     createdAt: new Date('2026-05-09T12:00:00.000Z'),
     user: { id: 'recipient-1', nickname: '받는사람', profileImageUrl: null } as UserEntity,
-    actor: { id: 'actor-1', nickname: '알림발생자', profileImageUrl: '/uploads/profile-images/actor.png' } as UserEntity,
+    actor: {
+      id: 'actor-1',
+      nickname: '알림발생자',
+      profileImageUrl: '/uploads/profile-images/actor.png',
+    } as UserEntity,
     diary: { id: 'diary-1', title: '공개 감상 기록' } as DiaryEntity,
     ...overrides,
   } as NotificationEntity;
@@ -65,7 +69,11 @@ describe('NotificationsService', () => {
     assert.deepEqual(result.items[0], {
       id: 'notice-1',
       type: 'DIARY_LIKED',
-      actor: { id: 'actor-1', nickname: '알림발생자', profileImageUrl: '/uploads/profile-images/actor.png' },
+      actor: {
+        id: 'actor-1',
+        nickname: '알림발생자',
+        profileImageUrl: '/uploads/profile-images/actor.png',
+      },
       diary: { id: 'diary-1', title: '공개 감상 기록' },
       readAt: null,
       createdAt: '2026-05-09T12:00:00.000Z',
@@ -76,9 +84,21 @@ describe('NotificationsService', () => {
     const repository = fakeNotificationsRepository();
     const service = new NotificationsService(repository as never);
 
-    await service.notifyDiaryLiked({ diaryId: 'diary-1', recipientId: 'author-1', actorId: 'viewer-1' });
-    await service.notifyDiaryCommented({ diaryId: 'diary-1', recipientId: 'author-1', actorId: 'viewer-1' });
-    await service.notifyDiaryLiked({ diaryId: 'mine', recipientId: 'viewer-1', actorId: 'viewer-1' });
+    await service.notifyDiaryLiked({
+      diaryId: 'diary-1',
+      recipientId: 'author-1',
+      actorId: 'viewer-1',
+    });
+    await service.notifyDiaryCommented({
+      diaryId: 'diary-1',
+      recipientId: 'author-1',
+      actorId: 'viewer-1',
+    });
+    await service.notifyDiaryLiked({
+      diaryId: 'mine',
+      recipientId: 'viewer-1',
+      actorId: 'viewer-1',
+    });
 
     assert.deepEqual(
       repository.calls.filter((call) => call.method === 'create').map((call) => call.input),
@@ -93,9 +113,18 @@ describe('NotificationsService', () => {
     const notification = makeNotification();
     const repository = fakeNotificationsRepository([notification]);
 
-    const result = await new NotificationsService(repository as never).markRead('notice-1', 'recipient-1');
+    const result = await new NotificationsService(repository as never).markRead(
+      'notice-1',
+      'recipient-1',
+    );
 
-    assert.deepEqual(repository.calls[0], { method: 'findOne', input: { where: { id: 'notice-1', userId: 'recipient-1', type: Not('AUTHOR_FOLLOWED') }, relations: { actor: true, diary: true } } });
+    assert.deepEqual(repository.calls[0], {
+      method: 'findOne',
+      input: {
+        where: { id: 'notice-1', userId: 'recipient-1', type: Not('AUTHOR_FOLLOWED') },
+        relations: { actor: true, diary: true },
+      },
+    });
     assert.ok(notification.readAt instanceof Date);
     assert.equal(result.id, 'notice-1');
     assert.notEqual(result.readAt, null);

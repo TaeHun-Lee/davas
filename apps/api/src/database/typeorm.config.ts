@@ -1,9 +1,34 @@
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { CommentEntity, DiaryCompanionEntity, DiaryEntity, DiaryLikeEntity, DiaryReactionEntity, DiaryShareEntity, FileCleanupJobEntity, FriendInviteEntity, FriendshipEntity, InviteCodeEntity, InviteUseEntity, MediaEntity, MediaFavoriteEntity, MediaImageEntity, NotificationEntity, UserConsentEntity, UserEntity, UserFollowEntity, WatchlistItemEntity } from './entities';
-import { HighValueFlows1720670400000 } from './migrations/1720670400000-HighValueFlows';
+import type { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import {
+  CommentEntity,
+  DiaryCompanionEntity,
+  DiaryEntity,
+  DiaryLikeEntity,
+  DiaryReactionEntity,
+  DiaryShareEntity,
+  FileCleanupJobEntity,
+  FriendInviteEntity,
+  FriendshipEntity,
+  InviteCodeEntity,
+  InviteUseEntity,
+  MediaEntity,
+  MediaFavoriteEntity,
+  MediaImageEntity,
+  NotificationEntity,
+  UserConsentEntity,
+  UserEntity,
+  UserFollowEntity,
+  WatchlistItemEntity,
+} from './entities';
 import { BaseSchema1720670300000 } from './migrations/1720670300000-BaseSchema';
+import { HighValueFlows1720670400000 } from './migrations/1720670400000-HighValueFlows';
 import { CoreRecordContract1720670500000 } from './migrations/1720670500000-CoreRecordContract';
 import { FriendInvitesAndConsents1720670600000 } from './migrations/1720670600000-FriendInvitesAndConsents';
+import { MediaCanonicalIdentity1720670700000 } from './migrations/1720670700000-MediaCanonicalIdentity';
+import { CoreQueryIndexes1720670800000 } from './migrations/1720670800000-CoreQueryIndexes';
+import { FeedIndexSharedAtPredicate1720670900000 } from './migrations/1720670900000-FeedIndexSharedAtPredicate';
+import { LegacyTmdbImageSafety1720671000000 } from './migrations/1720671000000-LegacyTmdbImageSafety';
+import { DropLegacyMediaIdentityIndex1720671100000 } from './migrations/1720671100000-DropLegacyMediaIdentityIndex';
 
 export function createTypeOrmOptions(): TypeOrmModuleOptions {
   return {
@@ -14,8 +39,38 @@ export function createTypeOrmOptions(): TypeOrmModuleOptions {
     username: process.env.DB_USERNAME ?? 'postgres',
     password: process.env.DB_PASSWORD ?? 'postgres',
     database: process.env.DB_DATABASE ?? 'davas',
-    entities: [UserEntity, UserConsentEntity, FileCleanupJobEntity, UserFollowEntity, FriendshipEntity, FriendInviteEntity, InviteCodeEntity, InviteUseEntity, MediaEntity, MediaImageEntity, MediaFavoriteEntity, WatchlistItemEntity, DiaryEntity, DiaryCompanionEntity, DiaryShareEntity, DiaryLikeEntity, DiaryReactionEntity, CommentEntity, NotificationEntity],
-    migrations: [BaseSchema1720670300000, HighValueFlows1720670400000, CoreRecordContract1720670500000, FriendInvitesAndConsents1720670600000],
+    entities: [
+      UserEntity,
+      UserConsentEntity,
+      FileCleanupJobEntity,
+      UserFollowEntity,
+      FriendshipEntity,
+      FriendInviteEntity,
+      InviteCodeEntity,
+      InviteUseEntity,
+      MediaEntity,
+      MediaImageEntity,
+      MediaFavoriteEntity,
+      WatchlistItemEntity,
+      DiaryEntity,
+      DiaryCompanionEntity,
+      DiaryShareEntity,
+      DiaryLikeEntity,
+      DiaryReactionEntity,
+      CommentEntity,
+      NotificationEntity,
+    ],
+    migrations: [
+      BaseSchema1720670300000,
+      HighValueFlows1720670400000,
+      CoreRecordContract1720670500000,
+      FriendInvitesAndConsents1720670600000,
+      MediaCanonicalIdentity1720670700000,
+      CoreQueryIndexes1720670800000,
+      FeedIndexSharedAtPredicate1720670900000,
+      LegacyTmdbImageSafety1720671000000,
+      DropLegacyMediaIdentityIndex1720671100000,
+    ],
     synchronize: process.env.TYPEORM_SYNC === 'true',
     logging: process.env.TYPEORM_LOGGING === 'true',
   };

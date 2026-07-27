@@ -12,6 +12,7 @@ import {
 import { AuthController } from './auth.controller';
 import { parseJwtExpirySeconds } from './jwt-config';
 import { JwtCookieAuthGuard } from './jwt-cookie-auth.guard';
+import { OptionalJwtCookieAuthGuard } from './optional-jwt-cookie-auth.guard';
 import { AuthService } from './auth.service';
 
 @Module({
@@ -25,14 +26,14 @@ import { AuthService } from './auth.service';
       InviteUseEntity,
     ]),
     JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'dev-secret-change-me',
+      secret: process.env.JWT_ACCESS_SECRET ?? 'dev-secret-change-me',
       signOptions: {
         expiresIn: parseJwtExpirySeconds(process.env.JWT_ACCESS_EXPIRES_IN),
       },
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtCookieAuthGuard],
-  exports: [AuthService, JwtCookieAuthGuard],
+  providers: [AuthService, JwtCookieAuthGuard, OptionalJwtCookieAuthGuard],
+  exports: [AuthService, JwtCookieAuthGuard, OptionalJwtCookieAuthGuard],
 })
 export class AuthModule {}

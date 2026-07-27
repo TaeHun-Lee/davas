@@ -19,23 +19,21 @@ function context(method: string, origin?: string) {
   } as unknown as ExecutionContext;
 }
 
+const validProductionEnvironment = {
+  NODE_ENV: 'production',
+  CORS_ORIGINS: 'https://davas.app',
+  JWT_ACCESS_SECRET: 'a'.repeat(48),
+  COOKIE_SECURE: 'true',
+};
+
 describe('application security configuration', () => {
   it('uses localhost only as the development CORS default', () => {
-    assert.deepEqual(resolveAllowedOrigins({}, 'development'), [
-      'http://localhost:3000',
-    ]);
+    assert.deepEqual(resolveAllowedOrigins({}, 'development'), ['http://localhost:3000']);
   });
 
   it('requires explicit exact production origins and rejects wildcard', () => {
-    assert.throws(
-      () => resolveAllowedOrigins({}, 'production'),
-      /CORS_ORIGINS/,
-    );
-    assert.throws(
-      () =>
-        resolveAllowedOrigins({ CORS_ORIGINS: '*' }, 'production'),
-      /wildcard/i,
-    );
+    assert.throws(() => resolveAllowedOrigins({}, 'production'), /CORS_ORIGINS/);
+    assert.throws(() => resolveAllowedOrigins({ CORS_ORIGINS: '*' }, 'production'), /wildcard/i);
     assert.deepEqual(
       resolveAllowedOrigins(
         { CORS_ORIGINS: 'https://davas.app, https://www.davas.app' },
@@ -45,28 +43,60 @@ describe('application security configuration', () => {
     );
   });
 
-  it('fails closed on insecure production secrets and cookies', () => {
+  it('fails closed on insecure production JWT and cookie settings', () => {
     assert.throws(
       () =>
         validateProductionConfiguration({
-          NODE_ENV: 'production',
-          CORS_ORIGINS: 'https://davas.app',
-          JWT_SECRET: 'dev-secret-change-me',
-          DATABASE_URL: '',
+          ...validProductionEnvironment,
+          JWT_ACCESS_SECRET: 'replace-me',
           COOKIE_SECURE: 'false',
         }),
-      /JWT_SECRET|DATABASE_URL|COOKIE_SECURE/,
+      /JWT_ACCESS_SECRET|COOKIE_SECURE/,
     );
 
-    assert.doesNotThrow(() =>
-      validateProductionConfiguration({
-        NODE_ENV: 'production',
-        CORS_ORIGINS: 'https://davas.app',
-        JWT_SECRET: 'a'.repeat(48),
-        DATABASE_URL: 'postgresql://app:secret@db:5432/davas',
-        COOKIE_SECURE: 'true',
-      }),
+    assert.doesNotThrow(() => validateProductionConfiguration(validProductionEnvironment));
+  });
+
+  it('does not silently accept the retired JWT_SECRET name', () => {
+    const { JWT_ACCESS_SECRET: _removed, ...withoutCurrentSecret } = validProductionEnvironment;
+
+    assert.throws(
+      () =>
+        validateProductionConfiguration({
+          ...withoutCurrentSecret,
+          JWT_SECRET: 'a'.repeat(48),
+        }),
+      /JWT_ACCESS_SECRET/,
     );
+  });
+
+  it('does not enforce general database, schema sync, or bootstrap invite policy', () => {
+    for (const password of ['short', 'postgres', 'change-this-postgres-password']) {
+      assert.doesNotThrow(() =>
+        validateProductionConfiguration({
+          ...validProductionEnvironment,
+          DB_PASSWORD: password,
+          DATABASE_URL: `postgresql://davas:***@db:5432/davas`,
+          TYPEORM_SYNC: 'true',
+          DAVAS_BOOTSTRAP_INVITE_CODE: 'private-self-host-code',
+          DAVAS_BOOTSTRAP_INVITE_MAX_USES: '0',
+          DAVAS_BOOTSTRAP_INVITE_EXPIRES_AT: 'not-a-date',
+        }),
+      );
+    }
+  });
+
+  it('rejects publicly known bootstrap invite placeholders in production', () => {
+    for (const bootstrapCode of ['change-me-bootstrap-code', 'replace-with-a-one-time-code']) {
+      assert.throws(
+        () =>
+          validateProductionConfiguration({
+            ...validProductionEnvironment,
+            DAVAS_BOOTSTRAP_INVITE_CODE: bootstrapCode,
+          }),
+        /DAVAS_BOOTSTRAP_INVITE_CODE/,
+      );
+    }
   });
 
   it('rejects unsafe browser requests from outside the allowlist', () => {

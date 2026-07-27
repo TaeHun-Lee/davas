@@ -1,20 +1,11 @@
-import {
-  ConflictException,
-  Injectable,
-  Optional,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { ConflictException, Injectable, Optional, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { DataSource, Repository } from 'typeorm';
-import {
-  FileCleanupJobEntity,
-  UserEntity,
-} from '../database/entities';
+import { FileCleanupJobEntity, UserEntity } from '../database/entities';
 import { validateProfileImageContent } from './profile-image-upload';
 
 export type UserProfileResponse = {
@@ -44,12 +35,11 @@ export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly users: Repository<UserEntity>,
-    private readonly jwt: JwtService,
     @Optional() private readonly dataSource?: DataSource,
   ) {}
 
-  async updateMe(accessToken: string | undefined, dto: UpdateMeDto) {
-    const user = await this.loadAuthenticatedUser(accessToken);
+  async updateMe(userId: string, dto: UpdateMeDto) {
+    const user = await this.loadUserById(userId);
     const nextNickname = dto.nickname?.trim();
 
     if (nextNickname && nextNickname !== user.nickname) {
@@ -76,25 +66,19 @@ export class UsersService {
     return this.toUserResponse(await this.users.save(user));
   }
 
-  async updateProfileImage(
-    accessToken: string | undefined,
-    imageUrl: string,
-  ) {
-    const user = await this.loadAuthenticatedUser(accessToken);
+  async updateProfileImage(userId: string, imageUrl: string) {
+    const user = await this.loadUserById(userId);
     user.profileImageUrl = imageUrl;
     return this.toUserResponse(await this.users.save(user));
   }
 
-  async saveProfileImage(
-    accessToken: string | undefined,
-    file: ProfileImageFile | undefined,
-  ) {
+  async saveProfileImage(userId: string, file: ProfileImageFile | undefined) {
     if (!file) {
       throw new ConflictException('프로필 이미지 파일이 필요합니다.');
     }
     const validated = validateProfileImageContent(file);
 
-    const user = await this.loadAuthenticatedUser(accessToken);
+    const user = await this.loadUserById(userId);
     const uploadRoot = process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads');
     const imageDirectory = join(uploadRoot, 'profile-images');
     await mkdir(imageDirectory, { recursive: true });
@@ -119,8 +103,8 @@ export class UsersService {
     return this.toUserResponse(savedUser);
   }
 
-  async deleteProfileImage(accessToken: string | undefined) {
-    const user = await this.loadAuthenticatedUser(accessToken);
+  async deleteProfileImage(userId: string) {
+    const user = await this.loadUserById(userId);
     const previousImageUrl = user.profileImageUrl;
     user.profileImageUrl = null;
     const savedUser = await this.users.save(user);
@@ -128,8 +112,8 @@ export class UsersService {
     return this.toUserResponse(savedUser);
   }
 
-  async deleteMe(accessToken: string | undefined, password: string) {
-    const user = await this.loadAuthenticatedUser(accessToken);
+  async deleteMe(userId: string, password: string) {
+    const user = await this.loadUserById(userId);
     if (!(await bcrypt.compare(password, user.passwordHash))) {
       throw new UnauthorizedException('비밀번호가 맞지 않아요.');
     }
@@ -152,21 +136,12 @@ export class UsersService {
         [user.id],
       );
       for (const [table, clause] of [
-        [
-          'friendships',
-          '"requester_id" = $1 OR "receiver_id" = $1',
-        ],
+        ['friendships', '"requester_id" = $1 OR "receiver_id" = $1'],
         ['diary_shares', '"user_id" = $1'],
         ['diary_reactions', '"user_id" = $1'],
         ['diary_likes', '"user_id" = $1'],
-        [
-          'notifications',
-          '"user_id" = $1 OR "actor_id" = $1',
-        ],
-        [
-          'user_follows',
-          '"follower_id" = $1 OR "following_id" = $1',
-        ],
+        ['notifications', '"user_id" = $1 OR "actor_id" = $1'],
+        ['user_follows', '"follower_id" = $1 OR "following_id" = $1'],
         ['watchlist_items', '"user_id" = $1'],
         ['media_favorites', '"user_id" = $1'],
       ] as const) {
@@ -219,22 +194,12 @@ export class UsersService {
     }
   }
 
-  private async loadAuthenticatedUser(accessToken: string | undefined) {
-    if (!accessToken) {
-      throw new UnauthorizedException('인증이 필요합니다.');
+  private async loadUserById(userId: string) {
+    const user = await this.users.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
     }
-
-    try {
-      const payload = this.jwt.verify<{ sub: string }>(accessToken);
-      const user = await this.users.findOne({ where: { id: payload.sub } });
-      if (!user) {
-        throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
-      }
-      return user;
-    } catch (error) {
-      if (error instanceof UnauthorizedException) throw error;
-      throw new UnauthorizedException('유효하지 않은 인증 정보입니다.');
-    }
+    return user;
   }
 
   private toUserResponse(user: UserEntity): UserProfileResponse {

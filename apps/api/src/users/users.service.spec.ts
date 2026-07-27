@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { mkdir, mkdtemp, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeEach, describe, it } from 'node:test';
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { UserEntity } from '../database/entities';
 import { UsersService } from './users.service';
 
@@ -12,24 +12,21 @@ type SavedUser = UserEntity & { id: string };
 
 class FakeUserRepository {
   users: SavedUser[] = [];
+  onRemove?: (user: UserEntity) => void;
 
   async findOne({ where }: { where: Partial<UserEntity>[] | Partial<UserEntity> }) {
     const conditions = Array.isArray(where) ? where : [where];
     return (
       this.users.find((user) =>
         conditions.some((condition) =>
-          Object.entries(condition).every(
-            ([key, value]) => user[key as keyof SavedUser] === value,
-          ),
+          Object.entries(condition).every(([key, value]) => user[key as keyof SavedUser] === value),
         ),
       ) ?? null
     );
   }
 
   async save(user: UserEntity) {
-    const existingIndex = this.users.findIndex(
-      (saved) => saved.id === (user as SavedUser).id,
-    );
+    const existingIndex = this.users.findIndex((saved) => saved.id === (user as SavedUser).id);
     if (existingIndex >= 0) {
       this.users[existingIndex] = {
         ...this.users[existingIndex],
@@ -41,12 +38,11 @@ class FakeUserRepository {
     this.users.push(saved);
     return saved;
   }
-}
 
-class FakeJwtService {
-  verify(token: string) {
-    if (token !== 'valid-token') throw new Error('bad token');
-    return { sub: 'user-1' };
+  async remove(user: UserEntity) {
+    this.onRemove?.(user);
+    this.users = this.users.filter((saved) => saved.id !== (user as SavedUser).id);
+    return user;
   }
 }
 
@@ -70,14 +66,11 @@ describe('UsersService', () => {
       updatedAt: new Date(),
       deletedAt: null,
     });
-    service = new UsersService(
-      users as never,
-      new FakeJwtService() as unknown as JwtService,
-    );
+    service = new UsersService(users as never);
   });
 
-  it('updates the authenticated profile without changing immutable fields', async () => {
-    const result = await service.updateMe('valid-token', {
+  it('updates the guard-authenticated profile without changing immutable fields', async () => {
+    const result = await service.updateMe('user-1', {
       nickname: ' after ',
       bio: ' hello ',
       preferredGenres: ['SF', 'Drama'],
@@ -98,23 +91,17 @@ describe('UsersService', () => {
     });
 
     await assert.rejects(
-      () => service.updateMe('valid-token', { nickname: 'taken' }),
+      () => service.updateMe('user-1', { nickname: 'taken' }),
       ConflictException,
     );
   });
 
-  it('stores and deletes the authenticated profile image URL', async () => {
-    const stored = await service.updateProfileImage(
-      'valid-token',
-      '/uploads/profile-images/user-1.png',
-    );
+  it('stores and deletes the guard-authenticated profile image URL', async () => {
+    const stored = await service.updateProfileImage('user-1', '/uploads/profile-images/user-1.png');
 
-    assert.equal(
-      stored.profileImageUrl,
-      '/uploads/profile-images/user-1.png',
-    );
+    assert.equal(stored.profileImageUrl, '/uploads/profile-images/user-1.png');
 
-    const deleted = await service.deleteProfileImage('valid-token');
+    const deleted = await service.deleteProfileImage('user-1');
 
     assert.equal(deleted.profileImageUrl, null);
   });
@@ -131,16 +118,123 @@ describe('UsersService', () => {
     };
 
     try {
-      const first = await service.saveProfileImage('valid-token', file);
+      const first = await service.saveProfileImage('user-1', file);
       const imageDirectory = join(uploadRoot, 'profile-images');
       assert.equal((await readdir(imageDirectory)).length, 1);
 
-      const second = await service.saveProfileImage('valid-token', file);
+      const second = await service.saveProfileImage('user-1', file);
       assert.notEqual(second.profileImageUrl, first.profileImageUrl);
       assert.equal((await readdir(imageDirectory)).length, 1);
 
-      await service.deleteProfileImage('valid-token');
+      await service.deleteProfileImage('user-1');
       assert.equal((await readdir(imageDirectory)).length, 0);
+    } finally {
+      if (previousUploadsDir === undefined) {
+        delete process.env.UPLOADS_DIR;
+      } else {
+        process.env.UPLOADS_DIR = previousUploadsDir;
+      }
+      await rm(uploadRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('removes the physical profile image when deleting an account', async () => {
+    const uploadRoot = await mkdtemp(join(tmpdir(), 'davas-account-delete-'));
+    const previousUploadsDir = process.env.UPLOADS_DIR;
+    process.env.UPLOADS_DIR = uploadRoot;
+
+    try {
+      users.users[0].passwordHash = await bcrypt.hash('delete-password', 4);
+      await service.saveProfileImage('user-1', {
+        originalname: 'account.jpg',
+        mimetype: 'image/jpeg',
+        buffer: Buffer.from([0xff, 0xd8, 0xff, 0xdb]),
+        size: 4,
+      });
+      const imageDirectory = join(uploadRoot, 'profile-images');
+      assert.equal((await readdir(imageDirectory)).length, 1);
+      service = new UsersService(
+        users as never,
+        {
+          isInitialized: true,
+          transaction: async (work: (manager: unknown) => Promise<void>) =>
+            work({
+              query: async () => [],
+              getRepository: () => ({
+                update: async (_criteria: unknown, update: Partial<UserEntity>) => {
+                  Object.assign(users.users[0], update);
+                },
+              }),
+            }),
+        } as never,
+      );
+
+      const result = await service.deleteMe('user-1', 'delete-password');
+
+      assert.equal(result, undefined);
+      assert.equal(users.users.length, 1);
+      assert.equal(users.users[0].profileImageUrl, null);
+      assert.ok(users.users[0].deletedAt instanceof Date);
+      assert.equal((await readdir(imageDirectory)).length, 0);
+    } finally {
+      if (previousUploadsDir === undefined) {
+        delete process.env.UPLOADS_DIR;
+      } else {
+        process.env.UPLOADS_DIR = previousUploadsDir;
+      }
+      await rm(uploadRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('queues account image cleanup after the user row is removed when unlink fails', async () => {
+    const uploadRoot = await mkdtemp(join(tmpdir(), 'davas-account-retry-'));
+    const previousUploadsDir = process.env.UPLOADS_DIR;
+    process.env.UPLOADS_DIR = uploadRoot;
+    const blockedName = 'blocked-account-image';
+    await mkdir(join(uploadRoot, 'profile-images', blockedName), {
+      recursive: true,
+    });
+    users.users[0].passwordHash = await bcrypt.hash('delete-password', 4);
+    users.users[0].profileImageUrl = `/uploads/profile-images/${blockedName}`;
+    const events: string[] = [];
+    const jobs: Array<Record<string, unknown>> = [];
+    service = new UsersService(
+      users as never,
+      {
+        isInitialized: true,
+        transaction: async (work: (manager: unknown) => Promise<void>) =>
+          work({
+            query: async () => [],
+            getRepository: () => ({
+              update: async (_criteria: unknown, update: Partial<UserEntity>) => {
+                events.push('account-anonymized');
+                Object.assign(users.users[0], update);
+              },
+            }),
+          }),
+        getRepository: () => ({
+          save: async (job: Record<string, unknown>) => {
+            events.push('cleanup-queued');
+            jobs.push(job);
+            return job;
+          },
+        }),
+      } as never,
+    );
+
+    try {
+      const result = await service.deleteMe('user-1', 'delete-password');
+
+      assert.equal(result, undefined);
+      assert.deepEqual(events, ['account-anonymized', 'cleanup-queued']);
+      assert.equal(users.users.length, 1);
+      assert.equal(users.users[0].profileImageUrl, null);
+      assert.ok(users.users[0].deletedAt instanceof Date);
+      assert.equal(jobs.length, 1);
+      assert.equal(jobs[0].path, join(uploadRoot, 'profile-images', blockedName));
+      assert.equal(jobs[0].kind, 'PROFILE_IMAGE');
+      assert.equal(jobs[0].attempts, 1);
+      assert.equal(jobs[0].completedAt, null);
     } finally {
       if (previousUploadsDir === undefined) {
         delete process.env.UPLOADS_DIR;
@@ -163,7 +257,6 @@ describe('UsersService', () => {
     const jobs: Array<Record<string, unknown>> = [];
     service = new UsersService(
       users as never,
-      new FakeJwtService() as unknown as JwtService,
       {
         isInitialized: true,
         getRepository: () => ({
@@ -176,7 +269,7 @@ describe('UsersService', () => {
     );
 
     try {
-      const deleted = await service.deleteProfileImage('valid-token');
+      const deleted = await service.deleteProfileImage('user-1');
 
       assert.equal(deleted.profileImageUrl, null);
       assert.equal(jobs.length, 1);
@@ -193,13 +286,13 @@ describe('UsersService', () => {
     }
   });
 
-  it('rejects missing or invalid auth tokens', async () => {
+  it('rejects user identifiers that no longer exist', async () => {
     await assert.rejects(
-      () => service.updateMe(undefined, { nickname: 'new' }),
+      () => service.updateMe('missing-user', { nickname: 'new' }),
       UnauthorizedException,
     );
     await assert.rejects(
-      () => service.updateProfileImage('bad-token', '/uploads/profile-images/x.png'),
+      () => service.updateProfileImage('missing-user', '/uploads/profile-images/x.png'),
       UnauthorizedException,
     );
   });

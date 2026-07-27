@@ -52,12 +52,14 @@ function fakeCommentsRepository(rows: CommentEntity[] = []): FakeCommentsReposit
     async findOne(input) {
       this.calls.push({ method: 'findOne', input });
       const where = (input as { where?: Partial<CommentEntity> }).where ?? {};
-      return this.rows.find((row) => {
-        if (where.id && row.id !== where.id) return false;
-        if (where.userId && row.userId !== where.userId) return false;
-        if (where.diaryId && row.diaryId !== where.diaryId) return false;
-        return true;
-      }) ?? null;
+      return (
+        this.rows.find((row) => {
+          if (where.id && row.id !== where.id) return false;
+          if (where.userId && row.userId !== where.userId) return false;
+          if (where.diaryId && row.diaryId !== where.diaryId) return false;
+          return true;
+        }) ?? null
+      );
     },
     async softDelete(input) {
       this.calls.push({ method: 'softDelete', input });
@@ -90,33 +92,56 @@ function fakeAccess(allowed = true) {
 describe('CommentsService', () => {
   it('lists comments for an accessible diary with real author data in oldest-first order', async () => {
     const comments = fakeCommentsRepository([makeComment()]);
-    const diaries = fakeDiariesRepository({ id: 'diary-1', visibility: 'FRIENDS' } as unknown as DiaryEntity);
+    const diaries = fakeDiariesRepository({
+      id: 'diary-1',
+      visibility: 'FRIENDS',
+    } as unknown as DiaryEntity);
 
-    const result = await new CommentsService(comments as never, diaries as never, fakeAccess() as never).listForDiary('diary-1');
+    const result = await new CommentsService(
+      comments as never,
+      diaries as never,
+      fakeAccess() as never,
+    ).listForDiary('diary-1');
 
     assert.deepEqual(diaries.calls[0], { method: 'findOne', input: { where: { id: 'diary-1' } } });
     assert.deepEqual(comments.calls[0], {
       method: 'find',
-      input: { where: { diaryId: 'diary-1' }, relations: { user: true }, order: { createdAt: 'ASC' } },
+      input: {
+        where: { diaryId: 'diary-1' },
+        relations: { user: true },
+        order: { createdAt: 'ASC' },
+      },
     });
-    assert.deepEqual(result.items, [{
-      id: 'comment-1',
-      diaryId: 'diary-1',
-      content: '좋은 기록입니다.',
-      author: { id: 'user-1', nickname: '댓글러', profileImageUrl: null },
-      createdAt: '2026-05-09T12:00:00.000Z',
-      updatedAt: '2026-05-09T12:00:00.000Z',
-      isMine: false,
-    }]);
+    assert.deepEqual(result.items, [
+      {
+        id: 'comment-1',
+        diaryId: 'diary-1',
+        content: '좋은 기록입니다.',
+        author: { id: 'user-1', nickname: '댓글러', profileImageUrl: null },
+        createdAt: '2026-05-09T12:00:00.000Z',
+        updatedAt: '2026-05-09T12:00:00.000Z',
+        isMine: false,
+      },
+    ]);
   });
 
   it('creates comments only on a diary accessible to the authenticated user', async () => {
     const comments = fakeCommentsRepository();
-    const diaries = fakeDiariesRepository({ id: 'diary-1', visibility: 'FRIENDS' } as unknown as DiaryEntity);
+    const diaries = fakeDiariesRepository({
+      id: 'diary-1',
+      visibility: 'FRIENDS',
+    } as unknown as DiaryEntity);
 
-    const result = await new CommentsService(comments as never, diaries as never, fakeAccess() as never).create('diary-1', 'user-1', '  새 댓글  ');
+    const result = await new CommentsService(
+      comments as never,
+      diaries as never,
+      fakeAccess() as never,
+    ).create('diary-1', 'user-1', '  새 댓글  ');
 
-    assert.deepEqual(comments.calls.map((call) => call.method), ['create', 'save', 'findOne']);
+    assert.deepEqual(
+      comments.calls.map((call) => call.method),
+      ['create', 'save', 'findOne'],
+    );
     assert.equal((comments.calls[0].input as Partial<CommentEntity>).content, '새 댓글');
     assert.equal(result.content, '새 댓글');
     assert.equal(result.isMine, true);
@@ -124,22 +149,47 @@ describe('CommentsService', () => {
 
   it('reloads a created comment with the persisted user relation before returning author data', async () => {
     const comments = fakeCommentsRepository([
-      makeComment({ content: '새 댓글', user: { id: 'user-1', nickname: '실제닉네임', profileImageUrl: '/uploads/me.jpg' } as UserEntity }),
+      makeComment({
+        content: '새 댓글',
+        user: {
+          id: 'user-1',
+          nickname: '실제닉네임',
+          profileImageUrl: '/uploads/me.jpg',
+        } as UserEntity,
+      }),
     ]);
-    const diaries = fakeDiariesRepository({ id: 'diary-1', userId: 'author-1', visibility: 'FRIENDS' } as unknown as DiaryEntity);
+    const diaries = fakeDiariesRepository({
+      id: 'diary-1',
+      userId: 'author-1',
+      visibility: 'FRIENDS',
+    } as unknown as DiaryEntity);
 
-    const result = await new CommentsService(comments as never, diaries as never, fakeAccess() as never).create('diary-1', 'user-1', '새 댓글');
+    const result = await new CommentsService(
+      comments as never,
+      diaries as never,
+      fakeAccess() as never,
+    ).create('diary-1', 'user-1', '새 댓글');
 
-    assert.deepEqual(comments.calls.map((call) => call.method), ['create', 'save', 'findOne']);
+    assert.deepEqual(
+      comments.calls.map((call) => call.method),
+      ['create', 'save', 'findOne'],
+    );
     assert.deepEqual(comments.calls.at(-1), {
       method: 'findOne',
       input: { where: { id: 'comment-1', userId: 'user-1' }, relations: { user: true } },
     });
-    assert.deepEqual(result.author, { id: 'user-1', nickname: '실제닉네임', profileImageUrl: '/uploads/me.jpg' });
+    assert.deepEqual(result.author, {
+      id: 'user-1',
+      nickname: '실제닉네임',
+      profileImageUrl: '/uploads/me.jpg',
+    });
   });
 
   it('maps comment user relation through the persisted snake_case user_id column', () => {
-    const source = readFileSync(join(process.cwd(), 'src/database/entities/comment.entity.ts'), 'utf8');
+    const source = readFileSync(
+      join(process.cwd(), 'src/database/entities/comment.entity.ts'),
+      'utf8',
+    );
     assert.match(
       source,
       /@Column\(\{ name: 'user_id', type: 'uuid' \}\)\s+userId!: string;\s+@ManyToOne\(\(\) => UserEntity, \(user\) => user\.comments, \{ onDelete: 'CASCADE' \}\)\s+@JoinColumn\(\{ name: 'user_id' \}\)\s+user!: UserEntity;/,
@@ -148,41 +198,79 @@ describe('CommentsService', () => {
 
   it('updates and deletes only comments owned by the authenticated user', async () => {
     const comments = fakeCommentsRepository([makeComment()]);
-    const diaries = fakeDiariesRepository({ id: 'diary-1', visibility: 'FRIENDS' } as unknown as DiaryEntity);
+    const diaries = fakeDiariesRepository({
+      id: 'diary-1',
+      visibility: 'FRIENDS',
+    } as unknown as DiaryEntity);
     const service = new CommentsService(comments as never, diaries as never, fakeAccess() as never);
 
     const updated = await service.update('comment-1', 'user-1', '  수정 댓글  ');
     await service.remove('comment-1', 'user-1');
 
-    assert.deepEqual(comments.calls.filter((call) => call.method === 'findOne').map((call) => call.input), [
-      { where: { id: 'comment-1', userId: 'user-1' }, relations: { user: true, diary: true } },
-      { where: { id: 'comment-1', userId: 'user-1' }, relations: { user: true, diary: true } },
-    ]);
+    assert.deepEqual(
+      comments.calls.filter((call) => call.method === 'findOne').map((call) => call.input),
+      [
+        { where: { id: 'comment-1', userId: 'user-1' }, relations: { user: true, diary: true } },
+        { where: { id: 'comment-1', userId: 'user-1' }, relations: { user: true, diary: true } },
+      ],
+    );
     assert.equal(updated.content, '수정 댓글');
-    assert.deepEqual(comments.calls.at(-1), { method: 'softDelete', input: { id: 'comment-1', userId: 'user-1' } });
+    assert.deepEqual(comments.calls.at(-1), {
+      method: 'softDelete',
+      input: { id: 'comment-1', userId: 'user-1' },
+    });
   });
 
   it('rejects update and delete attempts from a different authenticated user', async () => {
     const comments = fakeCommentsRepository([makeComment({ id: 'comment-1', userId: 'owner-1' })]);
-    const diaries = fakeDiariesRepository({ id: 'diary-1', visibility: 'FRIENDS' } as unknown as DiaryEntity);
+    const diaries = fakeDiariesRepository({
+      id: 'diary-1',
+      visibility: 'FRIENDS',
+    } as unknown as DiaryEntity);
     const service = new CommentsService(comments as never, diaries as never, fakeAccess() as never);
 
-    await assert.rejects(() => service.update('comment-1', 'intruder-1', '남의 댓글 수정'), NotFoundException);
+    await assert.rejects(
+      () => service.update('comment-1', 'intruder-1', '남의 댓글 수정'),
+      NotFoundException,
+    );
     await assert.rejects(() => service.remove('comment-1', 'intruder-1'), NotFoundException);
 
-    assert.deepEqual(comments.calls.filter((call) => call.method === 'findOne').map((call) => call.input), [
-      { where: { id: 'comment-1', userId: 'intruder-1' }, relations: { user: true, diary: true } },
-      { where: { id: 'comment-1', userId: 'intruder-1' }, relations: { user: true, diary: true } },
-    ]);
-    assert.equal(comments.calls.some((call) => call.method === 'save'), false);
-    assert.equal(comments.calls.some((call) => call.method === 'softDelete'), false);
+    assert.deepEqual(
+      comments.calls.filter((call) => call.method === 'findOne').map((call) => call.input),
+      [
+        {
+          where: { id: 'comment-1', userId: 'intruder-1' },
+          relations: { user: true, diary: true },
+        },
+        {
+          where: { id: 'comment-1', userId: 'intruder-1' },
+          relations: { user: true, diary: true },
+        },
+      ],
+    );
+    assert.equal(
+      comments.calls.some((call) => call.method === 'save'),
+      false,
+    );
+    assert.equal(
+      comments.calls.some((call) => call.method === 'softDelete'),
+      false,
+    );
   });
 
   it('rejects comments for missing diaries', async () => {
     const comments = fakeCommentsRepository();
     const diaries = fakeDiariesRepository(null);
 
-    await assert.rejects(() => new CommentsService(comments as never, diaries as never, fakeAccess() as never).listForDiary('private-diary'), NotFoundException);
+    await assert.rejects(
+      () =>
+        new CommentsService(
+          comments as never,
+          diaries as never,
+          fakeAccess() as never,
+        ).listForDiary('private-diary'),
+      NotFoundException,
+    );
   });
 
   it('fails closed before exposing comment rows when the viewer loses diary access', async () => {
@@ -192,9 +280,15 @@ describe('CommentsService', () => {
     const access = fakeAccess(false);
     const service = new CommentsService(comments as never, diaries as never, access as never);
 
-    await assert.rejects(() => service.listForDiary('diary-1', 'former-friend'), ForbiddenException);
+    await assert.rejects(
+      () => service.listForDiary('diary-1', 'former-friend'),
+      ForbiddenException,
+    );
 
     assert.deepEqual(access.calls, [{ diary, userId: 'former-friend' }]);
-    assert.equal(comments.calls.some((call) => call.method === 'find'), false);
+    assert.equal(
+      comments.calls.some((call) => call.method === 'find'),
+      false,
+    );
   });
 });

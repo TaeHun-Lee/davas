@@ -16,11 +16,11 @@ export class InvitesController {
 
   @Post()
   create(@Req() request: AuthenticatedRequest, @Body() body: CreateInviteDto) {
-    return this.invites.create(request.user!.id, body);
+    return this.invites.create(request.user.id, body);
   }
 
   @Get()
   async list(@Req() request: AuthenticatedRequest) {
-    return { items: await this.invites.list(request.user!.id) };
+    return { items: await this.invites.list(request.user.id) };
   }
 }

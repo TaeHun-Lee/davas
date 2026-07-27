@@ -58,14 +58,21 @@ class FakeTmdbClient {
     };
   }
 
-
   async searchPeople(input: { query: string; page: number; language: string }) {
     this.peopleCalls.push(input);
     return {
       query: input.query,
       page: input.page,
       totalPages: 1,
-      items: [{ id: '20738', name: '송강호', profileUrl: null, knownForDepartment: 'Acting', knownFor: [] }],
+      items: [
+        {
+          id: '20738',
+          name: '송강호',
+          profileUrl: null,
+          knownForDepartment: 'Acting',
+          knownFor: [],
+        },
+      ],
     };
   }
 
@@ -73,7 +80,14 @@ class FakeTmdbClient {
     this.creditCalls.push(input);
     return {
       personId: input.personId,
-      items: [{ externalProvider: 'TMDB' as const, externalId: '496243', mediaType: 'MOVIE' as const, title: '기생충' }],
+      items: [
+        {
+          externalProvider: 'TMDB' as const,
+          externalId: '496243',
+          mediaType: 'MOVIE' as const,
+          title: '기생충',
+        },
+      ],
     };
   }
 }
@@ -140,21 +154,24 @@ function fakeFavoriteRepository(favorite: Record<string, unknown> | null = null)
 describe('MediaService detail', () => {
   it('hydrates a selected TMDB media row with detail-only fields from TMDB', async () => {
     const tmdbClient = new FakeTmdbClient();
-    const service = new MediaService(tmdbClient as never, fakeRepository({
-      id: 'media-id',
-      externalProvider: 'TMDB',
-      externalId: '1124566',
-      mediaType: 'MOVIE',
-      title: '센티멘탈 밸류',
-      originalTitle: 'Affeksjonsverdi',
-      overview: '검색 시놉시스',
-      posterUrl: null,
-      backdropUrl: null,
-      releaseDate: '2026-02-18',
-      genres: ['18'],
-      country: null,
-      runtime: null,
-    }) as never);
+    const service = new MediaService(
+      tmdbClient as never,
+      fakeRepository({
+        id: 'media-id',
+        externalProvider: 'TMDB',
+        externalId: '1124566',
+        mediaType: 'MOVIE',
+        title: '센티멘탈 밸류',
+        originalTitle: 'Affeksjonsverdi',
+        overview: '검색 시놉시스',
+        posterUrl: null,
+        backdropUrl: null,
+        releaseDate: '2026-02-18',
+        genres: ['18'],
+        country: null,
+        runtime: null,
+      }) as never,
+    );
 
     const detail = await service.findDetail('media-id');
 
@@ -165,34 +182,40 @@ describe('MediaService detail', () => {
     assert.deepEqual(detail.stillCuts, ['https://image.tmdb.org/t/p/w780/still.jpg']);
     assert.equal(detail.certification, '15');
     assert.equal(detail.tmdbRating, 7.494);
-    assert.deepEqual(tmdbClient.detailCalls, [{ externalId: '1124566', mediaType: 'MOVIE', language: 'ko-KR' }]);
+    assert.deepEqual(tmdbClient.detailCalls, [
+      { externalId: '1124566', mediaType: 'MOVIE', language: 'ko-KR' },
+    ]);
   });
 
   it('includes the authenticated user diary for the selected media detail', async () => {
     const tmdbClient = new FakeTmdbClient();
-    const service = new MediaService(tmdbClient as never, fakeRepository({
-      id: 'media-id',
-      externalProvider: 'TMDB',
-      externalId: '1124566',
-      mediaType: 'MOVIE',
-      title: '센티멘탈 밸류',
-      originalTitle: 'Affeksjonsverdi',
-      overview: '검색 시놉시스',
-      posterUrl: null,
-      backdropUrl: null,
-      releaseDate: '2026-02-18',
-      genres: ['18'],
-      country: null,
-      runtime: null,
-    }) as never, fakeDiaryRepository({
-      id: 'diary-id',
-      mediaId: 'media-id',
-      title: '극장에서 남긴 기록',
-      content: '배우들의 감정선이 오래 남았다.',
-      watchedDate: '2026-05-09',
-      rating: '4.5',
-      updatedAt: new Date('2026-05-09T10:00:00.000Z'),
-    }) as never);
+    const service = new MediaService(
+      tmdbClient as never,
+      fakeRepository({
+        id: 'media-id',
+        externalProvider: 'TMDB',
+        externalId: '1124566',
+        mediaType: 'MOVIE',
+        title: '센티멘탈 밸류',
+        originalTitle: 'Affeksjonsverdi',
+        overview: '검색 시놉시스',
+        posterUrl: null,
+        backdropUrl: null,
+        releaseDate: '2026-02-18',
+        genres: ['18'],
+        country: null,
+        runtime: null,
+      }) as never,
+      fakeDiaryRepository({
+        id: 'diary-id',
+        mediaId: 'media-id',
+        title: '극장에서 남긴 기록',
+        content: '배우들의 감정선이 오래 남았다.',
+        watchedDate: '2026-05-09',
+        rating: '4.5',
+        updatedAt: new Date('2026-05-09T10:00:00.000Z'),
+      }) as never,
+    );
 
     const detail = await service.findDetail('media-id', 'user-id');
 
@@ -228,25 +251,32 @@ describe('MediaService detail', () => {
         updatedAt: new Date('2026-05-09T10:00:00.000Z'),
       },
     ]);
-    const service = new MediaService(tmdbClient as never, fakeRepository({
-      id: 'media-id',
-      externalProvider: 'TMDB',
-      externalId: '1124566',
-      mediaType: 'MOVIE',
-      title: '센티멘탈 밸류',
-      originalTitle: 'Affeksjonsverdi',
-      overview: '검색 시놉시스',
-      posterUrl: null,
-      backdropUrl: null,
-      releaseDate: '2026-02-18',
-      genres: ['18'],
-      country: null,
-      runtime: null,
-    }) as never, diaries as never);
+    const service = new MediaService(
+      tmdbClient as never,
+      fakeRepository({
+        id: 'media-id',
+        externalProvider: 'TMDB',
+        externalId: '1124566',
+        mediaType: 'MOVIE',
+        title: '센티멘탈 밸류',
+        originalTitle: 'Affeksjonsverdi',
+        overview: '검색 시놉시스',
+        posterUrl: null,
+        backdropUrl: null,
+        releaseDate: '2026-02-18',
+        genres: ['18'],
+        country: null,
+        runtime: null,
+      }) as never,
+      diaries as never,
+    );
 
     const detail = await service.findDetail('media-id', 'user-id');
 
-    assert.deepEqual(diaries.calls[0], { where: { userId: 'user-id', mediaId: 'media-id' }, order: { updatedAt: 'DESC', createdAt: 'DESC' } });
+    assert.deepEqual(diaries.calls[0], {
+      where: { userId: 'user-id', mediaId: 'media-id' },
+      order: { updatedAt: 'DESC', createdAt: 'DESC' },
+    });
     assert.equal(detail.myAverageRating, 4);
     assert.deepEqual(detail.myDiaries, [
       {
@@ -271,21 +301,27 @@ describe('MediaService detail', () => {
   it('includes the authenticated watchlist state without exposing legacy favorite state', async () => {
     const tmdbClient = new FakeTmdbClient();
     const watchlist = { findOne: async () => ({ id: 'watchlist-id', status: 'ACTIVE' }) };
-    const service = new MediaService(tmdbClient as never, fakeRepository({
-      id: 'media-id',
-      externalProvider: 'TMDB',
-      externalId: '1124566',
-      mediaType: 'MOVIE',
-      title: '센티멘탈 밸류',
-      originalTitle: 'Affeksjonsverdi',
-      overview: '검색 시놉시스',
-      posterUrl: null,
-      backdropUrl: null,
-      releaseDate: '2026-02-18',
-      genres: ['18'],
-      country: null,
-      runtime: null,
-    }) as never, fakeDiaryRepository(null) as never, fakeFavoriteRepository(null) as never, watchlist as never);
+    const service = new MediaService(
+      tmdbClient as never,
+      fakeRepository({
+        id: 'media-id',
+        externalProvider: 'TMDB',
+        externalId: '1124566',
+        mediaType: 'MOVIE',
+        title: '센티멘탈 밸류',
+        originalTitle: 'Affeksjonsverdi',
+        overview: '검색 시놉시스',
+        posterUrl: null,
+        backdropUrl: null,
+        releaseDate: '2026-02-18',
+        genres: ['18'],
+        country: null,
+        runtime: null,
+      }) as never,
+      fakeDiaryRepository(null) as never,
+      fakeFavoriteRepository(null) as never,
+      watchlist as never,
+    );
 
     const detail = await service.findDetail('media-id', 'user-id');
 
@@ -297,12 +333,20 @@ describe('MediaService detail', () => {
   it('toggles a media favorite for the authenticated user', async () => {
     const tmdbClient = new FakeTmdbClient();
     const favorites = fakeFavoriteRepository(null);
-    const service = new MediaService(tmdbClient as never, fakeRepository({ id: 'media-id' }) as never, fakeDiaryRepository(null) as never, favorites as never);
+    const service = new MediaService(
+      tmdbClient as never,
+      fakeRepository({ id: 'media-id' }) as never,
+      fakeDiaryRepository(null) as never,
+      favorites as never,
+    );
 
     const favorited = await service.toggleFavorite('media-id', 'user-id');
 
     assert.deepEqual(favorited, { mediaId: 'media-id', isFavorite: true });
-    assert.deepEqual(favorites.calls.map((call) => call.method), ['findOne', 'create', 'save']);
+    assert.deepEqual(
+      favorites.calls.map((call) => call.method),
+      ['findOne', 'create', 'save'],
+    );
   });
 
   it('lists the authenticated user favorite media in recently favorited order', async () => {
@@ -328,25 +372,36 @@ describe('MediaService detail', () => {
         country: 'NO',
       },
     });
-    const service = new MediaService(tmdbClient as never, fakeRepository(null) as never, fakeDiaryRepository(null) as never, favorites as never);
+    const service = new MediaService(
+      tmdbClient as never,
+      fakeRepository(null) as never,
+      fakeDiaryRepository(null) as never,
+      favorites as never,
+    );
 
     const result = await service.findFavorites('user-id');
 
     assert.deepEqual(favorites.calls[0], {
       method: 'find',
-      input: { where: { userId: 'user-id' }, relations: { media: true }, order: { createdAt: 'DESC' } },
+      input: {
+        where: { userId: 'user-id' },
+        relations: { media: true },
+        order: { createdAt: 'DESC' },
+      },
     });
-    assert.deepEqual(result.items, [{
-      id: 'media-id',
-      mediaType: 'MOVIE',
-      title: '센티멘탈 밸류',
-      originalTitle: 'Affeksjonsverdi',
-      posterUrl: 'https://image.tmdb.org/t/p/w500/poster.jpg',
-      backdropUrl: null,
-      releaseDate: '2026-02-18',
-      genres: ['드라마'],
-      favoritedAt: '2026-05-09T11:00:00.000Z',
-    }]);
+    assert.deepEqual(result.items, [
+      {
+        id: 'media-id',
+        mediaType: 'MOVIE',
+        title: '센티멘탈 밸류',
+        originalTitle: 'Affeksjonsverdi',
+        posterUrl: 'https://image.tmdb.org/t/p/w500/poster.jpg',
+        backdropUrl: null,
+        releaseDate: '2026-02-18',
+        genres: ['드라마'],
+        favoritedAt: '2026-05-09T11:00:00.000Z',
+      },
+    ]);
   });
 });
 
@@ -360,7 +415,10 @@ describe('MediaService search', () => {
 
     assert.equal(korean.items[0].title, '인터스텔라');
     assert.equal(english.items[0].title, 'Interstellar');
-    assert.deepEqual(tmdbClient.calls.map((call) => call.query), ['인터스텔라', 'Interstellar']);
+    assert.deepEqual(
+      tmdbClient.calls.map((call) => call.query),
+      ['인터스텔라', 'Interstellar'],
+    );
   });
 
   it('trims query and applies default type/page values', async () => {
@@ -369,9 +427,14 @@ describe('MediaService search', () => {
 
     await service.search({ query: '  Arrival  ' });
 
-    assert.deepEqual(tmdbClient.calls[0], { query: 'Arrival', type: 'multi', page: 1, language: 'ko-KR', region: 'KR' });
+    assert.deepEqual(tmdbClient.calls[0], {
+      query: 'Arrival',
+      type: 'multi',
+      page: 1,
+      language: 'ko-KR',
+      region: 'KR',
+    });
   });
-
 
   it('searches actor candidates with a trimmed query and Korean defaults', async () => {
     const tmdbClient = new FakeTmdbClient();

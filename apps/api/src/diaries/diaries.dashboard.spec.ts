@@ -19,8 +19,6 @@ function apiSource(path: string) {
 const controllerSource = source('diaries.controller.ts');
 const moduleSource = source('diaries.module.ts');
 const serviceSource = source('diaries-dashboard.service.ts');
-const authControllerSource = apiSource('auth/auth.controller.ts');
-const authBoundarySource = apiSource('auth/jwt-cookie-auth.guard.ts');
 const diaryEntitySource = apiSource('database/entities/diary.entity.ts');
 
 type FakeRepository = {
@@ -62,16 +60,24 @@ function makeDiary(overrides: Partial<DiaryEntity> = {}): DiaryEntity {
 describe('Diaries dashboard API contract', () => {
   it('registers GET /api/diaries/dashboard before dynamic diary detail routes', () => {
     assert.match(controllerSource, /@Get\('dashboard'\)/);
-    assert.ok(controllerSource.indexOf("@Get('dashboard')") < controllerSource.indexOf("@Get(':id')"));
-    assert.match(controllerSource, /async dashboard\(\s*@Req\(\) request: AuthenticatedRequest,\s*@Query\('year'\) year\?: string,\s*@Query\('month'\) month\?: string,\s*@Query\('day'\) day\?: string,\s*\)/);
+    assert.ok(
+      controllerSource.indexOf("@Get('dashboard')") < controllerSource.indexOf("@Get(':id')"),
+    );
+    assert.match(
+      controllerSource,
+      /async dashboard\(\s*@Req\(\) request: AuthenticatedRequest,\s*@Query\('year'\) year\?: string,\s*@Query\('month'\) month\?: string,\s*@Query\('day'\) day\?: string,\s*\)/,
+    );
     assert.match(controllerSource, /DiariesDashboardService/);
     assert.match(moduleSource, /DiariesDashboardService/);
   });
 
   it('loads the dashboard from persisted diary and media rows instead of mock fixtures', async () => {
-    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[DiaryEntity, MediaEntity,/);
+    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[\s*DiaryEntity,\s*MediaEntity,/);
     assert.match(serviceSource, /@InjectRepository\(DiaryEntity\)/);
-    assert.doesNotMatch(serviceSource, /mock-interstellar|mock-inception|mock-shawshank|const recentItems/);
+    assert.doesNotMatch(
+      serviceSource,
+      /mock-interstellar|mock-inception|mock-shawshank|const recentItems/,
+    );
 
     const repository: FakeRepository = { find: async () => [makeDiary()] };
     const service = new DiariesDashboardService(repository as never);
@@ -91,9 +97,36 @@ describe('Diaries dashboard API contract', () => {
   it('aggregates genre ratio rows from real selected media genres instead of exposing TMDB numeric ids', async () => {
     const repository: FakeRepository = {
       find: async () => [
-        makeDiary({ id: 'diary-sf', mediaId: 'media-sf', media: { id: 'media-sf', title: '인터스텔라', posterUrl: null, genres: ['878', '18'] } as MediaEntity }),
-        makeDiary({ id: 'diary-drama', mediaId: 'media-drama', media: { id: 'media-drama', title: '드라마', posterUrl: null, genres: ['18'] } as MediaEntity }),
-        makeDiary({ id: 'diary-horror', mediaId: 'media-horror', media: { id: 'media-horror', title: '공포', posterUrl: null, genres: ['27'] } as MediaEntity }),
+        makeDiary({
+          id: 'diary-sf',
+          mediaId: 'media-sf',
+          media: {
+            id: 'media-sf',
+            title: '인터스텔라',
+            posterUrl: null,
+            genres: ['878', '18'],
+          } as MediaEntity,
+        }),
+        makeDiary({
+          id: 'diary-drama',
+          mediaId: 'media-drama',
+          media: {
+            id: 'media-drama',
+            title: '드라마',
+            posterUrl: null,
+            genres: ['18'],
+          } as MediaEntity,
+        }),
+        makeDiary({
+          id: 'diary-horror',
+          mediaId: 'media-horror',
+          media: {
+            id: 'media-horror',
+            title: '공포',
+            posterUrl: null,
+            genres: ['27'],
+          } as MediaEntity,
+        }),
       ],
     };
 
@@ -107,7 +140,10 @@ describe('Diaries dashboard API contract', () => {
     assert.deepEqual(dashboard.recentItems[1]?.genreNames, ['드라마']);
     assert.deepEqual(dashboard.recentItems[2]?.genreNames, ['공포']);
     assert.deepEqual(dashboard.summary.topGenre, { name: '드라마', count: 2 });
-    assert.ok(dashboard.genreRatios.every((item) => !/^\d+$/.test(item.genre)), 'numeric TMDB genre ids must not be rendered as genre labels');
+    assert.ok(
+      dashboard.genreRatios.every((item) => !/^\d+$/.test(item.genre)),
+      'numeric TMDB genre ids must not be rendered as genre labels',
+    );
   });
 
   it('returns an empty live dashboard when the user has no diary rows', async () => {
@@ -144,12 +180,35 @@ describe('Diaries dashboard API contract', () => {
   it('builds calendar markers for the requested month while keeping summary stats over all records', async () => {
     const repository: FakeRepository = {
       find: async () => [
-        makeDiary({ id: 'april-action', watchedDate: '2026-04-10', rating: '5.0', media: { id: 'media-action', title: '액션', posterUrl: null, genres: ['28'] } as MediaEntity }),
-        makeDiary({ id: 'may-drama', watchedDate: '2026-05-03', rating: '3.0', media: { id: 'media-drama', title: '드라마', posterUrl: null, genres: ['18'] } as MediaEntity }),
+        makeDiary({
+          id: 'april-action',
+          watchedDate: '2026-04-10',
+          rating: '5.0',
+          media: {
+            id: 'media-action',
+            title: '액션',
+            posterUrl: null,
+            genres: ['28'],
+          } as MediaEntity,
+        }),
+        makeDiary({
+          id: 'may-drama',
+          watchedDate: '2026-05-03',
+          rating: '3.0',
+          media: {
+            id: 'media-drama',
+            title: '드라마',
+            posterUrl: null,
+            genres: ['18'],
+          } as MediaEntity,
+        }),
       ],
     };
 
-    const dashboard = await new DiariesDashboardService(repository as never).getDashboard('user-1', { year: 2026, month: 4, day: 10 });
+    const dashboard = await new DiariesDashboardService(repository as never).getDashboard(
+      'user-1',
+      { year: 2026, month: 4, day: 10 },
+    );
 
     assert.equal(dashboard.calendar.year, 2026);
     assert.equal(dashboard.calendar.month, 4);
@@ -181,27 +240,21 @@ describe('Diaries dashboard API contract', () => {
 
   it('joins diary rows to their selected media through persisted snake_case foreign keys for poster thumbnails', () => {
     assert.match(diaryEntitySource, /import \{[^}]*JoinColumn[^}]*\} from 'typeorm'/);
-    assert.match(diaryEntitySource, /@JoinColumn\(\{ name: 'user_id' \}\)\s*\n\s*user!: UserEntity/);
-    assert.match(diaryEntitySource, /@JoinColumn\(\{ name: 'media_id' \}\)\s*\n\s*media!: MediaEntity/);
+    assert.match(
+      diaryEntitySource,
+      /@JoinColumn\(\{ name: 'user_id' \}\)\s*\n\s*user!: UserEntity/,
+    );
+    assert.match(
+      diaryEntitySource,
+      /@JoinColumn\(\{ name: 'media_id' \}\)\s*\n\s*media!: MediaEntity/,
+    );
     assert.match(serviceSource, /relations: \{ media: true \}/);
     assert.match(serviceSource, /posterUrl: diary\.media\?\.posterUrl \?\? null/);
   });
 
-  it('uses the same auth cookie as the login flow so created diaries appear on my diary dashboard', () => {
-    const authCookieName = authBoundarySource.match(
-      /export const ACCESS_TOKEN_COOKIE\s*=\s*'([^']+)'/,
-    )?.[1];
-
-    assert.ok(authCookieName);
-    assert.match(
-      authControllerSource,
-      /ACCESS_TOKEN_COOKIE,[\s\S]*from '\.\/jwt-cookie-auth\.guard'/,
-    );
-    assert.match(
-      controllerSource,
-      /ACCESS_TOKEN_COOKIE,[\s\S]*from '\.\.\/auth\/jwt-cookie-auth\.guard'/,
-    );
-    assert.match(controllerSource, /this\.auth\?\.findMe\(accessToken\)/);
+  it('uses the principal attached by the global guard for diary ownership', () => {
+    assert.match(controllerSource, /request\.user\.id/);
+    assert.doesNotMatch(controllerSource, /ACCESS_TOKEN_COOKIE|readCookie|AuthService|findMe/);
   });
 
   it('persists a new diary for the authenticated user instead of echoing a contract stub', async () => {
@@ -223,6 +276,8 @@ describe('Diaries dashboard API contract', () => {
       title: '실사용 기록',
       content: '사용자가 직접 작성한 내용',
       watchedDate: '2026-05-08',
+      viewingMethod: 'OTT',
+      clientRequestId: '11111111-1111-4111-8111-111111111111',
       rating: 4.2,
       visibility: 'PRIVATE',
       hasSpoiler: true,
@@ -247,7 +302,7 @@ describe('Diaries dashboard API contract', () => {
   });
 
   it('stores the selected media representative poster on the server before showing diary thumbnails', async () => {
-    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[DiaryEntity, MediaEntity,/);
+    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[\s*DiaryEntity,\s*MediaEntity,/);
     assert.match(serviceSource, /@InjectRepository\(MediaEntity\)/);
     assert.match(serviceSource, /mediaPosterUrl/);
     assert.match(serviceSource, /media\.posterUrl = dto\.mediaPosterUrl/);
@@ -275,17 +330,20 @@ describe('Diaries dashboard API contract', () => {
       },
     };
 
-    await new DiariesDashboardService(repository as never, mediaRepository as never).createDiary('user-9', {
-      mediaId: 'media-9',
-      mediaPosterUrl: 'https://image.tmdb.org/t/p/w500/monster.jpg',
-      title: '괴물',
-      content: '',
-      watchedDate: '2026-05-08',
-      rating: 0,
-      visibility: 'PRIVATE',
-      hasSpoiler: false,
-      tags: [],
-    });
+    await new DiariesDashboardService(repository as never, mediaRepository as never).createDiary(
+      'user-9',
+      {
+        mediaId: 'media-9',
+        mediaPosterUrl: 'https://image.tmdb.org/t/p/w500/monster.jpg',
+        title: '괴물',
+        content: '',
+        watchedDate: '2026-05-08',
+        rating: 0,
+        visibility: 'PRIVATE',
+        hasSpoiler: false,
+        tags: [],
+      },
+    );
 
     assert.equal(savedMedia?.posterUrl, 'https://image.tmdb.org/t/p/w500/monster.jpg');
   });
@@ -294,7 +352,16 @@ describe('Diaries dashboard API contract', () => {
     const diary = makeDiary({
       id: 'diary-edit',
       userId: 'user-9',
-      media: { id: 'media-9', title: '괴물', originalTitle: 'Monster', posterUrl: 'https://image.tmdb.org/t/p/w500/monster.jpg', releaseDate: '2006-07-27', runtime: 119, mediaType: 'MOVIE', genres: ['27', '18'] } as MediaEntity,
+      media: {
+        id: 'media-9',
+        title: '괴물',
+        originalTitle: 'Monster',
+        posterUrl: 'https://image.tmdb.org/t/p/w500/monster.jpg',
+        releaseDate: '2006-07-27',
+        runtime: 119,
+        mediaType: 'MOVIE',
+        genres: ['27', '18'],
+      } as MediaEntity,
     });
     let findOneOptions: unknown;
     const repository: FakeRepository = {
@@ -305,9 +372,15 @@ describe('Diaries dashboard API contract', () => {
       },
     };
 
-    const detail = await new DiariesDashboardService(repository as never).getDiaryForEdit('user-9', 'diary-edit');
+    const detail = await new DiariesDashboardService(repository as never).getDiaryForEdit(
+      'user-9',
+      'diary-edit',
+    );
 
-    assert.deepEqual(findOneOptions, { where: { id: 'diary-edit', userId: 'user-9' }, relations: { media: true } });
+    assert.deepEqual(findOneOptions, {
+      where: { id: 'diary-edit', userId: 'user-9' },
+      relations: { media: true },
+    });
     assert.equal(detail.id, 'diary-edit');
     assert.equal(detail.title, '실제 기록 제목');
     assert.equal(detail.media.title, '괴물');
@@ -326,15 +399,19 @@ describe('Diaries dashboard API contract', () => {
       },
     };
 
-    const result = await new DiariesDashboardService(repository as never).updateDiary('user-9', 'diary-edit', {
-      title: '수정한 기록',
-      content: '수정한 본문',
-      watchedDate: '2026-05-09',
-      rating: 4.1,
-      visibility: 'PRIVATE',
-      hasSpoiler: true,
-      tags: [],
-    });
+    const result = await new DiariesDashboardService(repository as never).updateDiary(
+      'user-9',
+      'diary-edit',
+      {
+        title: '수정한 기록',
+        content: '수정한 본문',
+        watchedDate: '2026-05-09',
+        rating: 4.1,
+        visibility: 'PRIVATE',
+        hasSpoiler: true,
+        tags: [],
+      },
+    );
 
     assert.equal(savedDiary?.title, '수정한 기록');
     assert.equal(savedDiary?.rating, '4.1');
@@ -362,16 +439,32 @@ describe('Diaries dashboard API contract', () => {
     };
     const calls: Array<{ method: string; input: unknown }> = [];
     const shares = {
-      delete: async (input: unknown) => { calls.push({ method: 'delete', input }); },
+      delete: async (input: unknown) => {
+        calls.push({ method: 'delete', input });
+      },
       create: (input: unknown) => input,
-      save: async (input: unknown) => { calls.push({ method: 'save', input }); return input; },
+      save: async (input: unknown) => {
+        calls.push({ method: 'save', input });
+        return input;
+      },
     };
-    const service = new DiariesDashboardService(repository as never, undefined, undefined, shares as never);
+    const service = new DiariesDashboardService(
+      repository as never,
+      undefined,
+      undefined,
+      shares as never,
+    );
 
     await service.createDiary('user-1', {
       mediaId: '11111111-1111-4111-8111-111111111111',
-      title: '비공개 기록', content: '', watchedDate: '2026-05-08', rating: 4,
-      visibility: 'PRIVATE', hasSpoiler: false, tags: [], selectedUserIds: ['target-user'],
+      title: '비공개 기록',
+      content: '',
+      watchedDate: '2026-05-08',
+      rating: 4,
+      visibility: 'PRIVATE',
+      hasSpoiler: false,
+      tags: [],
+      selectedUserIds: ['target-user'],
     });
     await service.updateDiary('user-1', diary.id, { visibility: 'PRIVATE' });
 
@@ -382,28 +475,56 @@ describe('Diaries dashboard API contract', () => {
   });
 
   it('marks the matching watchlist item WATCHED only after a diary is persisted', async () => {
-    const persisted = makeDiary({ id: 'diary-created', mediaId: '11111111-1111-4111-8111-111111111111' });
+    const persisted = makeDiary({
+      id: 'diary-created',
+      mediaId: '11111111-1111-4111-8111-111111111111',
+    });
     const order: string[] = [];
     const repository: FakeRepository = {
       find: async () => [],
       create: (input) => ({ ...persisted, ...input }) as DiaryEntity,
-      save: async (input) => { order.push('diary-save'); return input; },
+      save: async (input) => {
+        order.push('diary-save');
+        return input;
+      },
     };
-    const watchlistRow = { id: 'watch-1', userId: 'user-1', mediaId: persisted.mediaId, status: 'ACTIVE' };
+    const watchlistRow = {
+      id: 'watch-1',
+      userId: 'user-1',
+      mediaId: persisted.mediaId,
+      status: 'ACTIVE',
+    };
     const watchlist = {
-      findOne: async (input: unknown) => { order.push('watchlist-find'); assert.deepEqual(input, { where: { userId: 'user-1', mediaId: persisted.mediaId } }); return watchlistRow; },
-      save: async (input: unknown) => { order.push('watchlist-save'); return input; },
+      findOne: async (input: unknown) => {
+        order.push('watchlist-find');
+        assert.deepEqual(input, { where: { userId: 'user-1', mediaId: persisted.mediaId } });
+        return watchlistRow;
+      },
+      save: async (input: unknown) => {
+        order.push('watchlist-save');
+        return input;
+      },
     };
-    const service = new DiariesDashboardService(repository as never, undefined, undefined, undefined, watchlist as never);
+    const service = new DiariesDashboardService(
+      repository as never,
+      undefined,
+      undefined,
+      undefined,
+      watchlist as never,
+    );
 
     await service.createDiary('user-1', {
       mediaId: persisted.mediaId,
-      title: '관람 완료', content: '', watchedDate: '2026-05-08', rating: 4,
-      visibility: 'PRIVATE', hasSpoiler: false, tags: [],
+      title: '관람 완료',
+      content: '',
+      watchedDate: '2026-05-08',
+      rating: 4,
+      visibility: 'PRIVATE',
+      hasSpoiler: false,
+      tags: [],
     });
 
     assert.deepEqual(order, ['diary-save', 'watchlist-find', 'watchlist-save']);
     assert.equal(watchlistRow.status, 'WATCHED');
   });
-
 });

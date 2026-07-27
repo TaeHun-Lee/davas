@@ -10,15 +10,25 @@ import helmet from 'helmet';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const DEVELOPMENT_ORIGIN = 'http://localhost:3000';
+export const PUBLIC_BOOTSTRAP_INVITE_PLACEHOLDERS = [
+  'change-me-bootstrap-code',
+  'replace-with-a-one-time-code',
+] as const;
+const PUBLIC_BOOTSTRAP_INVITE_PLACEHOLDER_SET = new Set<string>(
+  PUBLIC_BOOTSTRAP_INVITE_PLACEHOLDERS,
+);
 
 export type SecurityEnvironment = Record<string, string | undefined>;
+
+export function isPublicBootstrapInvitePlaceholder(value: string): boolean {
+  return PUBLIC_BOOTSTRAP_INVITE_PLACEHOLDER_SET.has(value.trim().toLowerCase());
+}
 
 export function resolveAllowedOrigins(
   environment: SecurityEnvironment = process.env,
   nodeEnvironment = environment.NODE_ENV ?? 'development',
 ): string[] {
-  const configured = environment.CORS_ORIGINS
-    ?.split(',')
+  const configured = environment.CORS_ORIGINS?.split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
 
@@ -60,15 +70,17 @@ export function validateProductionConfiguration(
     issues.push(String(error));
   }
 
-  const jwtSecret = environment.JWT_SECRET ?? '';
-  if (jwtSecret.length < 32 || jwtSecret === 'dev-secret-change-me') {
-    issues.push('JWT_SECRET must contain at least 32 non-default characters.');
-  }
-  if (!environment.DATABASE_URL?.trim()) {
-    issues.push('DATABASE_URL is required in production.');
+  const jwtSecret = environment.JWT_ACCESS_SECRET ?? '';
+  if (jwtSecret.length < 32 || /^(?:dev-secret-change-me|replace-me|change-this)/.test(jwtSecret)) {
+    issues.push('JWT_ACCESS_SECRET must contain at least 32 non-default characters.');
   }
   if (environment.COOKIE_SECURE !== 'true') {
     issues.push('COOKIE_SECURE must be true in production.');
+  }
+
+  const bootstrapInviteCode = environment.DAVAS_BOOTSTRAP_INVITE_CODE?.trim();
+  if (bootstrapInviteCode && isPublicBootstrapInvitePlaceholder(bootstrapInviteCode)) {
+    issues.push('DAVAS_BOOTSTRAP_INVITE_CODE must not use the public example placeholder.');
   }
 
   if (issues.length > 0) {

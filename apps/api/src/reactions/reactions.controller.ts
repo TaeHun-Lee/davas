@@ -1,2 +1,49 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Req } from '@nestjs/common'; import { REACTION_EMOJIS, ReactionEmoji } from '@davas/shared'; import type { Request } from 'express'; import { AuthService } from '../auth/auth.service'; import { ReactionsService } from './reactions.service'; import { CreateReactionDto } from './reactions.dto';
-@Controller('diaries/:diaryId/reactions') export class ReactionsController { constructor(private readonly service:ReactionsService,private readonly auth:AuthService){} @Get() async list(@Req() req:Request,@Param('diaryId') id:string){return this.service.list(id,(await this.user(req)).id)} @Post() async add(@Req() req:Request,@Param('diaryId') id:string,@Body() body:CreateReactionDto){return this.service.add(id,(await this.user(req)).id,body.emoji)} @Delete(':emoji') async remove(@Req() req:Request,@Param('diaryId') id:string,@Param('emoji') emoji:ReactionEmoji){this.assertEmoji(emoji);return this.service.remove(id,(await this.user(req)).id,emoji)} private assertEmoji(emoji:ReactionEmoji){if(!REACTION_EMOJIS.includes(emoji))throw new BadRequestException('지원하지 않는 반응입니다.')} private user(req:Request){return this.auth.findMe(req.headers.cookie?.split(';').map(x=>x.trim()).find(x=>x.startsWith('davas_access_token='))?.split('=')[1])}}
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Req,
+} from '@nestjs/common';
+import { REACTION_EMOJIS, type ReactionEmoji } from '@davas/shared';
+import type { AuthenticatedRequest } from '../auth/jwt-cookie-auth.guard';
+import { CreateReactionDto } from './reactions.dto';
+import { ReactionsService } from './reactions.service';
+
+@Controller('diaries/:diaryId/reactions')
+export class ReactionsController {
+  constructor(private readonly service: ReactionsService) {}
+
+  @Get()
+  list(@Req() request: AuthenticatedRequest, @Param('diaryId') diaryId: string) {
+    return this.service.list(diaryId, request.user.id);
+  }
+
+  @Post()
+  add(
+    @Req() request: AuthenticatedRequest,
+    @Param('diaryId') diaryId: string,
+    @Body() body: CreateReactionDto,
+  ) {
+    return this.service.add(diaryId, request.user.id, body.emoji);
+  }
+
+  @Delete(':emoji')
+  remove(
+    @Req() request: AuthenticatedRequest,
+    @Param('diaryId') diaryId: string,
+    @Param('emoji') emoji: ReactionEmoji,
+  ) {
+    this.assertEmoji(emoji);
+    return this.service.remove(diaryId, request.user.id, emoji);
+  }
+
+  private assertEmoji(emoji: ReactionEmoji) {
+    if (!REACTION_EMOJIS.includes(emoji)) {
+      throw new BadRequestException('지원하지 않는 반응입니다.');
+    }
+  }
+}
