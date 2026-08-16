@@ -17,10 +17,25 @@ describe('space watch flow', () => {
     assert.match(composer, /OTHER: '기타'/);
     assert.match(composer, /placeText: draft!\.placeText\.trim\(\)/);
     assert.match(rating, /\(index \+ 1\) \/ 2/);
+    assert.match(rating, /type="range"/);
+    assert.match(rating, /step=\{0\.5\}/);
+    assert.match(rating, /별점 슬라이더/);
     assert.match(composer, /spaceIds: draft!\.spaceIds/);
     assert.match(composer, /새 공간에 가입해도 과거 기록은 자동으로 공유되지 않아요/);
     assert.match(composer, /participantAccountIds/);
     assert.match(composer, /같은 작품을 다시 봤다면/);
+  });
+
+  it('uses real history navigation while keeping compose steps in sync with the URL', () => {
+    const composer = source('components/core/RecordComposer.tsx');
+    const coreUi = source('components/core/CoreUi.tsx');
+    assert.match(coreUi, /window\.history\.length > 1/);
+    assert.match(coreUi, /router\.back\(\)/);
+    assert.match(coreUi, /router\.replace\(fallback\)/);
+    assert.match(composer, /const requestedStep = params\.get\('step'\)/);
+    assert.match(composer, /requestedStep === 'write'/);
+    assert.match(composer, /fallback=\{editId \? `\/records\/\$\{editId\}` : '\/'\}/);
+    assert.doesNotMatch(composer, /confirmDiscard|작성 내용 버리기/);
   });
 
   it('shows pending confirmation, decline, and independent participant reactions', () => {

@@ -98,10 +98,12 @@ function SourceKindControl({
 export function RecordComposer({ editId }: { editId?: string }) {
   const router = useRouter();
   const params = useSearchParams();
+  const mediaId = params.get('mediaId');
+  const requestedStep = params.get('step');
   const [userId, setUserId] = useState('');
   const [draft, setDraft] = useState<Draft | null>(null);
   const [step, setStep] = useState<'find' | 'write'>(
-    editId || params.get('mediaId') ? 'write' : 'find',
+    editId || mediaId ? 'write' : 'find',
   );
   const [query, setQuery] = useState('');
   const [mediaType, setMediaType] = useState<MediaType | null>(null);
@@ -109,7 +111,6 @@ export function RecordComposer({ editId }: { editId?: string }) {
   const [spacesError, setSpacesError] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const viewingRef = useRef<HTMLDivElement>(null);
   const searchType =
     mediaType === 'MOVIE' ? 'movie' : mediaType === 'TV' ? 'tv' : 'multi';
@@ -133,7 +134,6 @@ export function RecordComposer({ editId }: { editId?: string }) {
             if (active) setSpacesError(true);
           });
         const storageKey = `davas:draft:${id}:${editId ? 'edit' : 'create'}:${editId ?? 'new'}`;
-        const mediaId = params.get('mediaId');
         const saved = sessionStorage.getItem(storageKey);
         if (saved) {
           try {
@@ -219,10 +219,16 @@ export function RecordComposer({ editId }: { editId?: string }) {
     return () => {
       active = false;
     };
-  }, [editId, params]);
+  }, [editId, mediaId]);
   useEffect(() => {
     if (key && draft) sessionStorage.setItem(key, JSON.stringify(draft));
   }, [key, draft]);
+  useEffect(() => {
+    if (editId) return;
+    setStep(
+      mediaId || requestedStep === 'write' ? 'write' : 'find',
+    );
+  }, [editId, mediaId, requestedStep]);
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
       if (draft?.selected || draft?.content) {
@@ -237,7 +243,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
     return (
       <TaskShell
         title={editId ? '기록 수정' : '기록 작성'}
-        fallback={editId ? `/records/${editId}` : '/records/new'}
+        fallback={editId ? `/records/${editId}` : '/'}
       >
         {error ? (
           <p className="form-error">{error}</p>
@@ -260,7 +266,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
   async function choose(item: MediaSearchResult) {
     if (!draft!.sourceKind) {
       setError('먼저 실제로 본 곳을 선택해 주세요.');
-      viewingRef.current?.querySelector('button')?.focus();
+      viewingRef.current?.querySelector('input')?.focus();
       return;
     }
     setBusy(true);
@@ -422,120 +428,131 @@ export function RecordComposer({ editId }: { editId?: string }) {
   return (
     <TaskShell
       title={editId ? '기록 수정' : '기록 작성'}
-      fallback={editId ? `/records/${editId}` : '/records/new'}
-      onBack={() => setConfirmDiscard(true)}
+      fallback={editId ? `/records/${editId}` : '/'}
     >
-      <section className="core-card p-4">
-        <div className="flex gap-3">
-          <Poster
-            url={draft.selected?.posterUrl ?? null}
-            title={draft.selected?.title ?? '선택 작품'}
-          />
-          <div className="min-w-0 flex-1">
-            <h1 className="text-[17px] font-black text-[var(--heading)]">
-              {draft.selected?.title ?? '작품을 선택해 주세요'}
-            </h1>
-            <p className="page-description">
-              {draft.selected?.mediaType === 'TV' ? '드라마' : '영화'}
-            </p>
-            {!editId ? (
-              <button
-                className="secondary-button mt-3"
-                onClick={() => {
-                  setStep('find');
-                  setDraft({ ...draft, selected: null });
-                  router.replace('/records/new');
-                }}
-              >
-                작품 바꾸기
-              </button>
+      <div className="record-compose-flow">
+        <section className="record-compose-media core-card p-3">
+          <div className="flex gap-3">
+            <Poster
+              url={draft.selected?.posterUrl ?? null}
+              title={draft.selected?.title ?? '선택 작품'}
+            />
+            <div className="min-w-0 flex-1">
+              <h1 className="text-[17px] font-black text-[var(--heading)]">
+                {draft.selected?.title ?? '작품을 선택해 주세요'}
+              </h1>
+              <p className="record-compose-media-type">
+                {draft.selected?.mediaType === 'TV' ? '드라마' : '영화'}
+              </p>
+              {!editId ? (
+                <button
+                  className="secondary-button mt-3"
+                  onClick={() => {
+                    setStep('find');
+                    setDraft({ ...draft, selected: null });
+                    router.replace('/records/new');
+                  }}
+                >
+                  작품 바꾸기
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </section>
+        <section className="record-compose-panel mt-4">
+          <div ref={viewingRef}>
+            <span className="field-label">어디서 봤나요? *</span>
+            <SourceKindControl
+              value={draft.sourceKind}
+              onChange={(value) => setDraft({ ...draft, sourceKind: value })}
+            />
+            {draft.sourceKind === null && editId ? (
+              <p className="form-error mt-2">
+                이전 기록에는 감상 경로가 없어요. 수정하려면 선택해 주세요.
+              </p>
             ) : null}
           </div>
-        </div>
-      </section>
-      <div className="mt-5" ref={viewingRef}>
-        <span className="field-label">감상 경로 *</span>
-        <SourceKindControl
-          value={draft.sourceKind}
-          onChange={(value) => setDraft({ ...draft, sourceKind: value })}
-        />
-        {draft.sourceKind === null && editId ? (
-          <p className="form-error mt-2">
-            이전 기록에는 감상 경로가 없어요. 수정하려면 선택해 주세요.
-          </p>
-        ) : null}
-      </div>
-      {draft.sourceKind === 'OTT' ? (
-        <label className="mt-4 block">
-          <span className="field-label">OTT 서비스 (선택)</span>
-          <input
-            className="date-input"
-            maxLength={80}
-            placeholder="예: 넷플릭스, 왓챠"
-            value={draft.providerName}
-            onChange={(event) =>
-              setDraft({ ...draft, providerName: event.target.value })
-            }
-          />
-        </label>
-      ) : null}
-      <label className="mt-4 block">
-        <span className="field-label">장소 (선택)</span>
-        <input
-          className="date-input"
-          maxLength={160}
-          placeholder={
-            draft.sourceKind === 'THEATER'
-              ? '예: 대한극장 3관'
-              : '예: 우리 집 거실'
-          }
-          value={draft.placeText}
-          onChange={(event) =>
-            setDraft({ ...draft, placeText: event.target.value })
-          }
-        />
-      </label>
-      <label className="mt-5 block">
-        <span className="field-label">본 날짜 *</span>
-        <input
-          className="date-input"
-          type="date"
-          max={today()}
-          value={draft.watchedDate}
-          onChange={(event) =>
-            setDraft({ ...draft, watchedDate: event.target.value })
-          }
-        />
-      </label>
-      <fieldset className="mt-5">
-        <legend className="field-label">별점 (선택)</legend>
-        <WatchRatingControl
-          value={draft.rating}
-          onChange={(rating) => setDraft({ ...draft, rating })}
-          name="record-rating"
-        />
-      </fieldset>
-      <label className="mt-5 block">
-        <span className="field-label">어땠나요? (선택)</span>
-        <textarea
-          className="text-area"
-          maxLength={500}
-          value={draft.content}
-          onChange={(event) =>
-            setDraft({
-              ...draft,
-              content: event.target.value,
-            })
-          }
-        />
-        <span className="mt-1 block text-right text-xs font-semibold text-[var(--muted)]">
-          {draft.content.length}/500
-        </span>
-      </label>
+          {draft.sourceKind === 'OTT' ? (
+            <label className="mt-4 block">
+              <span className="field-label">OTT 서비스 (선택)</span>
+              <input
+                className="date-input"
+                maxLength={80}
+                placeholder="예: 넷플릭스, 왓챠"
+                value={draft.providerName}
+                onChange={(event) =>
+                  setDraft({ ...draft, providerName: event.target.value })
+                }
+              />
+            </label>
+          ) : null}
+          {draft.sourceKind ? (
+            <label className="mt-4 block">
+              <span className="field-label">장소 (선택)</span>
+              <input
+                className="date-input"
+                maxLength={160}
+                placeholder={
+                  draft.sourceKind === 'THEATER'
+                    ? '예: 대한극장 3관'
+                    : '예: 우리 집 거실'
+                }
+                value={draft.placeText}
+                onChange={(event) =>
+                  setDraft({ ...draft, placeText: event.target.value })
+                }
+              />
+            </label>
+          ) : (
+            <p className="record-compose-helper">
+              경로를 선택하면 서비스와 장소를 더 입력할 수 있어요.
+            </p>
+          )}
+          <label className="mt-4 block">
+            <span className="field-label">본 날짜 *</span>
+            <input
+              className="date-input"
+              type="date"
+              max={today()}
+              value={draft.watchedDate}
+              onChange={(event) =>
+                setDraft({ ...draft, watchedDate: event.target.value })
+              }
+            />
+          </label>
+        </section>
+        <section className="record-compose-panel mt-4">
+          <fieldset>
+            <legend className="field-label">별점 (선택)</legend>
+            <WatchRatingControl
+              value={draft.rating}
+              onChange={(rating) => setDraft({ ...draft, rating })}
+              name="record-rating"
+            />
+          </fieldset>
+          <label className="mt-4 block">
+            <span className="field-label">어땠나요? (선택)</span>
+            <textarea
+              className="text-area record-compose-review"
+              maxLength={500}
+              placeholder="기억하고 싶은 감상을 짧게 남겨 보세요."
+              value={draft.content}
+              onChange={(event) =>
+                setDraft({
+                  ...draft,
+                  content: event.target.value,
+                })
+              }
+            />
+            <span className="mt-1 block text-right text-xs font-semibold text-[var(--muted)]">
+              {draft.content.length}/500
+            </span>
+          </label>
+        </section>
       <section className="core-card mt-5 p-4" aria-labelledby="share-scope-title">
         <h2 id="share-scope-title" className="section-title">공유 범위 *</h2>
         <p className="page-description">
-          저장 시점에 선택한 공간에만 공유돼요. 새 공간에 가입해도 과거 기록은 자동으로 공유되지 않아요.
+          개인 기록으로 남기거나 지금 참여 중인 공간에만 공유할 수 있어요. 새 공간에 가입해도 과거 기록은 자동으로 공유되지 않아요.
         </p>
         <button
           type="button"
@@ -648,7 +665,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
           {error}
         </p>
       ) : null}
-      <p className="page-description mt-4">
+      <p className="record-compose-note mt-4">
         같은 작품을 다시 봤다면 날짜와 감상 경로가 같은 경우에도 새 감상으로 저장돼요.
       </p>
       <button
@@ -660,22 +677,15 @@ export function RecordComposer({ editId }: { editId?: string }) {
       >
         {busy
           ? '저장 중…'
-          : editId
-            ? '수정 내용 저장하기'
-            : draft.spaceIds.length === 0
-              ? '개인 기록으로 저장하기'
-              : '선택한 공간에 공유하기'}
+          : !draft.sourceKind
+            ? '감상 경로를 선택해 주세요'
+            : editId
+              ? '수정 내용 저장하기'
+              : draft.spaceIds.length === 0
+                ? '개인 기록으로 저장하기'
+                : '선택한 공간에 공유하기'}
       </button>
-      {confirmDiscard ? (
-        <section role="dialog" aria-modal="true" aria-labelledby="discard-title" className="core-card mt-4 p-5">
-          <h2 id="discard-title" className="section-title">작성 중인 내용을 버릴까요?</h2>
-          <p className="page-description">버리면 이 기기의 현재 draft가 삭제돼요.</p>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <button type="button" autoFocus className="secondary-button" onClick={() => setConfirmDiscard(false)}>계속 작성</button>
-            <button type="button" className="danger-button" onClick={() => { sessionStorage.removeItem(key); if (editId) router.push(`/records/${editId}`); else { setDraft(freshDraft()); setStep('find'); router.replace('/records/new'); } }}>작성 내용 버리기</button>
-          </div>
-        </section>
-      ) : null}
+      </div>
     </TaskShell>
   );
 }

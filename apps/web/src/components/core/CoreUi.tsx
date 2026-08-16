@@ -97,11 +97,9 @@ export function CoreAppShell({ children }: { children: ReactNode }) {
 export function BackHeader({
   title,
   fallback,
-  onBack,
 }: {
   title: string;
   fallback: string;
-  onBack?: () => void;
 }) {
   const router = useRouter();
   return (
@@ -109,13 +107,14 @@ export function BackHeader({
       <button
         type="button"
         onClick={() => {
-          if (onBack) { onBack(); return; }
-          if (history.length > 1) router.back();
-          else router.push(fallback);
+          if (window.history.length > 1) router.back();
+          else router.replace(fallback);
         }}
         aria-label="뒤로 가기"
       >
-        ‹
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m15 5-7 7 7 7" />
+        </svg>
       </button>
       <strong>{title}</strong>
       <span aria-hidden="true" />
@@ -126,18 +125,16 @@ export function BackHeader({
 export function TaskShell({
   title,
   fallback,
-  onBack,
   children,
 }: {
   title: string;
   fallback: string;
-  onBack?: () => void;
   children: ReactNode;
 }) {
   return (
     <div className="desktop-canvas">
       <div className="core-shell">
-        <BackHeader title={title} fallback={fallback} onBack={onBack} />
+        <BackHeader title={title} fallback={fallback} />
         <main className="task-main">{children}</main>
       </div>
     </div>
