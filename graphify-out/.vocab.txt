@@ -29,6 +29,7 @@ apply
 apps
 architecture
 archive
+are
 array
 assert
 assign
@@ -154,9 +155,11 @@ default
 delete
 deletion
 deletions
+delivered
 department
 dependencies
 deploy
+deployed
 deployment
 design
 detail
@@ -256,6 +259,7 @@ friend
 friends
 friendship
 from
+functions
 future
 gamma
 generated
@@ -274,6 +278,7 @@ hero
 high
 highlight
 home
+how
 http
 hydrate
 icon
@@ -654,6 +659,7 @@ terms
 test
 text
 the
+they
 this
 tile
 tiles
@@ -700,6 +706,7 @@ validate
 validation
 validator
 value
+verified
 verify
 version
 view
@@ -715,6 +722,7 @@ watchlist
 watchtimelinepage
 web
 weekdays
+what
 where
 with
 without
