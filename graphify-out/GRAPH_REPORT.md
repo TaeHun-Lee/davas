@@ -6,11 +6,11 @@
 
 ## Summary
 - 2838 nodes · 5600 edges · 198 communities (169 shown, 29 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 176 edges (avg confidence: 0.79)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 174 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e0058283`
+- Built from commit: `fb04d7f8`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -170,7 +170,7 @@
 - 4. 핵심 도메인 모델
 - 14. 단계별 확장
 - Q: Narrow TypeScript lint errors in migration specs and the spaces membership fixture
-- 16. 평가 지표
+- 7. 콜드 스타트
 - availability.service.ts
 - Q: Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?
 - users.service.ts
@@ -341,7 +341,7 @@ Cohesion: 0.24
 Nodes (6): apiError(), assertNotFuture(), DiariesService, fingerprint(), normalizedCreate(), Injectable
 
 ### Community 33 - "tmdb.client.ts"
-Cohesion: 0.08
+Cohesion: 0.07
 Nodes (29): ProviderOffer, DavasPersonSearchItem, DiscoverRecommendationsInput, Fetcher, MediaDetailInput, MediaSearchInput, MediaSearchResponse, MediaSearchType (+21 more)
 
 ### Community 34 - "ExploreDashboard.tsx"
@@ -486,7 +486,7 @@ Nodes (16): DiaryReactions(), options, getApiBaseUrl(), CreatedDiaryResponse, cr
 
 ### Community 70 - "Davas 추천 전략 상세 설계"
 Cohesion: 0.11
-Nodes (19): 10. 그룹 점수, 11. 다양성과 탐색, 12. 설명과 개인정보, 13. 합의 흐름, 14. 피드백, 17. 운영 안전장치, 18. 구현 전 결정할 값, 1. 목표 (+11 more)
+Nodes (19): 10. 그룹 점수, 11. 다양성과 탐색, 12. 설명과 개인정보, 13. 합의 흐름, 14. 피드백, 16. 평가 지표, 17. 운영 안전장치, 18. 구현 전 결정할 값 (+11 more)
 
 ### Community 71 - "logout"
 Cohesion: 0.24
@@ -720,9 +720,9 @@ Nodes (5): 14. 단계별 확장, 1단계: 비공개 2~5명, 2단계: 친구와 �
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Narrow TypeScript lint errors in migration specs and the spaces membership fixture, Source Nodes
 
-### Community 190 - "16. 평가 지표"
+### Community 190 - "7. 콜드 스타트"
 Cohesion: 0.67
-Nodes (3): 16. 평가 지표, 오프라인, 온라인
+Nodes (3): 7. 콜드 스타트, 데이터가 거의 없을 때, 사용자 온보딩
 
 ### Community 191 - "availability.service.ts"
 Cohesion: 0.12
@@ -745,7 +745,7 @@ Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Trace the unused safeReturn and WatchTimelinePage warning in the Web workspace, Source Nodes
 
 ## Knowledge Gaps
-- **570 isolated node(s):** `$schema`, `collection`, `sourceRoot`, `deleteOutDir`, `name` (+565 more)
+- **570 isolated node(s):** `DNS`, `First deploy`, `Operations`, `Backup and rollback`, `Checks` (+565 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **29 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -760,13 +760,13 @@ Nodes (4): Answer, Outcome, Q: Trace the unused safeReturn and WatchTimelinePage
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `UserEntity` connect `UserEntity` to `CommentEntity`, `UserFollowEntity`, `community.service.ts`, `InviteCodeEntity`, `diaries.module.ts`, `DiaryEntity`, `auth.service.spec.ts`, `SpaceEntity`, `SpaceMembershipEntity`, `UsersService`, `users.module.ts`, `WatchReactionEntity`, `RecommendationSessionEntity`, `FriendInviteEntity`, `typeorm.config.ts`, `AuthService`, `NotificationEntity`, `watch-events.service.ts`, `entities/index.ts`, `TransactionOutboxService`, `users.service.ts`, `auth.service.ts`, `FriendshipEntity`, `FriendsService`?**
-  _High betweenness centrality (0.049) - this node is a cross-community bridge._
 - **Why does `DiaryEntity` connect `DiaryEntity` to `DiariesService`, `WatchReactionEntity`, `diaries.dashboard.spec.ts`, `diaries-dashboard.service.ts`, `DiariesDashboardService`, `FakeDatabase`, `CommentEntity`, `typeorm.config.ts`, `community.service.ts`, `UserEntity`, `media.service.ts`, `WatchEventsService`, `watch-events.service.ts`, `diaries.module.ts`, `NotificationEntity`, `entities/index.ts`, `SpaceMembershipEntity`, `group-recommendations.service.ts`?**
-  _High betweenness centrality (0.047) - this node is a cross-community bridge._
+  _High betweenness centrality (0.050) - this node is a cross-community bridge._
+- **Why does `UserEntity` connect `UserEntity` to `CommentEntity`, `UserFollowEntity`, `community.service.ts`, `InviteCodeEntity`, `diaries.module.ts`, `DiaryEntity`, `auth.service.spec.ts`, `SpaceEntity`, `SpaceMembershipEntity`, `UsersService`, `users.module.ts`, `WatchReactionEntity`, `RecommendationSessionEntity`, `FriendInviteEntity`, `typeorm.config.ts`, `AuthService`, `NotificationEntity`, `watch-events.service.ts`, `entities/index.ts`, `TransactionOutboxService`, `users.service.ts`, `auth.service.ts`, `FriendshipEntity`, `FriendsService`?**
+  _High betweenness centrality (0.048) - this node is a cross-community bridge._
 - **Why does `AuthService` connect `AuthService` to `CommentsService`, `WatchlistService`, `SpacesController`, `community.service.ts`, `FriendsController`, `InviteCodeEntity`, `friends.controller.ts`, `diaries.module.ts`, `group-recommendations.controller.ts`, `spaces.service.ts`, `auth.service.spec.ts`, `InvitesService`, `SpaceInvitesController`, `DiariesDashboardService`, `FriendInviteEntity`, `AuthController`, `WatchEventsService`, `ReactionsService`, `entities/index.ts`, `notifications.controller.ts`, `diaries.controller.ts`, `MediaService`, `NotificationsController`, `auth.service.ts`?**
-  _High betweenness centrality (0.042) - this node is a cross-community bridge._
-- **What connects `$schema`, `collection`, `sourceRoot` to the rest of the system?**
+  _High betweenness centrality (0.027) - this node is a cross-community bridge._
+- **What connects `DNS`, `First deploy`, `Operations` to the rest of the system?**
   _570 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `CommentsService` be split into smaller, more focused modules?**
   _Cohesion score 0.12643678160919541 - nodes in this community are weakly interconnected._

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T06:13:07.003669+00:00",
+  "generated_at": "2026-08-16T07:15:15.373093+00:00",
   "nodes": {
     "apps_api_package": {
       "code_fingerprint": "0a9b7066d0551322ddab84b6ceec2e409b8d679e8e4ae692bb2827d150adfc88",
@@ -17,7 +17,7 @@
           "q": "AGENTS.md에 Graphify랑 Serena 사용 지침 적당한지 확인해줘. 그리고 다른 AGNETS.md에 필요한 내용 있는지 알려줘"
         }
       ],
-      "score": 1.796205065,
+      "score": 1.794415082,
       "source_file": "apps/api/package.json",
       "status": "preferred",
       "uses": 2
@@ -33,7 +33,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.993651294,
+      "score": 0.992661085,
       "source_file": "apps/api/src/app.module.ts",
       "status": "tentative",
       "uses": 1
@@ -49,7 +49,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.993651294,
+      "score": 0.992661085,
       "source_file": "apps/api/src/database/entities/index.ts",
       "status": "tentative",
       "uses": 1
@@ -65,7 +65,7 @@
           "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
         }
       ],
-      "score": 0.999355076,
+      "score": 0.998359183,
       "source_file": "apps/api/src/database/entities/media.entity.ts",
       "status": "tentative",
       "uses": 1
@@ -73,18 +73,23 @@
     "apps_api_src_database_entities_space_membership_entity_spacemembershipentity": {
       "code_fingerprint": "8571a7bfc026fa64a46aac1bb3e43630d2876042794706dcb2328f9da0b9f7c2",
       "label": "SpaceMembershipEntity",
-      "last": "2026-08-16T05:43:26.434977+00:00",
+      "last": "2026-08-16T06:28:56.092270+00:00",
       "provenance": [
+        {
+          "date": "2026-08-16T06:28:56.092270+00:00",
+          "outcome": "useful",
+          "q": "What are the current Davas core functions and how are they delivered?"
+        },
         {
           "date": "2026-08-16T05:43:26.434977+00:00",
           "outcome": "useful",
           "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
         }
       ],
-      "score": 0.999523957,
+      "score": 1.997784943,
       "source_file": "apps/api/src/database/entities/space-membership.entity.ts",
-      "status": "tentative",
-      "uses": 1
+      "status": "preferred",
+      "uses": 2
     },
     "apps_api_src_database_migrations_account_lifecycle_notification_outbox_spec": {
       "code_fingerprint": "b73655400925719939bac6abffceab088a048f510a69cbd15dcbd028ea3ade84",
@@ -97,7 +102,7 @@
           "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
         }
       ],
-      "score": 0.999523957,
+      "score": 0.998527896,
       "source_file": "apps/api/src/database/migrations/account-lifecycle-notification-outbox.spec.ts",
       "status": "tentative",
       "uses": 1
@@ -113,7 +118,7 @@
           "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
         }
       ],
-      "score": 0.999523957,
+      "score": 0.998527896,
       "source_file": "apps/api/src/database/migrations/catalog-availability-migration.spec.ts",
       "status": "tentative",
       "uses": 1
@@ -121,18 +126,23 @@
     "apps_api_src_database_typeorm_config": {
       "code_fingerprint": "9d189f5142dd6b59829b66059b59e47c5e94aa382a78b5b55d330778a9ff62a7",
       "label": "typeorm.config.ts",
-      "last": "2026-08-15T23:36:10.553863+00:00",
+      "last": "2026-08-16T06:28:55.842823+00:00",
       "provenance": [
+        {
+          "date": "2026-08-16T06:28:55.842823+00:00",
+          "outcome": "useful",
+          "q": "Can Davas be deployed and verified on Raspberry Pi?"
+        },
         {
           "date": "2026-08-15T23:36:10.553863+00:00",
           "outcome": "useful",
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.993651294,
+      "score": 1.991918065,
       "source_file": "apps/api/src/database/typeorm.config.ts",
-      "status": "tentative",
-      "uses": 1
+      "status": "preferred",
+      "uses": 2
     },
     "apps_api_src_diaries_diaries_dashboard_service_diariesdashboardservice": {
       "code_fingerprint": "95ce253cbbd6176987d76aa75d5c043d7d840beceaef23bf88bccc30609b27f6",
@@ -145,7 +155,7 @@
           "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
         }
       ],
-      "score": 0.999355076,
+      "score": 0.998359183,
       "source_file": "apps/api/src/diaries/diaries-dashboard.service.ts",
       "status": "tentative",
       "uses": 1
@@ -161,7 +171,7 @@
           "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
         }
       ],
-      "score": 0.999355076,
+      "score": 0.998359183,
       "source_file": "apps/api/src/diaries/diaries-dashboard.service.ts",
       "status": "tentative",
       "uses": 1
@@ -177,7 +187,7 @@
           "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
         }
       ],
-      "score": 0.999355076,
+      "score": 0.998359183,
       "source_file": "apps/api/src/diaries/diaries.dashboard.spec.ts",
       "status": "tentative",
       "uses": 1
@@ -193,7 +203,7 @@
           "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
         }
       ],
-      "score": 0.999355076,
+      "score": 0.998359183,
       "source_file": "apps/api/src/diaries/diaries.module.ts",
       "status": "tentative",
       "uses": 1
@@ -209,7 +219,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.993651294,
+      "score": 0.992661085,
       "source_file": "apps/api/src/diaries/diaries.module.ts",
       "status": "tentative",
       "uses": 1
@@ -225,7 +235,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.993651294,
+      "score": 0.992661085,
       "source_file": "apps/api/src/diaries/diary-access.service.ts",
       "status": "tentative",
       "uses": 1
@@ -241,7 +251,7 @@
           "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
         }
       ],
-      "score": 0.993088235,
+      "score": 0.992098587,
       "source_file": "apps/api/src/diaries/space-watch.controller.ts",
       "status": "tentative",
       "uses": 1
@@ -249,8 +259,13 @@
     "apps_api_src_diaries_watch_events_service_watcheventsservice": {
       "code_fingerprint": "384465172c7df993dfff506359372baf0bd9eafa2ce1ed5493e837be755380f5",
       "label": "WatchEventsService",
-      "last": "2026-08-15T23:36:10.553863+00:00",
+      "last": "2026-08-16T06:28:56.092270+00:00",
       "provenance": [
+        {
+          "date": "2026-08-16T06:28:56.092270+00:00",
+          "outcome": "useful",
+          "q": "What are the current Davas core functions and how are they delivered?"
+        },
         {
           "date": "2026-08-15T23:36:10.553863+00:00",
           "outcome": "useful",
@@ -262,10 +277,26 @@
           "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
         }
       ],
-      "score": 1.986739528,
+      "score": 2.984016718,
       "source_file": "apps/api/src/diaries/watch-events.service.ts",
       "status": "preferred",
-      "uses": 2
+      "uses": 3
+    },
+    "apps_api_src_health_controller_healthcontroller": {
+      "code_fingerprint": "af112dde264e71d86cf09a15a524e5ddfdcca238872b41cc8d58d747516855ef",
+      "label": "HealthController",
+      "last": "2026-08-16T06:28:55.842823+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T06:28:55.842823+00:00",
+          "outcome": "useful",
+          "q": "Can Davas be deployed and verified on Raspberry Pi?"
+        }
+      ],
+      "score": 0.99925698,
+      "source_file": "apps/api/src/health.controller.ts",
+      "status": "tentative",
+      "uses": 1
     },
     "apps_api_src_media_media_module_mediamodule": {
       "code_fingerprint": "a91f6fcb6f2a01c76486e3912796c8b5c42474ec19ee3369e8ebf946dce8c1b8",
@@ -278,7 +309,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.993651294,
+      "score": 0.992661085,
       "source_file": "apps/api/src/media/media.module.ts",
       "status": "tentative",
       "uses": 1
@@ -294,8 +325,24 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.993651294,
+      "score": 0.992661085,
       "source_file": "apps/api/src/notifications/notifications.module.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_notifications_notifications_service_notificationsservice": {
+      "code_fingerprint": "eb652badfee8e404541af1332cd8832ebb4eef2b95686d798b597be4abc7e3b8",
+      "label": "NotificationsService",
+      "last": "2026-08-16T06:28:56.092270+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T06:28:56.092270+00:00",
+          "outcome": "useful",
+          "q": "What are the current Davas core functions and how are they delivered?"
+        }
+      ],
+      "score": 0.999257047,
+      "source_file": "apps/api/src/notifications/notifications.service.ts",
       "status": "tentative",
       "uses": 1
     },
@@ -310,7 +357,7 @@
           "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
         }
       ],
-      "score": 0.993370181,
+      "score": 0.992380253,
       "source_file": "apps/api/src/recommendations/group-recommendations.service.ts",
       "status": "tentative",
       "uses": 1
@@ -326,7 +373,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.993651294,
+      "score": 0.992661085,
       "source_file": "apps/api/src/recommendations/recommendations.module.ts",
       "status": "tentative",
       "uses": 1
@@ -342,7 +389,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.993651294,
+      "score": 0.992661085,
       "source_file": "apps/api/src/spaces/spaces.module.ts",
       "status": "tentative",
       "uses": 1
@@ -358,7 +405,7 @@
           "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
         }
       ],
-      "score": 0.999523957,
+      "score": 0.998527896,
       "source_file": "apps/api/src/spaces/spaces.service.spec.ts",
       "status": "tentative",
       "uses": 1
@@ -374,7 +421,7 @@
           "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
         }
       ],
-      "score": 0.999523957,
+      "score": 0.998527896,
       "source_file": "apps/api/src/to-be-integration.spec.ts",
       "status": "tentative",
       "uses": 1
@@ -395,7 +442,7 @@
           "q": "AGENTS.md에 Graphify랑 Serena 사용 지침 적당한지 확인해줘. 그리고 다른 AGNETS.md에 필요한 내용 있는지 알려줘"
         }
       ],
-      "score": 1.796205065,
+      "score": 1.794415082,
       "source_file": "apps/web/package.json",
       "status": "preferred",
       "uses": 2
@@ -411,7 +458,7 @@
           "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
         }
       ],
-      "score": 0.993088235,
+      "score": 0.992098587,
       "source_file": "apps/web/src/components/core/RecordComposer.tsx",
       "status": "tentative",
       "uses": 1
@@ -419,18 +466,23 @@
     "apps_web_src_components_core_recordscreens": {
       "code_fingerprint": "b88139002bf15cf3f8a892328b8ffec496035124da8d19233c940b4f23555c0e",
       "label": "RecordScreens.tsx",
-      "last": "2026-08-16T05:47:57.771058+00:00",
+      "last": "2026-08-16T06:28:56.092270+00:00",
       "provenance": [
+        {
+          "date": "2026-08-16T06:28:56.092270+00:00",
+          "outcome": "useful",
+          "q": "What are the current Davas core functions and how are they delivered?"
+        },
         {
           "date": "2026-08-16T05:47:57.771058+00:00",
           "outcome": "useful",
           "q": "Trace the unused safeReturn and WatchTimelinePage warning in the Web workspace"
         }
       ],
-      "score": 0.999596486,
+      "score": 1.997857399,
       "source_file": "apps/web/src/components/core/RecordScreens.tsx",
-      "status": "tentative",
-      "uses": 1
+      "status": "preferred",
+      "uses": 2
     },
     "apps_web_src_components_diary_diarycomposescreen": {
       "code_fingerprint": "c085f134171a6b2e3f65468201da5c8a10b2e663edaf1e42796d8222a0a0cfbe",
@@ -443,7 +495,7 @@
           "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
         }
       ],
-      "score": 0.993088235,
+      "score": 0.992098587,
       "source_file": "apps/web/src/components/diary/DiaryComposeScreen.tsx",
       "status": "tentative",
       "uses": 1
@@ -459,7 +511,7 @@
           "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
         }
       ],
-      "score": 0.993088235,
+      "score": 0.992098587,
       "source_file": "apps/web/src/components/diary/DiaryDetailScreen.tsx",
       "status": "tentative",
       "uses": 1
@@ -475,7 +527,7 @@
           "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
         }
       ],
-      "score": 0.993088235,
+      "score": 0.992098587,
       "source_file": "apps/web/src/lib/api/spaces.ts",
       "status": "tentative",
       "uses": 1
@@ -491,8 +543,40 @@
           "q": "Trace the unused safeReturn and WatchTimelinePage warning in the Web workspace"
         }
       ],
-      "score": 0.999596486,
+      "score": 0.998600352,
       "source_file": "apps/web/src/lib/api/watch-events.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "deploy_backup": {
+      "code_fingerprint": "d44a465ad731f7b71580dcd6230db5de1f7f569e1315deead96f6cfff014cc03",
+      "label": "backup.sh",
+      "last": "2026-08-16T06:28:55.842823+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T06:28:55.842823+00:00",
+          "outcome": "useful",
+          "q": "Can Davas be deployed and verified on Raspberry Pi?"
+        }
+      ],
+      "score": 0.99925698,
+      "source_file": "deploy/backup.sh",
+      "status": "tentative",
+      "uses": 1
+    },
+    "docs_deployment_raspberry_pi_duckdns_raspberry_pi_duckdns_deployment": {
+      "code_fingerprint": "5596bc230ec72e824c83c4e634342d5308c8225b4bf9605f44e47e4d27068082",
+      "label": "Raspberry Pi DuckDNS deployment",
+      "last": "2026-08-16T06:28:55.842823+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T06:28:55.842823+00:00",
+          "outcome": "useful",
+          "q": "Can Davas be deployed and verified on Raspberry Pi?"
+        }
+      ],
+      "score": 0.99925698,
+      "source_file": "docs/deployment/raspberry-pi-duckdns.md",
       "status": "tentative",
       "uses": 1
     },
@@ -507,7 +591,7 @@
           "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
         }
       ],
-      "score": 0.993370181,
+      "score": 0.992380253,
       "source_file": "docs/product/planning/recommendation-strategy-analysis.md",
       "status": "tentative",
       "uses": 1
@@ -528,7 +612,7 @@
           "q": "AGENTS.md에 Graphify랑 Serena 사용 지침 적당한지 확인해줘. 그리고 다른 AGNETS.md에 필요한 내용 있는지 알려줘"
         }
       ],
-      "score": 1.796205065,
+      "score": 1.794415082,
       "source_file": "packages/shared/package.json",
       "status": "preferred",
       "uses": 2
@@ -544,7 +628,7 @@
           "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
         }
       ],
-      "score": 0.993370181,
+      "score": 0.992380253,
       "source_file": "packages/shared/src/index.ts",
       "status": "tentative",
       "uses": 1
@@ -560,7 +644,7 @@
           "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
         }
       ],
-      "score": 0.993370181,
+      "score": 0.992380253,
       "source_file": "packages/shared/src/index.ts",
       "status": "tentative",
       "uses": 1
@@ -568,18 +652,23 @@
     "packages_shared_src_index_grouprecommendationsessionrequest": {
       "code_fingerprint": "cfeb8aee8d5e7b44f4393c22386617af275fad660b15a054bdbd6a18cf8cbe91",
       "label": "GroupRecommendationSessionRequest",
-      "last": "2026-08-15T23:18:32.477512+00:00",
+      "last": "2026-08-16T06:28:56.092270+00:00",
       "provenance": [
+        {
+          "date": "2026-08-16T06:28:56.092270+00:00",
+          "outcome": "useful",
+          "q": "What are the current Davas core functions and how are they delivered?"
+        },
         {
           "date": "2026-08-15T23:18:32.477512+00:00",
           "outcome": "useful",
           "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
         }
       ],
-      "score": 0.993370181,
+      "score": 1.991637299,
       "source_file": "packages/shared/src/index.ts",
-      "status": "tentative",
-      "uses": 1
+      "status": "preferred",
+      "uses": 2
     },
     "packages_shared_src_index_grouprecommendationsessionresponse": {
       "code_fingerprint": "cfeb8aee8d5e7b44f4393c22386617af275fad660b15a054bdbd6a18cf8cbe91",
@@ -592,7 +681,7 @@
           "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
         }
       ],
-      "score": 0.993370181,
+      "score": 0.992380253,
       "source_file": "packages/shared/src/index.ts",
       "status": "tentative",
       "uses": 1
@@ -608,7 +697,7 @@
           "q": "Trace the unused safeReturn and WatchTimelinePage warning in the Web workspace"
         }
       ],
-      "score": 0.999596486,
+      "score": 0.998600352,
       "source_file": "packages/shared/src/index.ts",
       "status": "tentative",
       "uses": 1
