@@ -1440,8 +1440,8 @@
     "semantic_hash": ""
   },
   "docs/deployment/raspberry-pi-duckdns.md": {
-    "mtime": 1786466223.5012107,
-    "ast_hash": "0af637f3c4422d2881048249a360a12f",
+    "mtime": 1786864395.5029051,
+    "ast_hash": "171ab05b52fb1410b350519560a7fd60",
     "semantic_hash": ""
   },
   "docs/development/docker.md": {
@@ -1590,13 +1590,13 @@
     "semantic_hash": ""
   },
   "apps/api/src/database/migrations/1720670800000-WatchEventsAndPersonalReactions.ts": {
-    "mtime": 1786555321.9763174,
-    "ast_hash": "5185ff8ed655829ae4903478bf5b7fd7",
+    "mtime": 1786864395.5009036,
+    "ast_hash": "1c9625c826c671faffa6d1d35938a367",
     "semantic_hash": ""
   },
   "apps/api/src/database/migrations/watch-event-migration.spec.ts": {
-    "mtime": 1786858847.7331917,
-    "ast_hash": "005a00f04c8b637b6c832f2c1e029b50",
+    "mtime": 1786864395.5019045,
+    "ast_hash": "f40249924f9292764be7a6e6e3175fbd",
     "semantic_hash": ""
   },
   "apps/api/src/diaries/dto/watch-event.dto.ts": {
@@ -1942,6 +1942,16 @@
   "graphify-out/memory/query_20260816_054757_trace_the_unused_safereturn_and_watchtimelinepage.md": {
     "mtime": 1786859277.771448,
     "ast_hash": "fb5ffa462d708418524e995a35e21e2e",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20260816_062855_can_davas_be_deployed_and_verified_on_raspberry_pi.md": {
+    "mtime": 1786861735.8423889,
+    "ast_hash": "3779596ce53fd5dd3b684aa356b0c5f2",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20260816_062856_what_are_the_current_davas_core_functions_and_how.md": {
+    "mtime": 1786861736.091887,
+    "ast_hash": "cca597e066dd38289050a4861d0d218f",
     "semantic_hash": ""
   }
 }

@@ -64,7 +64,8 @@ describe('watch event and personal reaction migration', () => {
     assert.match(sql.up, /INSERT INTO "watch_participants"/);
     assert.match(sql.up, /SELECT "id", "user_id", 'CONFIRMED'/);
     assert.match(sql.up, /INSERT INTO "watch_reactions"/);
-    assert.match(sql.up, /ROUND\("rating" \* 2\)::smallint/);
+    assert.match(sql.up, /ROUND\("rating" \* 2\) BETWEEN 1 AND 10/);
+    assert.match(sql.up, /THEN ROUND\("rating" \* 2\)::smallint\s+ELSE NULL/);
     assert.doesNotMatch(sql.up, /UPDATE "diaries" SET "visibility"/);
     assert.match(sql.down, /DROP TABLE IF EXISTS "watch_event_shares"/);
   });

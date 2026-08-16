@@ -70,7 +70,10 @@ export class WatchEventsAndPersonalReactions1720670800000 implements MigrationIn
     SELECT
       "id",
       "user_id",
-      CASE WHEN "rating" IS NULL THEN NULL ELSE ROUND("rating" * 2)::smallint END,
+      CASE
+        WHEN ROUND("rating" * 2) BETWEEN 1 AND 10 THEN ROUND("rating" * 2)::smallint
+        ELSE NULL
+      END,
       NULLIF(BTRIM("content"), ''),
       "created_at",
       "updated_at"

@@ -40,9 +40,9 @@ docker compose --env-file .env.production -f docker-compose.prod.yml build api w
 Before the first start or each schema-changing release, back up the database and uploads, then run migrations from the newly built API image. The production command uses the compiled `dist/database/data-source.js`; the runtime image intentionally does not contain TypeScript source or `ts-node`. Never enable `TYPEORM_SYNC` in production.
 
 ```bash
-docker compose --env-file .env.production -f docker-compose.prod.yml run --rm api npm run migration:show
-docker compose --env-file .env.production -f docker-compose.prod.yml run --rm api npm run migration:run
-docker compose --env-file .env.production -f docker-compose.prod.yml run --rm api npm run migration:show
+docker compose --env-file .env.production -f docker-compose.prod.yml run --rm api npm --workspace @davas/api run migration:show
+docker compose --env-file .env.production -f docker-compose.prod.yml run --rm api npm --workspace @davas/api run migration:run
+docker compose --env-file .env.production -f docker-compose.prod.yml run --rm api npm --workspace @davas/api run migration:show
 ```
 
 Only after `migration:show` reports no pending migration should the release receive traffic:
