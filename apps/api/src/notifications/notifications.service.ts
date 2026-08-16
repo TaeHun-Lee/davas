@@ -1,12 +1,25 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
-import { NotificationEntity, type NotificationType } from '../database/entities/notification.entity';
+import {
+  NOTIFICATION_PREFERENCE_CATEGORIES,
+  NotificationEntity,
+  NotificationPreferenceCategory,
+  NotificationPreferenceEntity,
+  NotificationType,
+  REQUIRED_NOTIFICATION_CATEGORIES,
+} from '../database/entities';
 
 export type CreateNotificationInput = {
   recipientId: string;
   actorId: string;
   diaryId?: string | null;
+  idempotencyKey?: string;
 };
 
 export type CommunityNotificationView = {
@@ -30,7 +43,46 @@ export class NotificationsService {
   constructor(
     @InjectRepository(NotificationEntity)
     private readonly notifications: Repository<NotificationEntity>,
+    @Optional()
+    @InjectRepository(NotificationPreferenceEntity)
+    private readonly preferences?: Repository<NotificationPreferenceEntity>,
   ) {}
+
+  async listPreferences(userId: string) {
+    const saved = this.preferences
+      ? await this.preferences.find({ where: { userId } })
+      : [];
+    const byCategory = new Map(saved.map((row) => [row.category, row.enabled]));
+    return NOTIFICATION_PREFERENCE_CATEGORIES.map((category) => ({
+      category,
+      required: REQUIRED_NOTIFICATION_CATEGORIES.has(category),
+      enabled: REQUIRED_NOTIFICATION_CATEGORIES.has(category)
+        ? true
+        : (byCategory.get(category) ?? true),
+    }));
+  }
+
+  async setPreference(
+    userId: string,
+    category: NotificationPreferenceCategory,
+    enabled: boolean,
+  ) {
+    if (REQUIRED_NOTIFICATION_CATEGORIES.has(category) && !enabled) {
+      throw new BadRequestException('필수 알림은 끌 수 없습니다.');
+    }
+    if (!this.preferences) {
+      throw new BadRequestException('알림 선호를 저장할 수 없습니다.');
+    }
+    let row = await this.preferences.findOne({ where: { userId, category } });
+    row ??= this.preferences.create({ userId, category, enabled });
+    row.enabled = enabled;
+    await this.preferences.save(row);
+    return {
+      category,
+      required: REQUIRED_NOTIFICATION_CATEGORIES.has(category),
+      enabled,
+    };
+  }
 
   async listForUser(userId: string) {
     const rows = await this.notifications.find({
@@ -55,6 +107,16 @@ export class NotificationsService {
 
   async notifyFriendRequested(input: Omit<CreateNotificationInput, 'diaryId'>) { return this.createForOtherUser({ ...input, diaryId: null, type: 'FRIEND_REQUESTED' }); }
   async notifyFriendAccepted(input: Omit<CreateNotificationInput, 'diaryId'>) { return this.createForOtherUser({ ...input, diaryId: null, type: 'FRIEND_ACCEPTED' }); }
+  async notifySpaceInvite(input: Omit<CreateNotificationInput, 'diaryId'>) {
+    return this.createForOtherUser({ ...input, diaryId: null, type: 'SPACE_INVITE' });
+  }
+  async notifyWatchParticipationRequested(input: CreateNotificationInput) {
+    return this.createForOtherUser({
+      ...input,
+      diaryId: input.diaryId ?? null,
+      type: 'WATCH_PARTICIPATION_REQUESTED',
+    });
+  }
 
   async markRead(notificationId: string, userId: string) {
     const notification = await this.notifications.findOne({
@@ -72,14 +134,41 @@ export class NotificationsService {
     if (input.recipientId === input.actorId) {
       return null;
     }
-    return this.notifications.save(
-      this.notifications.create({
+    if (!(await this.isEnabled(input.recipientId, input.type))) return null;
+    const idempotencyKey =
+      input.idempotencyKey ??
+      [input.type, input.recipientId, input.actorId, input.diaryId ?? 'none'].join(':');
+    const existing = await this.notifications.findOne({ where: { idempotencyKey } });
+    if (existing) return existing;
+    try {
+      return await this.notifications.save(
+        this.notifications.create({
         userId: input.recipientId,
         actorId: input.actorId,
         diaryId: input.diaryId ?? null,
         type: input.type,
-      }),
-    );
+          idempotencyKey,
+        }),
+      );
+    } catch (error) {
+      if ((error as { code?: string }).code !== '23505') throw error;
+      return this.notifications.findOne({ where: { idempotencyKey } });
+    }
+  }
+
+  private async isEnabled(userId: string, type: NotificationType) {
+    const category = this.categoryFor(type);
+    if (REQUIRED_NOTIFICATION_CATEGORIES.has(category) || !this.preferences) {
+      return true;
+    }
+    const preference = await this.preferences.findOne({ where: { userId, category } });
+    return preference?.enabled ?? true;
+  }
+
+  private categoryFor(type: NotificationType): NotificationPreferenceCategory {
+    if (type === 'SPACE_INVITE') return 'SPACE_INVITE';
+    if (type === 'WATCH_PARTICIPATION_REQUESTED') return 'WATCH_PARTICIPATION';
+    return 'SOCIAL';
   }
 
   private toView(notification: NotificationEntity): CommunityNotificationView {

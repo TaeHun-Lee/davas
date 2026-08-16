@@ -1,5 +1,17 @@
 import { DiaryVisibility, ViewingMethod } from '@davas/shared';
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { CommentEntity } from './comment.entity';
 import { DiaryLikeEntity } from './diary-like.entity';
 import { MediaEntity } from './media.entity';
@@ -8,6 +20,10 @@ import { UserEntity } from './user.entity';
 import { DiaryCompanionEntity } from './diary-companion.entity';
 import { DiaryShareEntity } from './diary-share.entity';
 import { DiaryReactionEntity } from './diary-reaction.entity';
+import { WatchParticipantEntity } from './watch-participant.entity';
+import { WatchReactionEntity } from './watch-reaction.entity';
+import { WatchShareEntity } from './watch-share.entity';
+import { WatchSourceEntity } from './watch-source.entity';
 
 @Entity({ name: 'diaries' })
 @Index(['userId', 'watchedDate'])
@@ -26,7 +42,9 @@ export class DiaryEntity {
   @Column({ name: 'media_id', type: 'uuid' })
   mediaId!: string;
 
-  @ManyToOne(() => MediaEntity, (media) => media.diaries, { onDelete: 'CASCADE' })
+  @ManyToOne(() => MediaEntity, (media) => media.diaries, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'media_id' })
   media!: MediaEntity;
 
@@ -48,7 +66,12 @@ export class DiaryEntity {
   @Column({ name: 'has_spoiler', type: 'boolean', default: false })
   hasSpoiler!: boolean;
 
-  @Column({ name: 'viewing_method', type: 'varchar', length: 20, nullable: true })
+  @Column({
+    name: 'viewing_method',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
   viewingMethod!: ViewingMethod | null;
 
   @Column({ name: 'shared_at', type: 'timestamp', nullable: true })
@@ -57,10 +80,20 @@ export class DiaryEntity {
   @Column({ name: 'client_request_id', type: 'uuid', nullable: true })
   clientRequestId!: string | null;
 
-  @Column({ name: 'client_request_fingerprint', type: 'varchar', length: 64, nullable: true })
+  @Column({
+    name: 'client_request_fingerprint',
+    type: 'varchar',
+    length: 64,
+    nullable: true,
+  })
   clientRequestFingerprint!: string | null;
 
-  @Column({ name: 'watched_place', type: 'varchar', length: 160, nullable: true })
+  @Column({
+    name: 'watched_place',
+    type: 'varchar',
+    length: 160,
+    nullable: true,
+  })
   watchedPlace!: string | null;
 
   @Column({ type: 'varchar', length: 80, nullable: true })
@@ -69,7 +102,9 @@ export class DiaryEntity {
   @Column({ name: 'memory_note', type: 'text', nullable: true })
   memoryNote!: string | null;
 
-  @OneToMany(() => DiaryCompanionEntity, (companion) => companion.diary, { cascade: true })
+  @OneToMany(() => DiaryCompanionEntity, (companion) => companion.diary, {
+    cascade: true,
+  })
   companions!: DiaryCompanionEntity[];
 
   @OneToMany(() => DiaryShareEntity, (share) => share.diary, { cascade: true })
@@ -77,6 +112,18 @@ export class DiaryEntity {
 
   @OneToMany(() => DiaryReactionEntity, (reaction) => reaction.diary)
   reactions!: DiaryReactionEntity[];
+
+  @OneToMany(() => WatchParticipantEntity, (participant) => participant.diary)
+  watchParticipants!: WatchParticipantEntity[];
+
+  @OneToMany(() => WatchReactionEntity, (reaction) => reaction.diary)
+  watchReactions!: WatchReactionEntity[];
+
+  @OneToOne(() => WatchSourceEntity, (source) => source.diary)
+  watchSource!: WatchSourceEntity | null;
+
+  @OneToMany(() => WatchShareEntity, (share) => share.diary)
+  spaceShares!: WatchShareEntity[];
 
   @OneToMany(() => CommentEntity, (comment) => comment.diary)
   comments!: CommentEntity[];

@@ -1,0 +1,11 @@
+# API workspace
+- Location: `apps/api`; NestJS modular monolith, PostgreSQL through TypeORM.
+- Composition root: `apps/api/src/app.module.ts`.
+- Current feature modules: auth, invites, friends, watchlist, reactions, comments, community, diaries, media, notifications, recommendations, users, health.
+- Persistence: entities exported from `src/database/entities`; datasource/config and ordered migrations under `src/database`.
+- Auth uses Passport JWT; feature modules import AuthModule for protected flows.
+- Diaries centralize record access in `DiaryAccessService`; preserve this authorization boundary when adding reads/writes.
+- Media integrates TMDB behind `TmdbClient` plus mapper/selection services; provider-specific data should not leak into unrelated domains.
+- API contract and migration behavior are covered by colocated `*.spec.ts` tests.
+- Shared enums/contracts come from `@davas/shared`; see `mem:shared/core`.
+- Commands and completion checks: `mem:suggested_commands`, `mem:task_completion`.

@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MediaEntity } from '../database/entities/media.entity';
+import { ExternalContentRefEntity } from '../database/entities/external-content-ref.entity';
 import { MediaSelectionDto } from './dto/media-selection.dto';
 import { resolveTmdbGenreLabels } from './tmdb-genres';
 
@@ -10,6 +11,9 @@ export class MediaSelectionService {
   constructor(
     @InjectRepository(MediaEntity)
     private readonly mediaRepository: Repository<MediaEntity>,
+    @Optional()
+    @InjectRepository(ExternalContentRefEntity)
+    private readonly externalRefRepository?: Repository<ExternalContentRefEntity>,
   ) {}
 
   async select(selection: MediaSelectionDto) {
@@ -21,6 +25,7 @@ export class MediaSelectionService {
     });
 
     if (existing) {
+      await this.recordExternalRef(existing.id, selection);
       return existing;
     }
 
@@ -40,6 +45,37 @@ export class MediaSelectionService {
       runtime: null,
     });
 
-    return this.mediaRepository.save(media);
+    const saved = await this.mediaRepository.save(media);
+    await this.recordExternalRef(saved.id, selection);
+    return saved;
+  }
+
+  private async recordExternalRef(
+    contentId: string,
+    selection: MediaSelectionDto,
+  ) {
+    if (!this.externalRefRepository) {
+      return;
+    }
+    const existing = await this.externalRefRepository.findOne({
+      where: {
+        provider: selection.externalProvider,
+        externalId: selection.externalId,
+      },
+    });
+    if (existing) {
+      existing.lastSyncedAt = new Date();
+      await this.externalRefRepository.save(existing);
+      return;
+    }
+    await this.externalRefRepository.save(
+      this.externalRefRepository.create({
+        contentId,
+        provider: selection.externalProvider,
+        externalId: selection.externalId,
+        source: selection.externalProvider,
+        lastSyncedAt: new Date(),
+      }),
+    );
   }
 }

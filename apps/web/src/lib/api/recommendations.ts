@@ -1,3 +1,9 @@
+import type {
+  GroupRecommendationFeedbackRequest,
+  GroupRecommendationFeedbackResponse,
+  GroupRecommendationSessionRequest,
+  GroupRecommendationSessionResponse,
+} from '@davas/shared';
 import type { MediaSearchResult } from './media';
 import { getApiBaseUrl } from './base-url';
 
@@ -32,13 +38,36 @@ export type TodayRecommendationResponse = {
   items: MediaRecommendationItem[];
 };
 
-async function fetchRecommendation<T>(path: string) {
+export class RecommendationRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly code?: string,
+  ) {
+    super(message);
+    this.name = 'RecommendationRequestError';
+  }
+}
+
+async function fetchRecommendation<T>(path: string, init?: RequestInit) {
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
     credentials: 'include',
+    ...init,
+    headers: {
+      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+      ...init?.headers,
+    },
   });
 
   if (!response.ok) {
-    throw new Error('recommendations request failed');
+    const payload = (await response.json().catch(() => null)) as
+      | { message?: string; code?: string }
+      | null;
+    throw new RecommendationRequestError(
+      payload?.message ?? '추천 요청을 처리하지 못했어요.',
+      response.status,
+      payload?.code,
+    );
   }
 
   return (await response.json()) as T;
@@ -84,4 +113,29 @@ export async function getTodayRecommendation({ limit = 3, language = 'ko-KR' }: 
   params.set('language', language);
 
   return fetchRecommendation<TodayRecommendationResponse>(`/recommendations/today/carousel?${params.toString()}`);
+}
+
+export function createGroupRecommendationSession(
+  request: GroupRecommendationSessionRequest,
+) {
+  return fetchRecommendation<GroupRecommendationSessionResponse>(
+    '/v1/recommendation-sessions',
+    { method: 'POST', body: JSON.stringify(request) },
+  );
+}
+
+export function getGroupRecommendationSession(sessionId: string) {
+  return fetchRecommendation<GroupRecommendationSessionResponse>(
+    `/v1/recommendation-sessions/${encodeURIComponent(sessionId)}`,
+  );
+}
+
+export function submitGroupRecommendationFeedback(
+  exposureId: string,
+  request: GroupRecommendationFeedbackRequest,
+) {
+  return fetchRecommendation<GroupRecommendationFeedbackResponse>(
+    `/v1/recommendation-exposures/${encodeURIComponent(exposureId)}/feedback`,
+    { method: 'POST', body: JSON.stringify(request) },
+  );
 }

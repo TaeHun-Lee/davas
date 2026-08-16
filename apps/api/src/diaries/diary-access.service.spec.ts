@@ -14,7 +14,21 @@ function setup() {
     findOne: async ({ where }: { where: { diaryId: string; userId: string } }) =>
       selectedTargets.has(`${where.diaryId}:${where.userId}`) ? {} : null,
   };
-  return { service: new DiaryAccessService(friendships as never, shares as never), acceptedPairs, selectedTargets };
+  const spaceShares = { find: async () => [] };
+  const spaceAccess = {
+    isActiveMemberOfAny: async () => false,
+    assertActiveMember: async () => null,
+  };
+  return {
+    service: new DiaryAccessService(
+      friendships as never,
+      shares as never,
+      spaceShares as never,
+      spaceAccess as never,
+    ),
+    acceptedPairs,
+    selectedTargets,
+  };
 }
 
 describe('DiaryAccessService permission matrix', () => {

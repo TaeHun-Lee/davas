@@ -1,0 +1,618 @@
+{
+  "generated_at": "2026-08-16T06:08:03.537573+00:00",
+  "nodes": {
+    "apps_api_package": {
+      "code_fingerprint": "0a9b7066d0551322ddab84b6ceec2e409b8d679e8e4ae692bb2827d150adfc88",
+      "label": "api/package.json",
+      "last": "2026-08-11T14:37:41.835321+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-11T14:37:41.835321+00:00",
+          "outcome": "useful",
+          "q": "적당하게 AGNETS.md 작성해"
+        },
+        {
+          "date": "2026-08-11T14:32:23.674737+00:00",
+          "outcome": "useful",
+          "q": "AGENTS.md에 Graphify랑 Serena 사용 지침 적당한지 확인해줘. 그리고 다른 AGNETS.md에 필요한 내용 있는지 알려줘"
+        }
+      ],
+      "score": 1.796350837,
+      "source_file": "apps/api/package.json",
+      "status": "preferred",
+      "uses": 2
+    },
+    "apps_api_src_app_module": {
+      "code_fingerprint": "aaa60cad3da81ddcd164e30d0e48a2e24a129f014de03d12fa6cb2fc3c05eac4",
+      "label": "app.module.ts",
+      "last": "2026-08-15T23:36:10.553863+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:36:10.553863+00:00",
+          "outcome": "useful",
+          "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
+        }
+      ],
+      "score": 0.993731934,
+      "source_file": "apps/api/src/app.module.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_database_entities_index": {
+      "code_fingerprint": "715a8ea1973bc54dbc44d18209b0b1e58aefb5d4d82359e38d38242b84eba3da",
+      "label": "entities/index.ts",
+      "last": "2026-08-15T23:36:10.553863+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:36:10.553863+00:00",
+          "outcome": "useful",
+          "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
+        }
+      ],
+      "score": 0.993731934,
+      "source_file": "apps/api/src/database/entities/index.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_database_entities_media_entity_mediaentity": {
+      "code_fingerprint": "317813280794439a5758bdd9132a519b5e7d4617877f7e988ab8cf528bab2fd5",
+      "label": "MediaEntity",
+      "last": "2026-08-16T05:32:54.553476+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T05:32:54.553476+00:00",
+          "outcome": "useful",
+          "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
+        }
+      ],
+      "score": 0.999436179,
+      "source_file": "apps/api/src/database/entities/media.entity.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_database_entities_space_membership_entity_spacemembershipentity": {
+      "code_fingerprint": "8571a7bfc026fa64a46aac1bb3e43630d2876042794706dcb2328f9da0b9f7c2",
+      "label": "SpaceMembershipEntity",
+      "last": "2026-08-16T05:43:26.434977+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T05:43:26.434977+00:00",
+          "outcome": "useful",
+          "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
+        }
+      ],
+      "score": 0.999605074,
+      "source_file": "apps/api/src/database/entities/space-membership.entity.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_database_migrations_account_lifecycle_notification_outbox_spec": {
+      "code_fingerprint": "b73655400925719939bac6abffceab088a048f510a69cbd15dcbd028ea3ade84",
+      "label": "account-lifecycle-notification-outbox.spec.ts",
+      "last": "2026-08-16T05:43:26.434977+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T05:43:26.434977+00:00",
+          "outcome": "useful",
+          "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
+        }
+      ],
+      "score": 0.999605074,
+      "source_file": "apps/api/src/database/migrations/account-lifecycle-notification-outbox.spec.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_database_migrations_catalog_availability_migration_spec": {
+      "code_fingerprint": "5e4d6375ab7916ec0d0c36fcc6f94e146ac7e585edcb16954e5a21ddc4c139a8",
+      "label": "catalog-availability-migration.spec.ts",
+      "last": "2026-08-16T05:43:26.434977+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T05:43:26.434977+00:00",
+          "outcome": "useful",
+          "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
+        }
+      ],
+      "score": 0.999605074,
+      "source_file": "apps/api/src/database/migrations/catalog-availability-migration.spec.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_database_typeorm_config": {
+      "code_fingerprint": "9d189f5142dd6b59829b66059b59e47c5e94aa382a78b5b55d330778a9ff62a7",
+      "label": "typeorm.config.ts",
+      "last": "2026-08-15T23:36:10.553863+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:36:10.553863+00:00",
+          "outcome": "useful",
+          "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
+        }
+      ],
+      "score": 0.993731934,
+      "source_file": "apps/api/src/database/typeorm.config.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_diaries_diaries_dashboard_service_diariesdashboardservice": {
+      "code_fingerprint": "95ce253cbbd6176987d76aa75d5c043d7d840beceaef23bf88bccc30609b27f6",
+      "label": "DiariesDashboardService",
+      "last": "2026-08-16T05:32:54.553476+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T05:32:54.553476+00:00",
+          "outcome": "useful",
+          "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
+        }
+      ],
+      "score": 0.999436179,
+      "source_file": "apps/api/src/diaries/diaries-dashboard.service.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_diaries_diaries_dashboard_service_diariesdashboardservice_saverepresentativeposter": {
+      "code_fingerprint": "95ce253cbbd6176987d76aa75d5c043d7d840beceaef23bf88bccc30609b27f6",
+      "label": ".saveRepresentativePoster()",
+      "last": "2026-08-16T05:32:54.553476+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T05:32:54.553476+00:00",
+          "outcome": "useful",
+          "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
+        }
+      ],
+      "score": 0.999436179,
+      "source_file": "apps/api/src/diaries/diaries-dashboard.service.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_diaries_diaries_dashboard_spec": {
+      "code_fingerprint": "18a3a6bd837864841a94bddfa29a92f28a94a3692fa2ace7fa2a7e3d4c129b9b",
+      "label": "diaries.dashboard.spec.ts",
+      "last": "2026-08-16T05:32:54.553476+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T05:32:54.553476+00:00",
+          "outcome": "useful",
+          "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
+        }
+      ],
+      "score": 0.999436179,
+      "source_file": "apps/api/src/diaries/diaries.dashboard.spec.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_diaries_diaries_module": {
+      "code_fingerprint": "2f0620ffe3e9e469466accb9fa96cd26df17399e8f06ed51269af07ac3516672",
+      "label": "diaries.module.ts",
+      "last": "2026-08-16T05:32:54.553476+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T05:32:54.553476+00:00",
+          "outcome": "useful",
+          "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
+        }
+      ],
+      "score": 0.999436179,
+      "source_file": "apps/api/src/diaries/diaries.module.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_diaries_diaries_module_diariesmodule": {
+      "code_fingerprint": "2f0620ffe3e9e469466accb9fa96cd26df17399e8f06ed51269af07ac3516672",
+      "label": "DiariesModule",
+      "last": "2026-08-15T23:36:10.553863+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:36:10.553863+00:00",
+          "outcome": "useful",
+          "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
+        }
+      ],
+      "score": 0.993731934,
+      "source_file": "apps/api/src/diaries/diaries.module.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_diaries_diary_access_service_diaryaccessservice": {
+      "code_fingerprint": "73eb023fd78f8551426f315dd5408bb4fbadf8e4d7c953822a7af51669489828",
+      "label": "DiaryAccessService",
+      "last": "2026-08-15T23:36:10.553863+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:36:10.553863+00:00",
+          "outcome": "useful",
+          "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
+        }
+      ],
+      "score": 0.993731934,
+      "source_file": "apps/api/src/diaries/diary-access.service.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_diaries_space_watch_controller_spacewatchcontroller": {
+      "code_fingerprint": "2bc11c81b04a394a629608354a970e8515728e24a7093c06aa4b82c67d272133",
+      "label": "SpaceWatchController",
+      "last": "2026-08-15T23:00:50.959249+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:00:50.959249+00:00",
+          "outcome": "useful",
+          "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
+        }
+      ],
+      "score": 0.993168829,
+      "source_file": "apps/api/src/diaries/space-watch.controller.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_diaries_watch_events_service_watcheventsservice": {
+      "code_fingerprint": "384465172c7df993dfff506359372baf0bd9eafa2ce1ed5493e837be755380f5",
+      "label": "WatchEventsService",
+      "last": "2026-08-15T23:36:10.553863+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:36:10.553863+00:00",
+          "outcome": "useful",
+          "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
+        },
+        {
+          "date": "2026-08-15T23:00:50.959249+00:00",
+          "outcome": "useful",
+          "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
+        }
+      ],
+      "score": 1.986900763,
+      "source_file": "apps/api/src/diaries/watch-events.service.ts",
+      "status": "preferred",
+      "uses": 2
+    },
+    "apps_api_src_media_media_module_mediamodule": {
+      "code_fingerprint": "a91f6fcb6f2a01c76486e3912796c8b5c42474ec19ee3369e8ebf946dce8c1b8",
+      "label": "MediaModule",
+      "last": "2026-08-15T23:36:10.553863+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:36:10.553863+00:00",
+          "outcome": "useful",
+          "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
+        }
+      ],
+      "score": 0.993731934,
+      "source_file": "apps/api/src/media/media.module.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_notifications_notifications_module_notificationsmodule": {
+      "code_fingerprint": "af76b1f62ec775d2196a716c041f12ccdf7b664e29010ce74d2190fde2d13321",
+      "label": "NotificationsModule",
+      "last": "2026-08-15T23:36:10.553863+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:36:10.553863+00:00",
+          "outcome": "useful",
+          "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
+        }
+      ],
+      "score": 0.993731934,
+      "source_file": "apps/api/src/notifications/notifications.module.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_recommendations_group_recommendations_service": {
+      "code_fingerprint": "134cd6ded69af06a777273e85ec1b498eb9d719128bca41b635223234ed2ab7f",
+      "label": "group-recommendations.service.ts",
+      "last": "2026-08-15T23:18:32.477512+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:18:32.477512+00:00",
+          "outcome": "useful",
+          "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
+        }
+      ],
+      "score": 0.993450799,
+      "source_file": "apps/api/src/recommendations/group-recommendations.service.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_recommendations_recommendations_module_recommendationsmodule": {
+      "code_fingerprint": "34ea7dc97464444772187a257fb204ed649c9f50da029c47cbc88f77549af156",
+      "label": "RecommendationsModule",
+      "last": "2026-08-15T23:36:10.553863+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:36:10.553863+00:00",
+          "outcome": "useful",
+          "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
+        }
+      ],
+      "score": 0.993731934,
+      "source_file": "apps/api/src/recommendations/recommendations.module.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_spaces_spaces_module_spacesmodule": {
+      "code_fingerprint": "2fbbaa0c03ee7ff19b32ae4e9f1b58c934370ed1c09f4bd21902e044dd3360c7",
+      "label": "SpacesModule",
+      "last": "2026-08-15T23:36:10.553863+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:36:10.553863+00:00",
+          "outcome": "useful",
+          "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
+        }
+      ],
+      "score": 0.993731934,
+      "source_file": "apps/api/src/spaces/spaces.module.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_spaces_spaces_service_spec": {
+      "code_fingerprint": "b652499ff278cf5cf9990f60ec034380fb8aac982902df3e7aa28f28f135e49c",
+      "label": "spaces.service.spec.ts",
+      "last": "2026-08-16T05:43:26.434977+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T05:43:26.434977+00:00",
+          "outcome": "useful",
+          "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
+        }
+      ],
+      "score": 0.999605074,
+      "source_file": "apps/api/src/spaces/spaces.service.spec.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_api_src_to_be_integration_spec": {
+      "code_fingerprint": "3fc0ccf76e7902165fbe8b344ade3c1c8c14904fc30bc70422dddad03972fbf6",
+      "label": "to-be-integration.spec.ts",
+      "last": "2026-08-16T05:43:26.434977+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T05:43:26.434977+00:00",
+          "outcome": "useful",
+          "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
+        }
+      ],
+      "score": 0.999605074,
+      "source_file": "apps/api/src/to-be-integration.spec.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_web_package": {
+      "code_fingerprint": "109cbcd014091c5b0879817d5fefe2267b3306fc7408984880a2f227ae6033ce",
+      "label": "web/package.json",
+      "last": "2026-08-11T14:37:41.835321+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-11T14:37:41.835321+00:00",
+          "outcome": "useful",
+          "q": "적당하게 AGNETS.md 작성해"
+        },
+        {
+          "date": "2026-08-11T14:32:23.674737+00:00",
+          "outcome": "useful",
+          "q": "AGENTS.md에 Graphify랑 Serena 사용 지침 적당한지 확인해줘. 그리고 다른 AGNETS.md에 필요한 내용 있는지 알려줘"
+        }
+      ],
+      "score": 1.796350837,
+      "source_file": "apps/web/package.json",
+      "status": "preferred",
+      "uses": 2
+    },
+    "apps_web_src_components_core_recordcomposer_recordcomposer": {
+      "code_fingerprint": "a0e5b9d0061f6cab179f5518f74982cf5741c36b99d5a39658ccd05d5b7d09c3",
+      "label": "RecordComposer()",
+      "last": "2026-08-15T23:00:50.959249+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:00:50.959249+00:00",
+          "outcome": "useful",
+          "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
+        }
+      ],
+      "score": 0.993168829,
+      "source_file": "apps/web/src/components/core/RecordComposer.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_web_src_components_core_recordscreens": {
+      "code_fingerprint": "b88139002bf15cf3f8a892328b8ffec496035124da8d19233c940b4f23555c0e",
+      "label": "RecordScreens.tsx",
+      "last": "2026-08-16T05:47:57.771058+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T05:47:57.771058+00:00",
+          "outcome": "useful",
+          "q": "Trace the unused safeReturn and WatchTimelinePage warning in the Web workspace"
+        }
+      ],
+      "score": 0.999677608,
+      "source_file": "apps/web/src/components/core/RecordScreens.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_web_src_components_diary_diarycomposescreen": {
+      "code_fingerprint": "c085f134171a6b2e3f65468201da5c8a10b2e663edaf1e42796d8222a0a0cfbe",
+      "label": "DiaryComposeScreen.tsx",
+      "last": "2026-08-15T23:00:50.959249+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:00:50.959249+00:00",
+          "outcome": "useful",
+          "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
+        }
+      ],
+      "score": 0.993168829,
+      "source_file": "apps/web/src/components/diary/DiaryComposeScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_web_src_components_diary_diarydetailscreen": {
+      "code_fingerprint": "437ae09e04cdb626a139bf2c2cd694634483a972533cdd770715fb8f2d97889c",
+      "label": "DiaryDetailScreen.tsx",
+      "last": "2026-08-15T23:00:50.959249+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:00:50.959249+00:00",
+          "outcome": "useful",
+          "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
+        }
+      ],
+      "score": 0.993168829,
+      "source_file": "apps/web/src/components/diary/DiaryDetailScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_web_src_lib_api_spaces": {
+      "code_fingerprint": "4d69587ed64624e8e55e9c78006288433d8c4651f5d819a69f0e3c378d57cf2d",
+      "label": "spaces.ts",
+      "last": "2026-08-15T23:00:50.959249+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:00:50.959249+00:00",
+          "outcome": "useful",
+          "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
+        }
+      ],
+      "score": 0.993168829,
+      "source_file": "apps/web/src/lib/api/spaces.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "apps_web_src_lib_api_watch_events": {
+      "code_fingerprint": "8dcaabd1b3693609e55c6136afc28d7c72b6260f038d8b7204f5b029ece58207",
+      "label": "watch-events.ts",
+      "last": "2026-08-16T05:47:57.771058+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T05:47:57.771058+00:00",
+          "outcome": "useful",
+          "q": "Trace the unused safeReturn and WatchTimelinePage warning in the Web workspace"
+        }
+      ],
+      "score": 0.999677608,
+      "source_file": "apps/web/src/lib/api/watch-events.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "docs_product_planning_recommendation_strategy_analysis": {
+      "code_fingerprint": "884e83477d17eb914dced4de08ad35bc008d6992b23b8df872191fc69f52e88b",
+      "label": "recommendation-strategy-analysis.md",
+      "last": "2026-08-15T23:18:32.477512+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:18:32.477512+00:00",
+          "outcome": "useful",
+          "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
+        }
+      ],
+      "score": 0.993450799,
+      "source_file": "docs/product/planning/recommendation-strategy-analysis.md",
+      "status": "tentative",
+      "uses": 1
+    },
+    "packages_shared_package": {
+      "code_fingerprint": "a3ea516399e3256d4d622e87b5e7baf53d61ea573f65c5900a6acb33b39eae7f",
+      "label": "shared/package.json",
+      "last": "2026-08-11T14:37:41.835321+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-11T14:37:41.835321+00:00",
+          "outcome": "useful",
+          "q": "적당하게 AGNETS.md 작성해"
+        },
+        {
+          "date": "2026-08-11T14:32:23.674737+00:00",
+          "outcome": "useful",
+          "q": "AGENTS.md에 Graphify랑 Serena 사용 지침 적당한지 확인해줘. 그리고 다른 AGNETS.md에 필요한 내용 있는지 알려줘"
+        }
+      ],
+      "score": 1.796350837,
+      "source_file": "packages/shared/package.json",
+      "status": "preferred",
+      "uses": 2
+    },
+    "packages_shared_src_index_grouprecommendationconsensus": {
+      "code_fingerprint": "cfeb8aee8d5e7b44f4393c22386617af275fad660b15a054bdbd6a18cf8cbe91",
+      "label": "GroupRecommendationConsensus",
+      "last": "2026-08-15T23:18:32.477512+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:18:32.477512+00:00",
+          "outcome": "useful",
+          "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
+        }
+      ],
+      "score": 0.993450799,
+      "source_file": "packages/shared/src/index.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "packages_shared_src_index_grouprecommendationfeedbackrequest": {
+      "code_fingerprint": "cfeb8aee8d5e7b44f4393c22386617af275fad660b15a054bdbd6a18cf8cbe91",
+      "label": "GroupRecommendationFeedbackRequest",
+      "last": "2026-08-15T23:18:32.477512+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:18:32.477512+00:00",
+          "outcome": "useful",
+          "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
+        }
+      ],
+      "score": 0.993450799,
+      "source_file": "packages/shared/src/index.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "packages_shared_src_index_grouprecommendationsessionrequest": {
+      "code_fingerprint": "cfeb8aee8d5e7b44f4393c22386617af275fad660b15a054bdbd6a18cf8cbe91",
+      "label": "GroupRecommendationSessionRequest",
+      "last": "2026-08-15T23:18:32.477512+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:18:32.477512+00:00",
+          "outcome": "useful",
+          "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
+        }
+      ],
+      "score": 0.993450799,
+      "source_file": "packages/shared/src/index.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "packages_shared_src_index_grouprecommendationsessionresponse": {
+      "code_fingerprint": "cfeb8aee8d5e7b44f4393c22386617af275fad660b15a054bdbd6a18cf8cbe91",
+      "label": "GroupRecommendationSessionResponse",
+      "last": "2026-08-15T23:18:32.477512+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:18:32.477512+00:00",
+          "outcome": "useful",
+          "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
+        }
+      ],
+      "score": 0.993450799,
+      "source_file": "packages/shared/src/index.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "packages_shared_src_index_watchtimelinepage": {
+      "code_fingerprint": "cfeb8aee8d5e7b44f4393c22386617af275fad660b15a054bdbd6a18cf8cbe91",
+      "label": "WatchTimelinePage",
+      "last": "2026-08-16T05:47:57.771058+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-16T05:47:57.771058+00:00",
+          "outcome": "useful",
+          "q": "Trace the unused safeReturn and WatchTimelinePage warning in the Web workspace"
+        }
+      ],
+      "score": 0.999677608,
+      "source_file": "packages/shared/src/index.ts",
+      "status": "tentative",
+      "uses": 1
+    }
+  },
+  "version": 1
+}

@@ -1,4 +1,5 @@
 import { DiaryComposeScreen } from '../../../../components/diary/DiaryComposeScreen';
+import { Suspense } from 'react';
 
 type DiaryEditPageProps = {
   params?: Promise<{ id: string }>;
@@ -6,5 +7,9 @@ type DiaryEditPageProps = {
 
 export default async function DiaryEditPage({ params }: DiaryEditPageProps) {
   const { id } = await params!;
-  return <DiaryComposeScreen mode="edit" diaryId={id} />;
+  return (
+    <Suspense fallback={null}>
+      <DiaryComposeScreen mode="edit" diaryId={id} />
+    </Suspense>
+  );
 }

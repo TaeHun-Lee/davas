@@ -5,6 +5,7 @@ import type { Request } from 'express';
 import type { Response } from 'express';
 import { UpdateMeDto, UsersService, type ProfileImageFile } from './users.service';
 import { DeleteMeDto } from './dto/delete-me.dto';
+import { CancelDeletionDto } from './dto/cancel-deletion.dto';
 
 const ACCESS_TOKEN_COOKIE = 'davas_access_token';
 
@@ -34,11 +35,44 @@ export class UsersController {
     return { user: await this.users.deleteProfileImage(this.readCookie(request, ACCESS_TOKEN_COOKIE)) };
   }
 
+  @Get('me/export')
+  exportMe(@Req() request: Request) {
+    return this.users.exportMe(this.readCookie(request, ACCESS_TOKEN_COOKIE));
+  }
+
+  @Post('me/deletion')
+  async requestDeletion(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+    @Body() body: DeleteMeDto,
+  ) {
+    const result = await this.users.requestDeletion(
+      this.readCookie(request, ACCESS_TOKEN_COOKIE),
+      body.password,
+    );
+    this.clearAccessCookie(response);
+    return result;
+  }
+
+  @Post('me/deletion/cancel')
+  cancelDeletion(@Body() body: CancelDeletionDto) {
+    return this.users.cancelDeletion(body.email, body.password);
+  }
+
   @Delete('me')
   @HttpCode(204)
   async deleteMe(@Req() request: Request, @Res({ passthrough: true }) response: Response, @Body() body: DeleteMeDto) {
     await this.users.deleteMe(this.readCookie(request, ACCESS_TOKEN_COOKIE), body.password);
-    response.clearCookie(ACCESS_TOKEN_COOKIE, { httpOnly: true, sameSite: 'lax', secure: process.env.COOKIE_SECURE === 'true', path: '/' });
+    this.clearAccessCookie(response);
+  }
+
+  private clearAccessCookie(response: Response) {
+    response.clearCookie(ACCESS_TOKEN_COOKIE, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.COOKIE_SECURE === 'true',
+      path: '/',
+    });
   }
 
   private readCookie(request: Request, name: string): string | undefined {

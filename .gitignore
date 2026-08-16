@@ -8,3 +8,12 @@ coverage/
 !.env.*.example
 .DS_Store
 npm-debug.log*
+graphify-out/cache/
+
+# Local deployment archives are generated artifacts, not source inputs.
+/.davas-*.tar
+
+# Graphify machine-local and transient state.
+graphify-out/.graphify_python
+graphify-out/.graphify_root
+graphify-out/**/.graphify_analysis.json

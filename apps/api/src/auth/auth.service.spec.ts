@@ -100,6 +100,23 @@ describe('AuthService', () => {
     await assert.rejects(() => service.login({ email: 'user@example.com', password: 'wrong-password' }), UnauthorizedException);
   });
 
+  it('blocks login and authenticated session checks while deletion is pending', async () => {
+    await service.signup({ ...legal, inviteCode: 'DAVAS-TEST', email: 'pending@example.com', nickname: 'pending', password: 'password123' });
+    users.users[0].status = 'DELETION_PENDING';
+    const token = new FakeJwtService().sign({ sub: users.users[0].id });
+
+    await assert.rejects(
+      () => service.login({ email: 'pending@example.com', password: 'password123' }),
+      UnauthorizedException,
+    );
+    const jwt = {
+      ...new FakeJwtService(),
+      verify() { return { sub: users.users[0].id }; },
+    };
+    const sessionService = new AuthService(users as never, jwt as never, new FakeInviteRepository() as never, new FakeInviteUseRepository() as never);
+    await assert.rejects(() => sessionService.findMe(token), UnauthorizedException);
+  });
+
   it('rejects signup without a valid invite code', async () => {
     await assert.rejects(() => service.signup({ ...legal, email: 'new@example.com', nickname: 'newbie', password: 'password123' }), BadRequestException);
   });

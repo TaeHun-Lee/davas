@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DiaryEntity } from '../database/entities/diary.entity';
@@ -6,6 +11,11 @@ import { MediaFavoriteEntity } from '../database/entities/media-favorite.entity'
 import { MediaEntity } from '../database/entities/media.entity';
 import { WatchlistItemEntity } from '../database/entities';
 import { MediaSearchQueryDto } from './dto/media-search-query.dto';
+import {
+  CatalogTitleDetail,
+  METADATA_PROVIDER,
+  MetadataProvider,
+} from './ports/metadata-provider.port';
 import { TmdbClient } from './tmdb.client';
 import { resolveTmdbGenreLabels } from './tmdb-genres';
 
@@ -89,21 +99,33 @@ export class MediaService {
     private readonly diaryRepository?: Repository<DiaryEntity>,
     @InjectRepository(MediaFavoriteEntity)
     private readonly favoriteRepository?: Repository<MediaFavoriteEntity>,
-    @InjectRepository(WatchlistItemEntity) private readonly watchlistRepository?: Repository<WatchlistItemEntity>,
+    @InjectRepository(WatchlistItemEntity)
+    private readonly watchlistRepository?: Repository<WatchlistItemEntity>,
+    @Optional()
+    @Inject(METADATA_PROVIDER)
+    private readonly metadataProvider?: MetadataProvider,
   ) {}
 
   async search(query: MediaSearchQueryDto) {
     const normalizedQuery = (query.query ?? query.q ?? '').trim();
-    return this.tmdbClient.search({
+    const input = {
       query: normalizedQuery,
       type: query.type ?? 'multi',
       page: query.page ?? 1,
       language: query.language ?? 'ko-KR',
       region: query.region ?? 'KR',
-    });
+    } as const;
+    return (
+      this.metadataProvider?.search(input) ?? this.tmdbClient.search(input)
+    );
   }
 
-  async searchPeople(query: { q?: string; query?: string; page?: number; language?: string }) {
+  async searchPeople(query: {
+    q?: string;
+    query?: string;
+    page?: number;
+    language?: string;
+  }) {
     const normalizedQuery = (query.query ?? query.q ?? '').trim();
     return this.tmdbClient.searchPeople({
       query: normalizedQuery,
@@ -125,17 +147,49 @@ export class MediaService {
     const myDiaries = await this.findMyDiaries(id, userId);
     const myDiary = myDiaries[0] ?? null;
     const myAverageRating = this.calculateAverageRating(myDiaries);
-    const watchlist = userId ? await this.watchlistRepository?.findOne({ where: { userId, mediaId: id } }) : null;
+    const watchlist = userId
+      ? await this.watchlistRepository?.findOne({
+          where: { userId, mediaId: id },
+        })
+      : null;
 
     if (media.externalProvider !== 'TMDB') {
-      return { ...this.fromCachedMedia(media), myDiary, myDiaries, myAverageRating, watchlistItemId: watchlist?.id ?? null, watchlistStatus: watchlist?.status ?? null };
+      return {
+        ...this.fromCachedMedia(media),
+        myDiary,
+        myDiaries,
+        myAverageRating,
+        watchlistItemId: watchlist?.id ?? null,
+        watchlistStatus: watchlist?.status ?? null,
+      };
     }
 
-    const detail = await this.tmdbClient.detail({
-      externalId: media.externalId,
-      mediaType: media.mediaType,
-      language: 'ko-KR',
-    });
+    let detail: CatalogTitleDetail;
+    try {
+      detail = this.metadataProvider
+        ? await this.metadataProvider.getTitle(
+            {
+              provider: media.externalProvider,
+              externalId: media.externalId,
+              mediaType: media.mediaType,
+            },
+            'ko-KR',
+          )
+        : await this.tmdbClient.detail({
+            externalId: media.externalId,
+            mediaType: media.mediaType,
+            language: 'ko-KR',
+          });
+    } catch {
+      return {
+        ...this.fromCachedMedia(media),
+        myDiary,
+        myDiaries,
+        myAverageRating,
+        watchlistItemId: watchlist?.id ?? null,
+        watchlistStatus: watchlist?.status ?? null,
+      };
+    }
 
     return {
       id: media.id,
@@ -170,8 +224,13 @@ export class MediaService {
     };
   }
 
-  async toggleFavorite(mediaId: string, userId: string): Promise<MediaFavoriteResponse> {
-    const media = await this.mediaRepository?.findOne({ where: { id: mediaId } });
+  async toggleFavorite(
+    mediaId: string,
+    userId: string,
+  ): Promise<MediaFavoriteResponse> {
+    const media = await this.mediaRepository?.findOne({
+      where: { id: mediaId },
+    });
     if (!media) {
       throw new NotFoundException('Media not found');
     }
@@ -179,13 +238,17 @@ export class MediaService {
       return { mediaId, isFavorite: false };
     }
 
-    const existing = await this.favoriteRepository.findOne({ where: { userId, mediaId } });
+    const existing = await this.favoriteRepository.findOne({
+      where: { userId, mediaId },
+    });
     if (existing) {
       await this.favoriteRepository.delete({ userId, mediaId });
       return { mediaId, isFavorite: false };
     }
 
-    await this.favoriteRepository.save(this.favoriteRepository.create({ userId, mediaId }));
+    await this.favoriteRepository.save(
+      this.favoriteRepository.create({ userId, mediaId }),
+    );
     return { mediaId, isFavorite: true };
   }
 
@@ -221,10 +284,15 @@ export class MediaService {
     if (!userId || !this.favoriteRepository) {
       return false;
     }
-    return Boolean(await this.favoriteRepository.findOne({ where: { userId, mediaId } }));
+    return Boolean(
+      await this.favoriteRepository.findOne({ where: { userId, mediaId } }),
+    );
   }
 
-  private async findMyDiaries(mediaId: string, userId?: string): Promise<MyMediaDiary[]> {
+  private async findMyDiaries(
+    mediaId: string,
+    userId?: string,
+  ): Promise<MyMediaDiary[]> {
     if (!userId || !this.diaryRepository) {
       return [];
     }
@@ -233,7 +301,9 @@ export class MediaService {
       where: { userId, mediaId },
       order: { updatedAt: 'DESC', createdAt: 'DESC' },
     } as const;
-    const repository = this.diaryRepository as Repository<DiaryEntity> & { find?: Repository<DiaryEntity>['find'] };
+    const repository = this.diaryRepository as Repository<DiaryEntity> & {
+      find?: Repository<DiaryEntity>['find'];
+    };
     const diaries = repository.find ? await repository.find(options) : [];
 
     return diaries.map((diary) => ({
@@ -270,7 +340,11 @@ export class MediaService {
       runtime: media.runtime,
       genres: media.genres,
       country: media.country,
-      countries: media.countries?.length ? media.countries : media.country ? [media.country] : [],
+      countries: media.countries?.length
+        ? media.countries
+        : media.country
+          ? [media.country]
+          : [],
       tmdbRating: media.tmdbRating ? Number(media.tmdbRating) : null,
       tmdbVoteCount: media.tmdbVoteCount,
       director: media.director,

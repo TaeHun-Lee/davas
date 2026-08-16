@@ -47,4 +47,37 @@ describe('Recommendations API contract', () => {
     assert.match(controllerSource, /recommendationsService\.randomGenreRecommendations/);
     assert.match(serviceSource, /Promise<\{ items: MediaRecommendationItem\[\] \}>/);
   });
+
+  it('adds authenticated group session, session-read, and feedback routes without changing legacy routes', () => {
+    const moduleSource = source('recommendations/recommendations.module.ts');
+    const controllerSource = source(
+      'recommendations/group-recommendations.controller.ts',
+    );
+
+    assert.match(moduleSource, /RecommendationsController/);
+    assert.match(moduleSource, /GroupRecommendationsController/);
+    assert.match(moduleSource, /RecommendationsService/);
+    assert.match(moduleSource, /GroupRecommendationsService/);
+    assert.match(controllerSource, /@Post\('recommendation-sessions'\)/);
+    assert.match(controllerSource, /@Get\('recommendation-sessions\/:sessionId'\)/);
+    assert.match(
+      controllerSource,
+      /@Post\('recommendation-exposures\/:exposureId\/feedback'\)/,
+    );
+    assert.match(controllerSource, /this\.auth\.findMe/);
+  });
+
+  it('keeps private score fields out of the group recommendation wire response', () => {
+    const serviceSource = source(
+      'recommendations/group-recommendations.service.ts',
+    );
+    const sessionView = serviceSource.slice(
+      serviceSource.indexOf('private sessionView'),
+    );
+
+    assert.doesNotMatch(sessionView, /participantScores\s*:/);
+    assert.doesNotMatch(sessionView, /scoreParts\s*:/);
+    assert.match(sessionView, /reasonCode/);
+    assert.match(sessionView, /consensus/);
+  });
 });

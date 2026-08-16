@@ -1,0 +1,11 @@
+# Web workspace
+- Location: `apps/web`; Next.js App Router with React.
+- Routes/layout/loading/error states live under `src/app`; feature UI under `src/components/<feature>`.
+- Typed API wrappers live under `src/lib/api`; reusable query and UI behavior lives under `src/hooks`.
+- TanStack React Query is the server-state layer; Zod is available for runtime validation.
+- Existing features include auth, records/diary, media search/detail, friends/invites, community/feed, recommendations/explore, watchlist, profile/settings, legal, and PWA/offline surfaces.
+- PWA assets include `public/sw.js` and app manifest/icon routes.
+- Design/contract tests are colocated in `src/app` as `*.spec.ts`.
+- Dynamic images use native `img` by explicit ESLint policy; do not switch to a broad remote-host allowlist without a security review.
+- Product target may differ from current routes; compare against `docs/product/README.md` before redesign work.
+- Shared types: `mem:shared/core`; commands/checks: `mem:suggested_commands`, `mem:task_completion`.

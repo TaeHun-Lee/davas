@@ -68,7 +68,7 @@ describe('Diaries dashboard API contract', () => {
   });
 
   it('loads the dashboard from persisted diary and media rows instead of mock fixtures', async () => {
-    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[DiaryEntity, MediaEntity,/);
+    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[\s*DiaryEntity,\s*MediaEntity,/);
     assert.match(serviceSource, /@InjectRepository\(DiaryEntity\)/);
     assert.doesNotMatch(serviceSource, /mock-interstellar|mock-inception|mock-shawshank|const recentItems/);
 
@@ -238,7 +238,7 @@ describe('Diaries dashboard API contract', () => {
   });
 
   it('stores the selected media representative poster on the server before showing diary thumbnails', async () => {
-    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[DiaryEntity, MediaEntity,/);
+    assert.match(moduleSource, /TypeOrmModule\.forFeature\(\[\s*DiaryEntity,\s*MediaEntity,/);
     assert.match(serviceSource, /@InjectRepository\(MediaEntity\)/);
     assert.match(serviceSource, /mediaPosterUrl/);
     assert.match(serviceSource, /media\.posterUrl = dto\.mediaPosterUrl/);

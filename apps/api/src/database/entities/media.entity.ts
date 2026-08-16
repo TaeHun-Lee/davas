@@ -1,6 +1,16 @@
-import { Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { MediaType } from '@davas/shared';
+import { AvailabilityObservationEntity } from './availability-observation.entity';
 import { DiaryEntity } from './diary.entity';
+import { ExternalContentRefEntity } from './external-content-ref.entity';
 import { MediaFavoriteEntity } from './media-favorite.entity';
 import { MediaImageEntity } from './media-image.entity';
 
@@ -58,7 +68,13 @@ export class MediaEntity {
   @Column({ type: 'int', nullable: true })
   runtime!: number | null;
 
-  @Column({ name: 'tmdb_rating', type: 'decimal', precision: 3, scale: 1, nullable: true })
+  @Column({
+    name: 'tmdb_rating',
+    type: 'decimal',
+    precision: 3,
+    scale: 1,
+    nullable: true,
+  })
   tmdbRating!: string | null;
 
   @Column({ name: 'tmdb_vote_count', type: 'int', nullable: true })
@@ -84,6 +100,18 @@ export class MediaEntity {
 
   @OneToMany(() => MediaFavoriteEntity, (favorite) => favorite.media)
   favorites?: MediaFavoriteEntity[];
+
+  @OneToMany(
+    () => ExternalContentRefEntity,
+    (externalRef) => externalRef.content,
+  )
+  externalRefs!: ExternalContentRefEntity[];
+
+  @OneToMany(
+    () => AvailabilityObservationEntity,
+    (observation) => observation.content,
+  )
+  availabilityObservations!: AvailabilityObservationEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

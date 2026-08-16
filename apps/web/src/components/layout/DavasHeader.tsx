@@ -11,6 +11,7 @@ const drawerItems = [
   { href: '/', label: '홈', description: '나의 기록 홈' },
   { href: '/explore', label: '탐색', description: '작품 검색과 추천' },
   { href: '/feed', label: '친구 피드', description: '허용된 친구의 기록' },
+  { href: '/spaces', label: '공유 공간', description: '멤버·초대와 활성 공간 관리' },
   { href: '/friends', label: '친구 관리', description: '요청과 친구 목록' },
   { href: '/watchlist', label: '보고 싶은 목록', description: '다음 작품 계획' },
   { href: '/diary', label: '다이어리', description: '내 감상 기록' },

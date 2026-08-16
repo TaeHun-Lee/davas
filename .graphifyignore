@@ -1,0 +1,7 @@
+# Tool metadata is not part of the application architecture.
+.codex/
+.serena/
+graphify-out/
+
+# Local deployment archives are not source inputs.
+*.tar

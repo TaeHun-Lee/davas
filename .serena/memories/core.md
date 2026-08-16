@@ -1,0 +1,13 @@
+# Davas project map
+- Windows npm-workspaces monorepo: `apps/api`, `apps/web`, `packages/shared`.
+- Target product source of truth: `docs/product/README.md` (private 2–5 member spaces, personal viewing reactions, group recommendations). Current implementation may lag; source, compiler, migrations, and tests are authoritative for AS-IS.
+- Repository rules: root `AGENTS.md`; no nested AGENTS files currently.
+- API module boundaries and persistence: `mem:api/core`.
+- Web routes, components, and client data access: `mem:web/core`.
+- Cross-workspace contracts: `mem:shared/core`.
+- Versions/build tooling: `mem:tech_stack`.
+- Commands developers actually run: `mem:suggested_commands`.
+- Formatting and code patterns: `mem:conventions`.
+- Required validation before handoff: `mem:task_completion`.
+- Documentation map: `docs/README.md`; local Docker guide under `docs/development/`, production Raspberry Pi guide under `docs/deployment/`.
+- Code intelligence routing: Graphify for repository-wide relationships/docs; Serena for exact symbols, references, refactors, and edits.

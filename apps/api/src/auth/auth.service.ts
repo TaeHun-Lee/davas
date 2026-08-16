@@ -157,6 +157,8 @@ export class AuthService {
       throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
     }
 
+    this.assertActive(user);
+
     return this.createAuthResult(user);
   }
 
@@ -171,6 +173,7 @@ export class AuthService {
       if (!user) {
         throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
       }
+      this.assertActive(user);
       return this.toUserResponse(user);
     } catch (error) {
       if (error instanceof UnauthorizedException) {
@@ -181,11 +184,18 @@ export class AuthService {
   }
 
   private createAuthResult(user: UserEntity): AuthResult {
+    this.assertActive(user);
     const safeUser = this.toUserResponse(user);
     return {
       accessToken: this.jwt.sign({ sub: safeUser.id, email: safeUser.email, nickname: safeUser.nickname }),
       user: safeUser,
     };
+  }
+
+  private assertActive(user: UserEntity) {
+    if (user.status && user.status !== 'ACTIVE') {
+      throw new UnauthorizedException('삭제 대기 또는 삭제된 계정은 로그인할 수 없습니다.');
+    }
   }
 
   private toUserResponse(user: UserEntity): AuthenticatedUser {

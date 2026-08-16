@@ -1,8 +1,9 @@
-import { Controller, Get, Param, Patch, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Put, Req } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { AuthService } from '../auth/auth.service';
 import { NotificationsService } from './notifications.service';
+import { UpdateNotificationPreferenceDto } from './dto/update-notification-preference.dto';
 
 const ACCESS_TOKEN_COOKIE = 'davas_access_token';
 
@@ -18,6 +19,21 @@ export class NotificationsController {
   async list(@Req() request: Request) {
     const viewer = await this.auth.findMe(this.readCookie(request, ACCESS_TOKEN_COOKIE));
     return this.notifications.listForUser(viewer.id);
+  }
+
+  @Get('preferences')
+  async listPreferences(@Req() request: Request) {
+    const viewer = await this.auth.findMe(this.readCookie(request, ACCESS_TOKEN_COOKIE));
+    return { items: await this.notifications.listPreferences(viewer.id) };
+  }
+
+  @Put('preferences')
+  async updatePreference(
+    @Req() request: Request,
+    @Body() body: UpdateNotificationPreferenceDto,
+  ) {
+    const viewer = await this.auth.findMe(this.readCookie(request, ACCESS_TOKEN_COOKIE));
+    return this.notifications.setPreference(viewer.id, body.category, body.enabled);
   }
 
   @Patch(':id/read')

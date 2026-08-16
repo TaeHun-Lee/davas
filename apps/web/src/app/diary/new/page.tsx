@@ -1,4 +1,5 @@
 import { DiaryComposeScreen } from '../../../components/diary/DiaryComposeScreen';
+import { Suspense } from 'react';
 
 type DiaryNewPageProps = {
   searchParams?: Promise<{
@@ -12,5 +13,9 @@ export default async function DiaryNewPage({ searchParams }: DiaryNewPageProps) 
   const mediaId = Array.isArray(params?.mediaId) ? params.mediaId[0] : params?.mediaId;
   const returnTo = Array.isArray(params?.returnTo) ? params.returnTo[0] : params?.returnTo;
 
-  return <DiaryComposeScreen mediaId={mediaId} returnTo={returnTo} />;
+  return (
+    <Suspense fallback={null}>
+      <DiaryComposeScreen mediaId={mediaId} returnTo={returnTo} />
+    </Suspense>
+  );
 }

@@ -7,7 +7,7 @@ This deployment runs Davas with Docker Compose, PostgreSQL, the Nest API, the Ne
 DuckDNS should point the subdomain to the public IP of the Raspberry Pi network.
 
 - Subdomain: `davas.duckdns.org`
-- Public IP currently registered: `14.36.8.228`
+- Public IP: keep the current router address updated in the DuckDNS dashboard; do not hard-code it in this repository.
 
 On the home router, forward these ports to the Raspberry Pi:
 

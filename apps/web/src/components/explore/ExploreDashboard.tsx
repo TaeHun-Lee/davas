@@ -6,6 +6,7 @@ import { ExploreFilterChips, type ExploreFilter } from './ExploreFilterChips';
 import { ExploreSearchBar } from './ExploreSearchBar';
 import { ExploreShortcutGrid } from './ExploreShortcutGrid';
 import { GenreRecommendationSection } from './GenreRecommendationSection';
+import { GroupRecommendationPanel } from './GroupRecommendationPanel';
 import { TodayRecommendationSection } from './TodayRecommendationSection';
 import { MediaPosterItem, MediaPosterRowSection } from '../home/MediaPosterRowSection';
 import { AppShell } from '../layout/AppShell';
@@ -212,9 +213,14 @@ export function ExploreDashboard() {
 
       {!isSearchMode ? (
         <>
+          <GroupRecommendationPanel />
+
           {recommendations.status === 'error' ? <div className="card-surface rounded-[20px] p-4 text-[13px] font-bold text-[#8b96a8]">추천을 불러오지 못했어요. 잠시 후 다시 시도해주세요.</div> : null}
 
-          <TodayRecommendationSection items={recommendations.todayItems} onSelect={handleRecommendationSelect} onViewAll={() => setShowAllToday((value) => !value)} />
+          <div className="mt-7 border-t border-[#e4ebf4] pt-5">
+            <p className="mb-3 text-[11px] font-black uppercase tracking-[0.14em] text-[#8b96a8]">혼자 더 둘러보기</p>
+            <TodayRecommendationSection items={recommendations.todayItems} onSelect={handleRecommendationSelect} onViewAll={() => setShowAllToday((value) => !value)} />
+          </div>
 
           {showAllToday ? (
             <div className="today-overview-list card-surface mt-3 rounded-[20px] p-3 shadow-[0_10px_24px_rgba(31,65,114,0.07)]">

@@ -6,6 +6,8 @@ import { MediaFavoriteEntity } from './media-favorite.entity';
 import { NotificationEntity } from './notification.entity';
 import { UserFollowEntity } from './user-follow.entity';
 
+export type UserAccountStatus = 'ACTIVE' | 'DELETION_PENDING' | 'DELETED';
+
 @Entity({ name: 'users' })
 export class UserEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -28,6 +30,18 @@ export class UserEntity {
 
   @Column('text', { name: 'preferred_genres', array: true, default: () => "'{}'" })
   preferredGenres!: string[];
+
+  @Column({ type: 'varchar', length: 24, default: 'ACTIVE' })
+  status!: UserAccountStatus;
+
+  @Column({ name: 'deletion_requested_at', type: 'timestamptz', nullable: true })
+  deletionRequestedAt!: Date | null;
+
+  @Column({ name: 'deletion_scheduled_for', type: 'timestamptz', nullable: true })
+  deletionScheduledFor!: Date | null;
+
+  @Column({ name: 'anonymized_at', type: 'timestamptz', nullable: true })
+  anonymizedAt!: Date | null;
 
   @OneToMany(() => DiaryEntity, (diary) => diary.user)
   diaries!: DiaryEntity[];

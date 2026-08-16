@@ -2,7 +2,14 @@ import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, Primary
 import { DiaryEntity } from './diary.entity';
 import { UserEntity } from './user.entity';
 
-export type NotificationType = 'DIARY_LIKED' | 'DIARY_COMMENTED' | 'AUTHOR_FOLLOWED' | 'FRIEND_REQUESTED' | 'FRIEND_ACCEPTED';
+export type NotificationType =
+  | 'DIARY_LIKED'
+  | 'DIARY_COMMENTED'
+  | 'AUTHOR_FOLLOWED'
+  | 'FRIEND_REQUESTED'
+  | 'FRIEND_ACCEPTED'
+  | 'SPACE_INVITE'
+  | 'WATCH_PARTICIPATION_REQUESTED';
 
 @Entity({ name: 'notifications' })
 @Index(['userId', 'createdAt'])
@@ -33,6 +40,9 @@ export class NotificationEntity {
 
   @Column({ type: 'varchar', length: 32 })
   type!: NotificationType;
+
+  @Column({ name: 'idempotency_key', type: 'varchar', length: 180, unique: true })
+  idempotencyKey!: string;
 
   @Column({ name: 'read_at', type: 'timestamp', nullable: true })
   readAt!: Date | null;

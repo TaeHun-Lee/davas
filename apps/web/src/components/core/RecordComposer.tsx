@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import type { MediaType, ViewingMethod } from '@davas/shared';
+import type { MediaType, SpaceView } from '@davas/shared';
 import { getMe } from '../../lib/api/auth';
 import {
   getMediaDetail,
@@ -10,13 +10,14 @@ import {
   type MediaSearchResult,
   type SelectedMedia,
 } from '../../lib/api/media';
+import { listSpaces } from '../../lib/api/spaces';
 import {
-  CoreApiError,
-  createRecord,
-  getRecord,
-  updateRecord,
-  type RecordWritePayload,
-} from '../../lib/api/core';
+  createWatchEvent,
+  getWatchEvent,
+  updateWatchEvent,
+  type WatchEventWritePayload,
+  type WatchSourceKind,
+} from '../../lib/api/watch-events';
 import { useMediaSearch } from '../../hooks/useMediaSearch';
 import {
   AsyncState,
@@ -25,18 +26,19 @@ import {
   Poster,
   SearchField,
   TaskShell,
-  ViewingMethodControl,
 } from './CoreUi';
+import { WatchRatingControl } from './WatchRatingControl';
 
 type Draft = {
   selected: SelectedMedia | null;
-  viewingMethod: ViewingMethod | null;
+  sourceKind: WatchSourceKind | null;
+  providerName: string;
+  placeText: string;
   watchedDate: string;
   rating: number | null;
   content: string;
-  hasSpoiler: boolean;
-  visibility: 'FRIENDS' | 'PRIVATE' | 'SELECTED';
-  clientRequestId: string;
+  spaceIds: string[];
+  participantAccountIds: string[];
 };
 const today = () =>
   new Intl.DateTimeFormat('en-CA', {
@@ -47,14 +49,51 @@ const today = () =>
   }).format(new Date());
 const freshDraft = (): Draft => ({
   selected: null,
-  viewingMethod: null,
+  sourceKind: null,
+  providerName: '',
+  placeText: '',
   watchedDate: today(),
   rating: null,
   content: '',
-  hasSpoiler: false,
-  visibility: 'FRIENDS',
-  clientRequestId: crypto.randomUUID(),
+  spaceIds: [],
+  participantAccountIds: [],
 });
+
+const sourceLabels: Record<WatchSourceKind, string> = {
+  THEATER: '극장',
+  OTT: 'OTT',
+  TV_OWNED: 'TV/소장',
+  OTHER: '기타',
+};
+
+function SourceKindControl({
+  value,
+  onChange,
+}: {
+  value: WatchSourceKind | null;
+  onChange: (value: WatchSourceKind) => void;
+}) {
+  return (
+    <div className="segmented" role="radiogroup" aria-label="감상 경로">
+      {(Object.keys(sourceLabels) as WatchSourceKind[]).map((kind) => (
+        <label
+          key={kind}
+          className="flex min-h-11 cursor-pointer items-center justify-center rounded-xl text-sm font-bold has-[:checked]:bg-[var(--blue-soft)] has-[:checked]:text-[var(--blue)]"
+        >
+          <input
+            className="sr-only"
+            type="radio"
+            name="source-kind"
+            value={kind}
+            checked={value === kind}
+            onChange={() => onChange(kind)}
+          />
+          {sourceLabels[kind]}
+        </label>
+      ))}
+    </div>
+  );
+}
 
 export function RecordComposer({ editId }: { editId?: string }) {
   const router = useRouter();
@@ -66,9 +105,10 @@ export function RecordComposer({ editId }: { editId?: string }) {
   );
   const [query, setQuery] = useState('');
   const [mediaType, setMediaType] = useState<MediaType | null>(null);
+  const [spaces, setSpaces] = useState<SpaceView[]>([]);
+  const [spacesError, setSpacesError] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [rewatchId, setRewatchId] = useState<string | null>(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const viewingRef = useRef<HTMLDivElement>(null);
   const searchType =
@@ -85,11 +125,27 @@ export function RecordComposer({ editId }: { editId?: string }) {
         if (!active) return;
         const id = user.id!;
         setUserId(id);
+        void listSpaces()
+          .then(({ items }) => {
+            if (active) setSpaces(items);
+          })
+          .catch(() => {
+            if (active) setSpacesError(true);
+          });
         const storageKey = `davas:draft:${id}:${editId ? 'edit' : 'create'}:${editId ?? 'new'}`;
         const saved = sessionStorage.getItem(storageKey);
         if (saved) {
           try {
-            setDraft(JSON.parse(saved));
+            const parsed = JSON.parse(saved) as Partial<Draft> & {
+              viewingMethod?: 'THEATER' | 'OTT';
+            };
+            setDraft({
+              ...freshDraft(),
+              ...parsed,
+              sourceKind: parsed.sourceKind ?? parsed.viewingMethod ?? null,
+              spaceIds: parsed.spaceIds ?? [],
+              participantAccountIds: parsed.participantAccountIds ?? [],
+            });
             setStep('write');
             return;
           } catch {
@@ -97,7 +153,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
           }
         }
         if (editId) {
-          const record = await getRecord(editId);
+          const record = await getWatchEvent(editId);
           setDraft({
             selected: {
               id: record.media.id,
@@ -105,23 +161,34 @@ export function RecordComposer({ editId }: { editId?: string }) {
               externalId: '',
               mediaType: record.media.mediaType,
               title: record.media.title,
-              originalTitle: record.media.originalTitle ?? '',
+              originalTitle: '',
               overview: '',
               posterUrl: record.media.posterUrl,
               backdropUrl: null,
-              releaseDate: record.media.releaseYear
-                ? `${record.media.releaseYear}-01-01`
-                : null,
+              releaseDate: null,
               genreIds: [],
               country: null,
             },
-            viewingMethod: record.viewingMethod,
+            sourceKind: record.source?.kind ?? null,
+            providerName: record.source?.providerName ?? '',
+            placeText: record.source?.placeText ?? '',
             watchedDate: record.watchedDate,
-            rating: record.rating,
-            content: record.content,
-            hasSpoiler: record.hasSpoiler,
-            visibility: record.visibility,
-            clientRequestId: crypto.randomUUID(),
+            rating:
+              record.reactions.find(
+                (reaction) => reaction.accountId === record.author.accountId,
+              )?.rating ?? null,
+            content:
+              record.reactions.find(
+                (reaction) => reaction.accountId === record.author.accountId,
+              )?.review ?? '',
+            spaceIds: record.spaceIds,
+            participantAccountIds: record.participants
+              .filter(
+                (participant) =>
+                  participant.accountId !== record.author.accountId &&
+                  participant.status !== 'DECLINED',
+              )
+              .map((participant) => participant.accountId),
           });
           return;
         }
@@ -169,8 +236,18 @@ export function RecordComposer({ editId }: { editId?: string }) {
       </TaskShell>
     );
 
+  const participantOptions = Array.from(
+    new Map(
+      spaces
+        .filter((space) => draft.spaceIds.includes(space.id))
+        .flatMap((space) => space.members)
+        .filter((member) => member.accountId !== userId)
+        .map((member) => [member.accountId, member] as const),
+    ).values(),
+  );
+
   async function choose(item: MediaSearchResult) {
-    if (!draft!.viewingMethod) {
+    if (!draft!.sourceKind) {
       setError('먼저 실제로 본 곳을 선택해 주세요.');
       viewingRef.current?.querySelector('button')?.focus();
       return;
@@ -189,51 +266,46 @@ export function RecordComposer({ editId }: { editId?: string }) {
     }
   }
 
-  async function save(allowDuplicate = false) {
+  async function save() {
     if (busy) return;
-    if (!draft!.selected || !draft!.viewingMethod) {
+    if (!draft!.selected || !draft!.sourceKind || !draft!.watchedDate) {
       setError('작품과 본 곳을 선택해 주세요.');
       return;
     }
     setBusy(true);
     setError('');
-    const payload: RecordWritePayload = {
+    const payload: WatchEventWritePayload = {
       mediaId: draft!.selected.id,
-      viewingMethod: draft!.viewingMethod,
       watchedDate: draft!.watchedDate,
+      source: {
+        kind: draft!.sourceKind,
+        providerName: draft!.providerName.trim() || null,
+        placeText: draft!.placeText.trim() || null,
+      },
+      spaceIds: draft!.spaceIds,
+      participantAccountIds: draft!.participantAccountIds,
       rating: draft!.rating,
-      content: draft!.content.trim(),
-      hasSpoiler: Boolean(draft!.content.trim()) && draft!.hasSpoiler,
-      visibility: draft!.visibility === 'PRIVATE' ? 'PRIVATE' : 'FRIENDS',
-      clientRequestId: draft!.clientRequestId,
-      allowDuplicate,
+      review: draft!.content.trim() || null,
     };
     try {
       const result = editId
-        ? await updateRecord(editId, {
-            ...payload,
-            visibility:
-              draft!.visibility === 'SELECTED' ? undefined : payload.visibility,
+        ? await updateWatchEvent(editId, {
+            mediaId: payload.mediaId,
+            watchedDate: payload.watchedDate,
+            source: payload.source,
+            spaceIds: payload.spaceIds,
+            rating: payload.rating,
+            review: payload.review,
           })
-        : await createRecord(payload);
+        : await createWatchEvent(payload);
       sessionStorage.removeItem(key);
       router.replace(
-        `/records/${result.diary.id}?returnTo=${encodeURIComponent('/me')}&saved=${draft!.visibility === 'PRIVATE' ? 'private' : 'friends'}`,
+        `/records/${result.id}?returnTo=${encodeURIComponent('/me')}&saved=${draft!.spaceIds.length ? 'space' : 'private'}`,
       );
     } catch (cause) {
-      if (
-        cause instanceof CoreApiError &&
-        cause.body.code === 'POSSIBLE_REWATCH'
-      ) {
-        const existing = cause.body.details?.existingRecord as
-          | { id?: string }
-          | undefined;
-        setRewatchId(existing?.id ?? null);
-        setError('같은 작품을 같은 날 같은 곳에서 본 기록이 있어요.');
-      } else
-        setError(
-          cause instanceof Error ? cause.message : '기록을 저장하지 못했어요.',
-        );
+      setError(
+        cause instanceof Error ? cause.message : '기록을 저장하지 못했어요.',
+      );
     } finally {
       setBusy(false);
     }
@@ -248,10 +320,10 @@ export function RecordComposer({ editId }: { editId?: string }) {
         </p>
         <div className="mt-6" ref={viewingRef}>
           <span className="field-label">어디서 봤나요?</span>
-          <ViewingMethodControl
-            value={draft.viewingMethod}
+          <SourceKindControl
+            value={draft.sourceKind}
             onChange={(value) => {
-              setDraft({ ...draft, viewingMethod: value });
+              setDraft({ ...draft, sourceKind: value });
               setError('');
             }}
           />
@@ -270,8 +342,8 @@ export function RecordComposer({ editId }: { editId?: string }) {
           <MediaTypeControl value={mediaType} onChange={setMediaType} />
         </div>
         <p className="page-description">
-          {draft.viewingMethod
-            ? `${draft.viewingMethod === 'THEATER' ? '영화관' : 'OTT'}에서 본 ${mediaType === 'MOVIE' ? '영화' : mediaType === 'TV' ? '드라마' : '작품'}을 찾는 중`
+          {draft.sourceKind
+            ? `${sourceLabels[draft.sourceKind]}에서 본 ${mediaType === 'MOVIE' ? '영화' : mediaType === 'TV' ? '드라마' : '작품'}을 찾는 중`
             : '본 곳을 먼저 선택해 주세요.'}
         </p>
         {error ? (
@@ -371,17 +443,47 @@ export function RecordComposer({ editId }: { editId?: string }) {
         </div>
       </section>
       <div className="mt-5" ref={viewingRef}>
-        <span className="field-label">본 곳 *</span>
-        <ViewingMethodControl
-          value={draft.viewingMethod}
-          onChange={(value) => setDraft({ ...draft, viewingMethod: value })}
+        <span className="field-label">감상 경로 *</span>
+        <SourceKindControl
+          value={draft.sourceKind}
+          onChange={(value) => setDraft({ ...draft, sourceKind: value })}
         />
-        {draft.viewingMethod === null && editId ? (
+        {draft.sourceKind === null && editId ? (
           <p className="form-error mt-2">
-            이전 기록에는 본 곳이 없어요. 수정하려면 선택해 주세요.
+            이전 기록에는 감상 경로가 없어요. 수정하려면 선택해 주세요.
           </p>
         ) : null}
       </div>
+      {draft.sourceKind === 'OTT' ? (
+        <label className="mt-4 block">
+          <span className="field-label">OTT 서비스 (선택)</span>
+          <input
+            className="date-input"
+            maxLength={80}
+            placeholder="예: 넷플릭스, 왓챠"
+            value={draft.providerName}
+            onChange={(event) =>
+              setDraft({ ...draft, providerName: event.target.value })
+            }
+          />
+        </label>
+      ) : null}
+      <label className="mt-4 block">
+        <span className="field-label">장소 (선택)</span>
+        <input
+          className="date-input"
+          maxLength={160}
+          placeholder={
+            draft.sourceKind === 'THEATER'
+              ? '예: 대한극장 3관'
+              : '예: 우리 집 거실'
+          }
+          value={draft.placeText}
+          onChange={(event) =>
+            setDraft({ ...draft, placeText: event.target.value })
+          }
+        />
+      </label>
       <label className="mt-5 block">
         <span className="field-label">본 날짜 *</span>
         <input
@@ -396,24 +498,11 @@ export function RecordComposer({ editId }: { editId?: string }) {
       </label>
       <fieldset className="mt-5">
         <legend className="field-label">별점 (선택)</legend>
-        <div className="segmented" role="radiogroup" aria-label="별점">
-          {[null, 1, 2, 3, 4, 5].map((rating) => (
-            <label
-              key={rating ?? 'none'}
-              className="flex min-h-11 cursor-pointer items-center justify-center rounded-xl text-sm font-bold has-[:checked]:bg-[var(--blue-soft)] has-[:checked]:text-[var(--blue)]"
-            >
-              <input
-                className="sr-only"
-                type="radio"
-                name="rating"
-                value={rating ?? ''}
-                checked={draft.rating === rating}
-                onChange={() => setDraft({ ...draft, rating })}
-              />
-              {rating === null ? '안 남김' : `${rating}점`}
-            </label>
-          ))}
-        </div>
+        <WatchRatingControl
+          value={draft.rating}
+          onChange={(rating) => setDraft({ ...draft, rating })}
+          name="record-rating"
+        />
       </fieldset>
       <label className="mt-5 block">
         <span className="field-label">어땠나요? (선택)</span>
@@ -425,7 +514,6 @@ export function RecordComposer({ editId }: { editId?: string }) {
             setDraft({
               ...draft,
               content: event.target.value,
-              hasSpoiler: event.target.value ? draft.hasSpoiler : false,
             })
           }
         />
@@ -433,83 +521,140 @@ export function RecordComposer({ editId }: { editId?: string }) {
           {draft.content.length}/500
         </span>
       </label>
-      {draft.content.trim() ? (
-        <label className="mt-3 flex min-h-11 items-center gap-3 text-sm font-bold">
-          <input
-            type="checkbox"
-            className="h-5 w-5 accent-[var(--blue)]"
-            checked={draft.hasSpoiler}
-            onChange={(event) =>
-              setDraft({ ...draft, hasSpoiler: event.target.checked })
-            }
-          />
-          스포일러가 있어요
-        </label>
-      ) : null}
-      <label className="mt-3 flex min-h-11 items-center justify-between gap-3 text-sm font-bold">
-        <span>
-          친구에게 보여주기
-          <small className="block text-xs font-semibold text-[var(--muted)]">
-            끄면 나만 볼 수 있어요.
-          </small>
-        </span>
-        <input
-          type="checkbox"
-          className="h-6 w-6 accent-[var(--blue)]"
-          checked={draft.visibility !== 'PRIVATE'}
-          onChange={(event) =>
+      <section className="core-card mt-5 p-4" aria-labelledby="share-scope-title">
+        <h2 id="share-scope-title" className="section-title">공유 범위 *</h2>
+        <p className="page-description">
+          저장 시점에 선택한 공간에만 공유돼요. 새 공간에 가입해도 과거 기록은 자동으로 공유되지 않아요.
+        </p>
+        <button
+          type="button"
+          aria-pressed={draft.spaceIds.length === 0}
+          className={`mt-3 min-h-12 w-full rounded-2xl px-4 text-left text-sm font-black ${draft.spaceIds.length === 0 ? 'bg-[var(--blue-soft)] text-[var(--blue)]' : 'bg-white text-[var(--text)] shadow-sm'}`}
+          onClick={() =>
             setDraft({
               ...draft,
-              visibility: event.target.checked ? 'FRIENDS' : 'PRIVATE',
+              spaceIds: [],
+              participantAccountIds: [],
             })
           }
-        />
-      </label>
-      {draft.visibility === 'SELECTED' ? (
-        <div className="form-error mt-2">
-          <p>일부 친구 공개(이전 방식) 기록이에요. 명시적으로 바꾸기 전까지 기존 대상을 유지해요.</p>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <button type="button" className="secondary-button" onClick={() => setDraft({ ...draft, visibility: 'FRIENDS' })}>친구 전체로 변경</button>
-            <button type="button" className="danger-button" onClick={() => setDraft({ ...draft, visibility: 'PRIVATE' })}>나만 보기로 변경</button>
-          </div>
-        </div>
+        >
+          개인 기록 · 나만 보기
+        </button>
+        {spaces.length ? (
+          <fieldset className="mt-3">
+            <legend className="field-label">공간에 공유</legend>
+            <div className="space-y-2">
+              {spaces.map((space) => (
+                <label
+                  key={space.id}
+                  className="flex min-h-12 items-center gap-3 rounded-2xl bg-white px-4 text-sm font-bold shadow-sm"
+                >
+                  <input
+                    type="checkbox"
+                    className="h-5 w-5 accent-[var(--blue)]"
+                    checked={draft.spaceIds.includes(space.id)}
+                    onChange={(event) => {
+                      const spaceIds = event.target.checked
+                        ? [...new Set([...draft.spaceIds, space.id])]
+                        : draft.spaceIds.filter((id) => id !== space.id);
+                      const allowedAccounts = new Set(
+                        spaces
+                          .filter((item) => spaceIds.includes(item.id))
+                          .flatMap((item) => item.members)
+                          .map((member) => member.accountId),
+                      );
+                      setDraft({
+                        ...draft,
+                        spaceIds,
+                        participantAccountIds:
+                          draft.participantAccountIds.filter((id) =>
+                            allowedAccounts.has(id),
+                          ),
+                      });
+                    }}
+                  />
+                  <span>{space.name}</span>
+                  <small className="ml-auto text-xs text-[var(--muted)]">
+                    {space.members.length}명
+                  </small>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ) : (
+          <p className="page-description mt-3">
+            {spacesError
+              ? '공간 목록을 불러오지 못했어요. 개인 기록으로는 저장할 수 있어요.'
+              : '참여 중인 공간이 없어요. 개인 기록으로 저장돼요.'}
+          </p>
+        )}
+      </section>
+      {draft.spaceIds.length > 0 && !editId ? (
+        <fieldset className="core-card mt-4 p-4">
+          <legend className="section-title px-1">함께 본 사람</legend>
+          <p className="page-description">
+            선택한 사람에게 참여 요청이 가며, 확인한 뒤 각자 별점과 리뷰를 남길 수 있어요.
+          </p>
+          {participantOptions.length ? (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {participantOptions.map((member) => (
+                <label
+                  key={member.accountId}
+                  className="flex min-h-11 items-center gap-2 rounded-xl bg-white px-3 text-sm font-bold shadow-sm"
+                >
+                  <input
+                    type="checkbox"
+                    checked={draft.participantAccountIds.includes(
+                      member.accountId,
+                    )}
+                    onChange={(event) =>
+                      setDraft({
+                        ...draft,
+                        participantAccountIds: event.target.checked
+                          ? [
+                              ...new Set([
+                                ...draft.participantAccountIds,
+                                member.accountId,
+                              ]),
+                            ]
+                          : draft.participantAccountIds.filter(
+                              (id) => id !== member.accountId,
+                            ),
+                      })
+                    }
+                  />
+                  {member.nickname || '공간 멤버'}
+                </label>
+              ))}
+            </div>
+          ) : (
+            <p className="page-description mt-3">요청할 다른 공간 멤버가 없어요.</p>
+          )}
+        </fieldset>
       ) : null}
       {error ? (
         <p className="form-error mt-4" role="alert">
           {error}
         </p>
       ) : null}
-      {rewatchId ? (
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <button
-            className="secondary-button"
-            onClick={() => router.push(`/records/${rewatchId}`)}
-          >
-            기존 기록 보기
-          </button>
-          <button
-            className="commit-button"
-            disabled={busy}
-            onClick={() => save(true)}
-          >
-            새 기록으로 저장
-          </button>
-        </div>
-      ) : (
-        <button
-          className="commit-button sticky-commit mt-5"
-          disabled={busy || !draft.selected || !draft.viewingMethod}
-          onClick={() => save()}
-        >
-          {busy
-            ? '저장 중…'
-            : editId
-              ? '수정 내용 저장하기'
-              : draft.visibility === 'PRIVATE'
-                ? '나만 저장하기'
-                : '친구와 공유하기'}
-        </button>
-      )}
+      <p className="page-description mt-4">
+        같은 작품을 다시 봤다면 날짜와 감상 경로가 같은 경우에도 새 감상으로 저장돼요.
+      </p>
+      <button
+        className="commit-button sticky-commit mt-5"
+        disabled={
+          busy || !draft.selected || !draft.sourceKind || !draft.watchedDate
+        }
+        onClick={() => save()}
+      >
+        {busy
+          ? '저장 중…'
+          : editId
+            ? '수정 내용 저장하기'
+            : draft.spaceIds.length === 0
+              ? '개인 기록으로 저장하기'
+              : '선택한 공간에 공유하기'}
+      </button>
       {confirmDiscard ? (
         <section role="dialog" aria-modal="true" aria-labelledby="discard-title" className="core-card mt-4 p-5">
           <h2 id="discard-title" className="section-title">작성 중인 내용을 버릴까요?</h2>

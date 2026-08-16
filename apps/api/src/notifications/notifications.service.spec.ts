@@ -1,9 +1,11 @@
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
+import { BadRequestException } from '@nestjs/common';
 import { Not } from 'typeorm';
 import type { DiaryEntity } from '../database/entities/diary.entity';
 import type { NotificationEntity } from '../database/entities/notification.entity';
 import type { UserEntity } from '../database/entities/user.entity';
+import type { NotificationPreferenceEntity } from '../database/entities';
 import { NotificationsService } from './notifications.service';
 
 function makeNotification(overrides: Partial<NotificationEntity> = {}): NotificationEntity {
@@ -13,6 +15,7 @@ function makeNotification(overrides: Partial<NotificationEntity> = {}): Notifica
     actorId: 'actor-1',
     diaryId: 'diary-1',
     type: 'DIARY_LIKED',
+    idempotencyKey: 'notice-key-1',
     readAt: null,
     createdAt: new Date('2026-05-09T12:00:00.000Z'),
     user: { id: 'recipient-1', nickname: '받는사람', profileImageUrl: null } as UserEntity,
@@ -39,8 +42,11 @@ function fakeNotificationsRepository(rows: NotificationEntity[] = []) {
       calls.push({ method: 'find', input });
       return rows;
     },
-    async findOne(input: unknown) {
+    async findOne(input: { where?: { idempotencyKey?: string } }) {
       calls.push({ method: 'findOne', input });
+      if (input.where?.idempotencyKey) {
+        return rows.find((row) => row.idempotencyKey === input.where?.idempotencyKey) ?? null;
+      }
       return rows[0] ?? null;
     },
   };
@@ -83,10 +89,53 @@ describe('NotificationsService', () => {
     assert.deepEqual(
       repository.calls.filter((call) => call.method === 'create').map((call) => call.input),
       [
-        { userId: 'author-1', actorId: 'viewer-1', diaryId: 'diary-1', type: 'DIARY_LIKED' },
-        { userId: 'author-1', actorId: 'viewer-1', diaryId: 'diary-1', type: 'DIARY_COMMENTED' },
+        { userId: 'author-1', actorId: 'viewer-1', diaryId: 'diary-1', type: 'DIARY_LIKED', idempotencyKey: 'DIARY_LIKED:author-1:viewer-1:diary-1' },
+        { userId: 'author-1', actorId: 'viewer-1', diaryId: 'diary-1', type: 'DIARY_COMMENTED', idempotencyKey: 'DIARY_COMMENTED:author-1:viewer-1:diary-1' },
       ],
     );
+  });
+
+  it('deduplicates repeated delivery and honors only optional opt-outs', async () => {
+    const repository = fakeNotificationsRepository();
+    const preferenceRows: NotificationPreferenceEntity[] = [];
+    const preferences = {
+      async find({ where }: { where: { userId: string } }) {
+        return preferenceRows.filter((row) => row.userId === where.userId);
+      },
+      async findOne({ where }: { where: { userId: string; category: string } }) {
+        return preferenceRows.find((row) => row.userId === where.userId && row.category === where.category) ?? null;
+      },
+      create(input: Partial<NotificationPreferenceEntity>) {
+        return { id: `preference-${preferenceRows.length + 1}`, ...input } as NotificationPreferenceEntity;
+      },
+      async save(row: NotificationPreferenceEntity) {
+        const index = preferenceRows.findIndex((saved) => saved.id === row.id);
+        if (index >= 0) preferenceRows[index] = row;
+        else preferenceRows.push(row);
+        return row;
+      },
+    };
+    const service = new NotificationsService(repository as never, preferences as never);
+
+    await service.notifySpaceInvite({ recipientId: 'recipient-1', actorId: 'actor-1', idempotencyKey: 'invite-1' });
+    await service.notifySpaceInvite({ recipientId: 'recipient-1', actorId: 'actor-1', idempotencyKey: 'invite-1' });
+    assert.equal(repository.calls.filter((call) => call.method === 'save').length, 1);
+    await assert.rejects(
+      () => service.setPreference('recipient-1', 'SPACE_INVITE', false),
+      BadRequestException,
+    );
+
+    await service.setPreference('recipient-1', 'SOCIAL', false);
+    const skipped = await service.notifyDiaryLiked({
+      recipientId: 'recipient-1',
+      actorId: 'actor-2',
+      diaryId: 'diary-2',
+      idempotencyKey: 'like-2',
+    });
+    assert.equal(skipped, null);
+    const listed = await service.listPreferences('recipient-1');
+    assert.equal(listed.find((item) => item.category === 'SPACE_INVITE')?.enabled, true);
+    assert.equal(listed.find((item) => item.category === 'SOCIAL')?.enabled, false);
   });
 
   it('marks only the authenticated recipient notification as read', async () => {
