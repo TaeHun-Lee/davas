@@ -13,16 +13,31 @@ import {
 } from '../../lib/api/core';
 
 const tabs = [
-  { href: '/', label: '친구 기록', icon: '◫' },
-  { href: '/records/new', label: '기록하기', icon: '＋' },
-  { href: '/me', label: '내 기록', icon: '▤' },
-  { href: '/friends', label: '친구', icon: '●' },
-];
+  { href: '/', label: '홈', icon: 'home' },
+  { href: '/records/new', label: '기록하기', icon: 'add' },
+  { href: '/me', label: '내 기록', icon: 'records' },
+  { href: '/friends', label: '친구', icon: 'friends' },
+] as const;
+
+function CoreNavIcon({ icon }: { icon: (typeof tabs)[number]['icon'] }) {
+  const paths = {
+    home: <path d="M3 10.8 12 3l9 7.8v9.7a.5.5 0 0 1-.5.5h-5.25v-6.4h-6.5V21H3.5a.5.5 0 0 1-.5-.5v-9.7Z" />,
+    add: <><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></>,
+    records: <><path d="M5 4.5h14v15H5z" /><path d="M8 8h8M8 12h8M8 16h5" /></>,
+    friends: <><circle cx="9" cy="9" r="3" /><circle cx="16.5" cy="10" r="2.5" /><path d="M3.5 19c.5-3.3 2.3-5 5.5-5s5 1.7 5.5 5M14 15c3.5-.4 5.5.9 6 4" /></>,
+  } as const;
+
+  return (
+    <svg className="core-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+      {paths[icon]}
+    </svg>
+  );
+}
 
 export function CoreHeader() {
   return (
     <header className="core-header">
-      <Link href="/" aria-label="친구 기록으로 이동">
+      <Link href="/" aria-label="홈으로 이동">
         <Image
           src="/images/davas-logo-horizontal.png"
           alt="Davas"
@@ -33,8 +48,11 @@ export function CoreHeader() {
           className="object-contain"
         />
       </Link>
-      <Link href="/settings" className="core-avatar" aria-label="설정 열기">
-        설정
+      <Link href="/settings" className="core-icon-button" aria-label="설정 열기">
+        <svg data-icon="settings" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9.7 3.5h4.6l.6 2.1c.5.2.9.4 1.3.7l2.1-.6 2.3 4-1.6 1.5v1.6l1.6 1.5-2.3 4-2.1-.6c-.4.3-.8.5-1.3.7l-.6 2.1H9.7l-.6-2.1c-.5-.2-.9-.4-1.3-.7l-2.1.6-2.3-4L5 12.8v-1.6L3.4 9.7l2.3-4 2.1.6c.4-.3.8-.5 1.3-.7l.6-2.1Z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
       </Link>
     </header>
   );
@@ -55,9 +73,7 @@ export function CoreBottomNav() {
             aria-current={active ? 'page' : undefined}
             data-active={active}
           >
-            <span aria-hidden="true" className="text-lg">
-              {tab.icon}
-            </span>
+            <CoreNavIcon icon={tab.icon} />
             <span>{tab.label}</span>
           </Link>
         );

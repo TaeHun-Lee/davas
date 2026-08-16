@@ -19,6 +19,7 @@ import {
   TaskShell,
   ViewingMethodControl,
 } from './CoreUi';
+import { HomeRecommendations } from './HomeRecommendations';
 import { WatchEventDetailScreen } from './WatchEventDetailScreen';
 
 function useRecords(
@@ -157,10 +158,13 @@ function RecordList({
 export function FeedScreen() {
   return (
     <CoreAppShell>
-      <h1 className="page-title">친구 기록</h1>
-      <p className="page-description">
-        친구들과 최근 본 작품과 감상을 나눠보세요.
-      </p>
+      <section className="home-intro">
+        <span>HOME</span>
+        <h1 className="page-title">홈</h1>
+        <p className="page-description">
+          친구의 감상과 오늘의 추천을 한곳에서 만나보세요.
+        </p>
+      </section>
       <div className="mt-5">
         <Link href="/search?scope=friends" aria-label="친구 기록 검색">
           <SearchField
@@ -172,10 +176,17 @@ export function FeedScreen() {
         </Link>
       </div>
       <Link href="/records/new" className="wide-cta mt-4">
-        <span>＋ 본 작품 기록하기</span>
+        <span><b aria-hidden="true">＋</b> 본 작품 기록하기</span>
         <span aria-hidden="true">›</span>
       </Link>
-      <h2 className="section-title mb-3 mt-7">최근 공유된 기록</h2>
+      <HomeRecommendations />
+      <div className="home-section-heading home-friend-heading">
+        <div>
+          <h2 className="section-title">친구들의 최근 기록</h2>
+          <p>친구들이 남긴 최신 감상을 확인해 보세요.</p>
+        </div>
+        <Link href="/friends">친구 <span aria-hidden="true">›</span></Link>
+      </div>
       <RecordList scope="friends" />
     </CoreAppShell>
   );

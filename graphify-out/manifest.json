@@ -685,9 +685,9 @@
     "semantic_hash": "3feea0c6898c87bdd296fb1593e5cdd3"
   },
   "apps/web/src/app/home-design.spec.ts": {
-    "mtime": 1783846910.473833,
-    "ast_hash": "3fe8f3aed887e687f2142e53d6f0dadb",
-    "semantic_hash": "3fe8f3aed887e687f2142e53d6f0dadb"
+    "mtime": 1786865603.624693,
+    "ast_hash": "972e933ae0c8acc5e7314b41f8f3da51",
+    "semantic_hash": ""
   },
   "apps/web/src/app/layout.tsx": {
     "mtime": 1783847135.43154,
@@ -895,9 +895,9 @@
     "semantic_hash": "48b9d2068146dc1196df0f79ed756460"
   },
   "apps/web/src/components/core/CoreUi.tsx": {
-    "mtime": 1783849687.2109268,
-    "ast_hash": "39e1fdaf39e3339ba85aac506b86633a",
-    "semantic_hash": "39e1fdaf39e3339ba85aac506b86633a"
+    "mtime": 1786865489.8166375,
+    "ast_hash": "422ee45cfa5cb2598f916e0deb656a74",
+    "semantic_hash": ""
   },
   "apps/web/src/components/core/RecordComposer.tsx": {
     "mtime": 1786837559.0786169,
@@ -905,8 +905,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/RecordScreens.tsx": {
-    "mtime": 1786859175.0556421,
-    "ast_hash": "cb1297b9b5cc543073cd18d6a6fe7f02",
+    "mtime": 1786865814.8561847,
+    "ast_hash": "70c6cea359f12adc3354f08c7bacadff",
     "semantic_hash": ""
   },
   "apps/web/src/components/diary/DiaryComposeHeader.tsx": {
@@ -1952,6 +1952,11 @@
   "graphify-out/memory/query_20260816_062856_what_are_the_current_davas_core_functions_and_how.md": {
     "mtime": 1786861736.091887,
     "ast_hash": "cca597e066dd38289050a4861d0d218f",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/core/HomeRecommendations.tsx": {
+    "mtime": 1786865676.3561478,
+    "ast_hash": "ebf231e93392495a8cd5b5b32371bd28",
     "semantic_hash": ""
   }
 }
