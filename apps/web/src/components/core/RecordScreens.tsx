@@ -76,6 +76,7 @@ function useRecords(
 function RecordList({
   scope,
   filters = {},
+  compact = false,
 }: {
   scope: 'friends' | 'mine';
   filters?: {
@@ -83,6 +84,7 @@ function RecordList({
     mediaType?: MediaType;
     viewingMethod?: ViewingMethod;
   };
+  compact?: boolean;
 }) {
   const data = useRecords(scope, filters);
   const [hasFriends, setHasFriends] = useState<boolean | null>(null);
@@ -92,9 +94,27 @@ function RecordList({
         .then((value) => setHasFriends(value.friends.length > 0))
         .catch(() => setHasFriends(null));
   }, [scope]);
-  if (data.status === 'loading') return <AsyncState kind="loading" />;
+  if (data.status === 'loading')
+    return compact ? (
+      <div className="home-feed-loading" aria-label="친구 기록 불러오는 중">
+        <span />
+        <span />
+      </div>
+    ) : (
+      <AsyncState kind="loading" />
+    );
   if (data.status === 'error')
-    return <AsyncState kind="error" onRetry={data.retry} />;
+    return compact ? (
+      <section className="home-feed-message" role="status">
+        <div>
+          <h3>친구 기록을 불러오지 못했어요.</h3>
+          <p>추천 작품은 그대로 둘러볼 수 있어요.</p>
+        </div>
+        <button type="button" onClick={data.retry}>다시 시도</button>
+      </section>
+    ) : (
+      <AsyncState kind="error" onRetry={data.retry} />
+    );
   if (!data.items.length) {
     const filtered = Boolean(
       filters.q || filters.mediaType || filters.viewingMethod,
@@ -158,24 +178,17 @@ function RecordList({
 export function FeedScreen() {
   return (
     <CoreAppShell>
-      <section className="home-intro">
-        <span>HOME</span>
-        <h1 className="page-title">홈</h1>
-        <p className="page-description">
-          친구의 감상과 오늘의 추천을 한곳에서 만나보세요.
-        </p>
-      </section>
-      <div className="mt-5">
-        <Link href="/search?scope=friends" aria-label="친구 기록 검색">
-          <SearchField
-            value=""
-            onChange={() => undefined}
-            label="친구 기록 검색"
-            placeholder="작품이나 친구 이름으로 기록 찾기"
-          />
+      <h1 className="sr-only">홈</h1>
+      <div className="home-top-actions">
+        <Link href="/search?scope=friends" className="home-search-link" aria-label="친구 기록 검색">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="10.5" cy="10.5" r="5.5" />
+            <path d="m15 15 4 4" />
+          </svg>
+          <span>작품이나 친구 이름으로 기록 찾기</span>
         </Link>
       </div>
-      <Link href="/records/new" className="wide-cta mt-4">
+      <Link href="/records/new" className="wide-cta home-record-cta mt-4">
         <span><b aria-hidden="true">＋</b> 본 작품 기록하기</span>
         <span aria-hidden="true">›</span>
       </Link>
@@ -187,7 +200,7 @@ export function FeedScreen() {
         </div>
         <Link href="/friends">친구 <span aria-hidden="true">›</span></Link>
       </div>
-      <RecordList scope="friends" />
+      <RecordList scope="friends" compact />
     </CoreAppShell>
   );
 }

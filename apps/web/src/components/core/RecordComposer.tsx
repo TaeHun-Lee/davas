@@ -133,19 +133,30 @@ export function RecordComposer({ editId }: { editId?: string }) {
             if (active) setSpacesError(true);
           });
         const storageKey = `davas:draft:${id}:${editId ? 'edit' : 'create'}:${editId ?? 'new'}`;
+        const mediaId = params.get('mediaId');
         const saved = sessionStorage.getItem(storageKey);
         if (saved) {
           try {
             const parsed = JSON.parse(saved) as Partial<Draft> & {
               viewingMethod?: 'THEATER' | 'OTT';
             };
-            setDraft({
+            const resumedDraft = {
               ...freshDraft(),
               ...parsed,
               sourceKind: parsed.sourceKind ?? parsed.viewingMethod ?? null,
               spaceIds: parsed.spaceIds ?? [],
               participantAccountIds: parsed.participantAccountIds ?? [],
-            });
+            };
+            if (mediaId) {
+              const media = await getMediaDetail(mediaId);
+              resumedDraft.selected = {
+                ...media,
+                externalProvider: media.externalProvider,
+                genreIds: media.genreIds ?? [],
+              };
+            }
+            if (!active) return;
+            setDraft(resumedDraft);
             setStep('write');
             return;
           } catch {
@@ -193,7 +204,6 @@ export function RecordComposer({ editId }: { editId?: string }) {
           return;
         }
         const next = freshDraft();
-        const mediaId = params.get('mediaId');
         if (mediaId) {
           const media = await getMediaDetail(mediaId);
           next.selected = {
@@ -202,6 +212,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
             genreIds: media.genreIds ?? [],
           };
         }
+        if (!active) return;
         setDraft(next);
       })
       .catch(() => setError('작성 화면을 준비하지 못했어요.'));
