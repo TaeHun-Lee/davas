@@ -1938,5 +1938,10 @@
     "mtime": 1786859006.4349134,
     "ast_hash": "b4097e84c9400927247bc8d535ce5072",
     "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20260816_054757_trace_the_unused_safereturn_and_watchtimelinepage.md": {
+    "mtime": 1786859277.771448,
+    "ast_hash": "fb5ffa462d708418524e995a35e21e2e",
+    "semantic_hash": ""
   }
 }
