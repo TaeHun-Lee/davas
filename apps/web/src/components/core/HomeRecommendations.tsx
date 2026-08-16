@@ -168,6 +168,7 @@ export function HomeRecommendations() {
       ) : null}
       {status === 'ready' && visibleItems.length > 0 ? (
         <div
+          key={activeType}
           ref={carouselRef}
           className="home-recommendation-row"
           onScroll={syncCarouselControls}
