@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T09:29:57.512426+00:00",
+  "generated_at": "2026-08-16T09:31:22.251573+00:00",
   "nodes": {
     "apps_api_package": {
       "code_fingerprint": "0a9b7066d0551322ddab84b6ceec2e409b8d679e8e4ae692bb2827d150adfc88",
@@ -17,7 +17,7 @@
           "q": "AGENTS.md에 Graphify랑 Serena 사용 지침 적당한지 확인해줘. 그리고 다른 AGNETS.md에 필요한 내용 있는지 알려줘"
         }
       ],
-      "score": 1.790540986,
+      "score": 1.790500411,
       "source_file": "apps/api/package.json",
       "status": "preferred",
       "uses": 2
@@ -33,7 +33,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.990517955,
+      "score": 0.990495509,
       "source_file": "apps/api/src/app.module.ts",
       "status": "tentative",
       "uses": 1
@@ -49,7 +49,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.990517955,
+      "score": 0.990495509,
       "source_file": "apps/api/src/database/entities/index.ts",
       "status": "tentative",
       "uses": 1
@@ -65,7 +65,7 @@
           "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
         }
       ],
-      "score": 0.99620375,
+      "score": 0.996181176,
       "source_file": "apps/api/src/database/entities/media.entity.ts",
       "status": "tentative",
       "uses": 1
@@ -86,7 +86,7 @@
           "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
         }
       ],
-      "score": 1.993471775,
+      "score": 1.993426602,
       "source_file": "apps/api/src/database/entities/space-membership.entity.ts",
       "status": "preferred",
       "uses": 2
@@ -102,7 +102,7 @@
           "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
         }
       ],
-      "score": 0.996372099,
+      "score": 0.996349521,
       "source_file": "apps/api/src/database/migrations/account-lifecycle-notification-outbox.spec.ts",
       "status": "tentative",
       "uses": 1
@@ -118,7 +118,7 @@
           "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
         }
       ],
-      "score": 0.996372099,
+      "score": 0.996349521,
       "source_file": "apps/api/src/database/migrations/catalog-availability-migration.spec.ts",
       "status": "tentative",
       "uses": 1
@@ -139,7 +139,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 1.987617564,
+      "score": 1.987572524,
       "source_file": "apps/api/src/database/typeorm.config.ts",
       "status": "preferred",
       "uses": 2
@@ -155,7 +155,7 @@
           "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
         }
       ],
-      "score": 0.99620375,
+      "score": 0.996181176,
       "source_file": "apps/api/src/diaries/diaries-dashboard.service.ts",
       "status": "tentative",
       "uses": 1
@@ -171,7 +171,7 @@
           "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
         }
       ],
-      "score": 0.99620375,
+      "score": 0.996181176,
       "source_file": "apps/api/src/diaries/diaries-dashboard.service.ts",
       "status": "tentative",
       "uses": 1
@@ -187,7 +187,7 @@
           "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
         }
       ],
-      "score": 0.99620375,
+      "score": 0.996181176,
       "source_file": "apps/api/src/diaries/diaries.dashboard.spec.ts",
       "status": "tentative",
       "uses": 1
@@ -203,7 +203,7 @@
           "q": "Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes"
         }
       ],
-      "score": 0.99620375,
+      "score": 0.996181176,
       "source_file": "apps/api/src/diaries/diaries.module.ts",
       "status": "tentative",
       "uses": 1
@@ -219,7 +219,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.990517955,
+      "score": 0.990495509,
       "source_file": "apps/api/src/diaries/diaries.module.ts",
       "status": "tentative",
       "uses": 1
@@ -235,7 +235,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.990517955,
+      "score": 0.990495509,
       "source_file": "apps/api/src/diaries/diary-access.service.ts",
       "status": "tentative",
       "uses": 1
@@ -251,7 +251,7 @@
           "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
         }
       ],
-      "score": 0.989956671,
+      "score": 0.989934238,
       "source_file": "apps/api/src/diaries/space-watch.controller.ts",
       "status": "tentative",
       "uses": 1
@@ -277,7 +277,7 @@
           "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
         }
       ],
-      "score": 2.977574301,
+      "score": 2.977506828,
       "source_file": "apps/api/src/diaries/watch-events.service.ts",
       "status": "preferred",
       "uses": 3
@@ -293,7 +293,7 @@
           "q": "Can Davas be deployed and verified on Raspberry Pi?"
         }
       ],
-      "score": 0.997099609,
+      "score": 0.997077015,
       "source_file": "apps/api/src/health.controller.ts",
       "status": "tentative",
       "uses": 1
@@ -309,7 +309,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.990517955,
+      "score": 0.990495509,
       "source_file": "apps/api/src/media/media.module.ts",
       "status": "tentative",
       "uses": 1
@@ -325,7 +325,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.990517955,
+      "score": 0.990495509,
       "source_file": "apps/api/src/notifications/notifications.module.ts",
       "status": "tentative",
       "uses": 1
@@ -341,7 +341,7 @@
           "q": "What are the current Davas core functions and how are they delivered?"
         }
       ],
-      "score": 0.997099676,
+      "score": 0.997077081,
       "source_file": "apps/api/src/notifications/notifications.service.ts",
       "status": "tentative",
       "uses": 1
@@ -357,7 +357,7 @@
           "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
         }
       ],
-      "score": 0.990237729,
+      "score": 0.990215289,
       "source_file": "apps/api/src/recommendations/group-recommendations.service.ts",
       "status": "tentative",
       "uses": 1
@@ -373,7 +373,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.990517955,
+      "score": 0.990495509,
       "source_file": "apps/api/src/recommendations/recommendations.module.ts",
       "status": "tentative",
       "uses": 1
@@ -389,7 +389,7 @@
           "q": "Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
         }
       ],
-      "score": 0.990517955,
+      "score": 0.990495509,
       "source_file": "apps/api/src/spaces/spaces.module.ts",
       "status": "tentative",
       "uses": 1
@@ -405,7 +405,7 @@
           "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
         }
       ],
-      "score": 0.996372099,
+      "score": 0.996349521,
       "source_file": "apps/api/src/spaces/spaces.service.spec.ts",
       "status": "tentative",
       "uses": 1
@@ -421,7 +421,7 @@
           "q": "Narrow TypeScript lint errors in migration specs and the spaces membership fixture"
         }
       ],
-      "score": 0.996372099,
+      "score": 0.996349521,
       "source_file": "apps/api/src/to-be-integration.spec.ts",
       "status": "tentative",
       "uses": 1
@@ -442,7 +442,7 @@
           "q": "AGENTS.md에 Graphify랑 Serena 사용 지침 적당한지 확인해줘. 그리고 다른 AGNETS.md에 필요한 내용 있는지 알려줘"
         }
       ],
-      "score": 1.790540986,
+      "score": 1.790500411,
       "source_file": "apps/web/package.json",
       "status": "preferred",
       "uses": 2
@@ -458,7 +458,7 @@
           "q": "기록 작성 화면 UIUX, 별점 슬라이더, 뒤로가기 흐름 분석"
         }
       ],
-      "score": 0.99950526,
+      "score": 0.999482611,
       "source_file": "apps/web/src/components/core/CoreUi.tsx",
       "status": "tentative",
       "uses": 1
@@ -479,7 +479,7 @@
           "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
         }
       ],
-      "score": 1.989461931,
+      "score": 1.989416849,
       "source_file": "apps/web/src/components/core/RecordComposer.tsx",
       "status": "preferred",
       "uses": 2
@@ -505,7 +505,7 @@
           "q": "Trace the unused safeReturn and WatchTimelinePage warning in the Web workspace"
         }
       ],
-      "score": 2.993049335,
+      "score": 2.992981511,
       "source_file": "apps/web/src/components/core/RecordScreens.tsx",
       "status": "preferred",
       "uses": 3
@@ -521,7 +521,7 @@
           "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
         }
       ],
-      "score": 0.989956671,
+      "score": 0.989934238,
       "source_file": "apps/web/src/components/diary/DiaryComposeScreen.tsx",
       "status": "tentative",
       "uses": 1
@@ -537,7 +537,7 @@
           "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
         }
       ],
-      "score": 0.989956671,
+      "score": 0.989934238,
       "source_file": "apps/web/src/components/diary/DiaryDetailScreen.tsx",
       "status": "tentative",
       "uses": 1
@@ -553,7 +553,7 @@
           "q": "기록 작성 화면 UIUX, 별점 슬라이더, 뒤로가기 흐름 분석"
         }
       ],
-      "score": 0.99950526,
+      "score": 0.999482611,
       "source_file": "apps/web/src/components/diary/RatingInputCard.tsx",
       "status": "tentative",
       "uses": 1
@@ -569,7 +569,7 @@
           "q": "Trace RecordComposer DiaryComposeScreen DiaryDetailScreen space sharing participation reactions timeline and API wrappers"
         }
       ],
-      "score": 0.989956671,
+      "score": 0.989934238,
       "source_file": "apps/web/src/lib/api/spaces.ts",
       "status": "tentative",
       "uses": 1
@@ -585,7 +585,7 @@
           "q": "Trace the unused safeReturn and WatchTimelinePage warning in the Web workspace"
         }
       ],
-      "score": 0.996444399,
+      "score": 0.996421819,
       "source_file": "apps/web/src/lib/api/watch-events.ts",
       "status": "tentative",
       "uses": 1
@@ -601,7 +601,7 @@
           "q": "Can Davas be deployed and verified on Raspberry Pi?"
         }
       ],
-      "score": 0.997099609,
+      "score": 0.997077015,
       "source_file": "deploy/backup.sh",
       "status": "tentative",
       "uses": 1
@@ -617,7 +617,7 @@
           "q": "Can Davas be deployed and verified on Raspberry Pi?"
         }
       ],
-      "score": 0.997099609,
+      "score": 0.997077015,
       "source_file": "docs/deployment/raspberry-pi-duckdns.md",
       "status": "tentative",
       "uses": 1
@@ -633,7 +633,7 @@
           "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
         }
       ],
-      "score": 0.990237729,
+      "score": 0.990215289,
       "source_file": "docs/product/planning/recommendation-strategy-analysis.md",
       "status": "tentative",
       "uses": 1
@@ -654,7 +654,7 @@
           "q": "AGENTS.md에 Graphify랑 Serena 사용 지침 적당한지 확인해줘. 그리고 다른 AGNETS.md에 필요한 내용 있는지 알려줘"
         }
       ],
-      "score": 1.790540986,
+      "score": 1.790500411,
       "source_file": "packages/shared/package.json",
       "status": "preferred",
       "uses": 2
@@ -670,7 +670,7 @@
           "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
         }
       ],
-      "score": 0.990237729,
+      "score": 0.990215289,
       "source_file": "packages/shared/src/index.ts",
       "status": "tentative",
       "uses": 1
@@ -686,7 +686,7 @@
           "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
         }
       ],
-      "score": 0.990237729,
+      "score": 0.990215289,
       "source_file": "packages/shared/src/index.ts",
       "status": "tentative",
       "uses": 1
@@ -707,7 +707,7 @@
           "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
         }
       ],
-      "score": 1.987337405,
+      "score": 1.987292371,
       "source_file": "packages/shared/src/index.ts",
       "status": "preferred",
       "uses": 2
@@ -723,7 +723,7 @@
           "q": "Where does the Web group recommendation flow connect to Explore, shared contracts, API, and product strategy?"
         }
       ],
-      "score": 0.990237729,
+      "score": 0.990215289,
       "source_file": "packages/shared/src/index.ts",
       "status": "tentative",
       "uses": 1
@@ -739,7 +739,7 @@
           "q": "Trace the unused safeReturn and WatchTimelinePage warning in the Web workspace"
         }
       ],
-      "score": 0.996444399,
+      "score": 0.996421819,
       "source_file": "packages/shared/src/index.ts",
       "status": "tentative",
       "uses": 1
