@@ -1,12 +1,13 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { MediaType, SpaceView } from '@davas/shared';
 import { getMe } from '../../lib/api/auth';
 import {
   getMediaDetail,
   selectMedia,
+  type MediaDetail,
   type MediaSearchResult,
   type SelectedMedia,
 } from '../../lib/api/media';
@@ -28,6 +29,7 @@ import {
   TaskShell,
 } from './CoreUi';
 import { WatchRatingControl } from './WatchRatingControl';
+import { MediaDetailModal } from '../media/MediaDetailModal';
 
 type Draft = {
   selected: SelectedMedia | null;
@@ -99,6 +101,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
   const router = useRouter();
   const params = useSearchParams();
   const mediaId = params.get('mediaId');
+  const detailMediaId = params.get('detail');
   const requestedStep = params.get('step');
   const [userId, setUserId] = useState('');
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -111,7 +114,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
   const [spacesError, setSpacesError] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const viewingRef = useRef<HTMLDivElement>(null);
+  const [detailPreview, setDetailPreview] = useState<MediaDetail | null>(null);
   const searchType =
     mediaType === 'MOVIE' ? 'movie' : mediaType === 'TV' ? 'tv' : 'multi';
   const results = useMediaSearch(query, searchType);
@@ -154,6 +157,14 @@ export function RecordComposer({ editId }: { editId?: string }) {
                 externalProvider: media.externalProvider,
                 genreIds: media.genreIds ?? [],
               };
+            } else if (detailMediaId) {
+              const media = await getMediaDetail(detailMediaId);
+              resumedDraft.selected = {
+                ...media,
+                externalProvider: media.externalProvider,
+                genreIds: media.genreIds ?? [],
+              };
+              if (active) setDetailPreview(media);
             }
             if (!active) return;
             setDraft(resumedDraft);
@@ -210,6 +221,14 @@ export function RecordComposer({ editId }: { editId?: string }) {
             externalProvider: media.externalProvider,
             genreIds: media.genreIds ?? [],
           };
+        } else if (detailMediaId) {
+          const media = await getMediaDetail(detailMediaId);
+          next.selected = {
+            ...media,
+            externalProvider: media.externalProvider,
+            genreIds: media.genreIds ?? [],
+          };
+          if (active) setDetailPreview(media);
         }
         if (!active) return;
         setDraft(next);
@@ -218,7 +237,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
     return () => {
       active = false;
     };
-  }, [editId, mediaId]);
+  }, [detailMediaId, editId, mediaId]);
   useEffect(() => {
     if (key && draft) sessionStorage.setItem(key, JSON.stringify(draft));
   }, [key, draft]);
@@ -263,20 +282,18 @@ export function RecordComposer({ editId }: { editId?: string }) {
   );
 
   async function choose(item: MediaSearchResult) {
-    if (!draft!.sourceKind) {
-      setError('먼저 실제로 본 곳을 선택해 주세요.');
-      viewingRef.current?.querySelector('input')?.focus();
-      return;
-    }
     setBusy(true);
     setError('');
     try {
       const selected = await selectMedia(item);
+      const detail = await getMediaDetail(selected.id);
       setDraft((value) => value && { ...value, selected });
-      setStep('write');
-      router.push('/records/new?step=write');
+      setDetailPreview(detail);
+      router.push(
+        `/records/new?step=find&detail=${encodeURIComponent(selected.id)}`,
+      );
     } catch {
-      setError('작품을 선택하지 못했어요. 다시 시도해 주세요.');
+      setError('작품 상세 정보를 불러오지 못했어요. 다시 시도해 주세요.');
     } finally {
       setBusy(false);
     }
@@ -332,20 +349,9 @@ export function RecordComposer({ editId }: { editId?: string }) {
       <CoreAppShell>
         <h1 className="page-title">어떤 작품을 봤나요?</h1>
         <p className="page-description">
-          본 곳과 작품 종류는 서로 다른 정보예요.
+          제목을 검색한 뒤 작품 정보를 확인해 주세요.
         </p>
-        <div className="mt-6" ref={viewingRef}>
-          <span className="field-label">어디서 봤나요?</span>
-          <SourceKindControl
-            value={draft.sourceKind}
-            onChange={(value) => {
-              setDraft({ ...draft, sourceKind: value });
-              setError('');
-            }}
-          />
-        </div>
-        <p className="page-description">선택한 본 곳은 내 기록에 저장돼요.</p>
-        <div className="mt-5">
+        <div className="mt-6">
           <SearchField
             value={query}
             onChange={setQuery}
@@ -358,9 +364,11 @@ export function RecordComposer({ editId }: { editId?: string }) {
           <MediaTypeControl value={mediaType} onChange={setMediaType} />
         </div>
         <p className="page-description">
-          {draft.sourceKind
-            ? `${sourceLabels[draft.sourceKind]}에서 본 ${mediaType === 'MOVIE' ? '영화' : mediaType === 'TV' ? '드라마' : '작품'}을 찾는 중`
-            : '본 곳을 먼저 선택해 주세요.'}
+          {mediaType === 'MOVIE'
+            ? '영화만 검색하고 있어요.'
+            : mediaType === 'TV'
+              ? '드라마만 검색하고 있어요.'
+              : '영화와 드라마를 함께 검색하고 있어요.'}
         </p>
         {error ? (
           <p className="form-error mt-3" role="alert">
@@ -406,7 +414,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
                     disabled={busy}
                     onClick={() => choose(item)}
                   >
-                    이 작품 선택
+                    {busy ? '상세 불러오는 중…' : '작품 상세 보기'}
                   </button>
                 </div>
               </article>
@@ -420,6 +428,25 @@ export function RecordComposer({ editId }: { editId?: string }) {
           >
             다음 결과 보기
           </button>
+        ) : null}
+        {detailPreview ? (
+          <MediaDetailModal
+            media={detailPreview}
+            isOpen
+            onClose={() => {
+              setDetailPreview(null);
+              if (window.history.length > 1) router.back();
+              else router.replace('/records/new?step=find');
+            }}
+            returnTo={`/records/new?step=find&detail=${detailPreview.id}`}
+            onRecord={() => {
+              const selectedId = detailPreview.id;
+              setDetailPreview(null);
+              router.push(
+                `/records/new?mediaId=${encodeURIComponent(selectedId)}&returnTo=${encodeURIComponent(`/records/new?step=find&detail=${selectedId}`)}`,
+              );
+            }}
+          />
         ) : null}
       </CoreAppShell>
     );
@@ -459,7 +486,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
           </div>
         </section>
         <section className="record-compose-panel mt-4">
-          <div ref={viewingRef}>
+          <div>
             <span className="field-label">어디서 봤나요? *</span>
             <SourceKindControl
               value={draft.sourceKind}

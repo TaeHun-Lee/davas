@@ -124,10 +124,6 @@ export function ExploreDashboard() {
     setIsSelectingMedia(true);
     try {
       const media = await selectMedia(item);
-      if (recordIntent) {
-        router.push(`/diary/new?mediaId=${encodeURIComponent(media.id)}&returnTo=${encodeURIComponent('/explore?intent=record')}`);
-        return;
-      }
       const detail = await getMediaDetail(media.id);
       openMediaDetail(detail);
     } finally {
@@ -139,10 +135,6 @@ export function ExploreDashboard() {
     setIsSelectingMedia(true);
     try {
       const media = await selectMedia(item);
-      if (recordIntent) {
-        router.push(`/diary/new?mediaId=${encodeURIComponent(media.id)}&returnTo=${encodeURIComponent('/explore?intent=record')}`);
-        return;
-      }
       const detail = await getMediaDetail(media.id);
       openMediaDetail(detail);
     } finally {
@@ -158,10 +150,6 @@ export function ExploreDashboard() {
     setIsSelectingMedia(true);
     try {
       const media = await selectMedia(item);
-      if (recordIntent) {
-        router.push(`/diary/new?mediaId=${encodeURIComponent(media.id)}&returnTo=${encodeURIComponent('/explore?intent=record')}`);
-        return;
-      }
       const detail = await getMediaDetail(media.id);
       openMediaDetail(detail);
     } finally {
@@ -207,7 +195,8 @@ export function ExploreDashboard() {
           media={selectedMedia}
           isOpen={isDetailModalOpen}
           onClose={handleCloseDetail}
-          returnTo={`/explore?detail=${selectedMedia.id}`}
+          returnTo={`/explore?${recordIntent ? 'intent=record&' : ''}detail=${selectedMedia.id}`}
+          recordHref={`/records/new?mediaId=${encodeURIComponent(selectedMedia.id)}&returnTo=${encodeURIComponent(`/explore?${recordIntent ? 'intent=record&' : ''}detail=${selectedMedia.id}`)}`}
         />
       ) : null}
 

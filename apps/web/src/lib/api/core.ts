@@ -30,14 +30,14 @@ export async function coreFetch<T>(path: string, init: RequestInit = {}): Promis
 }
 
 export type RecordCardData = {
-  id: string; author: { id: string; nickname: string; profileImageUrl: string | null };
+  id: string; recordTitle?: string; author: { id: string; nickname: string; profileImageUrl: string | null };
   media: { id: string; title: string; originalTitle: string | null; posterUrl: string | null; releaseYear: string | null; mediaType: MediaType };
   viewingMethod: ViewingMethod | null; watchedDate: string; rating: number | null; reviewPreview: string | null;
   hasSpoiler: boolean; visibility: DiaryVisibility; sharedAt: string | null; createdAt: string; isMine: boolean;
 };
 export type RecordDetailData = RecordCardData & { content: string; updatedAt: string; selectedUserIds?: string[] };
 export type CursorPage<T> = { items: T[]; nextCursor: string | null; hasMore: boolean };
-export type RecordFilters = { q?: string; mediaType?: MediaType; viewingMethod?: ViewingMethod; cursor?: string; limit?: number };
+export type RecordFilters = { q?: string; mediaId?: string; mediaType?: MediaType; viewingMethod?: ViewingMethod; cursor?: string; limit?: number };
 
 const query = (filters: RecordFilters) => { const p = new URLSearchParams(); Object.entries(filters).forEach(([key, value]) => { if (value !== undefined && value !== '') p.set(key, String(value)); }); return p.toString(); };
 export function listRecords(scope: 'friends' | 'mine', filters: RecordFilters) { return coreFetch<CursorPage<RecordCardData>>(`/diaries/${scope === 'friends' ? 'feed' : 'me'}?${query(filters)}`); }

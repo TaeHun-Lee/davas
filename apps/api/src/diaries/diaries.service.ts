@@ -22,6 +22,7 @@ import { UpdateDiaryDto } from './dto/update-diary.dto';
 
 export type DiaryListQuery = {
   q?: string;
+  mediaId?: string;
   mediaType?: MediaType;
   viewingMethod?: ViewingMethod;
   cursor?: string;
@@ -279,6 +280,8 @@ export class DiariesService {
         : '(media.title ILIKE :q OR media.originalTitle ILIKE :q)';
       qb.andWhere(fields, { q: `%${q}%` });
     }
+    if (query.mediaId)
+      qb.andWhere('diary.mediaId = :mediaId', { mediaId: query.mediaId });
     if (query.mediaType)
       qb.andWhere('media.mediaType = :mediaType', {
         mediaType: query.mediaType,
@@ -396,6 +399,7 @@ export class DiariesService {
     const content = diary.content?.trim() ?? '';
     return {
       id: diary.id,
+      recordTitle: diary.title,
       author: {
         id: diary.user?.id ?? diary.userId,
         nickname: diary.user?.nickname ?? '알 수 없음',
@@ -428,7 +432,7 @@ export class DiariesService {
       content: diary.content ?? '',
       updatedAt: diary.updatedAt?.toISOString(),
       selectedUserIds:
-        diary.visibility === 'SELECTED'
+        diary.userId === viewerId && diary.visibility === 'SELECTED'
           ? (diary.selectedShares?.map((share) => share.userId) ?? [])
           : undefined,
     };

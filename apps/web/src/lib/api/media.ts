@@ -48,7 +48,7 @@ export type SelectedMedia = MediaSearchResult & {
 
 export type MyMediaDiary = {
   id: string;
-  rating: number;
+  rating: number | null;
   title: string;
   contentPreview: string;
   watchedDate: string;

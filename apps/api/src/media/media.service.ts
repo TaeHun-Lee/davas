@@ -21,7 +21,7 @@ import { resolveTmdbGenreLabels } from './tmdb-genres';
 
 export type MyMediaDiary = {
   id: string;
-  rating: number;
+  rating: number | null;
   title: string;
   contentPreview: string;
   watchedDate: string;
@@ -308,7 +308,7 @@ export class MediaService {
 
     return diaries.map((diary) => ({
       id: diary.id,
-      rating: Number(diary.rating),
+      rating: diary.rating === null ? null : Number(diary.rating),
       title: diary.title,
       contentPreview: buildContentPreview(diary.content),
       watchedDate: formatWatchedDate(diary.watchedDate),
@@ -317,11 +317,14 @@ export class MediaService {
   }
 
   private calculateAverageRating(diaries: MyMediaDiary[]) {
-    if (diaries.length === 0) {
+    const ratings = diaries.flatMap((diary) =>
+      diary.rating === null ? [] : [diary.rating],
+    );
+    if (ratings.length === 0) {
       return null;
     }
-    const total = diaries.reduce((sum, diary) => sum + diary.rating, 0);
-    return Math.round((total / diaries.length) * 10) / 10;
+    const total = ratings.reduce((sum, rating) => sum + rating, 0);
+    return Math.round((total / ratings.length) * 10) / 10;
   }
 
   private fromCachedMedia(media: MediaEntity): MediaDetailResponse {

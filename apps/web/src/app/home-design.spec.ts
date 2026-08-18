@@ -52,13 +52,13 @@ describe('four-tab core shell', () => {
     );
   });
 
-  it('starts a record with the selected recommendation even when a draft exists', () => {
+  it('opens recommendation detail before starting a new record', () => {
     const recommendations = source(
       'components/core/HomeRecommendations.tsx',
     );
     const composer = source('components/core/RecordComposer.tsx');
-    assert.match(recommendations, /\/records\/new\?mediaId=/);
-    assert.doesNotMatch(recommendations, /\/explore\?detail=/);
+    assert.match(recommendations, /\/records\/new\?step=find&detail=/);
+    assert.doesNotMatch(recommendations, /\/records\/new\?mediaId=/);
     assert.ok(
       composer.indexOf("const mediaId = params.get('mediaId')") <
         composer.indexOf('const saved = sessionStorage.getItem'),

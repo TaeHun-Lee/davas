@@ -17,8 +17,11 @@ describe('explore flow contract', () => {
     assert.match(dashboard, /visibleTrendingItems/);
   });
 
-  it('uses media selections before the record write step', () => {
-    assert.match(source('components/core/RecordComposer.tsx'), /await selectMedia\(item\)/);
+  it('uses media selections and detail confirmation before the record write step', () => {
+    const composer = source('components/core/RecordComposer.tsx');
+    assert.match(composer, /await selectMedia\(item\)/);
+    assert.match(composer, /await getMediaDetail\(selected\.id\)/);
+    assert.match(composer, /<MediaDetailModal/);
   });
 
   it('forwards media type and provides TMDB next-page loading', () => {

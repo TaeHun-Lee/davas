@@ -7,12 +7,40 @@ const source = (path: string) =>
   readFileSync(join(process.cwd(), 'src', path), 'utf8');
 
 describe('core record compose', () => {
-  it('separates source kind from media type and forwards movie, tv, and multi search', () => {
+  it('keeps viewing source in writing while search only filters by media type', () => {
     const composer = source('components/core/RecordComposer.tsx');
     const hook = source('hooks/useMediaSearch.ts');
+    const findBranch = composer.slice(
+      composer.indexOf("if (step === 'find'"),
+      composer.indexOf('<TaskShell', composer.indexOf("if (step === 'find'")),
+    );
+    const chooseBranch = composer.slice(
+      composer.indexOf('async function choose'),
+      composer.indexOf('async function save'),
+    );
+    assert.doesNotMatch(findBranch, /SourceKindControl|어디서 봤나요/);
+    assert.match(findBranch, /SearchField/);
+    assert.match(findBranch, /MediaTypeControl/);
+    assert.match(findBranch, /MediaDetailModal/);
+    assert.doesNotMatch(chooseBranch, /draft!\.sourceKind|viewingRef/);
+    assert.match(composer, /어디서 봤나요\? \*/);
     assert.match(composer, /SourceKindControl/);
-    assert.match(composer, /MediaTypeControl/);
     assert.match(hook, /searchMedia\(\{ query: trimmedQuery, type/);
+  });
+
+  it('shows media detail before the user confirms record writing', () => {
+    const composer = source('components/core/RecordComposer.tsx');
+    const chooseBranch = composer.slice(
+      composer.indexOf('async function choose'),
+      composer.indexOf('async function save'),
+    );
+    assert.match(chooseBranch, /await selectMedia\(item\)/);
+    assert.match(chooseBranch, /await getMediaDetail\(selected\.id\)/);
+    assert.match(chooseBranch, /setDetailPreview\(detail\)/);
+    assert.doesNotMatch(chooseBranch, /setStep\('write'\)/);
+    assert.match(composer, /onRecord=\{\(\) => \{/);
+    assert.match(composer, /\/records\/new\?mediaId=/);
+    assert.match(composer, /const detailMediaId = params\.get\('detail'\)/);
   });
 
   it('keeps a per-user session draft while allowing repeated watches as new events', () => {

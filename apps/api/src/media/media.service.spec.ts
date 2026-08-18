@@ -210,6 +210,15 @@ describe('MediaService detail', () => {
     const tmdbClient = new FakeTmdbClient();
     const diaries = fakeDiariesRepository([
       {
+        id: 'unrated-diary-id',
+        mediaId: 'media-id',
+        title: '별점 없이 남긴 기록',
+        content: '기록만 남겼어요.',
+        watchedDate: '2026-05-11',
+        rating: null,
+        updatedAt: new Date('2026-05-11T10:00:00.000Z'),
+      },
+      {
         id: 'newer-diary-id',
         mediaId: 'media-id',
         title: '두 번째 기록',
@@ -249,6 +258,14 @@ describe('MediaService detail', () => {
     assert.deepEqual(diaries.calls[0], { where: { userId: 'user-id', mediaId: 'media-id' }, order: { updatedAt: 'DESC', createdAt: 'DESC' } });
     assert.equal(detail.myAverageRating, 4);
     assert.deepEqual(detail.myDiaries, [
+      {
+        id: 'unrated-diary-id',
+        rating: null,
+        title: '별점 없이 남긴 기록',
+        contentPreview: '기록만 남겼어요.',
+        watchedDate: '2026.05.11',
+        updatedAt: '2026-05-11T10:00:00.000Z',
+      },
       {
         id: 'newer-diary-id',
         rating: 3.5,

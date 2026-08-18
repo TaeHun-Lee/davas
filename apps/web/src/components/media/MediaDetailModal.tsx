@@ -2,9 +2,17 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { listRecords, type RecordCardData } from '../../lib/api/core';
 import { type MediaDetail } from '../../lib/api/media';
 import { addWatchlist, removeWatchlist } from '../../lib/api/watchlist';
-import { BasicInfoGrid, DetailInfoCard, MyRatingCard, StillCutStrip } from './media-detail-sections';
+import {
+  BasicInfoGrid,
+  DetailInfoCard,
+  FriendRecordsCard,
+  MyRatingCard,
+  StillCutStrip,
+  type FriendRecordsStatus,
+} from './media-detail-sections';
 import { getTmdbGenreNames } from './media-genres';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
@@ -58,11 +66,40 @@ function fallbackOverview(media: MediaDetail) {
   return media.overview || '작품 소개가 아직 준비되지 않았어요. 다이어리를 작성하며 나만의 감상을 남겨보세요.';
 }
 
-export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: MediaDetail; isOpen: boolean; onClose: () => void; returnTo?: string }) {
+type MediaDetailModalProps = {
+  media: MediaDetail;
+  isOpen: boolean;
+  onClose: () => void;
+  returnTo?: string;
+  recordHref?: string;
+  recordLabel?: string;
+  onRecord?: () => void;
+};
+
+export function MediaDetailModal({
+  media,
+  isOpen,
+  onClose,
+  returnTo,
+  recordHref,
+  recordLabel = '이 작품 기록하기',
+  onRecord,
+}: MediaDetailModalProps) {
   const router = useRouter();
   const [watchlistItemId, setWatchlistItemId] = useState(media.watchlistItemId ?? null);
   const [isFavoritePending, setIsFavoritePending] = useState(false);
   const [shareLabel, setShareLabel] = useState('공유하기');
+  const [friendRecords, setFriendRecords] = useState<RecordCardData[]>([]);
+  const [friendRecordsStatus, setFriendRecordsStatus] =
+    useState<FriendRecordsStatus>('loading');
+  const [friendRecordsCursor, setFriendRecordsCursor] = useState<string | null>(
+    null,
+  );
+  const [friendRecordsHasMore, setFriendRecordsHasMore] = useState(false);
+  const [isFriendRecordsLoadingMore, setIsFriendRecordsLoadingMore] =
+    useState(false);
+  const [friendRecordsLoadMoreError, setFriendRecordsLoadMoreError] =
+    useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const closeDialog = useCallback(() => onClose(), [onClose]);
   useFocusTrap(isOpen, dialogRef, closeDialog);
@@ -80,6 +117,63 @@ export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: 
     setShareLabel('공유하기');
   }, [media.id, media.watchlistItemId]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+    setFriendRecords([]);
+    setFriendRecordsStatus('loading');
+    setFriendRecordsCursor(null);
+    setFriendRecordsHasMore(false);
+    setFriendRecordsLoadMoreError(false);
+    listRecords('friends', { mediaId: media.id, limit: 12 })
+      .then((response) => {
+        if (!active) return;
+        setFriendRecords(response.items.filter((record) => !record.isMine));
+        setFriendRecordsCursor(response.nextCursor);
+        setFriendRecordsHasMore(response.hasMore);
+        setFriendRecordsStatus('ready');
+      })
+      .catch(() => {
+        if (active) setFriendRecordsStatus('error');
+      });
+    return () => {
+      active = false;
+    };
+  }, [isOpen, media.id]);
+
+  async function loadMoreFriendRecords() {
+    if (
+      isFriendRecordsLoadingMore ||
+      !friendRecordsHasMore ||
+      !friendRecordsCursor
+    ) {
+      return;
+    }
+    setIsFriendRecordsLoadingMore(true);
+    setFriendRecordsLoadMoreError(false);
+    try {
+      const response = await listRecords('friends', {
+        mediaId: media.id,
+        cursor: friendRecordsCursor,
+        limit: 12,
+      });
+      const visible = response.items.filter((record) => !record.isMine);
+      setFriendRecords((current) =>
+        Array.from(
+          new Map(
+            [...current, ...visible].map((record) => [record.id, record]),
+          ).values(),
+        ),
+      );
+      setFriendRecordsCursor(response.nextCursor);
+      setFriendRecordsHasMore(response.hasMore);
+    } catch {
+      setFriendRecordsLoadMoreError(true);
+    } finally {
+      setIsFriendRecordsLoadingMore(false);
+    }
+  }
+
   if (!isOpen) {
     return null;
   }
@@ -89,8 +183,10 @@ export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: 
   const runtimeText = media.runtime ? `${media.runtime}분` : '러닝타임 준비 중';
   const overview = fallbackOverview(media);
   const tmdbRating = media.tmdbRating == null ? null : (media.tmdbRating / 2).toFixed(1);
-  const detailUrl = typeof window === 'undefined' ? returnTo ?? `/explore?detail=${media.id}` : `${window.location.origin}${returnTo ?? `/explore?detail=${media.id}`}`;
-  const diaryUrl = `/diary/new?mediaId=${encodeURIComponent(media.id)}&returnTo=${encodeURIComponent(returnTo ?? `/explore?detail=${media.id}`)}`;
+  const detailReturnTo =
+    returnTo ?? `/records/new?step=find&detail=${media.id}`;
+  const detailUrl = typeof window === 'undefined' ? detailReturnTo : `${window.location.origin}${detailReturnTo}`;
+  const recordUrl = recordHref ?? `/records/new?mediaId=${encodeURIComponent(media.id)}&returnTo=${encodeURIComponent(detailReturnTo)}`;
 
   async function handleFavoriteToggle() {
     if (isFavoritePending) return;
@@ -150,8 +246,8 @@ export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: 
         </section>
 
         <div className="mt-5 grid grid-cols-1 gap-2.5 min-[375px]:grid-cols-[1.25fr_0.75fr]">
-          <button type="button" onClick={() => router.push(diaryUrl)} className="flex h-[50px] items-center justify-center gap-2 rounded-[16px] bg-[#ff5a52] text-[13px] font-black text-white shadow-[0_12px_22px_rgba(255,90,82,0.28)]">
-            <span aria-hidden="true">✎</span> 리뷰·다이어리 작성
+          <button type="button" onClick={() => onRecord ? onRecord() : router.push(recordUrl)} className="flex h-[50px] items-center justify-center gap-2 rounded-[16px] bg-[#ff5a52] text-[13px] font-black text-white shadow-[0_12px_22px_rgba(255,90,82,0.28)]">
+            <span aria-hidden="true">✎</span> {recordLabel}
           </button>
           <button type="button" aria-pressed={Boolean(watchlistItemId)} disabled={isFavoritePending} onClick={() => void handleFavoriteToggle()} className={`flex h-[50px] items-center justify-center gap-1.5 rounded-[16px] bg-white text-[13px] font-black shadow-[0_10px_22px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8] transition ${watchlistItemId ? 'text-[#ff5a52]' : 'text-[#1f4e82]'}`}>
             {watchlistItemId ? '♥ 보고 싶어요' : '♡ 보고 싶어요'}
@@ -160,14 +256,20 @@ export function MediaDetailModal({ media, isOpen, onClose, returnTo }: { media: 
 
         <div className="mt-5 space-y-3">
           <DetailInfoCard title="시놉시스">{overview}</DetailInfoCard>
+          <BasicInfoGrid media={media} />
+          <MyRatingCard diaries={media.myDiaries ?? (media.myDiary ? [media.myDiary] : [])} averageRating={media.myAverageRating ?? media.myDiary?.rating ?? null} />
+          <FriendRecordsCard
+            records={friendRecords}
+            status={friendRecordsStatus}
+            returnTo={detailReturnTo}
+            hasMore={friendRecordsHasMore}
+            isLoadingMore={isFriendRecordsLoadingMore}
+            loadMoreError={friendRecordsLoadMoreError}
+            onLoadMore={() => void loadMoreFriendRecords()}
+          />
         </div>
 
         <StillCutStrip media={media} />
-
-        <div className="mt-5 grid gap-3 min-[390px]:grid-cols-2">
-          <BasicInfoGrid media={media} />
-          <MyRatingCard diaries={media.myDiaries ?? (media.myDiary ? [media.myDiary] : [])} averageRating={media.myAverageRating ?? media.myDiary?.rating ?? null} />
-        </div>
       </div>
     </div>
   );

@@ -100,7 +100,9 @@ export function HomeRecommendations() {
     setSelectionError('');
     try {
       const selected = await selectMedia(item);
-      router.push(`/records/new?mediaId=${encodeURIComponent(selected.id)}`);
+      router.push(
+        `/records/new?step=find&detail=${encodeURIComponent(selected.id)}`,
+      );
     } catch {
       setSelectionError('기록 작성을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.');
     } finally {

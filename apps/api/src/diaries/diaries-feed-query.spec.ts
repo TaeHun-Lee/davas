@@ -7,6 +7,10 @@ const serviceSource = readFileSync(
   join(process.cwd(), 'src', 'diaries', 'diaries.service.ts'),
   'utf8',
 );
+const queryDtoSource = readFileSync(
+  join(process.cwd(), 'src', 'diaries', 'dto', 'diary-list-query.dto.ts'),
+  'utf8',
+);
 
 describe('friend diary feed query', () => {
   it('keeps the raw FRIENDS visibility predicate parentheses balanced', () => {
@@ -24,5 +28,20 @@ describe('friend diary feed query', () => {
 
     assert.equal(depth, 0, 'predicate must close every opened parenthesis');
     assert.match(match[1], /EXISTS \(SELECT 1 FROM friendships/);
+  });
+
+  it('supports an exact media filter without changing the visibility predicate', () => {
+    assert.match(queryDtoSource, /@IsOptional\(\) @IsUUID\(\) mediaId\?: string/);
+    assert.match(
+      serviceSource,
+      /diary\.mediaId = :mediaId'[\s\S]*mediaId: query\.mediaId/,
+    );
+  });
+
+  it('does not reveal the complete selected-recipient list to a viewer', () => {
+    assert.match(
+      serviceSource,
+      /diary\.userId === viewerId && diary\.visibility === 'SELECTED'/,
+    );
   });
 });
