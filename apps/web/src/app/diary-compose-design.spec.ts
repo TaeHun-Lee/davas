@@ -23,6 +23,20 @@ describe('core record compose', () => {
     assert.doesNotMatch(composer, /POSSIBLE_REWATCH|allowDuplicate/);
   });
 
+  it('does not let a saved draft skip the generic TMDB search entry', () => {
+    const composer = source('components/core/RecordComposer.tsx');
+    const savedDraftBranch = composer.slice(
+      composer.indexOf('const saved = sessionStorage.getItem'),
+      composer.indexOf('if (editId) {'),
+    );
+    assert.doesNotMatch(savedDraftBranch, /setStep\('write'\)/);
+    assert.match(
+      composer,
+      /mediaId \|\| requestedStep === 'write' \? 'write' : 'find'/,
+    );
+    assert.match(composer, /router\.replace\('\/records\/new\?step=find'\)/);
+  });
+
   it('uses the common half-star control and explicit space participant fields', () => {
     const composer = source('components/core/RecordComposer.tsx');
     assert.match(composer, /WatchRatingControl/);

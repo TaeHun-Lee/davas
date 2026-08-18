@@ -141,6 +141,23 @@ export function TaskShell({
   );
 }
 
+export function SearchIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <circle cx="10.5" cy="10.5" r="5.5" />
+      <path d="m15 15 4 4" />
+    </svg>
+  );
+}
+
 export function SearchField({
   value,
   onChange,
@@ -157,6 +174,7 @@ export function SearchField({
   return (
     <form
       className="search-field"
+      role="search"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit?.();
@@ -165,9 +183,12 @@ export function SearchField({
       <label className="sr-only" htmlFor={`search-${label}`}>
         {label}
       </label>
-      <span aria-hidden="true">⌕</span>
+      <SearchIcon className="search-field-icon" />
       <input
         id={`search-${label}`}
+        type="search"
+        enterKeyHint="search"
+        autoComplete="off"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}

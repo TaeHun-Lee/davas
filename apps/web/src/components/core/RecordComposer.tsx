@@ -157,7 +157,6 @@ export function RecordComposer({ editId }: { editId?: string }) {
             }
             if (!active) return;
             setDraft(resumedDraft);
-            setStep('write');
             return;
           } catch {
             sessionStorage.removeItem(storageKey);
@@ -450,7 +449,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
                   onClick={() => {
                     setStep('find');
                     setDraft({ ...draft, selected: null });
-                    router.replace('/records/new');
+                    router.replace('/records/new?step=find');
                   }}
                 >
                   작품 바꾸기
