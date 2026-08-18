@@ -665,9 +665,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/favicon.spec.ts": {
-    "mtime": 1783806633.2879114,
-    "ast_hash": "f84d71410508dc3c0d0ab7d891d3d688",
-    "semantic_hash": "f84d71410508dc3c0d0ab7d891d3d688"
+    "mtime": 1786876354.469823,
+    "ast_hash": "f4cb270140a20a9711f16fbf56eabf5c",
+    "semantic_hash": ""
   },
   "apps/web/src/app/feed/page.tsx": {
     "mtime": 1783845213.6472561,
@@ -1270,9 +1270,9 @@
     "semantic_hash": "9ee760926b6179aefc8c9f292dff1ed3"
   },
   "apps/web/src/components/pwa/PwaStatus.tsx": {
-    "mtime": 1783806233.3292813,
-    "ast_hash": "83de457786b197f57a0a00f4b4ad0e24",
-    "semantic_hash": "83de457786b197f57a0a00f4b4ad0e24"
+    "mtime": 1786876336.3727531,
+    "ast_hash": "70029b47642d7034a90381477ef49112",
+    "semantic_hash": ""
   },
   "apps/web/src/components/settings/SettingsScreen.tsx": {
     "mtime": 1783845758.9666734,
@@ -1962,6 +1962,11 @@
   "graphify-out/memory/query_20260816_085906_\uae30\ub85d_\uc791\uc131_\ud654\uba74_uiux__\ubcc4\uc810_\uc2ac\ub77c\uc774\ub354__\ub4a4\ub85c\uac00\uae30_\ud750\ub984_\ubd84\uc11d.md": {
     "mtime": 1786870746.9940405,
     "ast_hash": "d91aa9644d940a7e2f325e1909c496c6",
+    "semantic_hash": ""
+  },
+  "graphify-out/memory/query_20260816_101517_\uc911\uac04\uc911\uac04_\uc0c8\ubc84\uc804\uc774_\uc900\ube44\ub410\uc5b4\uc694_\uc548\uc804\ud558\uac8c_\uc5c5\ub370\uc774\ud2b8_\uc774\uac74_\uc65c_\ub728\ub294_\uac70\uc57c__\ud654\uba74_\uc774\ub3d9\ub9c8\ub2e4_\uc57d\uac04\uc529.md": {
+    "mtime": 1786875317.7331421,
+    "ast_hash": "4598eac19cae7d532ec83a336652306a",
     "semantic_hash": ""
   }
 }
