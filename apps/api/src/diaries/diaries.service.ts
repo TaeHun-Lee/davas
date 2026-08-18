@@ -231,7 +231,7 @@ export class DiariesService {
       new Brackets((where) => {
         where
           .where(
-            `diary.visibility = 'FRIENDS' AND (diary.userId = :viewerId OR EXISTS (SELECT 1 FROM friendships f WHERE f.status = 'ACCEPTED' AND ((f.requester_id = diary.user_id AND f.receiver_id = :viewerId) OR (f.receiver_id = diary.user_id AND f.requester_id = :viewerId)))`,
+            `diary.visibility = 'FRIENDS' AND (diary.userId = :viewerId OR EXISTS (SELECT 1 FROM friendships f WHERE f.status = 'ACCEPTED' AND ((f.requester_id = diary.user_id AND f.receiver_id = :viewerId) OR (f.receiver_id = diary.user_id AND f.requester_id = :viewerId))))`,
             { viewerId: userId },
           )
           .orWhere(
