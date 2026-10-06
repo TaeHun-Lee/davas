@@ -825,8 +825,8 @@
     "semantic_hash": "9d612e2fd8dfe86db0967c1d9efeb20f"
   },
   "apps/web/src/components/auth/AuthUi.tsx": {
-    "mtime": 1791266531.309222,
-    "ast_hash": "d01b6008961bcb025de3de166074f6b0",
+    "mtime": 1791273820.4378676,
+    "ast_hash": "555e6df5f2928a8342ce277d1a0d1ef6",
     "semantic_hash": ""
   },
   "apps/web/src/components/auth/AuthenticatedLanding.tsx": {
@@ -1075,8 +1075,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/friends/FriendsScreen.tsx": {
-    "mtime": 1791266026.1843662,
-    "ast_hash": "a2833c356d1e9bcf953cc5f61828b863",
+    "mtime": 1791273230.6609507,
+    "ast_hash": "b3dc6de6f70b8e9b5815174e9f5193ea",
     "semantic_hash": ""
   },
   "apps/web/src/components/home/ArchiveHighlightSection.tsx": {
@@ -1735,13 +1735,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceInviteScreen.tsx": {
-    "mtime": 1791266026.1869211,
-    "ast_hash": "617f76f4a33ba81a237f660a828febc6",
+    "mtime": 1791273819.1047513,
+    "ast_hash": "2846e36f6021efe21c4aa8b86788b647",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpacesScreen.tsx": {
-    "mtime": 1791272147.5156221,
-    "ast_hash": "c68017c77fc3f327822ce07740a91293",
+    "mtime": 1791273018.9342904,
+    "ast_hash": "31ab20280a603251293618fe5a65b4e4",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/space-ui.spec.ts": {
@@ -1755,8 +1755,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/spaces-design.spec.ts": {
-    "mtime": 1791271662.4102702,
-    "ast_hash": "3e8866010742cb6cedd4a0ded3b1c0e4",
+    "mtime": 1791273914.5637882,
+    "ast_hash": "fd69ecc8f42f7c036fda677961867a70",
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/spaces.spec.ts": {
@@ -1845,8 +1845,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceTimeline.tsx": {
-    "mtime": 1791266026.1874313,
-    "ast_hash": "371ebf3648b404309c50b720a5e63fee",
+    "mtime": 1791273018.95962,
+    "ast_hash": "f0f54636079dae3ce8671a88f4e14a0b",
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/watch-events.spec.ts": {
@@ -2195,8 +2195,8 @@
     "semantic_hash": ""
   },
   "scripts/prettier-baseline.json": {
-    "mtime": 1791271792.7711897,
-    "ast_hash": "8ff813d0007c1642e6ae8104b5ad4965",
+    "mtime": 1791274160.5998309,
+    "ast_hash": "42008e6aa582558bb58019e5491d1fa6",
     "semantic_hash": ""
   },
   "scripts/run-tests.mjs": {
@@ -2255,8 +2255,8 @@
     "semantic_hash": ""
   },
   "docs/appendix.md": {
-    "mtime": 1791271732.865287,
-    "ast_hash": "36fce52368ae62e1dfa65218a5cec255",
+    "mtime": 1791274111.2540166,
+    "ast_hash": "a3896db95d9ef963508def90d044ae83",
     "semantic_hash": ""
   },
   "docs/development.md": {
