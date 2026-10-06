@@ -17,8 +17,11 @@ describe('record experience screens', () => {
       composer.indexOf('<PhotoPicker uploads={photoUploads} />') >
         composer.indexOf('추억 메모 · 공간 사람만 봐요'),
     );
-    assert.match(picker, /<span>사진 첨부 \(옵션\)<\/span>/);
+    assert.match(picker, /<span>사진 첨부 \(선택\)<\/span>/);
     assert.doesNotMatch(picker, /데이트 사진/);
+    // Optional fields all say "(선택)", and the memo hint fits a friends' space too.
+    assert.doesNotMatch(picker + composer, /\(옵션\)/);
+    assert.match(composer, /placeholder="그날 있었던 일을 적어 두세요/);
     // Saving waits for uploads still in flight and refuses to drop failed ones silently.
     assert.match(composer, /await photoUploads\.settle\(\)/);
     assert.match(composer, /올리지 못한 사진이 있어요/);

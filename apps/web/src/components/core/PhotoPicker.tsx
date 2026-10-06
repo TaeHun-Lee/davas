@@ -27,7 +27,7 @@ export function PhotoPicker({ uploads }: { uploads: WatchPhotoUploads }) {
   return (
     <fieldset className="photo-picker">
       <legend>
-        <span>사진 첨부 (옵션)</span>
+        <span>사진 첨부 (선택)</span>
         <span className="photo-picker-count">
           {items.length}/{WATCH_PHOTO_MAX_COUNT}
         </span>

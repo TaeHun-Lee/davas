@@ -768,7 +768,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
             multiline
             rows={3}
             max={WATCH_MEMORY_NOTE_MAX_LENGTH}
-            placeholder="그날의 데이트를 적어 두세요. 예: 팝콘 반반 먹고 근처 국밥집"
+            placeholder="그날 있었던 일을 적어 두세요. 예: 팝콘 반반 먹고 근처 국밥집"
             value={draft.memoryNote}
             onChange={(memoryNote) => setDraft({ ...draft, memoryNote })}
           />
