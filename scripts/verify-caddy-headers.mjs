@@ -61,6 +61,7 @@ const apiOrigin = createServer((_request, response) => {
 });
 const webOrigin = createServer((_request, response) => {
   response.setHeader('content-type', 'text/html; charset=utf-8');
+  response.setHeader('x-powered-by', 'Next.js');
   response.end('<!doctype html><title>Davas</title>');
 });
 
@@ -79,6 +80,10 @@ function assertHeaders(response, label) {
     if (actual !== expected) {
       failures.push(`${label} ${name}: expected "${expected}", received "${actual}"`);
     }
+  }
+  const poweredBy = response.headers.get('x-powered-by');
+  if (poweredBy !== null) {
+    failures.push(`${label} x-powered-by: expected removal, received "${poweredBy}"`);
   }
   if (failures.length > 0) throw new Error(failures.join('\n'));
 }
