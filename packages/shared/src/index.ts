@@ -60,11 +60,20 @@ export type SpaceInviteInspection =
 
 export const WATCH_SOURCE_KINDS = ['THEATER', 'OTT', 'TV_OWNED', 'OTHER'] as const;
 export type WatchSourceKind = (typeof WATCH_SOURCE_KINDS)[number];
+export const THEATER_FORMATS = ['STANDARD', 'IMAX', 'FOUR_DX', 'DOLBY'] as const;
+export type TheaterFormat = (typeof THEATER_FORMATS)[number];
 export type WatchParticipantStatus = 'PENDING' | 'CONFIRMED' | 'DECLINED';
 export type WatchSourceView = {
   kind: WatchSourceKind;
   providerName?: string | null;
   placeText?: string | null;
+  /** Theater only. */
+  theaterFormat?: TheaterFormat | null;
+  seatText?: string | null;
+  /** Series only: the last episode watched and, when known, how many there are. */
+  episodeWatched?: number | null;
+  episodeTotal?: number | null;
+  completed?: boolean;
 };
 export type WatchParticipantView = {
   accountId: string;
@@ -73,12 +82,40 @@ export type WatchParticipantView = {
   requestedAt?: string;
   respondedAt?: string | null;
 };
+export const WATCH_HEADLINE_MAX_LENGTH = 40;
+export const WATCH_REVIEW_MAX_LENGTH = 2000;
+export const WATCH_MEMORY_NOTE_MAX_LENGTH = 1000;
+export const WATCH_PHOTO_MAX_COUNT = 10;
 export type WatchReactionView = {
+  /** Null for a legacy review that only exists on the old diary row. */
+  id: string | null;
   accountId: string;
   nickname?: string;
   rating: number | null;
+  /** 한줄평 */
+  headline: string | null;
+  /** 소감 */
   review: string | null;
+  hasSpoiler: boolean;
+  /** The writer asked to keep it hidden until the viewer writes their own review. */
+  isBlind: boolean;
+  /** True when it is blind and still hidden from this viewer; content fields are then null. */
+  locked: boolean;
+  likeCount: number;
+  likedByMe: boolean;
   updatedAt?: string;
+};
+export type WatchPhotoView = {
+  id: string;
+  width: number;
+  height: number;
+  /** Tiny blurred preview as a data URL, shown while the real image loads. */
+  placeholder: string | null;
+  thumbUrl: string;
+  displayUrl: string;
+  /** Only the uploader can fetch the untouched original. */
+  originalUrl: string | null;
+  uploaderAccountId: string;
 };
 export type WatchEventView = {
   id: string;
@@ -99,19 +136,46 @@ export type WatchEventView = {
   source: WatchSourceView | null;
   participants: WatchParticipantView[];
   reactions: WatchReactionView[];
+  /** 추억 메모: a note about the outing, visible to everyone who can see the record. */
+  memoryNote: string | null;
+  photos: WatchPhotoView[];
+  commentCount: number;
   createdAt?: string;
   updatedAt?: string;
   isMine: boolean;
 };
-export type WatchEventWriteRequest = {
+export type WatchReactionWriteFields = {
+  rating?: number | null;
+  headline?: string | null;
+  review?: string | null;
+  hasSpoiler?: boolean;
+  isBlind?: boolean;
+};
+export type WatchEventWriteRequest = WatchReactionWriteFields & {
   mediaId: string;
   watchedDate: string;
   spaceIds?: string[];
   participantAccountIds?: string[];
   source?: WatchSourceView;
-  rating?: number | null;
-  review?: string | null;
+  memoryNote?: string | null;
+  /** Photos uploaded beforehand, in display order. Replaces the record's photo list. */
+  photoIds?: string[];
 };
+export type WatchReviewLikeResponse = {
+  reactionId: string;
+  liked: boolean;
+  likeCount: number;
+};
+export type WatchCommentView = {
+  id: string;
+  diaryId: string;
+  content: string;
+  author: { id: string; nickname: string; profileImageUrl: string | null };
+  createdAt: string;
+  updatedAt: string;
+  isMine: boolean;
+};
+export const WATCH_COMMENT_MAX_LENGTH = 500;
 export type WatchTimelinePage = {
   items: WatchEventView[];
   hasMore: boolean;

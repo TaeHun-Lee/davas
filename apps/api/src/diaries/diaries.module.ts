@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import {
+  CommentEntity,
   DiaryCompanionEntity,
   DiaryEntity,
   DiaryShareEntity,
@@ -9,7 +10,9 @@ import {
   MediaEntity,
   WatchlistItemEntity,
   WatchParticipantEntity,
+  WatchPhotoEntity,
   WatchReactionEntity,
+  WatchReviewLikeEntity,
   WatchShareEntity,
   WatchSourceEntity,
 } from '../database/entities';
@@ -22,6 +25,8 @@ import { DiariesService } from './diaries.service';
 import { SpaceWatchController } from './space-watch.controller';
 import { WatchEventsController } from './watch-events.controller';
 import { WatchEventsService } from './watch-events.service';
+import { WatchPhotosController } from './watch-photos.controller';
+import { WatchPhotosService } from './watch-photos.service';
 
 @Module({
   imports: [
@@ -39,14 +44,23 @@ import { WatchEventsService } from './watch-events.service';
       WatchReactionEntity,
       WatchSourceEntity,
       WatchShareEntity,
+      WatchPhotoEntity,
+      WatchReviewLikeEntity,
+      CommentEntity,
     ]),
   ],
-  controllers: [DiariesController, WatchEventsController, SpaceWatchController],
+  controllers: [
+    DiariesController,
+    WatchEventsController,
+    WatchPhotosController,
+    SpaceWatchController,
+  ],
   providers: [
     DiariesDashboardService,
     DiariesService,
     DiaryAccessService,
     WatchEventsService,
+    WatchPhotosService,
   ],
   exports: [DiaryAccessService, WatchEventsService],
 })

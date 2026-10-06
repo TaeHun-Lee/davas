@@ -105,7 +105,7 @@ graphify-out/      Graphify 코드 그래프 (도구가 생성, 손으로 수정
 
 주요 Web 코드:
 
-- `src/components/core/`: 공통 화면 틀(`CoreUi.tsx`), 홈의 공간 영역(`SpaceHome.tsx`), 기록 작성(`RecordComposer.tsx`), 목록·검색(`RecordScreens.tsx`), 감상 상세(`WatchEventDetailScreen.tsx`)
+- `src/components/core/`: 공통 화면 틀(`CoreUi.tsx`), 홈의 공간 영역(`SpaceHome.tsx`), 기록 작성(`RecordComposer.tsx`, 입력 부품 `ComposerFields.tsx`, 사진 선택 `PhotoPicker.tsx`), 목록·검색(`RecordScreens.tsx`), 감상 상세(`WatchEventDetailScreen.tsx`, 리뷰·댓글 `WatchReviews.tsx`, 사진 `WatchPhoto.tsx`·`WatchPhotoGallery.tsx`)
 - `src/components/spaces/`: 공간 화면(`SpacesScreen.tsx`), 타임라인(`SpaceTimeline.tsx`, 홈과 같이 쓰는 카드 `SpaceWatchCard.tsx`, 불러오기 `hooks/useSpaceTimeline.ts`), 활성 공간·기본 참여자 규칙(`space-ui.ts`), 그룹 추천 패널(`GroupRecommendationPanel.tsx`). 홈의 "함께 고르기"가 `/spaces?view=recommend`로 연결된다.
 - `src/components/friends/`, `settings/`
 - `src/lib/api/`: API 호출 함수. 공통 호출기 `core.ts`의 `coreFetch`가 401이면 임시저장을 지우고 로그인 화면으로 보낸다.
@@ -173,6 +173,9 @@ npm run migration:show --workspace @davas/api
 
 - 영화·드라마 구분은 작품(`MOVIE`/`TV`)에, 시청 방식(`THEATER`/`OTT` 등)은 기록마다 저장한다.
 - 감상 사건(`/v1/watch-events`)의 별점은 미평가 또는 0.5~5.0(0.5 단위)이다. 예전 `/diaries` API는 1~5 정수 별점을 유지한다.
+- 개인 리뷰(`watch_reactions`)는 별점·한줄평(40자)·소감(2,000자)·스포일러·블라인드 여부를 가진다. 블라인드 공개 규칙은 `diaries/blind-review.ts` 한 곳에 있고, 감상 상세·타임라인·반응 비교·예전 `/diaries/:id`·`/community/diaries/:id`가 모두 이 규칙으로 가린다. 가려진 리뷰는 내용·별점·좋아요 수·수정 시각을 보내지 않는다.
+- 리뷰 좋아요: `PUT`/`DELETE /v1/watch-events/:id/reactions/:reactionId/like`. 내 리뷰와 잠긴 리뷰에는 누를 수 없다. 댓글은 기록 단위로 `/diaries/:id/comments`를 쓴다(500자).
+- 사진: 작성 화면에서 고르는 즉시 `POST /v1/watch-photos`로 올리고(한 장 15MB, JPEG·PNG·WebP), 기록을 저장할 때 `photoIds` 순서대로 붙인다(최대 10장, 첫 장이 대표). 서버는 sharp로 바로 세운 메타데이터 없는 WebP 썸네일(480px)·화면용(1600px)과 흐린 미리보기를 만들고 원본은 그대로 둔다. 파일은 `UPLOADS_DIR/watch-photos`에 있고 `/uploads` 정적 경로로는 나가지 않는다. `GET /v1/watch-photos/:id/thumb|display|original`이 기록을 볼 수 있는 사람에게만 주고, `original`은 올린 사람만 받는다. 기록에 붙지 않은 사진은 하루 뒤 정리한다.
 - `clientRequestId`로 같은 생성 요청의 중복 저장을 막는다. 같은 키에 다른 내용이면 충돌로 거부한다.
 - 새 감상 기록은 공간 공유(`watch_event_shares`)로만 퍼지고 홈과 `/spaces`의 공간 타임라인에 보인다. 친구 기록 검색(`/search?scope=friends`)은 예전 `/diaries`의 친구 공개 기록(`sharedAt`이 있는 기록)만 보여 준다.
 

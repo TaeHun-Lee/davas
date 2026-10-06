@@ -5,11 +5,13 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { DiaryEntity } from './diary.entity';
 import { UserEntity } from './user.entity';
+import { WatchReviewLikeEntity } from './watch-review-like.entity';
 
 @Entity({ name: 'watch_reactions' })
 @Index(['diaryId', 'accountId'], { unique: true })
@@ -38,6 +40,20 @@ export class WatchReactionEntity {
 
   @Column({ name: 'review_text', type: 'text', nullable: true })
   reviewText!: string | null;
+
+  /** 한줄평 */
+  @Column({ type: 'varchar', length: 40, nullable: true })
+  headline!: string | null;
+
+  @Column({ name: 'has_spoiler', type: 'boolean', default: false })
+  hasSpoiler!: boolean;
+
+  /** Hidden from each viewer until that viewer writes their own review (see blind-review.ts). */
+  @Column({ name: 'is_blind', type: 'boolean', default: false })
+  isBlind!: boolean;
+
+  @OneToMany(() => WatchReviewLikeEntity, (like) => like.reaction)
+  likes?: WatchReviewLikeEntity[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

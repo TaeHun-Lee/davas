@@ -21,6 +21,7 @@ import { DiaryCompanionEntity } from './diary-companion.entity';
 import { DiaryShareEntity } from './diary-share.entity';
 import { DiaryReactionEntity } from './diary-reaction.entity';
 import { WatchParticipantEntity } from './watch-participant.entity';
+import { WatchPhotoEntity } from './watch-photo.entity';
 import { WatchReactionEntity } from './watch-reaction.entity';
 import { WatchShareEntity } from './watch-share.entity';
 import { WatchSourceEntity } from './watch-source.entity';
@@ -124,6 +125,9 @@ export class DiaryEntity {
 
   @OneToMany(() => WatchShareEntity, (share) => share.diary)
   spaceShares!: WatchShareEntity[];
+
+  @OneToMany(() => WatchPhotoEntity, (photo) => photo.diary)
+  watchPhotos?: WatchPhotoEntity[];
 
   @OneToMany(() => CommentEntity, (comment) => comment.diary)
   comments!: CommentEntity[];

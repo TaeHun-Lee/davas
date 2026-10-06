@@ -38,10 +38,10 @@ cp .env.production.example .env.production
 
 - `TYPEORM_SYNC=true`를 운영에서 켜지 않는다. 장애 복구 지름길로도 쓰지 않는다. 자동 동기화는 예상하지 못한 컬럼·제약 변경, 기존 데이터 충돌, migration 기록과 실제 구조의 불일치를 만든다.
 - 스키마 변경은 새로 빌드한 API 이미지의 migration(`dist/database/data-source.js`)으로만 적용한다. 운영 이미지에는 TypeScript 소스와 `ts-node`가 없다.
-- schema를 바꾸는 배포 전에는 반드시 DB와 업로드를 함께 백업한다.
+- schema를 바꾸는 배포 전에는 반드시 DB와 업로드를 함께 백업한다. 업로드 볼륨에는 프로필 사진과 기록 사진(`watch-photos/`, 원본·화면용·썸네일)이 함께 있어 기록 사진이 늘수록 백업도 커진다.
 - 정확한 되돌리기는 배포 전 백업 복원뿐이다. `BaseSchema`의 `down`은 의도적으로 아무것도 하지 않는다.
 
-현재 등록된 migration (14개):
+현재 등록된 migration (15개):
 
 1. `BaseSchema1720670300000`
 2. `HighValueFlows1720670400000`
@@ -57,8 +57,9 @@ cp .env.production.example .env.production
 12. `CanonicalCatalogAvailability1720670900000`
 13. `AccountLifecycleNotificationOutbox1720671000000`
 14. `GroupRecommendationSessions1720671100000`
+15. `RecordExperience1720671200000` (한줄평·블라인드·스포일러, 극장·회차 정보, 기록 사진, 리뷰 좋아요)
 
-목록 순서는 운영 DB에 적용된 순서(기록 id 1~14)다. 5~9(보안 보강)와 10~14(TO-BE 기능)는 같은 timestamp를 공유하므로 빈 DB에서는 timestamp 순으로 섞여 실행되지만, 서로 독립이고 재실행에 안전하다. TypeORM은 class 이름으로 적용 여부를 판단하므로 이 이름들을 바꾸지 않는다. 새 migration을 등록하면 이 목록도 같은 변경에서 갱신한다(`npm run verify:deployment`가 검사).
+목록 순서는 운영 DB에 적용된 순서(기록 id 1~14, 15부터는 앞으로 배포하는 순서)다. 5~9(보안 보강)와 10~14(TO-BE 기능)는 같은 timestamp를 공유하므로 빈 DB에서는 timestamp 순으로 섞여 실행되지만, 서로 독립이고 재실행에 안전하다. TypeORM은 class 이름으로 적용 여부를 판단하므로 이 이름들을 바꾸지 않는다. 새 migration을 등록하면 이 목록도 같은 변경에서 갱신한다(`npm run verify:deployment`가 검사).
 
 ## 4. 배포 절차
 

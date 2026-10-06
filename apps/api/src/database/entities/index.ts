@@ -28,6 +28,8 @@ export * from './user-consent.entity';
 export * from './transaction-outbox.entity';
 export * from './watchlist-item.entity';
 export * from './watch-participant.entity';
+export * from './watch-photo.entity';
+export * from './watch-review-like.entity';
 export * from './watch-reaction.entity';
 export * from './watch-share.entity';
 export * from './watch-source.entity';

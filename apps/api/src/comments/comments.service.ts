@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { WATCH_COMMENT_MAX_LENGTH } from '@davas/shared';
 import { Repository } from 'typeorm';
 import { CommentEntity } from '../database/entities/comment.entity';
 import { DiaryEntity } from '../database/entities/diary.entity';
@@ -24,6 +25,9 @@ function normalizeContent(content: string) {
   const normalized = content.trim();
   if (!normalized) {
     throw new BadRequestException('댓글 내용을 입력해주세요.');
+  }
+  if (normalized.length > WATCH_COMMENT_MAX_LENGTH) {
+    throw new BadRequestException(`댓글은 ${WATCH_COMMENT_MAX_LENGTH}자까지 쓸 수 있어요.`);
   }
   return normalized;
 }

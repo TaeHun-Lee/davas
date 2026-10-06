@@ -1,0 +1,214 @@
+import { randomBytes } from 'node:crypto';
+import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { WATCH_PHOTO_MAX_COUNT, type WatchPhotoView } from '@davas/shared';
+import { EntityManager, In, IsNull, LessThan, Repository } from 'typeorm';
+import { DiaryEntity, FileCleanupJobEntity, WatchPhotoEntity } from '../database/entities';
+import { DiaryAccessService } from './diary-access.service';
+import {
+  processWatchPhoto,
+  validateWatchPhoto,
+  type UploadedPhotoFile,
+} from './watch-photo-processing';
+
+export type WatchPhotoVariant = 'thumb' | 'display' | 'original';
+
+// Photos picked in the composer but never saved with a record are dropped after a day.
+const STAGED_PHOTO_TTL_MS = 24 * 60 * 60 * 1000;
+// Enough for one full composer (10) plus retries, without letting one account fill the disk.
+const MAX_STAGED_PHOTOS = 30;
+
+const ORIGINAL_EXTENSIONS: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
+
+const apiError = (status: 400 | 404, code: string, message: string) =>
+  status === 404
+    ? new NotFoundException({ statusCode: status, code, message })
+    : new BadRequestException({ statusCode: status, code, message });
+
+@Injectable()
+export class WatchPhotosService {
+  constructor(
+    @InjectRepository(WatchPhotoEntity)
+    private readonly photos: Repository<WatchPhotoEntity>,
+    @InjectRepository(DiaryEntity)
+    private readonly diaries: Repository<DiaryEntity>,
+    private readonly access: DiaryAccessService,
+  ) {}
+
+  /** Stores a photo before its record exists; `attach` links it when the record is saved. */
+  async stage(uploaderId: string, file: UploadedPhotoFile | undefined) {
+    const type = validateWatchPhoto(file);
+    await this.dropExpiredStaged(uploaderId);
+    const staged = await this.photos.count({ where: { uploaderId, diaryId: IsNull() } });
+    if (staged >= MAX_STAGED_PHOTOS) {
+      throw apiError(
+        400,
+        'PHOTO_STAGING_FULL',
+        '저장하지 않은 사진이 너무 많아요. 작성 중인 기록을 먼저 저장해 주세요.',
+      );
+    }
+    const processed = await processWatchPhoto(file!.buffer);
+    const storageKey = randomBytes(16).toString('hex');
+    const paths = this.paths(storageKey, type.mimeType);
+    await mkdir(this.root(), { recursive: true });
+    try {
+      // `wx` refuses to overwrite: a key collision must fail instead of replacing a photo.
+      await writeFile(paths.original, file!.buffer, { flag: 'wx' });
+      await writeFile(paths.display, processed.display, { flag: 'wx' });
+      await writeFile(paths.thumb, processed.thumb, { flag: 'wx' });
+      const saved = await this.photos.save(
+        this.photos.create({
+          diaryId: null,
+          uploaderId,
+          position: 0,
+          storageKey,
+          originalMimeType: type.mimeType,
+          originalBytes: file!.size,
+          width: processed.width,
+          height: processed.height,
+          placeholder: processed.placeholder,
+          attachedAt: null,
+        }),
+      );
+      return this.view(saved, uploaderId);
+    } catch (error) {
+      await Promise.all(Object.values(paths).map((path) => unlink(path).catch(() => undefined)));
+      throw error;
+    }
+  }
+
+  /**
+   * Makes `photoIds` (in order) the record's photos. Each id must already belong to this record
+   * or be a staged photo uploaded by `accountId`; photos left out are removed with their files.
+   */
+  async replaceForDiary(
+    manager: EntityManager,
+    diaryId: string,
+    accountId: string,
+    photoIds: string[],
+  ) {
+    const ids = [...new Set(photoIds)];
+    if (ids.length > WATCH_PHOTO_MAX_COUNT) {
+      throw apiError(400, 'TOO_MANY_PHOTOS', '사진은 기록 하나에 10장까지 올릴 수 있어요.');
+    }
+    const repo = manager.getRepository(WatchPhotoEntity);
+    const current = await repo.find({ where: { diaryId } });
+    const requested = ids.length ? await repo.find({ where: { id: In(ids) } }) : [];
+    const usable = requested.filter(
+      (photo) =>
+        photo.diaryId === diaryId || (photo.diaryId === null && photo.uploaderId === accountId),
+    );
+    if (usable.length !== ids.length) {
+      throw apiError(
+        400,
+        'PHOTO_NOT_FOUND',
+        '올린 사진 일부를 찾을 수 없어요. 사진을 다시 올려 주세요.',
+      );
+    }
+
+    const removed = current.filter((photo) => !ids.includes(photo.id));
+    if (removed.length) {
+      await repo.delete({ id: In(removed.map((photo) => photo.id)) });
+      await this.enqueueFileCleanup(manager, removed);
+    }
+    const now = new Date();
+    const byId = new Map(usable.map((photo) => [photo.id, photo]));
+    await repo.save(
+      ids.map((id, position) =>
+        Object.assign(byId.get(id)!, {
+          diaryId,
+          position,
+          attachedAt: byId.get(id)!.attachedAt ?? now,
+        }),
+      ),
+    );
+  }
+
+  async open(photoId: string, variant: WatchPhotoVariant, viewerId: string) {
+    const photo = await this.photos.findOne({ where: { id: photoId } });
+    const notFound = () => apiError(404, 'PHOTO_NOT_FOUND', '사진을 찾을 수 없어요.');
+    if (!photo) throw notFound();
+    const isUploader = photo.uploaderId === viewerId;
+    // The untouched original may carry location metadata, so only its uploader gets it.
+    if (variant === 'original' && !isUploader) throw notFound();
+    if (!isUploader) {
+      if (!photo.diaryId) throw notFound();
+      const diary = await this.diaries.findOne({ where: { id: photo.diaryId } });
+      await this.access.assertCanView(diary, viewerId).catch(() => {
+        throw notFound();
+      });
+    }
+    const paths = this.paths(photo.storageKey, photo.originalMimeType);
+    return variant === 'original'
+      ? {
+          path: paths.original,
+          mimeType: photo.originalMimeType,
+          downloadName: `davas-${photo.id}.${ORIGINAL_EXTENSIONS[photo.originalMimeType] ?? 'jpg'}`,
+        }
+      : { path: paths[variant], mimeType: 'image/webp', downloadName: null };
+  }
+
+  view(photo: WatchPhotoEntity, viewerId: string): WatchPhotoView {
+    const base = `/v1/watch-photos/${photo.id}`;
+    return {
+      id: photo.id,
+      width: photo.width,
+      height: photo.height,
+      placeholder: photo.placeholder,
+      thumbUrl: `${base}/thumb`,
+      displayUrl: `${base}/display`,
+      originalUrl: photo.uploaderId === viewerId ? `${base}/original` : null,
+      uploaderAccountId: photo.uploaderId,
+    };
+  }
+
+  private async dropExpiredStaged(uploaderId: string) {
+    const expired = await this.photos.find({
+      where: {
+        uploaderId,
+        diaryId: IsNull(),
+        createdAt: LessThan(new Date(Date.now() - STAGED_PHOTO_TTL_MS)),
+      },
+    });
+    if (!expired.length) return;
+    await this.photos.manager.transaction(async (manager) => {
+      await manager.getRepository(WatchPhotoEntity).delete({ id: In(expired.map((p) => p.id)) });
+      await this.enqueueFileCleanup(manager, expired);
+    });
+  }
+
+  // Files are removed by FileCleanupService after the transaction commits, so a rollback
+  // never leaves a record pointing at deleted files.
+  private async enqueueFileCleanup(manager: EntityManager, photos: WatchPhotoEntity[]) {
+    const jobs = manager.getRepository(FileCleanupJobEntity);
+    await jobs.save(
+      photos.flatMap((photo) =>
+        Object.values(this.paths(photo.storageKey, photo.originalMimeType)).map((path) =>
+          jobs.create({ userId: photo.uploaderId, kind: 'WATCH_PHOTO', path }),
+        ),
+      ),
+    );
+  }
+
+  private root() {
+    return join(process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads'), 'watch-photos');
+  }
+
+  private paths(storageKey: string, originalMimeType: string) {
+    const root = this.root();
+    return {
+      original: join(
+        root,
+        `${storageKey}-original.${ORIGINAL_EXTENSIONS[originalMimeType] ?? 'bin'}`,
+      ),
+      display: join(root, `${storageKey}-display.webp`),
+      thumb: join(root, `${storageKey}-thumb.webp`),
+    };
+  }
+}

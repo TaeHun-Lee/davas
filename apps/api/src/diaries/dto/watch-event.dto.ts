@@ -1,5 +1,11 @@
 import {
+  THEATER_FORMATS,
+  WATCH_HEADLINE_MAX_LENGTH,
+  WATCH_MEMORY_NOTE_MAX_LENGTH,
+  WATCH_PHOTO_MAX_COUNT,
+  WATCH_REVIEW_MAX_LENGTH,
   WATCH_SOURCE_KINDS,
+  type TheaterFormat,
   type WatchParticipantStatus,
   type WatchSourceKind,
 } from '@davas/shared';
@@ -8,6 +14,7 @@ import {
   ArrayMaxSize,
   ArrayUnique,
   IsArray,
+  IsBoolean,
   IsIn,
   IsInt,
   IsOptional,
@@ -35,9 +42,59 @@ export class WatchSourceDto {
   @IsString()
   @MaxLength(160)
   placeText?: string | null;
+
+  @IsOptional()
+  @IsIn(THEATER_FORMATS)
+  theaterFormat?: TheaterFormat | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  seatText?: string | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(2000)
+  episodeWatched?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(2000)
+  episodeTotal?: number | null;
+
+  @IsOptional()
+  @IsBoolean()
+  completed?: boolean;
 }
 
-export class CreateWatchEventDto {
+/** 한줄평, 소감, spoiler and blind flags: one person's review, shared by create/update/reaction. */
+class WatchReviewFieldsDto {
+  @IsOptional()
+  @IsIn(WATCH_RATINGS)
+  rating?: number | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(WATCH_HEADLINE_MAX_LENGTH)
+  headline?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(WATCH_REVIEW_MAX_LENGTH)
+  review?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  hasSpoiler?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isBlind?: boolean;
+}
+
+export class CreateWatchEventDto extends WatchReviewFieldsDto {
   @IsUUID()
   mediaId!: string;
 
@@ -64,16 +121,19 @@ export class CreateWatchEventDto {
   source?: WatchSourceDto;
 
   @IsOptional()
-  @IsIn(WATCH_RATINGS)
-  rating?: number | null;
+  @IsString()
+  @MaxLength(WATCH_MEMORY_NOTE_MAX_LENGTH)
+  memoryNote?: string | null;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  review?: string | null;
+  @IsArray()
+  @ArrayMaxSize(WATCH_PHOTO_MAX_COUNT)
+  @ArrayUnique()
+  @IsUUID('4', { each: true })
+  photoIds?: string[];
 }
 
-export class UpdateWatchEventDto {
+export class UpdateWatchEventDto extends WatchReviewFieldsDto {
   @IsOptional()
   @IsUUID()
   mediaId?: string;
@@ -95,13 +155,16 @@ export class UpdateWatchEventDto {
   source?: WatchSourceDto | null;
 
   @IsOptional()
-  @IsIn(WATCH_RATINGS)
-  rating?: number | null;
+  @IsString()
+  @MaxLength(WATCH_MEMORY_NOTE_MAX_LENGTH)
+  memoryNote?: string | null;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  review?: string | null;
+  @IsArray()
+  @ArrayMaxSize(WATCH_PHOTO_MAX_COUNT)
+  @ArrayUnique()
+  @IsUUID('4', { each: true })
+  photoIds?: string[];
 }
 
 export class WatchParticipantResponseDto {
@@ -109,16 +172,7 @@ export class WatchParticipantResponseDto {
   status!: Extract<WatchParticipantStatus, 'CONFIRMED' | 'DECLINED'>;
 }
 
-export class SaveWatchReactionDto {
-  @IsOptional()
-  @IsIn(WATCH_RATINGS)
-  rating?: number | null;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  review?: string | null;
-}
+export class SaveWatchReactionDto extends WatchReviewFieldsDto {}
 
 export class WatchTimelineQueryDto {
   @IsOptional()

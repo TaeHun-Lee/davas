@@ -29,7 +29,9 @@ import {
   UserFollowEntity,
   WatchlistItemEntity,
   WatchParticipantEntity,
+  WatchPhotoEntity,
   WatchReactionEntity,
+  WatchReviewLikeEntity,
   WatchShareEntity,
   WatchSourceEntity,
   TransactionOutboxEntity,
@@ -48,6 +50,7 @@ import { CoreQueryIndexes1720670800000 } from './migrations/1720670800000-CoreQu
 import { FeedIndexSharedAtPredicate1720670900000 } from './migrations/1720670900000-FeedIndexSharedAtPredicate';
 import { LegacyTmdbImageSafety1720671000000 } from './migrations/1720671000000-LegacyTmdbImageSafety';
 import { DropLegacyMediaIdentityIndex1720671100000 } from './migrations/1720671100000-DropLegacyMediaIdentityIndex';
+import { RecordExperience1720671200000 } from './migrations/1720671200000-RecordExperience';
 
 export function createTypeOrmOptions(): TypeOrmModuleOptions {
   return {
@@ -91,6 +94,8 @@ export function createTypeOrmOptions(): TypeOrmModuleOptions {
       WatchReactionEntity,
       WatchSourceEntity,
       WatchShareEntity,
+      WatchPhotoEntity,
+      WatchReviewLikeEntity,
       TransactionOutboxEntity,
     ],
     migrations: [
@@ -112,6 +117,7 @@ export function createTypeOrmOptions(): TypeOrmModuleOptions {
       AccountLifecycleNotificationOutbox1720671000000,
       DropLegacyMediaIdentityIndex1720671100000,
       GroupRecommendationSessions1720671100000,
+      RecordExperience1720671200000,
     ],
     synchronize: process.env.TYPEORM_SYNC === 'true',
     logging: process.env.TYPEORM_LOGGING === 'true',

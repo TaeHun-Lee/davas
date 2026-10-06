@@ -17,17 +17,21 @@ import {
   Repository,
 } from 'typeorm';
 import {
+  CommentEntity,
   DiaryEntity,
   MediaEntity,
   SpaceMembershipEntity,
   WatchParticipantEntity,
   WatchReactionEntity,
+  WatchReviewLikeEntity,
   WatchShareEntity,
   WatchSourceEntity,
 } from '../database/entities';
 import { TransactionOutboxService } from '../outbox/transaction-outbox.service';
 import { SpaceAccessService } from '../spaces/space-access.service';
+import { hiddenReviewAccountIds } from './blind-review';
 import { DiaryAccessService } from './diary-access.service';
+import { WatchPhotosService } from './watch-photos.service';
 import {
   CreateWatchEventDto,
   SaveWatchReactionDto,
@@ -45,6 +49,21 @@ const response = (statusCode: number, code: string, message: string) => ({
 const ratingScale = (rating: number | null | undefined) =>
   rating === null || rating === undefined ? null : Math.round(rating * 2);
 
+const REVIEW_FIELDS = ['rating', 'headline', 'review', 'hasSpoiler', 'isBlind'] as const;
+const hasReviewFields = (dto: SaveWatchReactionDto) =>
+  REVIEW_FIELDS.some((field) => dto[field] !== undefined);
+
+// Relations every watch-record view needs; the timeline loads the same tree under `diary`.
+const WATCH_VIEW_RELATIONS = {
+  media: true,
+  user: true,
+  watchParticipants: { account: true },
+  watchReactions: { account: true, likes: true },
+  watchSource: true,
+  spaceShares: true,
+  watchPhotos: true,
+} as const;
+
 @Injectable()
 export class WatchEventsService {
   constructor(
@@ -60,10 +79,15 @@ export class WatchEventsService {
     private readonly sources: Repository<WatchSourceEntity>,
     @InjectRepository(WatchShareEntity)
     private readonly spaceShares: Repository<WatchShareEntity>,
+    @InjectRepository(WatchReviewLikeEntity)
+    private readonly reviewLikes: Repository<WatchReviewLikeEntity>,
+    @InjectRepository(CommentEntity)
+    private readonly comments: Repository<CommentEntity>,
     private readonly access: DiaryAccessService,
     private readonly spaceAccess: SpaceAccessService,
     private readonly outbox: TransactionOutboxService,
     private readonly dataSource: DataSource,
+    private readonly photos: WatchPhotosService,
   ) {}
 
   async create(accountId: string, dto: CreateWatchEventDto) {
@@ -75,9 +99,9 @@ export class WatchEventsService {
       if (!media) throw this.mediaNotFound();
 
       const spaceIds = [...new Set(dto.spaceIds ?? [])];
-      const participantIds = [
-        ...new Set(dto.participantAccountIds ?? []),
-      ].filter((id) => id !== accountId);
+      const participantIds = [...new Set(dto.participantAccountIds ?? [])].filter(
+        (id) => id !== accountId,
+      );
       if (participantIds.length && !spaceIds.length) {
         throw new BadRequestException(
           response(
@@ -101,19 +125,16 @@ export class WatchEventsService {
           title: media.title,
           content: dto.review?.trim() ?? '',
           watchedDate: dto.watchedDate,
-          rating:
-            dto.rating === null || dto.rating === undefined
-              ? null
-              : dto.rating.toFixed(1),
+          rating: dto.rating === null || dto.rating === undefined ? null : dto.rating.toFixed(1),
           visibility: 'PRIVATE',
-          hasSpoiler: false,
+          hasSpoiler: dto.hasSpoiler ?? false,
           viewingMethod: this.legacyViewingMethod(dto.source),
           sharedAt: null,
           clientRequestId: randomUUID(),
           clientRequestFingerprint: null,
           watchedPlace: dto.source?.placeText?.trim() || null,
           mood: null,
-          memoryNote: null,
+          memoryNote: dto.memoryNote?.trim() || null,
         }),
       );
 
@@ -176,19 +197,18 @@ export class WatchEventsService {
         );
       }
       if (dto.source) {
-        await this.saveSource(
-          manager.getRepository(WatchSourceEntity),
-          diary.id,
-          dto.source,
-        );
+        await this.saveSource(manager.getRepository(WatchSourceEntity), diary.id, dto.source);
       }
-      if (dto.rating !== undefined || dto.review !== undefined) {
+      if (hasReviewFields(dto)) {
         await this.saveReaction(
           manager.getRepository(WatchReactionEntity),
           diary.id,
           accountId,
-          { rating: dto.rating, review: dto.review },
+          dto,
         );
+      }
+      if (dto.photoIds?.length) {
+        await this.photos.replaceForDiary(manager, diary.id, accountId, dto.photoIds);
       }
       return diary.id;
     });
@@ -219,6 +239,10 @@ export class WatchEventsService {
         diary.title = media.title;
       }
       if (dto.watchedDate !== undefined) diary.watchedDate = dto.watchedDate;
+      if (dto.memoryNote !== undefined) diary.memoryNote = dto.memoryNote?.trim() || null;
+      if (dto.photoIds !== undefined) {
+        await this.photos.replaceForDiary(manager, diaryId, accountId, dto.photoIds);
+      }
 
       if (dto.spaceIds !== undefined) {
         const spaceIds = [...new Set(dto.spaceIds)];
@@ -230,11 +254,7 @@ export class WatchEventsService {
           participants.map((participant) => participant.accountId),
           manager.getRepository(SpaceMembershipEntity),
         );
-        await this.replaceShares(
-          manager.getRepository(WatchShareEntity),
-          diaryId,
-          spaceIds,
-        );
+        await this.replaceShares(manager.getRepository(WatchShareEntity), diaryId, spaceIds);
       }
 
       if (dto.source !== undefined) {
@@ -250,20 +270,14 @@ export class WatchEventsService {
         }
       }
 
-      if ('rating' in dto || 'review' in dto) {
+      if (hasReviewFields(dto)) {
         await this.saveReaction(
           manager.getRepository(WatchReactionEntity),
           diaryId,
           accountId,
           dto,
         );
-        if ('rating' in dto) {
-          diary.rating =
-            dto.rating === null || dto.rating === undefined
-              ? null
-              : dto.rating.toFixed(1);
-        }
-        if ('review' in dto) diary.content = dto.review?.trim() ?? '';
+        this.syncLegacyReview(diary, dto);
       }
       await diaries.save(diary);
     });
@@ -293,11 +307,7 @@ export class WatchEventsService {
       if (row.status === status) return row;
       if (row.status !== 'PENDING') {
         throw new ConflictException(
-          response(
-            409,
-            'WATCH_PARTICIPATION_FINALIZED',
-            '이미 응답한 참여 요청이에요.',
-          ),
+          response(409, 'WATCH_PARTICIPATION_FINALIZED', '이미 응답한 참여 요청이에요.'),
         );
       }
       row.status = status;
@@ -320,18 +330,10 @@ export class WatchEventsService {
     return this.participantView(participant);
   }
 
-  async upsertReaction(
-    diaryId: string,
-    accountId: string,
-    dto: SaveWatchReactionDto,
-  ) {
-    if (!('rating' in dto) && !('review' in dto)) {
+  async upsertReaction(diaryId: string, accountId: string, dto: SaveWatchReactionDto) {
+    if (!hasReviewFields(dto)) {
       throw new BadRequestException(
-        response(
-          400,
-          'WATCH_REACTION_EMPTY',
-          '별점 또는 리뷰를 입력해 주세요.',
-        ),
+        response(400, 'WATCH_REACTION_EMPTY', '별점 또는 리뷰를 입력해 주세요.'),
       );
     }
     const diary = await this.diaries.findOne({ where: { id: diaryId } });
@@ -343,30 +345,54 @@ export class WatchEventsService {
       throw this.participationNotFound();
     }
 
-    const reaction = await this.saveReaction(
-      this.reactions,
-      diaryId,
-      accountId,
-      dto,
-    );
+    const reaction = await this.saveReaction(this.reactions, diaryId, accountId, dto);
     if (diary?.userId === accountId) {
-      if ('rating' in dto) {
-        diary.rating =
-          dto.rating === null || dto.rating === undefined
-            ? null
-            : dto.rating.toFixed(1);
-      }
-      if ('review' in dto) diary.content = dto.review?.trim() ?? '';
+      this.syncLegacyReview(diary, dto);
       await this.diaries.save(diary);
     }
-    return this.reactionView(reaction);
+    return this.reactionView(reaction, accountId, false);
   }
 
-  async timeline(
-    spaceId: string,
-    accountId: string,
-    query: WatchTimelineQueryDto,
-  ) {
+  /**
+   * 따봉 on someone else's review. The review must be visible to the liker: a blind review
+   * that is still locked cannot be liked, and nobody can like their own.
+   */
+  async setReviewLike(diaryId: string, reactionId: string, accountId: string, liked: boolean) {
+    const diary = await this.loadDiary(diaryId);
+    await this.access.assertCanView(diary, accountId);
+    const view = await this.toView(diary!, accountId);
+    const reaction = view.reactions.find((item) => item.id === reactionId);
+    if (!reaction) {
+      throw new NotFoundException(response(404, 'REVIEW_NOT_FOUND', '리뷰를 찾을 수 없어요.'));
+    }
+    if (reaction.accountId === accountId) {
+      throw new BadRequestException(
+        response(400, 'OWN_REVIEW_LIKE', '내 리뷰에는 좋아요를 누를 수 없어요.'),
+      );
+    }
+    if (reaction.locked) {
+      throw new ConflictException(
+        response(409, 'REVIEW_LOCKED', '잠긴 리뷰에는 좋아요를 누를 수 없어요.'),
+      );
+    }
+    if (liked) {
+      await this.reviewLikes
+        .createQueryBuilder()
+        .insert()
+        .values({ reactionId, accountId })
+        .orIgnore()
+        .execute();
+    } else {
+      await this.reviewLikes.delete({ reactionId, accountId });
+    }
+    return {
+      reactionId,
+      liked,
+      likeCount: await this.reviewLikes.count({ where: { reactionId } }),
+    };
+  }
+
+  async timeline(spaceId: string, accountId: string, query: WatchTimelineQueryDto) {
     await this.access.assertActiveSpaceMember(spaceId, accountId);
     const limit = Math.min(50, Math.max(1, query.limit ?? 20));
     const base: FindOptionsWhere<WatchShareEntity> = {
@@ -374,9 +400,7 @@ export class WatchEventsService {
       revokedAt: IsNull(),
       diary: { deletedAt: IsNull() },
     };
-    let where:
-      | FindOptionsWhere<WatchShareEntity>[]
-      | FindOptionsWhere<WatchShareEntity> = base;
+    let where: FindOptionsWhere<WatchShareEntity>[] | FindOptionsWhere<WatchShareEntity> = base;
     if (query.cursor) {
       const cursor = this.decodeCursor(query.cursor);
       where = [
@@ -390,24 +414,13 @@ export class WatchEventsService {
     }
     const rows = await this.spaceShares.find({
       where,
-      relations: {
-        diary: {
-          media: true,
-          user: true,
-          watchParticipants: { account: true },
-          watchReactions: { account: true },
-          watchSource: true,
-          spaceShares: true,
-        },
-      },
+      relations: { diary: WATCH_VIEW_RELATIONS },
       order: { sharedAt: 'DESC', id: 'DESC' },
       take: limit + 1,
     });
     const hasMore = rows.length > limit;
     const page = rows.slice(0, limit);
-    const items = await Promise.all(
-      page.map((share) => this.toView(share.diary, accountId)),
-    );
+    const items = await Promise.all(page.map((share) => this.toView(share.diary, accountId)));
     const last = page.at(-1);
     return {
       items,
@@ -437,16 +450,10 @@ export class WatchEventsService {
     });
     const diaries = shares.map((share) => share.diary);
     const diaryIds = diaries.map((diary) => diary.id);
-    const activeMemberships = await this.spaceAccess.activeMembersInSpaces([
-      spaceId,
-    ]);
-    const activeAccountIds = activeMemberships.map(
-      (membership) => membership.accountId,
-    );
+    const activeMemberships = await this.spaceAccess.activeMembersInSpaces([spaceId]);
+    const activeAccountIds = activeMemberships.map((membership) => membership.accountId);
     const participants = diaryIds.length
-      ? await this.participants.find({
-          where: { diaryId: In(diaryIds), status: 'CONFIRMED' },
-        })
+      ? await this.participants.find({ where: { diaryId: In(diaryIds) } })
       : [];
     const reactions =
       diaryIds.length && activeAccountIds.length
@@ -455,7 +462,7 @@ export class WatchEventsService {
               diaryId: In(diaryIds),
               accountId: In(activeAccountIds),
             },
-            relations: { account: true },
+            relations: { account: true, likes: true },
           })
         : [];
 
@@ -463,39 +470,35 @@ export class WatchEventsService {
       spaceId,
       mediaId,
       events: diaries.map((diary) => {
+        const eventParticipants = participants.filter(
+          (participant) => participant.diaryId === diary.id,
+        );
         const confirmed = new Set(
-          participants
-            .filter((participant) => participant.diaryId === diary.id)
+          eventParticipants
+            .filter((participant) => participant.status === 'CONFIRMED')
             .map((participant) => participant.accountId),
         );
+        confirmed.add(diary.userId);
         const eventReactions = reactions.filter(
-          (reaction) =>
-            reaction.diaryId === diary.id && confirmed.has(reaction.accountId),
+          (reaction) => reaction.diaryId === diary.id && confirmed.has(reaction.accountId),
         );
         if (
           activeAccountIds.includes(diary.userId) &&
-          !eventReactions.some(
-            (reaction) => reaction.accountId === diary.userId,
-          ) &&
+          !eventReactions.some((reaction) => reaction.accountId === diary.userId) &&
           (diary.rating !== null || diary.content.trim())
         ) {
-          eventReactions.push(
-            Object.assign(new WatchReactionEntity(), {
-              diaryId: diary.id,
-              accountId: diary.userId,
-              ratingScale:
-                diary.rating === null
-                  ? null
-                  : Math.round(Number(diary.rating) * 2),
-              reviewText: diary.content.trim() || null,
-            }),
-          );
+          eventReactions.push(this.legacyAuthorReaction(diary));
         }
+        const hidden = hiddenReviewAccountIds({
+          viewerId: accountId,
+          reactions: eventReactions,
+          participants: this.withAuthorParticipant(diary, eventParticipants),
+        });
         return {
           watchEventId: diary.id,
           watchedDate: diary.watchedDate,
           reactions: eventReactions.map((reaction) =>
-            this.reactionView(reaction),
+            this.reactionView(reaction, accountId, hidden.has(reaction.accountId)),
           ),
         };
       }),
@@ -505,25 +508,14 @@ export class WatchEventsService {
   private async loadDiary(diaryId: string) {
     return this.diaries.findOne({
       where: { id: diaryId },
-      relations: {
-        media: true,
-        user: true,
-        watchParticipants: { account: true },
-        watchReactions: { account: true },
-        watchSource: true,
-        spaceShares: true,
-      },
+      relations: WATCH_VIEW_RELATIONS,
     });
   }
 
   private async toView(diary: DiaryEntity, viewerId: string) {
-    const activeShares = (diary.spaceShares ?? []).filter(
-      (share) => !share.revokedAt,
-    );
+    const activeShares = (diary.spaceShares ?? []).filter((share) => !share.revokedAt);
     const sharedSpaceIds = activeShares.map((share) => share.spaceId);
-    const memberships = await this.spaceAccess.activeMembersInSpaces(
-      sharedSpaceIds,
-    );
+    const memberships = await this.spaceAccess.activeMembersInSpaces(sharedSpaceIds);
     const viewerSpaceIds = new Set(
       memberships
         .filter((membership) => membership.accountId === viewerId)
@@ -536,25 +528,12 @@ export class WatchEventsService {
       }
     }
 
-    const participants = (diary.watchParticipants ?? []).filter((participant) =>
-      visibleAccountIds.has(participant.accountId),
-    );
-    if (
-      visibleAccountIds.has(diary.userId) &&
-      !participants.some(
-        (participant) => participant.accountId === diary.userId,
-      )
-    ) {
-      participants.unshift(
-        Object.assign(new WatchParticipantEntity(), {
-          diaryId: diary.id,
-          accountId: diary.userId,
-          status: 'CONFIRMED',
-          requestedAt: diary.createdAt,
-          respondedAt: diary.createdAt,
-        }),
-      );
-    }
+    const participants = this.withAuthorParticipant(
+      diary,
+      (diary.watchParticipants ?? []).filter((participant) =>
+        visibleAccountIds.has(participant.accountId),
+      ),
+    ).filter((participant) => visibleAccountIds.has(participant.accountId));
 
     const confirmedIds = new Set(
       participants
@@ -563,26 +542,18 @@ export class WatchEventsService {
     );
     const reactions = (diary.watchReactions ?? []).filter(
       (reaction) =>
-        visibleAccountIds.has(reaction.accountId) &&
-        confirmedIds.has(reaction.accountId),
+        visibleAccountIds.has(reaction.accountId) && confirmedIds.has(reaction.accountId),
     );
-    const authorVisible =
-      diary.userId === viewerId || visibleAccountIds.has(diary.userId);
+    const authorVisible = diary.userId === viewerId || visibleAccountIds.has(diary.userId);
     if (
       visibleAccountIds.has(diary.userId) &&
       !reactions.some((reaction) => reaction.accountId === diary.userId) &&
       (diary.rating !== null || diary.content.trim())
     ) {
-      reactions.unshift(
-        Object.assign(new WatchReactionEntity(), {
-          diaryId: diary.id,
-          accountId: diary.userId,
-          ratingScale:
-            diary.rating === null ? null : Math.round(Number(diary.rating) * 2),
-          reviewText: diary.content.trim() || null,
-        }),
-      );
+      reactions.unshift(this.legacyAuthorReaction(diary));
     }
+    const hidden = hiddenReviewAccountIds({ viewerId, reactions, participants });
+    const source = diary.watchSource;
 
     return {
       id: diary.id,
@@ -604,21 +575,65 @@ export class WatchEventsService {
           ? sharedSpaceIds
           : sharedSpaceIds.filter((spaceId) => viewerSpaceIds.has(spaceId)),
       source:
-        authorVisible && diary.watchSource
+        authorVisible && source
           ? {
-              kind: diary.watchSource.kind,
-              providerName: diary.watchSource.providerName,
-              placeText: diary.watchSource.placeText,
+              kind: source.kind,
+              providerName: source.providerName,
+              placeText: source.placeText,
+              theaterFormat: source.theaterFormat ?? null,
+              seatText: source.seatText ?? null,
+              episodeWatched: source.episodeWatched ?? null,
+              episodeTotal: source.episodeTotal ?? null,
+              completed: source.completed ?? false,
             }
           : null,
-      participants: participants.map((participant) =>
-        this.participantView(participant),
+      participants: participants.map((participant) => this.participantView(participant)),
+      reactions: reactions.map((reaction) =>
+        this.reactionView(reaction, viewerId, hidden.has(reaction.accountId)),
       ),
-      reactions: reactions.map((reaction) => this.reactionView(reaction)),
+      memoryNote: authorVisible ? (diary.memoryNote ?? null) : null,
+      photos: authorVisible
+        ? (diary.watchPhotos ?? [])
+            .filter((photo) => photo.diaryId === diary.id)
+            .sort((left, right) => left.position - right.position)
+            .map((photo) => this.photos.view(photo, viewerId))
+        : [],
+      commentCount: await this.comments.count({ where: { diaryId: diary.id } }),
       createdAt: diary.createdAt?.toISOString(),
       updatedAt: diary.updatedAt?.toISOString(),
       isMine: diary.userId === viewerId,
     };
+  }
+
+  // Records written before participants existed have no row for their author.
+  private withAuthorParticipant(diary: DiaryEntity, participants: WatchParticipantEntity[]) {
+    if (participants.some((participant) => participant.accountId === diary.userId)) {
+      return participants;
+    }
+    return [
+      Object.assign(new WatchParticipantEntity(), {
+        diaryId: diary.id,
+        accountId: diary.userId,
+        status: 'CONFIRMED',
+        requestedAt: diary.createdAt,
+        respondedAt: diary.createdAt,
+      }),
+      ...participants,
+    ];
+  }
+
+  // Older records keep the author's review only on the diary row.
+  private legacyAuthorReaction(diary: DiaryEntity) {
+    return Object.assign(new WatchReactionEntity(), {
+      diaryId: diary.id,
+      accountId: diary.userId,
+      ratingScale: diary.rating === null ? null : Math.round(Number(diary.rating) * 2),
+      reviewText: diary.content.trim() || null,
+      headline: null,
+      hasSpoiler: diary.hasSpoiler,
+      isBlind: false,
+      likes: [],
+    });
   }
 
   private async replaceShares(
@@ -652,12 +667,23 @@ export class WatchEventsService {
     diaryId: string,
     dto: WatchSourceDto,
   ) {
-    const source =
-      (await sources.findOne({ where: { diaryId } })) ??
-      sources.create({ diaryId });
+    const theater = dto.kind === 'THEATER';
+    const episodeWatched = theater ? null : (dto.episodeWatched ?? null);
+    const episodeTotal = theater ? null : (dto.episodeTotal ?? null);
+    if (episodeWatched !== null && episodeTotal !== null && episodeWatched > episodeTotal) {
+      throw new BadRequestException(
+        response(400, 'WATCH_EPISODE_RANGE', '본 회차가 전체 회차보다 클 수 없어요.'),
+      );
+    }
+    const source = (await sources.findOne({ where: { diaryId } })) ?? sources.create({ diaryId });
     source.kind = dto.kind;
     source.providerName = dto.providerName?.trim() || null;
     source.placeText = dto.placeText?.trim() || null;
+    source.theaterFormat = theater ? (dto.theaterFormat ?? null) : null;
+    source.seatText = theater ? dto.seatText?.trim() || null : null;
+    source.episodeWatched = episodeWatched;
+    source.episodeTotal = episodeTotal;
+    source.completed = theater ? false : Boolean(dto.completed);
     return sources.save(source);
   }
 
@@ -674,10 +700,27 @@ export class WatchEventsService {
         accountId,
         ratingScale: null,
         reviewText: null,
+        headline: null,
+        hasSpoiler: false,
+        isBlind: false,
       });
-    if ('rating' in dto) reaction.ratingScale = ratingScale(dto.rating);
-    if ('review' in dto) reaction.reviewText = dto.review?.trim() || null;
+    // DTO instances carry every declared field (as undefined when absent), so "was it sent"
+    // must be checked by value, not with `in`.
+    if (dto.rating !== undefined) reaction.ratingScale = ratingScale(dto.rating);
+    if (dto.review !== undefined) reaction.reviewText = dto.review?.trim() || null;
+    if (dto.headline !== undefined) reaction.headline = dto.headline?.trim() || null;
+    if (dto.hasSpoiler !== undefined) reaction.hasSpoiler = dto.hasSpoiler;
+    if (dto.isBlind !== undefined) reaction.isBlind = dto.isBlind;
     return reactions.save(reaction);
+  }
+
+  // The diary row keeps a copy of the author's review for the older `/diaries` screens.
+  private syncLegacyReview(diary: DiaryEntity, dto: SaveWatchReactionDto) {
+    if (dto.rating !== undefined) {
+      diary.rating = dto.rating === null ? null : dto.rating.toFixed(1);
+    }
+    if (dto.review !== undefined) diary.content = dto.review?.trim() ?? '';
+    if (dto.hasSpoiler !== undefined) diary.hasSpoiler = dto.hasSpoiler;
   }
 
   private participantView(participant: WatchParticipantEntity) {
@@ -690,12 +733,35 @@ export class WatchEventsService {
     };
   }
 
-  private reactionView(reaction: WatchReactionEntity) {
-    return {
+  private reactionView(reaction: WatchReactionEntity, viewerId: string, locked: boolean) {
+    const base = {
+      id: reaction.id ?? null,
       accountId: reaction.accountId,
       nickname: reaction.account?.nickname,
+      isBlind: Boolean(reaction.isBlind),
+      locked,
+    };
+    // A locked review reveals nothing, not even when it was last edited or how it was received.
+    if (locked) {
+      return {
+        ...base,
+        rating: null,
+        headline: null,
+        review: null,
+        hasSpoiler: false,
+        likeCount: 0,
+        likedByMe: false,
+      };
+    }
+    const likes = reaction.likes ?? [];
+    return {
+      ...base,
       rating: reaction.ratingScale === null ? null : reaction.ratingScale / 2,
+      headline: reaction.headline ?? null,
       review: reaction.reviewText,
+      hasSpoiler: Boolean(reaction.hasSpoiler),
+      likeCount: likes.length,
+      likedByMe: likes.some((like) => like.accountId === viewerId),
       updatedAt: reaction.updatedAt?.toISOString(),
     };
   }
@@ -708,14 +774,11 @@ export class WatchEventsService {
 
   private decodeCursor(raw: string) {
     try {
-      const value = JSON.parse(
-        Buffer.from(raw, 'base64url').toString('utf8'),
-      ) as { sharedAt?: string; id?: string };
-      if (
-        !value.sharedAt ||
-        !value.id ||
-        Number.isNaN(Date.parse(value.sharedAt))
-      )
+      const value = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8')) as {
+        sharedAt?: string;
+        id?: string;
+      };
+      if (!value.sharedAt || !value.id || Number.isNaN(Date.parse(value.sharedAt)))
         throw new Error('invalid');
       return { sharedAt: value.sharedAt, id: value.id };
     } catch {
@@ -728,19 +791,13 @@ export class WatchEventsService {
   private assertNotFuture(value: string) {
     if (value > new Date().toISOString().slice(0, 10)) {
       throw new BadRequestException(
-        response(
-          400,
-          'WATCH_DATE_IN_FUTURE',
-          '미래 날짜의 감상 기록은 저장할 수 없어요.',
-        ),
+        response(400, 'WATCH_DATE_IN_FUTURE', '미래 날짜의 감상 기록은 저장할 수 없어요.'),
       );
     }
   }
 
   private recordNotFound() {
-    return new NotFoundException(
-      response(404, 'RECORD_NOT_FOUND', '기록을 찾을 수 없어요.'),
-    );
+    return new NotFoundException(response(404, 'RECORD_NOT_FOUND', '기록을 찾을 수 없어요.'));
   }
 
   private mediaNotFound() {
@@ -751,11 +808,7 @@ export class WatchEventsService {
 
   private participationNotFound() {
     return new NotFoundException(
-      response(
-        404,
-        'WATCH_PARTICIPATION_NOT_FOUND',
-        '참여 요청을 찾을 수 없어요.',
-      ),
+      response(404, 'WATCH_PARTICIPATION_NOT_FOUND', '참여 요청을 찾을 수 없어요.'),
     );
   }
 }

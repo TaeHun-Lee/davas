@@ -1,11 +1,5 @@
-import {
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  OneToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import type { TheaterFormat } from '@davas/shared';
 import { DiaryEntity } from './diary.entity';
 
 export type WatchSourceKind = 'THEATER' | 'OTT' | 'TV_OWNED' | 'OTHER';
@@ -38,4 +32,19 @@ export class WatchSourceEntity {
 
   @Column({ name: 'place_text', type: 'varchar', length: 160, nullable: true })
   placeText!: string | null;
+
+  @Column({ name: 'theater_format', type: 'varchar', length: 16, nullable: true })
+  theaterFormat!: TheaterFormat | null;
+
+  @Column({ name: 'seat_text', type: 'varchar', length: 40, nullable: true })
+  seatText!: string | null;
+
+  @Column({ name: 'episode_watched', type: 'smallint', nullable: true })
+  episodeWatched!: number | null;
+
+  @Column({ name: 'episode_total', type: 'smallint', nullable: true })
+  episodeTotal!: number | null;
+
+  @Column({ type: 'boolean', default: false })
+  completed!: boolean;
 }

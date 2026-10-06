@@ -2,12 +2,17 @@ import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import {
   compareSpaceReactions,
+  createWatchComment,
   createWatchEvent,
+  deleteWatchComment,
   deleteWatchEvent,
   getSpaceTimeline,
   getWatchEvent,
+  listWatchComments,
+  photoSrc,
   respondToWatchParticipation,
   saveWatchReaction,
+  setReviewLike,
   updateWatchEvent,
 } from './watch-events';
 
@@ -38,8 +43,7 @@ beforeEach(() => {
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
-  if (originalBaseUrl === undefined)
-    delete process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (originalBaseUrl === undefined) delete process.env.NEXT_PUBLIC_API_BASE_URL;
   else process.env.NEXT_PUBLIC_API_BASE_URL = originalBaseUrl;
 });
 
@@ -90,14 +94,8 @@ describe('watch events API wrapper', () => {
       [
         ['https://api.example.test/api/v1/watch-events/watch%20%2F%20one', 'GET'],
         ['https://api.example.test/api/v1/watch-events/watch%20%2F%20one', 'PATCH'],
-        [
-          'https://api.example.test/api/v1/watch-events/watch%20%2F%20one/participants/me',
-          'PATCH',
-        ],
-        [
-          'https://api.example.test/api/v1/watch-events/watch%20%2F%20one/reaction',
-          'PUT',
-        ],
+        ['https://api.example.test/api/v1/watch-events/watch%20%2F%20one/participants/me', 'PATCH'],
+        ['https://api.example.test/api/v1/watch-events/watch%20%2F%20one/reaction', 'PUT'],
         [
           'https://api.example.test/api/v1/spaces/space%20%2F%20one/timeline?cursor=cursor+%2F+one&limit=10',
           'GET',
@@ -116,6 +114,40 @@ describe('watch events API wrapper', () => {
       rating: 4,
       review: '내 리뷰',
     });
-    assert.equal(calls.every((call) => call.init.credentials === 'include'), true);
+    assert.equal(
+      calls.every((call) => call.init.credentials === 'include'),
+      true,
+    );
+  });
+
+  it('maps review likes, record comments, and private photo paths', async () => {
+    await setReviewLike('watch / one', 'reaction / one', true);
+    await setReviewLike('watch / one', 'reaction / one', false);
+    await listWatchComments('watch / one');
+    await createWatchComment('watch / one', '다음엔 4DX로 보자');
+    await deleteWatchComment('comment / one');
+
+    assert.deepEqual(
+      calls.map(({ url, init }) => [url, init.method ?? 'GET']),
+      [
+        [
+          'https://api.example.test/api/v1/watch-events/watch%20%2F%20one/reactions/reaction%20%2F%20one/like',
+          'PUT',
+        ],
+        [
+          'https://api.example.test/api/v1/watch-events/watch%20%2F%20one/reactions/reaction%20%2F%20one/like',
+          'DELETE',
+        ],
+        ['https://api.example.test/api/diaries/watch%20%2F%20one/comments', 'GET'],
+        ['https://api.example.test/api/diaries/watch%20%2F%20one/comments', 'POST'],
+        ['https://api.example.test/api/comments/comment%20%2F%20one', 'DELETE'],
+      ],
+    );
+    assert.deepEqual(JSON.parse(String(calls[3].init.body)), { content: '다음엔 4DX로 보자' });
+    // Photos are served by the API behind the session cookie, never from public /uploads.
+    assert.equal(
+      photoSrc('/v1/watch-photos/photo-1/thumb'),
+      'https://api.example.test/api/v1/watch-photos/photo-1/thumb',
+    );
   });
 });

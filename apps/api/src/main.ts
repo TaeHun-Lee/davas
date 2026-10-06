@@ -34,6 +34,11 @@ async function bootstrap() {
 
   const uploadsDir = process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads');
   mkdirSync(uploadsDir, { recursive: true });
+  // Record photos share the uploads volume but must only leave through the access-checked
+  // /api/v1/watch-photos route, never as public static files.
+  app.use('/uploads/watch-photos', (_request: Request, response: Response) => {
+    response.status(404).end();
+  });
   app.useStaticAssets(uploadsDir, { prefix: '/uploads/' });
 
   if (shouldEnableSwagger()) {

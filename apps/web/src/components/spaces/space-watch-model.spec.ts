@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type { WatchEvent } from '../../lib/api/watch-events';
+import type { WatchEvent, WatchReaction } from '../../lib/api/watch-events';
 import {
   pendingConfirmations,
   reactionRows,
@@ -8,6 +8,19 @@ import {
   watchSourceSummary,
   withMyParticipation,
 } from './space-watch-model';
+
+const reaction = (overrides: Partial<WatchReaction> & { accountId: string }): WatchReaction => ({
+  id: `reaction-${overrides.accountId}`,
+  rating: null,
+  headline: null,
+  review: null,
+  hasSpoiler: false,
+  isBlind: false,
+  locked: false,
+  likeCount: 0,
+  likedByMe: false,
+  ...overrides,
+});
 
 const event = (overrides: Partial<WatchEvent> = {}): WatchEvent => ({
   id: 'event-1',
@@ -22,7 +35,17 @@ const event = (overrides: Partial<WatchEvent> = {}): WatchEvent => ({
     { accountId: 'minho', status: 'CONFIRMED', nickname: '민호' },
     { accountId: 'seo', status: 'DECLINED', nickname: '서준' },
   ],
-  reactions: [{ accountId: 'minho', rating: 4.5, review: ' 결말을 알고 봐도 화가 나는 영화. ' }],
+  reactions: [
+    reaction({
+      accountId: 'minho',
+      rating: 4.5,
+      review: ' 결말을 알고 봐도 화가 나는 영화. ',
+      likeCount: 2,
+    }),
+  ],
+  memoryNote: null,
+  photos: [],
+  commentCount: 0,
   isMine: false,
   ...overrides,
 });
@@ -42,13 +65,36 @@ describe('space timeline card model', () => {
   it('lists the author first, labels the viewer, and leaves out people who declined', () => {
     const rows = reactionRows(event(), 'me');
     assert.deepEqual(
-      rows.map((row) => [row.name, row.rating, row.review]),
+      rows.map((row) => [row.name, row.rating, row.text, row.likeCount]),
       [
-        ['민호', 4.5, '결말을 알고 봐도 화가 나는 영화.'],
-        ['나', null, null],
+        ['민호', 4.5, '결말을 알고 봐도 화가 나는 영화.', 2],
+        ['나', null, null, 0],
       ],
     );
     assert.equal(rows[1].isMe, true);
+  });
+
+  it('prefers the headline and marks locked reviews and my review that is waiting to open', () => {
+    const locked = reactionRows(
+      event({
+        reactions: [reaction({ accountId: 'minho', isBlind: true, locked: true })],
+      }),
+      'me',
+    );
+    assert.equal(locked[0].locked, true);
+
+    const mine = reactionRows(
+      event({
+        author: { accountId: 'me', nickname: '지우', profileImageUrl: null },
+        reactions: [
+          reaction({ accountId: 'me', headline: '한 줄', review: '긴 소감', isBlind: true }),
+        ],
+      }),
+      'me',
+    );
+    const me = mine.find((row) => row.isMe)!;
+    assert.equal(me.text, '한 줄');
+    assert.equal(me.waitingToOpen, true);
   });
 
   it('finds records that wait for the viewer to confirm, then reflects the answer', () => {

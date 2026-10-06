@@ -5,7 +5,24 @@ import type { ReactNode } from 'react';
 import { mediaTypeLabel } from '../../lib/api/core';
 import type { WatchEvent } from '../../lib/api/watch-events';
 import { Poster } from '../core/CoreUi';
-import { reactionRows, watchedDayLabel, watchSourceSummary } from './space-watch-model';
+import { WatchPhoto } from '../core/WatchPhoto';
+import {
+  reactionRows,
+  watchedDayLabel,
+  watchSourceSummary,
+  type WatchReactionRow,
+} from './space-watch-model';
+
+const STRIP_SIZE = 3;
+
+function rowText(row: WatchReactionRow) {
+  if (row.status === 'PENDING') {
+    return row.isMe ? '함께 봤는지 알려 주세요' : '함께 봤는지 확인을 기다리고 있어요';
+  }
+  if (row.locked) return '리뷰가 잠겨 있어요 · 내 리뷰를 남기면 열려요';
+  if (row.hasSpoiler && row.text) return '스포일러가 있는 리뷰예요';
+  return row.text ?? (row.rating === null ? '아직 별점을 안 남겼어요' : '별점만 남겼어요');
+}
 
 export function SpaceWatchCard({
   event,
@@ -29,6 +46,9 @@ export function SpaceWatchCard({
     .filter(Boolean)
     .join(' · ');
   const titleId = `space-watch-${event.id}`;
+  const likeTotal = rows.reduce((sum, row) => sum + row.likeCount, 0);
+  const photos = event.photos ?? [];
+  const extraPhotos = photos.length - STRIP_SIZE;
 
   return (
     <article className="core-card space-watch-card" aria-labelledby={titleId}>
@@ -40,22 +60,42 @@ export function SpaceWatchCard({
           <p>{mediaTypeLabel(event.media.mediaType)}</p>
         </div>
       </div>
+      {photos.length ? (
+        <Link
+          href={detail}
+          className="space-watch-photos"
+          aria-label={`${event.media.title} 사진 ${photos.length}장 보기`}
+        >
+          {photos.slice(0, STRIP_SIZE).map((photo, index) => (
+            <span key={photo.id} className="space-watch-photo">
+              <WatchPhoto photo={photo} variant="thumb" alt="" />
+              {index === STRIP_SIZE - 1 && extraPhotos > 0 ? (
+                <span className="space-watch-photo-more" aria-hidden="true">
+                  +{extraPhotos}
+                </span>
+              ) : null}
+            </span>
+          ))}
+        </Link>
+      ) : null}
       <ul className="space-watch-reactions" aria-label={`${event.media.title} 별점과 리뷰`}>
         {rows.map((row) => (
-          <li key={row.accountId} data-me={row.isMe || undefined}>
+          <li
+            key={row.accountId}
+            data-me={row.isMe || undefined}
+            data-locked={row.locked || undefined}
+          >
             <span className="space-watch-avatar" aria-hidden="true">
               {row.name.slice(0, 1)}
             </span>
             <span className="space-watch-text">
-              <b>{row.name}</b>{' '}
-              {row.status === 'PENDING'
-                ? row.isMe
-                  ? '함께 봤는지 알려 주세요'
-                  : '함께 봤는지 확인을 기다리고 있어요'
-                : (row.review ??
-                  (row.rating === null ? '아직 별점을 안 남겼어요' : '별점만 남겼어요'))}
+              <b>{row.name}</b> {rowText(row)}
             </span>
-            {row.status === 'CONFIRMED' && row.rating !== null ? (
+            {row.locked ? (
+              <span className="space-watch-rating" role="img" aria-label="별점 가려짐">
+                ★ ?.?
+              </span>
+            ) : row.status === 'CONFIRMED' && row.rating !== null ? (
               <span className="space-watch-rating">★ {row.rating.toFixed(1)}</span>
             ) : row.isMe && row.status === 'CONFIRMED' ? (
               <Link
@@ -66,12 +106,27 @@ export function SpaceWatchCard({
                 별점 남기기
               </Link>
             ) : null}
+            {row.waitingToOpen ? (
+              <span className="space-watch-badge">상대가 남기면 공개돼요</span>
+            ) : null}
           </li>
         ))}
       </ul>
+      {rows.some((row) => row.locked) &&
+      rows.some((row) => row.isMe && row.status === 'CONFIRMED') ? (
+        <Link href={detail} className="primary-button space-watch-write">
+          내 리뷰 쓰기
+        </Link>
+      ) : null}
       <div className="space-watch-actions">
         <Link href={detail} className="secondary-button">
           자세히 보기
+          {likeTotal || event.commentCount ? (
+            <span className="space-watch-counts">
+              {likeTotal ? ` · 좋아요 ${likeTotal}` : ''}
+              {event.commentCount ? ` · 댓글 ${event.commentCount}` : ''}
+            </span>
+          ) : null}
         </Link>
         {actions}
       </div>

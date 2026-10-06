@@ -203,6 +203,14 @@ export class CommunityService {
 
   async getPublicDiary(id: string, userId?: string): Promise<CommunityDiaryDetail> {
     const diary = await this.getAccessibleDiaryEntity(id, userId);
+    // Same rule as the watch-record screens: a blind review stays hidden until the viewer
+    // writes their own.
+    if (userId && (await this.access.isAuthorReviewHidden(diary, userId))) {
+      return toCommunityDiaryDetail(
+        Object.assign(new DiaryEntity(), diary, { content: '', rating: null, hasSpoiler: false }),
+        { userId },
+      );
+    }
     return toCommunityDiaryDetail(diary, { userId });
   }
 

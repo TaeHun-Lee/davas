@@ -9,7 +9,7 @@ export type ProfileImageContent = {
   size: number;
 };
 
-const ALLOWED_DECLARED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+export const ALLOWED_DECLARED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 export const PROFILE_IMAGE_UPLOAD_OPTIONS: MulterOptions = {
   limits: {
@@ -40,7 +40,8 @@ function hasPrefix(buffer: Buffer, prefix: number[]) {
   return buffer.length >= prefix.length && prefix.every((byte, index) => buffer[index] === byte);
 }
 
-function detectProfileImage(buffer: Buffer): ValidatedProfileImage | null {
+/** Identifies JPEG, PNG and WebP by their leading bytes instead of trusting the client's label. */
+export function detectImageType(buffer: Buffer): ValidatedProfileImage | null {
   if (hasPrefix(buffer, [0xff, 0xd8, 0xff])) {
     return { mimeType: 'image/jpeg', extension: 'jpg' };
   }
@@ -62,7 +63,7 @@ export function validateProfileImageContent(file: ProfileImageContent): Validate
     throw new BadRequestException('프로필 이미지는 5MB 이하만 업로드할 수 있습니다.');
   }
 
-  const detected = detectProfileImage(file.buffer);
+  const detected = detectImageType(file.buffer);
   if (!detected || detected.mimeType !== file.mimetype) {
     throw new BadRequestException('유효한 JPEG, PNG 또는 WebP 이미지가 아닙니다.');
   }

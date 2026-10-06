@@ -173,6 +173,12 @@ export class DiariesService {
     });
     if (!diary || !(await this.access.canView(diary, userId)))
       throw apiError(404, 'RECORD_NOT_FOUND', '기록을 찾을 수 없어요.');
+    if (await this.access.isAuthorReviewHidden(diary, userId)) {
+      return this.toDetail(
+        Object.assign(new DiaryEntity(), diary, { content: '', rating: null, hasSpoiler: false }),
+        userId,
+      );
+    }
     return this.toDetail(diary, userId);
   }
 

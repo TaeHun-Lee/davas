@@ -13,7 +13,14 @@ export type WatchReactionRow = {
   isMe: boolean;
   status: Exclude<WatchParticipantStatus, 'DECLINED'>;
   rating: number | null;
-  review: string | null;
+  /** The headline when there is one, otherwise the review. */
+  text: string | null;
+  hasSpoiler: boolean;
+  /** Blind and still hidden from the viewer. */
+  locked: boolean;
+  /** The viewer's own blind review, still hidden from someone who has not written yet. */
+  waitingToOpen: boolean;
+  likeCount: number;
 };
 
 /** `2026-10-04` → `10월 4일`. Falls back to the raw value for anything unexpected. */
@@ -35,6 +42,13 @@ export function watchSourceSummary(event: WatchEvent) {
  * the viewer labelled "나". Declined people are left out: they said they were not there.
  */
 export function reactionRows(event: WatchEvent, myAccountId: string): WatchReactionRow[] {
+  const written = new Set(event.reactions.map((reaction) => reaction.accountId));
+  const someoneConfirmedHasNotWritten = event.participants.some(
+    (participant) =>
+      participant.status === 'CONFIRMED' &&
+      participant.accountId !== myAccountId &&
+      !written.has(participant.accountId),
+  );
   const rows = event.participants
     .filter((participant) => participant.status !== 'DECLINED')
     .map((participant) => {
@@ -49,7 +63,11 @@ export function reactionRows(event: WatchEvent, myAccountId: string): WatchReact
         isMe,
         status: participant.status as WatchReactionRow['status'],
         rating: reaction?.rating ?? null,
-        review: reaction?.review?.trim() || null,
+        text: reaction?.headline?.trim() || reaction?.review?.trim() || null,
+        hasSpoiler: reaction?.hasSpoiler ?? false,
+        locked: reaction?.locked ?? false,
+        waitingToOpen: Boolean(isMe && reaction?.isBlind && someoneConfirmedHasNotWritten),
+        likeCount: reaction?.likeCount ?? 0,
       };
     });
   return rows.sort(

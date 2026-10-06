@@ -18,20 +18,21 @@ async function statements() {
 }
 
 describe('group recommendation persistence migration', () => {
-  it('is the next additive migration and registers all recommendation entities', () => {
+  it('is registered after the shared-timestamp sets and registers all recommendation entities', () => {
     const options = createTypeOrmOptions();
     const migrations = options.migrations as Array<new () => { name: string }>;
     const entities = options.entities as Array<new () => unknown>;
-    assert.equal(
-      migrations.at(-1)?.name,
-      'GroupRecommendationSessions1720671100000',
-    );
+    const names = migrations.map((migration) => migration.name);
+    assert.equal(names.indexOf('GroupRecommendationSessions1720671100000'), 13);
     for (const name of [
       'RecommendationSessionEntity',
       'RecommendationExposureEntity',
       'RecommendationFeedbackEntity',
     ]) {
-      assert.ok(entities.some((entity) => entity.name === name), name);
+      assert.ok(
+        entities.some((entity) => entity.name === name),
+        name,
+      );
     }
   });
 
@@ -49,10 +50,7 @@ describe('group recommendation persistence migration', () => {
     assert.match(sql.up, /UQ_recommendation_feedback_account/);
     assert.match(sql.up, /'AVAILABILITY_ERROR', 'WATCHED'/);
     assert.match(sql.up, /"watch_event_id" uuid/);
-    assert.match(
-      sql.up,
-      /\("kind" = 'WATCHED'\) = \("watch_event_id" IS NOT NULL\)/,
-    );
+    assert.match(sql.up, /\("kind" = 'WATCHED'\) = \("watch_event_id" IS NOT NULL\)/);
     assert.doesNotMatch(sql.up, /DROP TABLE.*"diaries"/i);
     assert.match(sql.down, /DROP TABLE IF EXISTS "recommendation_feedback"/);
     assert.match(sql.down, /DROP TABLE IF EXISTS "recommendation_sessions"/);

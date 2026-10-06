@@ -3,17 +3,21 @@ import { describe, it } from 'node:test';
 import { HttpException } from '@nestjs/common';
 import type { EntityManager, ObjectLiteral, Repository } from 'typeorm';
 import {
+  CommentEntity,
   DiaryEntity,
   MediaEntity,
   SpaceMembershipEntity,
   WatchParticipantEntity,
+  WatchPhotoEntity,
   WatchReactionEntity,
+  WatchReviewLikeEntity,
   WatchShareEntity,
   WatchSourceEntity,
 } from '../database/entities';
 import { SpaceAccessService } from '../spaces/space-access.service';
 import { DiaryAccessService } from './diary-access.service';
 import { WatchEventsService } from './watch-events.service';
+import type { WatchPhotosService } from './watch-photos.service';
 
 type Row = Record<string, unknown> & { id?: string };
 
@@ -25,6 +29,9 @@ class FakeDatabase {
   reactions: WatchReactionEntity[] = [];
   sources: WatchSourceEntity[] = [];
   shares: WatchShareEntity[] = [];
+  likes: WatchReviewLikeEntity[] = [];
+  comments: CommentEntity[] = [];
+  photos: WatchPhotoEntity[] = [];
   private sequence = 0;
 
   readonly dataSource = {
@@ -33,8 +40,7 @@ class FakeDatabase {
   };
 
   readonly manager = {
-    getRepository: <T extends ObjectLiteral>(target: new () => T) =>
-      this.repository(target),
+    getRepository: <T extends ObjectLiteral>(target: new () => T) => this.repository(target),
   };
 
   repository<T extends ObjectLiteral>(target: new () => T): Repository<T> {
@@ -54,9 +60,7 @@ class FakeDatabase {
           (targetKey !== DiaryEntity ||
             options.withDeleted ||
             !(candidate as unknown as DiaryEntity).deletedAt) &&
-          conditions.some((condition) =>
-            this.matches(target, candidate as Row, condition),
-          ),
+          conditions.some((condition) => this.matches(target, candidate as Row, condition)),
       );
       if (options.order) {
         const entries = Object.entries(options.order);
@@ -65,8 +69,7 @@ class FakeDatabase {
             const left = (a as Row)[key] as string | Date;
             const right = (b as Row)[key] as string | Date;
             const comparison = String(left).localeCompare(String(right));
-            if (comparison)
-              return direction === 'DESC' ? -comparison : comparison;
+            if (comparison) return direction === 'DESC' ? -comparison : comparison;
           }
           return 0;
         });
@@ -97,25 +100,33 @@ class FakeDatabase {
     return {
       create: (input: Partial<T>) => Object.assign(new target(), input),
       save: async (input: T | T[]) =>
-        Array.isArray(input)
-          ? input.map((value) => saveOne(value))
-          : saveOne(input),
+        Array.isArray(input) ? input.map((value) => saveOne(value)) : saveOne(input),
       find,
       findOne: async (options: { where: Row | Row[]; relations?: unknown }) =>
         (await find({ ...options, take: 1 }))[0] ?? null,
+      count: async (options: { where?: Row | Row[] } = {}) => (await find(options)).length,
+      createQueryBuilder: () => ({
+        insert: () => ({
+          values: (input: Row) => ({
+            orIgnore: () => ({
+              execute: async () => {
+                const exists = rows.some((candidate) =>
+                  this.matches(target, candidate as Row, input),
+                );
+                if (!exists) saveOne(Object.assign(new target(), input));
+              },
+            }),
+          }),
+        }),
+      }),
       delete: async (where: Row) => {
-        const matches = rows.filter((candidate) =>
-          this.matches(target, candidate as Row, where),
-        );
+        const matches = rows.filter((candidate) => this.matches(target, candidate as Row, where));
         for (const match of matches) rows.splice(rows.indexOf(match), 1);
         return { affected: matches.length };
       },
       softDelete: async (where: Row) => {
-        const matches = rows.filter((candidate) =>
-          this.matches(target, candidate as Row, where),
-        );
-        for (const match of matches)
-          (match as unknown as DiaryEntity).deletedAt = new Date();
+        const matches = rows.filter((candidate) => this.matches(target, candidate as Row, where));
+        for (const match of matches) (match as unknown as DiaryEntity).deletedAt = new Date();
         return { affected: matches.length };
       },
     } as never;
@@ -133,18 +144,15 @@ class FakeDatabase {
   }
 
   addMember(spaceId: string, accountId: string) {
-    const membership: SpaceMembershipEntity = Object.assign(
-      new SpaceMembershipEntity(),
-      {
-        id: `membership-${++this.sequence}`,
-        spaceId,
-        accountId,
-        role: 'MEMBER' as const,
-        status: 'ACTIVE' as const,
-        joinedAt: new Date(),
-        leftAt: null,
-      },
-    );
+    const membership: SpaceMembershipEntity = Object.assign(new SpaceMembershipEntity(), {
+      id: `membership-${++this.sequence}`,
+      spaceId,
+      accountId,
+      role: 'MEMBER' as const,
+      status: 'ACTIVE' as const,
+      joinedAt: new Date(),
+      leftAt: null,
+    });
     this.memberships.push(membership);
     return membership;
   }
@@ -153,14 +161,14 @@ class FakeDatabase {
     const targetKey: unknown = target;
     if (targetKey === DiaryEntity) return this.diaries as unknown as T[];
     if (targetKey === MediaEntity) return this.media as unknown as T[];
-    if (targetKey === SpaceMembershipEntity)
-      return this.memberships as unknown as T[];
-    if (targetKey === WatchParticipantEntity)
-      return this.participants as unknown as T[];
-    if (targetKey === WatchReactionEntity)
-      return this.reactions as unknown as T[];
+    if (targetKey === SpaceMembershipEntity) return this.memberships as unknown as T[];
+    if (targetKey === WatchParticipantEntity) return this.participants as unknown as T[];
+    if (targetKey === WatchReactionEntity) return this.reactions as unknown as T[];
     if (targetKey === WatchSourceEntity) return this.sources as unknown as T[];
     if (targetKey === WatchShareEntity) return this.shares as unknown as T[];
+    if (targetKey === WatchReviewLikeEntity) return this.likes as unknown as T[];
+    if (targetKey === CommentEntity) return this.comments as unknown as T[];
+    if (targetKey === WatchPhotoEntity) return this.photos as unknown as T[];
     throw new Error(`Unexpected repository ${target.name}`);
   }
 
@@ -177,39 +185,25 @@ class FakeDatabase {
           : candidate[key];
       if (this.isFindOperator(expected)) {
         if (expected._type === 'isNull') return actual === null;
-        if (expected._type === 'in')
-          return (expected._value as unknown[]).includes(actual);
-        if (expected._type === 'equal')
-          return String(actual) === String(expected._value);
-        if (expected._type === 'lessThan')
-          return String(actual) < String(expected._value);
+        if (expected._type === 'in') return (expected._value as unknown[]).includes(actual);
+        if (expected._type === 'equal') return String(actual) === String(expected._value);
+        if (expected._type === 'lessThan') return String(actual) < String(expected._value);
       }
-      if (
-        expected &&
-        typeof expected === 'object' &&
-        !(expected instanceof Date)
-      ) {
+      if (expected && typeof expected === 'object' && !(expected instanceof Date)) {
         return this.matches(target, (actual ?? {}) as Row, expected as Row);
       }
       return actual === expected;
     });
   }
 
-  private isFindOperator(
-    value: unknown,
-  ): value is { _type: string; _value: unknown } {
+  private isFindOperator(value: unknown): value is { _type: string; _value: unknown } {
     return Boolean(value && typeof value === 'object' && '_type' in value);
   }
 
-  private hydrate<T extends ObjectLiteral>(
-    target: new () => T,
-    value: T,
-    relations?: unknown,
-  ) {
+  private hydrate<T extends ObjectLiteral>(target: new () => T, value: T, relations?: unknown) {
     if (!relations) return value;
     const targetKey: unknown = target;
-    if (targetKey === DiaryEntity)
-      this.hydrateDiary(value as unknown as DiaryEntity);
+    if (targetKey === DiaryEntity) this.hydrateDiary(value as unknown as DiaryEntity);
     if (targetKey === WatchShareEntity) {
       const share = value as unknown as WatchShareEntity;
       share.diary = this.diaries.find((diary) => diary.id === share.diaryId)!;
@@ -251,13 +245,12 @@ class FakeDatabase {
           id: reaction.accountId,
           nickname: reaction.accountId,
         } as never;
+        reaction.likes = this.likes.filter((like) => like.reactionId === reaction.id);
         return reaction;
       });
-    diary.watchSource =
-      this.sources.find((source) => source.diaryId === diary.id) ?? null;
-    diary.spaceShares = this.shares.filter(
-      (share) => share.diaryId === diary.id,
-    );
+    diary.watchPhotos = this.photos.filter((photo) => photo.diaryId === diary.id);
+    diary.watchSource = this.sources.find((source) => source.diaryId === diary.id) ?? null;
+    diary.spaceShares = this.shares.filter((share) => share.diaryId === diary.id);
   }
 }
 
@@ -273,10 +266,7 @@ function setup() {
       outboxEvents.push(input);
       return input;
     },
-    enqueueNotification: async (
-      _manager: unknown,
-      input: Record<string, unknown>,
-    ) => {
+    enqueueNotification: async (_manager: unknown, input: Record<string, unknown>) => {
       outboxEvents.push({ eventType: 'NotificationRequested', ...input });
       return input;
     },
@@ -287,6 +277,12 @@ function setup() {
     watchShares,
     spaceAccess,
   );
+  const attachedPhotoIds: string[][] = [];
+  const photos = {
+    replaceForDiary: async (_manager: unknown, _diaryId: string, _account: string, ids: string[]) =>
+      void attachedPhotoIds.push(ids),
+    view: (photo: WatchPhotoEntity) => ({ id: photo.id }),
+  } as unknown as WatchPhotosService;
   const service = new WatchEventsService(
     database.repository(DiaryEntity),
     database.repository(MediaEntity),
@@ -294,12 +290,34 @@ function setup() {
     database.repository(WatchReactionEntity),
     database.repository(WatchSourceEntity),
     watchShares,
+    database.repository(WatchReviewLikeEntity),
+    database.repository(CommentEntity),
     access,
     spaceAccess,
     outbox as never,
     database.dataSource as never,
+    photos,
   );
-  return { database, outboxEvents, service };
+  return { attachedPhotoIds, database, outboxEvents, service };
+}
+
+async function coupleRecord(isBlind: boolean) {
+  const context = setup();
+  context.database.addMember('space-1', 'jiwoo');
+  context.database.addMember('space-1', 'minho');
+  context.database.addMember('space-1', 'seojun');
+  const created = await context.service.create('jiwoo', {
+    mediaId: 'media-1',
+    watchedDate: '2026-10-04',
+    spaceIds: ['space-1'],
+    participantAccountIds: ['minho'],
+    rating: 4.5,
+    headline: '결말이 오래 남아요',
+    review: '지우의 소감',
+    isBlind,
+  });
+  await context.service.respondToParticipation(created.id, 'minho', 'CONFIRMED');
+  return { ...context, created };
 }
 
 function exceptionCode(error: unknown) {
@@ -323,9 +341,7 @@ describe('WatchEventsService', () => {
     assert.equal(database.diaries.length, 2);
     assert.equal(database.shares.length, 0);
     assert.equal(
-      database.participants.every(
-        (participant) => participant.status === 'CONFIRMED',
-      ),
+      database.participants.every((participant) => participant.status === 'CONFIRMED'),
       true,
     );
 
@@ -363,15 +379,10 @@ describe('WatchEventsService', () => {
       'PENDING',
     );
     assert.equal(
-      outboxEvents.filter(
-        (event) => event.eventType === 'WatchParticipationRequested',
-      ).length,
+      outboxEvents.filter((event) => event.eventType === 'WatchParticipationRequested').length,
       2,
     );
-    assert.doesNotMatch(
-      JSON.stringify(outboxEvents),
-      /작성자 리뷰|거실|rating|review|place/i,
-    );
+    assert.doesNotMatch(JSON.stringify(outboxEvents), /작성자 리뷰|거실|rating|review|place/i);
     await assert.rejects(
       () => service.upsertReaction(created.id, 'member', { rating: 3.5 }),
       (error) => exceptionCode(error) === 'WATCH_PARTICIPATION_NOT_FOUND',
@@ -396,11 +407,7 @@ describe('WatchEventsService', () => {
       (error) => exceptionCode(error) === 'WATCH_PARTICIPATION_NOT_FOUND',
     );
 
-    const comparison = await service.compareReactions(
-      'space-1',
-      'media-1',
-      'member',
-    );
+    const comparison = await service.compareReactions('space-1', 'media-1', 'member');
     assert.deepEqual(
       comparison.events[0].reactions.map((reaction) => reaction.rating).sort(),
       [3.5, 4.5],
@@ -476,10 +483,7 @@ describe('WatchEventsService', () => {
       spaceIds: ['space-1'],
       source: { kind: 'OTHER', placeText: '구성원 위치 기여' },
     });
-    assert.equal(
-      (await service.timeline('space-1', 'member', {})).items.length,
-      2,
-    );
+    assert.equal((await service.timeline('space-1', 'member', {})).items.length, 2);
 
     membership.status = 'LEFT';
     membership.leftAt = new Date();
@@ -491,11 +495,7 @@ describe('WatchEventsService', () => {
       () => service.detail('member', created.id),
       (error) => exceptionCode(error) === 'RECORD_NOT_FOUND',
     );
-    const comparison = await service.compareReactions(
-      'space-1',
-      'media-1',
-      'owner',
-    );
+    const comparison = await service.compareReactions('space-1', 'media-1', 'owner');
     assert.equal(
       comparison.events.some((event) =>
         event.reactions.some((reaction) => reaction.accountId === 'member'),
@@ -503,5 +503,135 @@ describe('WatchEventsService', () => {
       false,
     );
     assert.equal((await service.detail('owner', memberEvent.id)).source, null);
+  });
+
+  it('keeps a blind review hidden from the partner until they write theirs, everywhere', async () => {
+    const { created, service } = await coupleRecord(true);
+
+    const locked = await service.detail('minho', created.id);
+    const jiwoo = locked.reactions.find((reaction) => reaction.accountId === 'jiwoo')!;
+    assert.equal(jiwoo.locked, true);
+    assert.equal(jiwoo.isBlind, true);
+    assert.equal(jiwoo.rating, null);
+    assert.equal(jiwoo.headline, null);
+    assert.equal(jiwoo.review, null);
+    assert.equal('updatedAt' in jiwoo, false);
+    assert.doesNotMatch(JSON.stringify(locked), /지우의 소감|결말이 오래 남아요/);
+
+    const timeline = await service.timeline('space-1', 'minho', {});
+    assert.doesNotMatch(JSON.stringify(timeline), /지우의 소감|결말이 오래 남아요/);
+    const comparison = await service.compareReactions('space-1', 'media-1', 'minho');
+    assert.doesNotMatch(JSON.stringify(comparison), /지우의 소감/);
+    // A space member who was not there waits for every watcher, not just one.
+    const outsider = await service.detail('seojun', created.id);
+    assert.equal(outsider.reactions.find((item) => item.accountId === 'jiwoo')?.locked, true);
+
+    await service.upsertReaction(created.id, 'minho', { rating: 4 });
+    const opened = await service.detail('minho', created.id);
+    assert.equal(
+      opened.reactions.find((item) => item.accountId === 'jiwoo')?.review,
+      '지우의 소감',
+    );
+    const outsiderAfter = await service.detail('seojun', created.id);
+    assert.equal(outsiderAfter.reactions.find((item) => item.accountId === 'jiwoo')?.locked, false);
+    // The writer always sees their own review.
+    const own = await service.detail('jiwoo', created.id);
+    assert.equal(own.reactions.find((item) => item.accountId === 'jiwoo')?.locked, false);
+  });
+
+  it('shows a review right away when blind reveal is off', async () => {
+    const { created, service } = await coupleRecord(false);
+    const view = await service.detail('minho', created.id);
+    const jiwoo = view.reactions.find((reaction) => reaction.accountId === 'jiwoo')!;
+    assert.equal(jiwoo.locked, false);
+    assert.equal(jiwoo.headline, '결말이 오래 남아요');
+  });
+
+  it('lets people like a visible review of someone else, once', async () => {
+    const { created, database, service } = await coupleRecord(true);
+    const jiwooReaction = database.reactions.find((reaction) => reaction.accountId === 'jiwoo')!;
+
+    await assert.rejects(
+      () => service.setReviewLike(created.id, jiwooReaction.id, 'minho', true),
+      (error) => exceptionCode(error) === 'REVIEW_LOCKED',
+    );
+    await assert.rejects(
+      () => service.setReviewLike(created.id, jiwooReaction.id, 'jiwoo', true),
+      (error) => exceptionCode(error) === 'OWN_REVIEW_LIKE',
+    );
+    await service.upsertReaction(created.id, 'minho', { rating: 4 });
+    await service.setReviewLike(created.id, jiwooReaction.id, 'minho', true);
+    const twice = await service.setReviewLike(created.id, jiwooReaction.id, 'minho', true);
+    assert.deepEqual(twice, { reactionId: jiwooReaction.id, liked: true, likeCount: 1 });
+
+    const view = await service.detail('minho', created.id);
+    const liked = view.reactions.find((reaction) => reaction.accountId === 'jiwoo')!;
+    assert.equal(liked.likeCount, 1);
+    assert.equal(liked.likedByMe, true);
+
+    const undone = await service.setReviewLike(created.id, jiwooReaction.id, 'minho', false);
+    assert.equal(undone.likeCount, 0);
+    await assert.rejects(
+      () => service.setReviewLike(created.id, 'missing', 'minho', true),
+      (error) => exceptionCode(error) === 'REVIEW_NOT_FOUND',
+    );
+  });
+
+  it('stores theater and series details, memory notes, photos and spoiler flags', async () => {
+    const { attachedPhotoIds, database, service } = setup();
+    const theater = await service.create('owner', {
+      mediaId: 'media-1',
+      watchedDate: '2026-10-04',
+      source: {
+        kind: 'THEATER',
+        placeText: 'CGV 용산',
+        theaterFormat: 'IMAX',
+        seatText: 'H12',
+        episodeWatched: 3,
+      },
+      memoryNote: '  팝콘 반반  ',
+      hasSpoiler: true,
+      review: '반전',
+      photoIds: ['photo-1', 'photo-2'],
+    });
+    assert.deepEqual(attachedPhotoIds, [['photo-1', 'photo-2']]);
+    assert.equal(theater.memoryNote, '팝콘 반반');
+    assert.equal(theater.source?.theaterFormat, 'IMAX');
+    assert.equal(theater.source?.seatText, 'H12');
+    // Episodes only make sense for a series watched at home.
+    assert.equal(theater.source?.episodeWatched, null);
+    assert.equal(theater.reactions[0].hasSpoiler, true);
+    assert.equal(database.diaries[0].hasSpoiler, true);
+
+    await assert.rejects(
+      () =>
+        service.create('owner', {
+          mediaId: 'media-1',
+          watchedDate: '2026-10-04',
+          source: { kind: 'OTT', episodeWatched: 9, episodeTotal: 8 },
+        }),
+      (error) => exceptionCode(error) === 'WATCH_EPISODE_RANGE',
+    );
+    const series = await service.create('owner', {
+      mediaId: 'media-1',
+      watchedDate: '2026-10-04',
+      source: { kind: 'OTT', providerName: '넷플릭스', episodeWatched: 8, episodeTotal: 16 },
+    });
+    assert.equal(series.source?.episodeWatched, 8);
+    assert.equal(series.source?.theaterFormat, null);
+  });
+
+  it('keeps the rating when an update leaves review fields out', async () => {
+    const { service } = setup();
+    const created = await service.create('owner', {
+      mediaId: 'media-1',
+      watchedDate: '2026-10-04',
+      rating: 4,
+      review: '좋았어요',
+    });
+    const updated = await service.update('owner', created.id, { watchedDate: '2026-10-03' });
+    assert.equal(updated.watchedDate, '2026-10-03');
+    assert.equal(updated.reactions[0].rating, 4);
+    assert.equal(updated.reactions[0].review, '좋았어요');
   });
 });

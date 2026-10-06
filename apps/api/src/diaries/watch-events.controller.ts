@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Put,
+  Req,
+} from '@nestjs/common';
 import type { AuthenticatedRequest } from '../auth/jwt-cookie-auth.guard';
 import {
   CreateWatchEventDto,
@@ -66,5 +77,23 @@ export class WatchEventsController {
     return {
       reaction: await this.watchEvents.upsertReaction(watchEventId, request.user.id, body),
     };
+  }
+
+  @Put(':watchEventId/reactions/:reactionId/like')
+  like(
+    @Req() request: AuthenticatedRequest,
+    @Param('watchEventId', ParseUUIDPipe) watchEventId: string,
+    @Param('reactionId', ParseUUIDPipe) reactionId: string,
+  ) {
+    return this.watchEvents.setReviewLike(watchEventId, reactionId, request.user.id, true);
+  }
+
+  @Delete(':watchEventId/reactions/:reactionId/like')
+  unlike(
+    @Req() request: AuthenticatedRequest,
+    @Param('watchEventId', ParseUUIDPipe) watchEventId: string,
+    @Param('reactionId', ParseUUIDPipe) reactionId: string,
+  ) {
+    return this.watchEvents.setReviewLike(watchEventId, reactionId, request.user.id, false);
   }
 }

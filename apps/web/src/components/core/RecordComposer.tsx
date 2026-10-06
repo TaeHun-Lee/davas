@@ -2,7 +2,13 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import type { MediaType, SpaceView } from '@davas/shared';
+import {
+  WATCH_HEADLINE_MAX_LENGTH,
+  WATCH_MEMORY_NOTE_MAX_LENGTH,
+  WATCH_REVIEW_MAX_LENGTH,
+  type MediaType,
+  type SpaceView,
+} from '@davas/shared';
 import { getMe } from '../../lib/api/auth';
 import {
   getMediaDetail,
@@ -16,10 +22,21 @@ import {
   createWatchEvent,
   getWatchEvent,
   updateWatchEvent,
+  type TheaterFormat,
   type WatchEventWritePayload,
+  type WatchPhotoView,
   type WatchSourceKind,
 } from '../../lib/api/watch-events';
 import { useMediaSearch } from '../../hooks/useMediaSearch';
+import { useWatchPhotoUploads } from '../../hooks/useWatchPhotoUploads';
+import {
+  ChoiceChips,
+  CountedField,
+  OTT_SERVICES,
+  SeriesProgress,
+  THEATER_FORMAT_LABELS,
+  ToggleSwitch,
+} from './ComposerFields';
 import {
   AsyncState,
   CoreAppShell,
@@ -28,6 +45,7 @@ import {
   SearchField,
   TaskShell,
 } from './CoreUi';
+import { PhotoPicker } from './PhotoPicker';
 import { WatchRatingControl } from './WatchRatingControl';
 import { MediaDetailModal } from '../media/MediaDetailModal';
 import { chooseActiveSpace, defaultWatchPartners, readActiveSpaceId } from '../spaces/space-ui';
@@ -39,9 +57,22 @@ type Draft = {
   placeText: string;
   watchedDate: string;
   rating: number | null;
+  /** 한줄평 */
+  headline: string;
+  /** 소감 */
   content: string;
+  hasSpoiler: boolean;
+  isBlind: boolean;
+  memoryNote: string;
+  theaterFormat: TheaterFormat | null;
+  seatText: string;
+  episodeWatched: number | null;
+  episodeTotal: number | null;
+  completed: boolean;
   spaceIds: string[];
   participantAccountIds: string[];
+  /** Photos already uploaded; kept so a reloaded draft does not lose them. */
+  photos: WatchPhotoView[];
 };
 const today = () =>
   new Intl.DateTimeFormat('en-CA', {
@@ -57,9 +88,19 @@ const freshDraft = (): Draft => ({
   placeText: '',
   watchedDate: today(),
   rating: null,
+  headline: '',
   content: '',
+  hasSpoiler: false,
+  isBlind: false,
+  memoryNote: '',
+  theaterFormat: null,
+  seatText: '',
+  episodeWatched: null,
+  episodeTotal: null,
+  completed: false,
   spaceIds: [],
   participantAccountIds: [],
+  photos: [],
 });
 
 const sourceLabels: Record<WatchSourceKind, string> = {
@@ -114,6 +155,9 @@ export function RecordComposer({ editId }: { editId?: string }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [detailPreview, setDetailPreview] = useState<MediaDetail | null>(null);
+  const [waitingForPhotos, setWaitingForPhotos] = useState(false);
+  const photoUploads = useWatchPhotoUploads();
+  const { reset: resetPhotos } = photoUploads;
   const searchType = mediaType === 'MOVIE' ? 'movie' : mediaType === 'TV' ? 'tv' : 'multi';
   const results = useMediaSearch(query, searchType);
   const key = userId
@@ -148,6 +192,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
               sourceKind: parsed.sourceKind ?? parsed.viewingMethod ?? null,
               spaceIds: parsed.spaceIds ?? [],
               participantAccountIds: parsed.participantAccountIds ?? [],
+              photos: parsed.photos ?? [],
             };
             if (mediaId) {
               const media = await getMediaDetail(mediaId);
@@ -166,6 +211,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
               if (active) setDetailPreview(media);
             }
             if (!active) return;
+            resetPhotos(resumedDraft.photos);
             setDraft(resumedDraft);
             return;
           } catch {
@@ -174,6 +220,10 @@ export function RecordComposer({ editId }: { editId?: string }) {
         }
         if (editId) {
           const record = await getWatchEvent(editId);
+          const mine = record.reactions.find(
+            (reaction) => reaction.accountId === record.author.accountId,
+          );
+          resetPhotos(record.photos);
           setDraft({
             selected: {
               id: record.media.id,
@@ -193,12 +243,18 @@ export function RecordComposer({ editId }: { editId?: string }) {
             providerName: record.source?.providerName ?? '',
             placeText: record.source?.placeText ?? '',
             watchedDate: record.watchedDate,
-            rating:
-              record.reactions.find((reaction) => reaction.accountId === record.author.accountId)
-                ?.rating ?? null,
-            content:
-              record.reactions.find((reaction) => reaction.accountId === record.author.accountId)
-                ?.review ?? '',
+            rating: mine?.rating ?? null,
+            headline: mine?.headline ?? '',
+            content: mine?.review ?? '',
+            hasSpoiler: mine?.hasSpoiler ?? false,
+            isBlind: mine?.isBlind ?? false,
+            memoryNote: record.memoryNote ?? '',
+            theaterFormat: record.source?.theaterFormat ?? null,
+            seatText: record.source?.seatText ?? '',
+            episodeWatched: record.source?.episodeWatched ?? null,
+            episodeTotal: record.source?.episodeTotal ?? null,
+            completed: record.source?.completed ?? false,
+            photos: record.photos,
             spaceIds: record.spaceIds,
             participantAccountIds: record.participants
               .filter(
@@ -225,6 +281,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
             externalProvider: media.externalProvider,
             genreIds: media.genreIds ?? [],
           };
+          next.episodeTotal = media.mediaType === 'TV' ? (media.numberOfEpisodes ?? null) : null;
         } else if (detailMediaId) {
           const media = await getMediaDetail(detailMediaId);
           next.selected = {
@@ -232,19 +289,32 @@ export function RecordComposer({ editId }: { editId?: string }) {
             externalProvider: media.externalProvider,
             genreIds: media.genreIds ?? [],
           };
+          next.episodeTotal = media.mediaType === 'TV' ? (media.numberOfEpisodes ?? null) : null;
           if (active) setDetailPreview(media);
         }
         if (!active) return;
+        resetPhotos([]);
         setDraft(next);
       })
       .catch(() => setError('작성 화면을 준비하지 못했어요.'));
     return () => {
       active = false;
     };
-  }, [detailMediaId, editId, mediaId]);
+  }, [detailMediaId, editId, mediaId, resetPhotos]);
+  const uploadedPhotos = photoUploads.items.flatMap((item) =>
+    item.status === 'done' && item.photo ? [item.photo] : [],
+  );
+  const uploadedPhotoKey = uploadedPhotos.map((photo) => photo.id).join(',');
   useEffect(() => {
-    if (key && draft) sessionStorage.setItem(key, JSON.stringify(draft));
-  }, [key, draft]);
+    if (!key || !draft) return;
+    try {
+      sessionStorage.setItem(key, JSON.stringify({ ...draft, photos: uploadedPhotos }));
+    } catch {
+      // A full or blocked storage only loses the safety copy, never the form itself.
+    }
+    // uploadedPhotoKey stands in for the photo list, which is rebuilt on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, draft, uploadedPhotoKey]);
   useEffect(() => {
     if (editId) return;
     setStep(mediaId || requestedStep === 'write' ? 'write' : 'find');
@@ -303,6 +373,17 @@ export function RecordComposer({ editId }: { editId?: string }) {
     }
     setBusy(true);
     setError('');
+    // Saving while photos are still uploading waits for them instead of dropping them.
+    setWaitingForPhotos(photoUploads.uploadingCount > 0);
+    const photoItems = await photoUploads.settle();
+    setWaitingForPhotos(false);
+    if (photoItems.some((item) => item.status === 'error')) {
+      setBusy(false);
+      setError('올리지 못한 사진이 있어요. 다시 시도하거나 삭제한 뒤 저장해 주세요.');
+      return;
+    }
+    const theater = draft!.sourceKind === 'THEATER';
+    const shared = draft!.spaceIds.length > 0;
     const payload: WatchEventWritePayload = {
       mediaId: draft!.selected.id,
       watchedDate: draft!.watchedDate,
@@ -310,25 +391,31 @@ export function RecordComposer({ editId }: { editId?: string }) {
         kind: draft!.sourceKind,
         providerName: draft!.providerName.trim() || null,
         placeText: draft!.placeText.trim() || null,
+        theaterFormat: theater ? draft!.theaterFormat : null,
+        seatText: theater ? draft!.seatText.trim() || null : null,
+        episodeWatched: theater ? null : draft!.episodeWatched,
+        episodeTotal: theater ? null : draft!.episodeTotal,
+        completed: theater ? false : draft!.completed,
       },
       spaceIds: draft!.spaceIds,
       participantAccountIds: draft!.participantAccountIds,
       rating: draft!.rating,
+      headline: draft!.headline.trim() || null,
       review: draft!.content.trim() || null,
+      hasSpoiler: draft!.hasSpoiler,
+      // Blind reveal only means something when someone else can see the review.
+      isBlind: shared && draft!.isBlind,
+      memoryNote: draft!.memoryNote.trim() || null,
+      photoIds: photoItems.flatMap((item) => (item.photo ? [item.photo.id] : [])),
     };
     try {
+      // Companions are only asked when the record is created; an edit never re-sends requests.
+      const changes: Partial<WatchEventWritePayload> = { ...payload };
+      delete changes.participantAccountIds;
       const result = editId
-        ? await updateWatchEvent(editId, {
-            mediaId: payload.mediaId,
-            watchedDate: payload.watchedDate,
-            source: payload.source,
-            spaceIds: payload.spaceIds,
-            rating: payload.rating,
-            review: payload.review,
-          })
+        ? await updateWatchEvent(editId, changes)
         : await createWatchEvent(payload);
       sessionStorage.removeItem(key);
-      const shared = draft!.spaceIds.length > 0;
       router.replace(
         `/records/${result.id}?returnTo=${encodeURIComponent(shared ? '/' : '/me')}&saved=${shared ? 'space' : 'private'}`,
       );
@@ -474,6 +561,9 @@ export function RecordComposer({ editId }: { editId?: string }) {
           </div>
         </section>
         <section className="record-compose-panel mt-4">
+          <PhotoPicker uploads={photoUploads} />
+        </section>
+        <section className="record-compose-panel mt-4">
           <div>
             <span className="field-label">어디서 봤나요? *</span>
             <SourceKindControl
@@ -487,20 +577,72 @@ export function RecordComposer({ editId }: { editId?: string }) {
             ) : null}
           </div>
           {draft.sourceKind === 'OTT' ? (
-            <label className="mt-4 block">
-              <span className="field-label">OTT 서비스 (선택)</span>
-              <input
-                className="date-input"
-                maxLength={80}
-                placeholder="예: 넷플릭스, 왓챠"
-                value={draft.providerName}
-                onChange={(event) => setDraft({ ...draft, providerName: event.target.value })}
+            <div className="mt-4">
+              <ChoiceChips
+                legend="OTT 서비스 (선택)"
+                options={OTT_SERVICES.map((service) => ({ value: service, label: service }))}
+                value={OTT_SERVICES.includes(draft.providerName) ? draft.providerName : null}
+                onChange={(value) => setDraft({ ...draft, providerName: value ?? '' })}
               />
-            </label>
+              <label className="mt-2 block">
+                <span className="sr-only">다른 OTT 서비스 이름</span>
+                <input
+                  className="date-input"
+                  maxLength={80}
+                  placeholder="목록에 없으면 직접 입력"
+                  value={OTT_SERVICES.includes(draft.providerName) ? '' : draft.providerName}
+                  onChange={(event) => setDraft({ ...draft, providerName: event.target.value })}
+                />
+              </label>
+            </div>
+          ) : null}
+          {draft.sourceKind === 'THEATER' ? (
+            <div className="mt-4 space-y-4">
+              <ChoiceChips
+                legend="상영 형식 (선택)"
+                options={(Object.keys(THEATER_FORMAT_LABELS) as TheaterFormat[]).map((format) => ({
+                  value: format,
+                  label: THEATER_FORMAT_LABELS[format],
+                }))}
+                value={draft.theaterFormat}
+                onChange={(value) => setDraft({ ...draft, theaterFormat: value })}
+              />
+              <label className="block">
+                <span className="field-label">좌석 (선택)</span>
+                <input
+                  className="date-input"
+                  maxLength={40}
+                  placeholder="예: H열 12, 13"
+                  value={draft.seatText}
+                  onChange={(event) => setDraft({ ...draft, seatText: event.target.value })}
+                />
+              </label>
+            </div>
+          ) : null}
+          {draft.sourceKind &&
+          draft.sourceKind !== 'THEATER' &&
+          draft.selected?.mediaType === 'TV' ? (
+            <div className="mt-4">
+              <SeriesProgress
+                watched={draft.episodeWatched}
+                total={draft.episodeTotal}
+                completed={draft.completed}
+                onChange={(value) =>
+                  setDraft({
+                    ...draft,
+                    episodeWatched: value.watched,
+                    episodeTotal: value.total,
+                    completed: value.completed,
+                  })
+                }
+              />
+            </div>
           ) : null}
           {draft.sourceKind ? (
             <label className="mt-4 block">
-              <span className="field-label">장소 (선택)</span>
+              <span className="field-label">
+                {draft.sourceKind === 'THEATER' ? '극장 이름 (선택)' : '장소 (선택)'}
+              </span>
               <input
                 className="date-input"
                 maxLength={160}
@@ -536,24 +678,33 @@ export function RecordComposer({ editId }: { editId?: string }) {
               name="record-rating"
             />
           </fieldset>
-          <label className="mt-4 block">
-            <span className="field-label">어땠나요? (선택)</span>
-            <textarea
-              className="text-area record-compose-review"
-              maxLength={500}
-              placeholder="기억하고 싶은 감상을 짧게 남겨 보세요."
-              value={draft.content}
-              onChange={(event) =>
-                setDraft({
-                  ...draft,
-                  content: event.target.value,
-                })
-              }
+          <div className="mt-4">
+            <CountedField
+              label="한줄평 (선택)"
+              max={WATCH_HEADLINE_MAX_LENGTH}
+              placeholder="한 문장으로 남겨 보세요"
+              value={draft.headline}
+              onChange={(headline) => setDraft({ ...draft, headline })}
             />
-            <span className="mt-1 block text-right text-xs font-semibold text-[var(--muted)]">
-              {draft.content.length}/500
-            </span>
-          </label>
+          </div>
+          <div className="mt-4">
+            <CountedField
+              label="소감 (선택)"
+              multiline
+              max={WATCH_REVIEW_MAX_LENGTH}
+              placeholder="기억하고 싶은 장면이나 느낌을 자유롭게 남겨 보세요."
+              value={draft.content}
+              onChange={(content) => setDraft({ ...draft, content })}
+            />
+          </div>
+          <div className="mt-4">
+            <ToggleSwitch
+              label="스포일러 포함"
+              description="켜면 목록에서 내용이 가려지고, 눌러야 보여요."
+              checked={draft.hasSpoiler}
+              onChange={(hasSpoiler) => setDraft({ ...draft, hasSpoiler })}
+            />
+          </div>
         </section>
         <section className="core-card mt-5 p-4" aria-labelledby="share-scope-title">
           <h2 id="share-scope-title" className="section-title">
@@ -624,6 +775,22 @@ export function RecordComposer({ editId }: { editId?: string }) {
           >
             개인 기록 · 나만 보기
           </button>
+          {draft.spaceIds.length > 0 ? (
+            <div className="mt-4">
+              <ToggleSwitch
+                label="상대가 리뷰를 쓰면 공개(블라인드)"
+                description="함께 본 사람이 이 기록에 리뷰를 남기기 전까지 내 별점·한줄평·소감이 가려져요."
+                checked={draft.isBlind}
+                onChange={(isBlind) => setDraft({ ...draft, isBlind })}
+              >
+                {draft.isBlind ? (
+                  <p className="composer-switch-preview">
+                    상대에게는 &lsquo;리뷰가 잠겨 있어요 · 내 리뷰를 남기면 열려요&rsquo;로 보여요.
+                  </p>
+                ) : null}
+              </ToggleSwitch>
+            </div>
+          ) : null}
         </section>
         {draft.spaceIds.length > 0 && !editId ? (
           <fieldset className="core-card mt-4 p-4">
@@ -665,9 +832,26 @@ export function RecordComposer({ editId }: { editId?: string }) {
             )}
           </fieldset>
         ) : null}
+        <section className="record-compose-panel mt-4">
+          <CountedField
+            label={draft.spaceIds.length ? '추억 메모 · 공간 사람만 봐요' : '추억 메모 · 나만 봐요'}
+            multiline
+            rows={3}
+            max={WATCH_MEMORY_NOTE_MAX_LENGTH}
+            placeholder="그날의 데이트를 적어 두세요. 예: 팝콘 반반 먹고 근처 국밥집"
+            value={draft.memoryNote}
+            onChange={(memoryNote) => setDraft({ ...draft, memoryNote })}
+          />
+        </section>
         {error ? (
           <p className="form-error mt-4" role="alert">
             {error}
+          </p>
+        ) : null}
+        {photoUploads.uploadingCount > 0 ? (
+          <p className="record-compose-note mt-4" role="status">
+            사진 {photoUploads.uploadingCount}장을 올리는 중이에요. 저장을 누르면 다 올라간 뒤에
+            저장돼요.
           </p>
         ) : null}
         <p className="record-compose-note mt-4">
@@ -678,17 +862,19 @@ export function RecordComposer({ editId }: { editId?: string }) {
           disabled={busy || !draft.selected || !draft.sourceKind || !draft.watchedDate}
           onClick={() => save()}
         >
-          {busy
-            ? '저장 중…'
-            : !draft.sourceKind
-              ? '감상 경로를 선택해 주세요'
-              : editId
-                ? '수정 내용 저장하기'
-                : draft.spaceIds.length === 0
-                  ? '개인 기록으로 저장하기'
-                  : draft.spaceIds.length === 1
-                    ? `${spaces.find((space) => space.id === draft.spaceIds[0])?.name ?? '선택한 공간'}에 공유하기`
-                    : `공간 ${draft.spaceIds.length}곳에 공유하기`}
+          {waitingForPhotos
+            ? '사진을 올리는 중… 끝나면 저장돼요'
+            : busy
+              ? '저장 중…'
+              : !draft.sourceKind
+                ? '감상 경로를 선택해 주세요'
+                : editId
+                  ? '수정 내용 저장하기'
+                  : draft.spaceIds.length === 0
+                    ? '개인 기록으로 저장하기'
+                    : draft.spaceIds.length === 1
+                      ? `${spaces.find((space) => space.id === draft.spaceIds[0])?.name ?? '선택한 공간'}에 공유하기`
+                      : `공간 ${draft.spaceIds.length}곳에 공유하기`}
         </button>
       </div>
     </TaskShell>
