@@ -1075,8 +1075,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/friends/FriendsScreen.tsx": {
-    "mtime": 1791266026.1843662,
-    "ast_hash": "a2833c356d1e9bcf953cc5f61828b863",
+    "mtime": 1791273230.6609507,
+    "ast_hash": "b3dc6de6f70b8e9b5815174e9f5193ea",
     "semantic_hash": ""
   },
   "apps/web/src/components/home/ArchiveHighlightSection.tsx": {
@@ -1735,13 +1735,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceInviteScreen.tsx": {
-    "mtime": 1791266026.1869211,
-    "ast_hash": "617f76f4a33ba81a237f660a828febc6",
+    "mtime": 1791273018.9756992,
+    "ast_hash": "ea445b810d5c933c61357b84ccea725b",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpacesScreen.tsx": {
-    "mtime": 1791272147.5156221,
-    "ast_hash": "c68017c77fc3f327822ce07740a91293",
+    "mtime": 1791273018.9342904,
+    "ast_hash": "31ab20280a603251293618fe5a65b4e4",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/space-ui.spec.ts": {
@@ -1755,8 +1755,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/spaces-design.spec.ts": {
-    "mtime": 1791271662.4102702,
-    "ast_hash": "3e8866010742cb6cedd4a0ded3b1c0e4",
+    "mtime": 1791273057.9035976,
+    "ast_hash": "a741ed79d48f1bd1cf57de36242f0615",
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/spaces.spec.ts": {
@@ -1845,8 +1845,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceTimeline.tsx": {
-    "mtime": 1791266026.1874313,
-    "ast_hash": "371ebf3648b404309c50b720a5e63fee",
+    "mtime": 1791273018.95962,
+    "ast_hash": "f0f54636079dae3ce8671a88f4e14a0b",
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/watch-events.spec.ts": {
@@ -2195,8 +2195,8 @@
     "semantic_hash": ""
   },
   "scripts/prettier-baseline.json": {
-    "mtime": 1791271792.7711897,
-    "ast_hash": "8ff813d0007c1642e6ae8104b5ad4965",
+    "mtime": 1791273266.8597393,
+    "ast_hash": "da04524a17d71722bfda71ce5f3b72bc",
     "semantic_hash": ""
   },
   "scripts/run-tests.mjs": {
