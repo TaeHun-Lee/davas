@@ -782,6 +782,7 @@ export class WatchEventsService {
         id: diary.media?.id ?? diary.mediaId,
         title: diary.media?.title ?? diary.title,
         mediaType: diary.media?.mediaType,
+        releaseYear: diary.media?.releaseDate?.slice(0, 4) ?? null,
         posterUrl: diary.media?.posterUrl ?? null,
       },
       author: {

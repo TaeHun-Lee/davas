@@ -42,6 +42,7 @@ export function ReviewCard({
   isMe,
   waitingFor,
   lockedHint,
+  onEdit,
   onLikeChange,
 }: {
   watchEventId: string;
@@ -52,6 +53,8 @@ export function ReviewCard({
   waitingFor: string | null;
   /** What opens a locked review for this viewer, which depends on whether they watched. */
   lockedHint: string;
+  /** Opens my review for editing in place; only passed for the viewer's own review. */
+  onEdit?: () => void;
   onLikeChange: (next: { likeCount: number; likedByMe: boolean }) => void;
 }) {
   const [spoilerOpen, setSpoilerOpen] = useState(false);
@@ -105,6 +108,9 @@ export function ReviewCard({
             <ThumbIcon />
             좋아요
           </button>
+          <span className="review-like-hint" aria-hidden="true">
+            리뷰가 열리면 좋아요를 누를 수 있어요
+          </span>
         </div>
       </article>
     );
@@ -112,13 +118,22 @@ export function ReviewCard({
 
   const hasText = Boolean(reaction.headline || reaction.review);
   const hidden = reaction.hasSpoiler && !spoilerOpen && !isMe;
+  const meta = [
+    reaction.updatedAt ? relativeTime(reaction.updatedAt) : null,
+    reaction.isBlind ? '블라인드로 남김' : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
   return (
     <article className="review-card" data-me={isMe || undefined}>
       <div className="review-card-head">
         <span className="review-avatar" aria-hidden="true">
           {name.slice(0, 1)}
         </span>
-        <strong>{name}</strong>
+        <strong>
+          {name}
+          {meta ? <span className="review-when"> · {meta}</span> : null}
+        </strong>
         {isMe && reaction.isBlind && waitingFor ? (
           <span className="review-badge">{waitingFor}님이 남기면 공개돼요</span>
         ) : null}
@@ -157,6 +172,11 @@ export function ReviewCard({
             좋아요 {reaction.likeCount}
           </button>
         )}
+        {onEdit ? (
+          <button type="button" className="review-edit" onClick={onEdit}>
+            고치기
+          </button>
+        ) : null}
       </div>
       {error ? (
         <p role="alert" className="form-error mt-2">
@@ -186,6 +206,8 @@ export function CommentsSection({
   const [content, setContent] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // A second tap on delete while the first is on its way does nothing.
+  const [removing, setRemoving] = useState<string | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -205,12 +227,16 @@ export function CommentsSection({
   }
 
   async function remove(commentId: string) {
+    if (removing) return;
+    setRemoving(commentId);
     setError('');
     try {
       await deleteWatchComment(commentId);
       onChange((current) => current.filter((comment) => comment.id !== commentId));
     } catch (caught) {
       setError(errorMessage(caught, '댓글을 지우지 못했어요.'));
+    } finally {
+      setRemoving(null);
     }
   }
 
@@ -252,6 +278,7 @@ export function CommentsSection({
                     type="button"
                     className="comments-delete"
                     aria-label="내 댓글 삭제"
+                    disabled={removing === comment.id}
                     onClick={() => remove(comment.id)}
                   >
                     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -266,28 +293,31 @@ export function CommentsSection({
       ) : (
         <p className="page-description">아직 댓글이 없어요. 그날 이야기를 나눠 보세요.</p>
       )}
-      <form className="comments-form" onSubmit={submit}>
-        <label htmlFor="comment-input" className="sr-only">
-          댓글 입력
-        </label>
-        <input
-          id="comment-input"
-          maxLength={WATCH_COMMENT_MAX_LENGTH}
-          placeholder="댓글 남기기"
-          value={content}
-          onChange={(event) => setContent(event.target.value)}
-        />
-        <button type="submit" aria-label="댓글 보내기" disabled={busy || !content.trim()}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 12l16-8-6 16-3-7Z" />
-          </svg>
-        </button>
-      </form>
-      {error ? (
-        <p role="alert" className="form-error mt-2">
-          {error}
-        </p>
-      ) : null}
+      {/* Pinned to the bottom of the screen, so a comment can be written from anywhere. */}
+      <div className="comments-bar">
+        {error ? (
+          <p role="alert" className="form-error mb-2">
+            {error}
+          </p>
+        ) : null}
+        <form className="comments-form" onSubmit={submit}>
+          <label htmlFor="comment-input" className="sr-only">
+            댓글 입력
+          </label>
+          <input
+            id="comment-input"
+            maxLength={WATCH_COMMENT_MAX_LENGTH}
+            placeholder="댓글 남기기"
+            value={content}
+            onChange={(event) => setContent(event.target.value)}
+          />
+          <button type="submit" aria-label="댓글 보내기" disabled={busy || !content.trim()}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 12l16-8-6 16-3-7Z" />
+            </svg>
+          </button>
+        </form>
+      </div>
     </section>
   );
 }

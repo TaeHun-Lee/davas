@@ -38,6 +38,8 @@ export function SpaceWatchCard({
   actions?: ReactNode;
 }) {
   const detail = `/records/${event.id}?returnTo=${encodeURIComponent(returnTo)}`;
+  // Opens the record with its review form already open.
+  const writeReview = `${detail}#my-review`;
   const rows = reactionRows(event, myAccountId);
   const lockedHint = lockedReviewHint(blindViewerRole(event, myAccountId));
   const together = rows.filter((row) => row.status === 'CONFIRMED').length > 1;
@@ -102,7 +104,7 @@ export function SpaceWatchCard({
               <span className="space-watch-rating">★ {row.rating.toFixed(1)}</span>
             ) : row.isMe && row.status === 'CONFIRMED' ? (
               <Link
-                href={detail}
+                href={writeReview}
                 className="space-watch-rate"
                 aria-label={`${event.media.title}에 내 별점 남기기`}
               >
@@ -117,7 +119,7 @@ export function SpaceWatchCard({
       </ul>
       {rows.some((row) => row.locked) &&
       rows.some((row) => row.isMe && row.status === 'CONFIRMED') ? (
-        <Link href={detail} className="primary-button space-watch-write">
+        <Link href={writeReview} className="primary-button space-watch-write">
           내 리뷰 쓰기
         </Link>
       ) : null}

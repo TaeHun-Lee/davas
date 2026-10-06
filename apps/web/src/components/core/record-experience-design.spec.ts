@@ -103,9 +103,13 @@ describe('record experience screens', () => {
   it('keeps comments on the record for space-shared records only', () => {
     const detail = source('components/core/WatchEventDetailScreen.tsx');
     const reviews = source('components/core/WatchReviews.tsx');
-    assert.match(detail, /watchEvent\.visibility === 'SPACES' \? \(\s*<CommentsSection/);
+    assert.match(detail, /const commentsShown = watchEvent\.visibility === 'SPACES';/);
+    assert.match(detail, /\{commentsShown \? \(\s*<CommentsSection/);
     assert.match(reviews, /maxLength=\{WATCH_COMMENT_MAX_LENGTH\}/);
     assert.match(reviews, /aria-label="내 댓글 삭제"/);
+    // The comment box stays pinned to the bottom, and a delete cannot be sent twice.
+    assert.match(reviews, /<div className="comments-bar">/);
+    assert.match(reviews, /disabled=\{removing === comment\.id\}/);
   });
 
   it('keeps the record steady after an action and shows the result where it can be seen', () => {
@@ -113,12 +117,43 @@ describe('record experience screens', () => {
     const css = source('app/globals.css');
     // Saving a review or answering a request refreshes without swapping in the loader.
     assert.equal((detail.match(/await load\(\{ quiet: true \}\)/g) ?? []).length, 2);
-    assert.match(detail, /className="action-toast" data-tone="error"/);
+    assert.match(detail, /className="action-toast"\s+data-tone="error"/);
     assert.match(css, /\.action-toast \{\s*position: fixed;/);
-    // The delete confirmation is inline, keeps its own error and returns where it came from.
-    assert.doesNotMatch(detail, /aria-modal="true"/);
+    assert.match(css, /\.action-toast\[data-above='comments'\]/);
+    // Deleting asks in a real dialog that holds focus, keeps its own error and goes back.
+    assert.match(detail, /useFocusTrap\(true, dialogRef, onCancel\)/);
+    assert.match(detail, /role="dialog"\s+aria-modal="true"/);
     assert.match(detail, /setDeleteError\(/);
     assert.match(detail, /router\.replace\(fallback\)/);
+  });
+
+  it('lays the record out like C안: menu, confirmation, my review card, opened blind reviews', () => {
+    const detail = source('components/core/WatchEventDetailScreen.tsx');
+    const reviews = source('components/core/WatchReviews.tsx');
+    const ui = source('components/core/CoreUi.tsx');
+    // Edit, record again and delete sit in the header "…" menu, not at the bottom.
+    assert.match(ui, /\{action \?\? <span aria-hidden="true" \/>\}/);
+    assert.match(detail, /headerAction=\{\s*<RecordMenu/);
+    assert.match(detail, /aria-label="기록 메뉴"/);
+    assert.match(detail, /기록 수정하기/);
+    assert.match(detail, /기록 삭제하기/);
+    assert.doesNotMatch(detail, /이 작품 다시 감상 기록하기/);
+    // A request to confirm is a banner; the participant list card is gone.
+    assert.match(
+      detail,
+      /currentParticipant\?\.status === 'PENDING' \? \(\s*<section className="space-confirm-card/,
+    );
+    assert.doesNotMatch(detail, /<h2 className="section-title">함께 본 사람<\/h2>/);
+    // My review is a card that opens the form in place; a timeline link can open it directly.
+    assert.match(detail, /아직 내 리뷰가 없어요\./);
+    assert.match(detail, /window\.location\.hash !== '#my-review'/);
+    assert.match(reviews, /className="review-edit"/);
+    assert.match(source('components/spaces/SpaceWatchCard.tsx'), /`\$\{detail\}#my-review`/);
+    // Blind reviews say when they opened, and a blind switch names who it waits for.
+    assert.match(detail, /리뷰를 남겨서 블라인드 리뷰가 열렸어요/);
+    assert.match(detail, /꺼져 있으면 저장하는 즉시 \$\{companionNames\}님에게 보여요\./);
+    assert.match(reviews, /블라인드로 남김/);
+    assert.match(reviews, /리뷰가 열리면 좋아요를 누를 수 있어요/);
   });
 
   it('saves only what the composer shows and keeps its controls reachable', () => {

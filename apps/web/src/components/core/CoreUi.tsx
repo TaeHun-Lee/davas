@@ -144,7 +144,16 @@ export function CoreAppShell({ children }: { children: ReactNode }) {
   );
 }
 
-export function BackHeader({ title, fallback }: { title: string; fallback: string }) {
+export function BackHeader({
+  title,
+  fallback,
+  action,
+}: {
+  title: string;
+  fallback: string;
+  /** A 44px control for the right corner, such as a screen's "…" menu. */
+  action?: ReactNode;
+}) {
   const router = useRouter();
   return (
     <header className="back-header">
@@ -161,7 +170,7 @@ export function BackHeader({ title, fallback }: { title: string; fallback: strin
         </svg>
       </button>
       <strong>{title}</strong>
-      <span aria-hidden="true" />
+      {action ?? <span aria-hidden="true" />}
     </header>
   );
 }
@@ -169,16 +178,18 @@ export function BackHeader({ title, fallback }: { title: string; fallback: strin
 export function TaskShell({
   title,
   fallback,
+  headerAction,
   children,
 }: {
   title: string;
   fallback: string;
+  headerAction?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <div className="desktop-canvas">
       <div className="core-shell">
-        <BackHeader title={title} fallback={fallback} />
+        <BackHeader title={title} fallback={fallback} action={headerAction} />
         <main className="task-main">{children}</main>
       </div>
     </div>

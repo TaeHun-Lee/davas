@@ -1895,6 +1895,10 @@ label:has(> input.sr-only:focus-visible) {
   font-weight: 800;
   line-height: 20px;
 }
+/* Above the pinned comment box on a record. */
+.action-toast[data-above='comments'] {
+  bottom: calc(84px + env(safe-area-inset-bottom));
+}
 .action-toast[data-tone='ok'] {
   background: #1f2a44;
   color: #ffffff;
@@ -2286,6 +2290,14 @@ label:has(> input.sr-only:focus-visible) {
   accent-color: var(--blue);
 }
 
+.record-detail-head .poster {
+  width: 56px;
+  height: 84px;
+  border-radius: 12px;
+}
+.record-detail-head .poster-empty {
+  font-size: 20px;
+}
 .record-detail-head h1 {
   color: var(--heading);
   font-size: 21px;
@@ -2301,7 +2313,128 @@ label:has(> input.sr-only:focus-visible) {
   font-weight: 700;
 }
 .record-detail-together {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: #4a5a70;
+}
+.record-detail-avatars {
+  display: inline-flex;
+  flex: none;
+}
+.record-detail-avatars span {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #2f5450;
+  box-shadow: 0 0 0 2px var(--app-bg);
+  color: white;
+  font-size: 9px;
+  font-weight: 900;
+}
+.record-detail-avatars span + span {
+  margin-left: -5px;
+}
+.record-detail-avatars span[data-me] {
+  background: var(--blue);
+}
+/* The header "…" menu of a record. */
+.record-menu {
+  position: relative;
+}
+.record-menu > button svg {
+  stroke-width: 3;
+}
+.back-header .record-menu-list {
+  position: absolute;
+  z-index: 45;
+  top: 50px;
+  right: 0;
+  min-width: 208px;
+  border: 1px solid #e1e9f3;
+  border-radius: 16px;
+  background: white;
+  padding: 6px;
+  box-shadow: 0 16px 36px rgba(31, 65, 114, 0.16);
+}
+.back-header .record-menu-list a,
+.back-header .record-menu-list button {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: flex-start;
+  border-radius: 12px;
+  padding: 0 14px;
+  color: var(--heading);
+  font-size: 14px;
+  font-weight: 800;
+  text-align: left;
+}
+.back-header .record-menu-list a:hover,
+.back-header .record-menu-list button:hover {
+  background: var(--soft-card);
+}
+.back-header .record-menu-list button[data-tone='danger'] {
+  color: var(--danger);
+}
+/* A bottom sheet dialog over a dimmed page. */
+.sheet-backdrop {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(10, 20, 38, 0.45);
+}
+.sheet {
+  box-sizing: border-box;
+  width: min(100%, 430px);
+  border-radius: 24px 24px 0 0;
+  background: white;
+  padding: 22px 20px calc(20px + env(safe-area-inset-bottom));
+}
+.blind-opened {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  border-radius: 14px;
+  background: var(--blue-soft);
+  padding: 10px 12px;
+  color: var(--blue-ink);
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 850;
+}
+.my-review-prompt {
+  border: 1px dashed #c9d6e6;
+  border-radius: 20px;
+  background: white;
+  padding: 14px;
+}
+.my-review-prompt > p {
+  margin: 8px 0 10px;
+  color: #33445c;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 650;
+}
+.my-review-editor {
+  border: 1px solid #e1e9f3;
+  border-radius: 20px;
+  background: white;
+  padding: 16px;
+}
+.my-review-editor h3 {
+  color: var(--heading);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 900;
 }
 .record-detail-chips {
   display: flex;
@@ -2363,6 +2496,11 @@ label:has(> input.sr-only:focus-visible) {
 .review-card[data-me] .review-avatar,
 .comments-list li[data-me] .review-avatar {
   background: var(--blue);
+}
+.review-when {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
 }
 .review-rating {
   color: #b63b36;
@@ -2495,6 +2633,23 @@ label:has(> input.sr-only:focus-visible) {
   color: var(--muted);
   padding: 0 4px;
 }
+.review-like-hint {
+  color: #56667b;
+  font-size: 12px;
+  line-height: 17px;
+  font-weight: 650;
+}
+.review-edit {
+  min-height: 44px;
+  margin-left: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: white;
+  padding: 0 14px;
+  color: var(--heading);
+  font-size: 12px;
+  font-weight: 850;
+}
 .memory-note {
   margin-top: 20px;
   border: 1px solid #f1e6cf;
@@ -2515,12 +2670,24 @@ label:has(> input.sr-only:focus-visible) {
   font-weight: 900;
 }
 .memory-note-head span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   border-radius: 999px;
   background: #f6eedd;
   padding: 4px 9px;
   color: #6b5126;
   font-size: 11px;
   font-weight: 850;
+}
+.memory-note-head svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .memory-note > p {
   margin-top: 8px;
@@ -2573,6 +2740,9 @@ label:has(> input.sr-only:focus-visible) {
   font-weight: 600;
   overflow-wrap: anywhere;
 }
+.comments-delete:disabled {
+  opacity: 0.4;
+}
 .comments-delete {
   display: inline-flex;
   width: 44px;
@@ -2584,11 +2754,24 @@ label:has(> input.sr-only:focus-visible) {
   background: transparent;
   color: #56667b;
 }
+/* The comment box stays at the bottom of the screen while the record scrolls. */
+.comments-bar {
+  position: fixed;
+  z-index: 20;
+  left: 50%;
+  bottom: 0;
+  box-sizing: border-box;
+  width: min(100%, 430px);
+  transform: translateX(-50%);
+  border-top: 1px solid #dce5ef;
+  background: #ffffff;
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
+  box-shadow: 0 -8px 24px rgba(31, 65, 114, 0.07);
+}
 .comments-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 48px;
   gap: 8px;
-  margin-top: 12px;
 }
 .comments-form input {
   min-width: 0;
@@ -3146,7 +3329,8 @@ label:has(> input.sr-only:focus-visible) {
     padding-right: 20px;
     padding-left: 20px;
   }
-  .sticky-commit-bar {
+  .sticky-commit-bar,
+  .comments-bar {
     padding-right: 20px;
     padding-left: 20px;
   }

@@ -124,6 +124,8 @@ export type WatchEventView = {
     title: string;
     mediaType: MediaType;
     posterUrl: string | null;
+    /** `2024`, from the stored release date; null when TMDB has none. */
+    releaseYear?: string | null;
   };
   author: {
     accountId: string;

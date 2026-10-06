@@ -582,6 +582,18 @@ describe('WatchEventsService', () => {
     assert.deepEqual(removedPhotosOf, [created.id]);
   });
 
+  it('sends the release year of the title with a record', async () => {
+    const { database, service } = setup();
+    Object.assign(database.media[0], { releaseDate: '2023-11-22' });
+    const created = await service.create('owner', {
+      mediaId: 'media-1',
+      watchedDate: '2026-08-06',
+    });
+    assert.equal(created.media.releaseYear, '2023');
+    Object.assign(database.media[0], { releaseDate: null });
+    assert.equal((await service.detail('owner', created.id)).media.releaseYear, null);
+  });
+
   it('keeps a service name only on a streaming viewing', async () => {
     const { database, service } = setup();
     await service.create('owner', {
