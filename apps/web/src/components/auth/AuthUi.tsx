@@ -175,7 +175,8 @@ export function SignupCard() {
         termsVersion: CURRENT_TERMS_VERSION,
         privacyVersion: CURRENT_PRIVACY_VERSION,
       });
-      router.replace(friendInviteToken ? '/' : '/records/new');
+      // A safe returnTo (for example a space invite) wins over the default landing screen.
+      router.replace(safeReturn(params.get('returnTo'), friendInviteToken ? '/' : '/records/new'));
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '계정을 만들지 못했어요.');

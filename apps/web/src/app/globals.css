@@ -45,9 +45,12 @@
   }
 }
 
+/* `clip` hides sideways overflow without turning html/body into scroll containers, which
+   would break the sticky core header. `hidden` stays as the fallback for older browsers. */
 html {
   background: #f6f8fc;
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -55,6 +58,7 @@ body {
   margin: 0;
   background: #f6f8fc;
   overflow-x: hidden;
+  overflow-x: clip;
   font-family:
     'Pretendard Variable',
     Pretendard,

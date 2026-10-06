@@ -11,7 +11,10 @@ describe('spaces onboarding and member management UI', () => {
     const invite = source('components/spaces/SpaceInviteScreen.tsx');
     const friends = source('components/friends/FriendsScreen.tsx');
     assert.match(screen, /<CoreAppShell>/);
-    assert.match(invite, /<TaskShell title="공간 초대" fallback="\/spaces">/);
+    assert.match(
+      invite,
+      /<TaskShell title="공간 초대" fallback=\{authenticated \? '\/spaces' : '\/login'\}>/,
+    );
     assert.doesNotMatch(screen + invite, /layout\/AppShell/);
     assert.match(screen, /친구 관계와는\s+별도로 관리돼요/);
     assert.match(screen, /href="\/friends"/);
@@ -68,5 +71,23 @@ describe('spaces onboarding and member management UI', () => {
     assert.doesNotMatch(home, /href="\/explore"/);
     assert.match(middleware, /pathname === '\/spaces' \|\|/);
     assert.match(routes, /isSafeSpacesQuery/);
+  });
+
+  it('lets signed-out visitors review an invite, then log in or sign up and come back', () => {
+    const invite = source('components/spaces/SpaceInviteScreen.tsx');
+    const auth = source('components/auth/AuthUi.tsx');
+    assert.match(invite, /getMe\(\)/);
+    assert.match(invite, /data-state="signed-out"/);
+    assert.match(invite, /\/login\?returnTo=\$\{returnTo\}/);
+    assert.match(invite, /\/signup\?returnTo=\$\{returnTo\}/);
+    assert.match(invite, /authenticated \? \(/);
+    assert.match(auth, /router\.replace\(\s*safeReturn\(params\.get\('returnTo'\)/);
+  });
+
+  it('keeps the core header sticky by clipping instead of hiding root overflow', () => {
+    const css = source('app/globals.css');
+    assert.match(css, /html \{[^}]*overflow-x: clip;/);
+    assert.match(css, /body \{[^}]*overflow-x: clip;/);
+    assert.match(css, /\.core-header,\s*\.back-header\s*\{\s*position: sticky;/);
   });
 });

@@ -19,7 +19,8 @@
 
 ### 알려진 문제
 
-- **API만 있고 Web 화면이 없는 기능:** 데이터 내보내기(`GET /api/users/me/export`), 알림 설정(`/api/notifications/preferences`), 공간 초대 화면에서 비로그인 사용자를 로그인으로 안내하는 흐름.
+- **API만 있고 Web 화면이 없는 기능:** 데이터 내보내기(`GET /api/users/me/export`), 알림 설정(`/api/notifications/preferences`).
+- **공간 초대 링크만으로는 가입할 수 없다.** 초대 화면은 비로그인 방문자에게 로그인·가입 후 돌아오는 길을 안내하지만, 가입 자체는 가입 초대 코드나 친구 초대 링크가 있어야 한다.
 - **탈퇴 30일 유예 후 실제 삭제가 실행되지 않는다.** `UsersService.purgeExpiredDeletions`를 주기적으로 부르는 작업이 없어서, 탈퇴 신청 계정은 "삭제 대기" 상태로 남는다.
 - **아웃박스 소비 워커가 없다.** 알림·도메인 이벤트는 `transaction_outbox`에 쌓이기만 한다.
 - **외부 작품 ID 연결표가 영화·드라마를 구분하지 않는다.** `external_content_refs`의 고유 조건은 `(provider, external_id)`라서, TMDB 번호가 같은 영화와 드라마가 서로 겹칠 수 있다. 반면 `media`는 `media_type`까지 포함해 구분한다.
