@@ -3,8 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
-const source = (path: string) =>
-  readFileSync(join(process.cwd(), 'src', path), 'utf8');
+const source = (path: string) => readFileSync(join(process.cwd(), 'src', path), 'utf8');
 
 describe('spaces onboarding and member management UI', () => {
   it('keeps spaces and legacy friends as separate navigation boundaries', () => {
@@ -46,5 +45,25 @@ describe('spaces onboarding and member management UI', () => {
     assert.match(screen, /activeSpace\.members\.length >= activeSpace\.maxMembers/);
     assert.match(invite, /acceptSpaceInvite\(token\)/);
     assert.match(invite, /localStorage\.setItem\(ACTIVE_SPACE_KEY, accepted\.spaceId\)/);
+  });
+
+  it('hosts group choosing in the active space and links home to it', () => {
+    const screen = source('components/spaces/SpacesScreen.tsx');
+    const panel = source('components/spaces/GroupRecommendationPanel.tsx');
+    const page = source('app/spaces/page.tsx');
+    const home = source('components/core/HomeRecommendations.tsx');
+    const middleware = source('middleware.ts');
+    const routes = source('lib/core-routes.ts');
+
+    assert.match(screen, /<GroupRecommendationPanel space=\{activeSpace\} myAccountId=/);
+    assert.match(screen, /aria-label="공간 화면 전환"/);
+    assert.match(screen, /aria-pressed=\{view === option\.value\}/);
+    assert.match(page, /view === 'recommend' \? 'recommend' : 'timeline'/);
+    assert.match(panel, /id="group-recommendation"/);
+    assert.doesNotMatch(panel, /listSpaces|<select[^>]*selectSpace/);
+    assert.match(home, /href="\/spaces\?view=recommend"/);
+    assert.doesNotMatch(home, /href="\/explore"/);
+    assert.match(middleware, /pathname === '\/spaces' \|\|/);
+    assert.match(routes, /isSafeSpacesQuery/);
   });
 });

@@ -20,8 +20,7 @@ export type GroupRecommendationDraft = {
   minimumApprovals: number;
 };
 
-export type GroupRecommendationItem =
-  GroupRecommendationSessionResponse['items'][number];
+export type GroupRecommendationItem = GroupRecommendationSessionResponse['items'][number];
 
 export const FEEDBACK_OPTIONS: Array<{
   kind: RecommendationFeedbackKind;
@@ -92,9 +91,7 @@ export function buildGroupRecommendationRequest(
     avoidTags,
     rewatchPolicy: draft.rewatchPolicy,
     decisionRule: draft.decisionRule,
-    ...(draft.decisionRule === 'MINIMUM'
-      ? { minimumApprovals: draft.minimumApprovals }
-      : {}),
+    ...(draft.decisionRule === 'MINIMUM' ? { minimumApprovals: draft.minimumApprovals } : {}),
   };
 }
 

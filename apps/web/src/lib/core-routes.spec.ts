@@ -10,6 +10,7 @@ describe('core returnTo allow-list', () => {
       '/friends',
       '/settings',
       '/spaces',
+      '/spaces?view=recommend',
       '/search?scope=mine&q=dune&mediaType=MOVIE',
       '/records/new',
       '/records/new?step=find&detail=abc-123',
@@ -41,6 +42,8 @@ describe('core returnTo allow-list', () => {
       '/records/abc?returnTo=https%3A%2F%2Fevil.example',
       '/records/abc?saved=public',
       '/spaces/invite/a/b',
+      '/spaces?view=admin',
+      '/spaces?view=recommend&view=timeline',
     ]) {
       assert.equal(isSafeCoreReturnTo(value), false, String(value));
     }

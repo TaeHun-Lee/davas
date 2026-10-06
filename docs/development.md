@@ -96,7 +96,7 @@ graphify-out/      Graphify 코드 그래프 (도구가 생성, 손으로 수정
 | `/search?scope=friends` 또는 `/search?scope=mine` | 기록 검색 |
 | `/me` | 내 기록 |
 | `/friends`, `/friends/invite/:token` | 친구 목록·요청·초대 |
-| `/spaces`, `/spaces/invite/:token` | 공유 공간 목록·타임라인, 공간 초대 |
+| `/spaces`, `/spaces/invite/:token` | 공유 공간: 기록 타임라인과 함께 고르기(그룹 추천, `?view=recommend`), 멤버·초대 관리. 공간 초대 |
 | `/settings` | 프로필·사진, 로그아웃, 법률 문서, 계정 삭제(30일 유예) |
 | `/login`, `/signup` | 로그인, 초대 코드·친구 초대 가입 |
 | `/terms`, `/privacy`, `/offline` | 법률 문서, PWA 오프라인 안내 |
@@ -106,7 +106,8 @@ graphify-out/      Graphify 코드 그래프 (도구가 생성, 손으로 수정
 주요 Web 코드:
 
 - `src/components/core/`: 공통 화면 틀(`CoreUi.tsx`), 기록 작성(`RecordComposer.tsx`), 목록·검색(`RecordScreens.tsx`), 감상 상세(`WatchEventDetailScreen.tsx`)
-- `src/components/spaces/`, `friends/`, `settings/`, `explore/`(그룹 추천 패널)
+- `src/components/spaces/`: 공간 화면(`SpacesScreen.tsx`), 타임라인, 그룹 추천 패널(`GroupRecommendationPanel.tsx`). 홈의 "함께 고르기"가 `/spaces?view=recommend`로 연결된다.
+- `src/components/friends/`, `settings/`
 - `src/lib/api/`: API 호출 함수. 공통 호출기 `core.ts`의 `coreFetch`가 401이면 임시저장을 지우고 로그인 화면으로 보낸다.
 - `src/lib/core-routes.ts`: 로그인 후 돌아갈 수 있는 경로의 허용 목록
 - `src/middleware.ts`: 로그인 필요 경로 검사와 예전 경로 전환

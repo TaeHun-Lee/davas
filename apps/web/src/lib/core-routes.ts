@@ -4,7 +4,7 @@ const CORE_ORIGIN = 'https://davas.invalid';
 const SAFE_SEGMENT = /^[A-Za-z0-9_-]+$/;
 const MAX_NESTED_RETURN_DEPTH = 2;
 
-const PARAMLESS_PATHS = new Set(['/', '/me', '/friends', '/settings', '/spaces', '/diary']);
+const PARAMLESS_PATHS = new Set(['/', '/me', '/friends', '/settings', '/diary']);
 
 function hasOnlySingleValueParams(params: URLSearchParams, allowed: ReadonlySet<string>) {
   for (const key of params.keys()) {
@@ -27,6 +27,13 @@ function isSafeSearchQuery(params: URLSearchParams) {
     (mediaType === null || mediaType === 'MOVIE' || mediaType === 'TV') &&
     (viewingMethod === null || viewingMethod === 'THEATER' || viewingMethod === 'OTT')
   );
+}
+
+function isSafeSpacesQuery(params: URLSearchParams) {
+  if (params.size === 0) return true;
+  if (!hasOnlySingleValueParams(params, new Set(['view']))) return false;
+  const view = params.get('view');
+  return view === 'timeline' || view === 'recommend';
 }
 
 function isSafeNewRecordQuery(params: URLSearchParams, depth: number) {
@@ -82,6 +89,7 @@ function isSafeAtDepth(value: string | null | undefined, depth: number): value i
   const { pathname, searchParams } = url;
   if (PARAMLESS_PATHS.has(pathname)) return searchParams.size === 0;
   if (pathname === '/search') return isSafeSearchQuery(searchParams);
+  if (pathname === '/spaces') return isSafeSpacesQuery(searchParams);
   if (pathname === '/records/new') {
     return searchParams.size === 0 || isSafeNewRecordQuery(searchParams, depth);
   }

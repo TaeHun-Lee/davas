@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getMe } from '../../lib/api/auth';
 import {
   cancelSpaceInvite,
@@ -15,12 +15,21 @@ import {
   type SpaceView,
 } from '../../lib/api/spaces';
 import { AppShell } from '../layout/AppShell';
+import { GroupRecommendationPanel } from './GroupRecommendationPanel';
 import { chooseActiveSpace, spaceErrorMessage } from './space-ui';
 import { SpaceTimeline } from './SpaceTimeline';
 
 const ACTIVE_SPACE_KEY = 'davas:active-space-id';
 
-export function SpacesScreen() {
+export type SpacesView = 'timeline' | 'recommend';
+
+const VIEW_OPTIONS: Array<{ value: SpacesView; label: string }> = [
+  { value: 'timeline', label: '기록 타임라인' },
+  { value: 'recommend', label: '함께 고르기' },
+];
+
+export function SpacesScreen({ initialView = 'timeline' }: { initialView?: SpacesView }) {
+  const [view, setView] = useState<SpacesView>(initialView);
   const [spaces, setSpaces] = useState<SpaceView[]>([]);
   const [activeSpaceId, setActiveSpaceId] = useState<string | null>(null);
   const [myAccountId, setMyAccountId] = useState<string | null>(null);
@@ -33,17 +42,14 @@ export function SpacesScreen() {
   const [expiresInHours, setExpiresInHours] = useState(168);
   const [invite, setInvite] = useState<SpaceInvite | null>(null);
   const [newOwnerId, setNewOwnerId] = useState('');
-  const [dangerAction, setDangerAction] = useState<'leave' | 'close' | null>(
-    null,
-  );
+  const [dangerAction, setDangerAction] = useState<'leave' | 'close' | null>(null);
 
   const reload = useCallback(async (preferredSpaceId?: string | null) => {
     setLoading(true);
     setError('');
     try {
       const [{ items }, me] = await Promise.all([listSpaces(), getMe()]);
-      const preferred =
-        preferredSpaceId ?? window.localStorage.getItem(ACTIVE_SPACE_KEY);
+      const preferred = preferredSpaceId ?? window.localStorage.getItem(ACTIVE_SPACE_KEY);
       const selected = chooseActiveSpace(items, preferred);
       setSpaces(items);
       setActiveSpaceId(selected?.id ?? null);
@@ -67,20 +73,35 @@ export function SpacesScreen() {
   );
   const isOwner = Boolean(
     activeSpace &&
-      (activeSpace.ownerAccountId === myAccountId ||
-        activeSpace.members.some(
-          (member) =>
-            member.accountId === myAccountId && member.role === 'OWNER',
-        )),
+    (activeSpace.ownerAccountId === myAccountId ||
+      activeSpace.members.some(
+        (member) => member.accountId === myAccountId && member.role === 'OWNER',
+      )),
   );
   const ownershipCandidates =
-    activeSpace?.members.filter(
-      (member) => member.accountId !== myAccountId,
-    ) ?? [];
+    activeSpace?.members.filter((member) => member.accountId !== myAccountId) ?? [];
   const inviteUrl =
     invite && typeof window !== 'undefined'
       ? `${window.location.origin}/spaces/invite/${encodeURIComponent(invite.token)}`
       : '';
+
+  // Arriving from the home "함께 고르기" link lands below the space picker, so bring the
+  // panel into view once, after the first load (not again on later reloads).
+  const scrolledToPanel = useRef(false);
+  useEffect(() => {
+    if (scrolledToPanel.current || loading || initialView !== 'recommend' || !activeSpace) return;
+    scrolledToPanel.current = true;
+    document.getElementById('space-view-switch')?.scrollIntoView({ block: 'start' });
+  }, [activeSpace, initialView, loading]);
+
+  function changeView(next: SpacesView) {
+    setView(next);
+    window.history.replaceState(
+      null,
+      '',
+      next === 'recommend' ? '/spaces?view=recommend' : '/spaces',
+    );
+  }
 
   function selectSpace(spaceId: string) {
     setActiveSpaceId(spaceId);
@@ -118,10 +139,7 @@ export function SpacesScreen() {
   async function handleCreateInvite() {
     if (!activeSpace) return;
     await runAction(async () => {
-      const created = await createSpaceInvite(
-        activeSpace.id,
-        expiresInHours,
-      );
+      const created = await createSpaceInvite(activeSpace.id, expiresInHours);
       setInvite(created);
       setNotice('초대 링크를 만들었어요. 만료 전에 한 명에게 공유해 주세요.');
     });
@@ -241,10 +259,17 @@ export function SpacesScreen() {
                 </label>
               ) : (
                 <div data-state="empty" className="py-5 text-center">
-                  <p className="text-[15px] font-black text-[#344866]">아직 참여 중인 공간이 없어요.</p>
+                  <p className="text-[15px] font-black text-[#344866]">
+                    아직 참여 중인 공간이 없어요.
+                  </p>
                   <p className="mt-2 text-[13px] font-semibold leading-5 text-[#7b8799]">
                     새 공간은 소유자 한 명으로 시작해요. 초대로 2~5명이 함께할 수 있어요.
                   </p>
+                  {view === 'recommend' ? (
+                    <p className="mt-2 text-[13px] font-bold leading-5 text-[#456ca8]">
+                      함께 고르기는 공간을 만들고 멤버를 초대한 뒤 쓸 수 있어요.
+                    </p>
+                  ) : null}
                 </div>
               )}
             </section>
@@ -292,10 +317,35 @@ export function SpacesScreen() {
 
             {activeSpace ? (
               <>
-                <SpaceTimeline
-                  spaceId={activeSpace.id}
-                  spaceName={activeSpace.name}
-                />
+                <div
+                  role="group"
+                  id="space-view-switch"
+                  aria-label="공간 화면 전환"
+                  className="mt-4 grid scroll-mt-24 grid-cols-2 gap-1 rounded-2xl bg-[#eef3fa] p-1"
+                >
+                  {VIEW_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      aria-pressed={view === option.value}
+                      onClick={() => changeView(option.value)}
+                      className={`min-h-11 rounded-xl text-[13px] font-black ${
+                        view === option.value
+                          ? 'bg-white text-[#284778] shadow-[0_4px_12px_rgba(31,65,114,0.10)]'
+                          : 'text-[#6f7f96]'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                {/* Both views stay mounted so switching keeps an in-progress recommendation. */}
+                <div hidden={view !== 'timeline'}>
+                  <SpaceTimeline spaceId={activeSpace.id} spaceName={activeSpace.name} />
+                </div>
+                <div hidden={view !== 'recommend'} className="mt-4">
+                  <GroupRecommendationPanel space={activeSpace} myAccountId={myAccountId ?? ''} />
+                </div>
                 <section className="mt-4 rounded-[24px] bg-white p-5 shadow-[0_12px_28px_rgba(31,65,114,0.08)]">
                   <div className="flex items-start justify-between gap-3">
                     <div>

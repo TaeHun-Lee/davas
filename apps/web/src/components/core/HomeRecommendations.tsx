@@ -69,9 +69,7 @@ export function HomeRecommendations() {
     const carousel = carouselRef.current;
     if (!carousel) return;
     setCanScrollBack(carousel.scrollLeft > 4);
-    setCanScrollForward(
-      carousel.scrollLeft < carousel.scrollWidth - carousel.clientWidth - 4,
-    );
+    setCanScrollForward(carousel.scrollLeft < carousel.scrollWidth - carousel.clientWidth - 4);
   }, []);
 
   useEffect(() => {
@@ -100,9 +98,7 @@ export function HomeRecommendations() {
     setSelectionError('');
     try {
       const selected = await selectMedia(item);
-      router.push(
-        `/records/new?step=find&detail=${encodeURIComponent(selected.id)}`,
-      );
+      router.push(`/records/new?step=find&detail=${encodeURIComponent(selected.id)}`);
     } catch {
       setSelectionError('기록 작성을 시작하지 못했어요. 잠시 후 다시 시도해 주세요.');
     } finally {
@@ -114,10 +110,14 @@ export function HomeRecommendations() {
     <section className="home-recommendations" aria-labelledby="home-recommendations-title">
       <div className="home-section-heading">
         <div>
-          <h2 id="home-recommendations-title" className="section-title">오늘 뭐 볼까요?</h2>
+          <h2 id="home-recommendations-title" className="section-title">
+            오늘 뭐 볼까요?
+          </h2>
           <p>지금 인기 있는 영화와 드라마를 골라봤어요.</p>
         </div>
-        <Link href="/explore">더 보기 <span aria-hidden="true">›</span></Link>
+        <Link href="/spaces?view=recommend">
+          함께 고르기 <span aria-hidden="true">›</span>
+        </Link>
       </div>
 
       <div className="home-recommendation-toolbar">
@@ -158,14 +158,24 @@ export function HomeRecommendations() {
       {status === 'loading' ? <RecommendationSkeleton /> : null}
       {status === 'error' ? (
         <div className="home-recommendation-message" role="status">
-          <p><strong>추천을 불러오지 못했어요.</strong><br />친구 기록과 관계없이 다시 불러올 수 있어요.</p>
-          <button type="button" onClick={() => setRetryKey((value) => value + 1)}>다시 시도</button>
+          <p>
+            <strong>추천을 불러오지 못했어요.</strong>
+            <br />
+            친구 기록과 관계없이 다시 불러올 수 있어요.
+          </p>
+          <button type="button" onClick={() => setRetryKey((value) => value + 1)}>
+            다시 시도
+          </button>
         </div>
       ) : null}
       {status === 'ready' && visibleItems.length === 0 ? (
         <div className="home-recommendation-message">
-          <p><strong>{activeType === 'MOVIE' ? '영화' : '드라마'} 추천을 준비하고 있어요.</strong><br />다른 작품도 둘러보세요.</p>
-          <Link href="/explore">추천 둘러보기</Link>
+          <p>
+            <strong>{activeType === 'MOVIE' ? '영화' : '드라마'} 추천을 준비하고 있어요.</strong>
+            <br />
+            공간 멤버와 조건을 정해 함께 골라 보세요.
+          </p>
+          <Link href="/spaces?view=recommend">함께 볼 작품 고르기</Link>
         </div>
       ) : null}
       {status === 'ready' && visibleItems.length > 0 ? (
@@ -178,9 +188,10 @@ export function HomeRecommendations() {
         >
           {visibleItems.map((item) => {
             const year = item.releaseDate?.slice(0, 4) ?? '연도 미상';
-            const rating = item.voteAverage && item.voteAverage > 0
-              ? `★ ${(item.voteAverage / 2).toFixed(1)}`
-              : '평점 준비 중';
+            const rating =
+              item.voteAverage && item.voteAverage > 0
+                ? `★ ${(item.voteAverage / 2).toFixed(1)}`
+                : '평점 준비 중';
             const itemId = `${item.mediaType}-${item.externalId}`;
             return (
               <article className="home-recommendation-card" key={itemId}>
@@ -193,28 +204,32 @@ export function HomeRecommendations() {
                 >
                   <span className="home-recommendation-poster">
                     {item.posterUrl ? (
-                      <Image
-                        unoptimized
-                        fill
-                        sizes="104px"
-                        src={item.posterUrl}
-                        alt=""
-                      />
+                      <Image unoptimized fill sizes="104px" src={item.posterUrl} alt="" />
                     ) : (
                       <span aria-hidden="true">{item.title.slice(0, 1)}</span>
                     )}
-                    <span className="home-recommendation-compose" aria-hidden="true">＋</span>
-                    {busyId === item.externalId ? <span className="home-recommendation-busy">기록 준비 중…</span> : null}
+                    <span className="home-recommendation-compose" aria-hidden="true">
+                      ＋
+                    </span>
+                    {busyId === item.externalId ? (
+                      <span className="home-recommendation-busy">기록 준비 중…</span>
+                    ) : null}
                   </span>
                   <strong>{item.title}</strong>
-                  <span>{year} · {rating}</span>
+                  <span>
+                    {year} · {rating}
+                  </span>
                 </button>
               </article>
             );
           })}
         </div>
       ) : null}
-      {selectionError ? <p className="home-recommendation-error" role="alert">{selectionError}</p> : null}
+      {selectionError ? (
+        <p className="home-recommendation-error" role="alert">
+          {selectionError}
+        </p>
+      ) : null}
     </section>
   );
 }

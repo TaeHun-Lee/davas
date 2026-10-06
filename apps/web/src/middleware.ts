@@ -22,6 +22,7 @@ export function middleware(request: NextRequest) {
     pathname === '/search' ||
     pathname === '/settings' ||
     pathname === '/friends' ||
+    pathname === '/spaces' ||
     pathname.startsWith('/records/');
   if (protectedPath && !publicInvite && !request.cookies.get(ACCESS_TOKEN_COOKIE)?.value) {
     const login = new URL('/login', request.url);
@@ -38,6 +39,7 @@ export const config = {
     '/settings',
     '/friends/:path*',
     '/records/:path*',
+    '/spaces',
     '/login',
     '/signup',
     '/profile/:path*',

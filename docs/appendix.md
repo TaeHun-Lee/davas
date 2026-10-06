@@ -13,13 +13,12 @@
 | `/profile...` | `/settings` | `middleware.ts` |
 | `/community/authors/...`, `/community`, `/feed` | `/` | `middleware.ts`, 각 `page.tsx` |
 | `/watchlist` | `/me` | `middleware.ts` |
-| `/explore` | `/records/new` | `middleware.ts` |
+| `/explore` | `/records/new` (그룹 추천은 `/spaces?view=recommend`로 이동) | `middleware.ts` |
 
 `home`, `diary`, `community`, `watchlist`, `profile` 아래 예전 컴포넌트와 API(`watchlist`, `reactions`, `comments`, `community`)는 데이터 호환을 위해 남아 있다. 새 기능의 근거로 쓰지 말고, 지울 때는 데이터 보존 정책을 먼저 정한다.
 
 ### 알려진 문제
 
-- **그룹 추천 화면에 들어갈 길이 없다.** 홈의 "추천 둘러보기"와 "더 보기"는 `/explore`로 연결되지만, `middleware.ts`가 `/explore`를 `/records/new`로 돌려보낸다. 그래서 `ExploreDashboard`의 `GroupRecommendationPanel`이 보이지 않는다.
 - **API만 있고 Web 화면이 없는 기능:** 데이터 내보내기(`GET /api/users/me/export`), 알림 설정(`/api/notifications/preferences`), 공간 초대 화면에서 비로그인 사용자를 로그인으로 안내하는 흐름.
 - **탈퇴 30일 유예 후 실제 삭제가 실행되지 않는다.** `UsersService.purgeExpiredDeletions`를 주기적으로 부르는 작업이 없어서, 탈퇴 신청 계정은 "삭제 대기" 상태로 남는다.
 - **아웃박스 소비 워커가 없다.** 알림·도메인 이벤트는 `transaction_outbox`에 쌓이기만 한다.

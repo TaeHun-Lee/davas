@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -6,7 +6,6 @@ import { ExploreFilterChips, type ExploreFilter } from './ExploreFilterChips';
 import { ExploreSearchBar } from './ExploreSearchBar';
 import { ExploreShortcutGrid } from './ExploreShortcutGrid';
 import { GenreRecommendationSection } from './GenreRecommendationSection';
-import { GroupRecommendationPanel } from './GroupRecommendationPanel';
 import { TodayRecommendationSection } from './TodayRecommendationSection';
 import { MediaPosterItem, MediaPosterRowSection } from '../home/MediaPosterRowSection';
 import { AppShell } from '../layout/AppShell';
@@ -16,22 +15,36 @@ import { MediaSearchResults } from '../media/MediaSearchResults';
 import { PersonCreditResults } from '../media/PersonCreditResults';
 import { PersonSearchResults } from '../media/PersonSearchResults';
 import { getTmdbGenreNames } from '../media/media-genres';
-import { getMediaDetail, selectMedia, type MediaDetail, type MediaSearchResult, type PersonSearchResult } from '../../lib/api/media';
+import {
+  getMediaDetail,
+  selectMedia,
+  type MediaDetail,
+  type MediaSearchResult,
+  type PersonSearchResult,
+} from '../../lib/api/media';
 import type { MediaRecommendationItem } from '../../lib/api/recommendations';
 import { useExploreRecommendations } from '../../hooks/useExploreRecommendations';
 import { useMediaSearch } from '../../hooks/useMediaSearch';
 import { usePeopleSearch } from '../../hooks/usePeopleSearch';
 
 function recommendationToPosterItem(item: MediaRecommendationItem): MediaPosterItem {
-  const genre = getTmdbGenreNames({ genreIds: item.genreIds, mediaType: item.mediaType })[0] ?? (item.mediaType === 'TV' ? 'TV' : '영화');
+  const genre =
+    getTmdbGenreNames({ genreIds: item.genreIds, mediaType: item.mediaType })[0] ??
+    (item.mediaType === 'TV' ? 'TV' : '영화');
   const year = item.releaseDate?.slice(0, 4) ?? '연도 미상';
-  const rating = typeof item.voteAverage === 'number' && item.voteAverage > 0 ? (item.voteAverage / 2).toFixed(1) : '—';
+  const rating =
+    typeof item.voteAverage === 'number' && item.voteAverage > 0
+      ? (item.voteAverage / 2).toFixed(1)
+      : '—';
 
   return {
     title: item.title,
     meta: `${genre} · ${year}`,
     rating,
-    gradient: item.mediaType === 'TV' ? 'from-[#1f2937] via-[#2f6c91] to-[#b7d7ee]' : 'from-[#07111f] via-[#15528e] to-[#b9d9ff]',
+    gradient:
+      item.mediaType === 'TV'
+        ? 'from-[#1f2937] via-[#2f6c91] to-[#b7d7ee]'
+        : 'from-[#07111f] via-[#15528e] to-[#b9d9ff]',
     posterUrl: item.posterUrl,
     sourceItem: item,
   };
@@ -53,18 +66,20 @@ export function ExploreDashboard() {
   const [showAllToday, setShowAllToday] = useState(false);
   const [activeExploreFilter, setActiveExploreFilter] = useState<ExploreFilter>('전체');
   const isSearchMode = searchQuery.trim().length >= 2;
-  const filteredMediaSearchItems = search.items
-    .filter((item) => {
-      if (activeExploreFilter === '영화') return item.mediaType === 'MOVIE';
-      if (activeExploreFilter === '드라마') return item.mediaType === 'TV';
-      return true;
-    });
-  const filteredMediaSearchStatus = search.status === 'results' && filteredMediaSearchItems.length === 0 ? 'empty' : search.status;
+  const filteredMediaSearchItems = search.items.filter((item) => {
+    if (activeExploreFilter === '영화') return item.mediaType === 'MOVIE';
+    if (activeExploreFilter === '드라마') return item.mediaType === 'TV';
+    return true;
+  });
+  const filteredMediaSearchStatus =
+    search.status === 'results' && filteredMediaSearchItems.length === 0 ? 'empty' : search.status;
   const showMediaSearchResults = ['전체', '영화', '드라마'].includes(activeExploreFilter);
   const showPeopleSearchResults = ['전체', '인물'].includes(activeExploreFilter);
   const showCreditResults = showPeopleSearchResults;
   const trendingPosterItems = recommendations.trendingItems.map(recommendationToPosterItem);
-  const visibleTrendingItems = showAllTrending ? trendingPosterItems : trendingPosterItems.slice(0, 5);
+  const visibleTrendingItems = showAllTrending
+    ? trendingPosterItems
+    : trendingPosterItems.slice(0, 5);
 
   function openMediaDetail(detail: MediaDetail) {
     setSelectedMedia(detail);
@@ -169,9 +184,18 @@ export function ExploreDashboard() {
         }}
       />
 
-      {isSearchMode ? <ExploreFilterChips activeFilter={activeExploreFilter} onChange={setActiveExploreFilter} /> : null}
+      {isSearchMode ? (
+        <ExploreFilterChips activeFilter={activeExploreFilter} onChange={setActiveExploreFilter} />
+      ) : null}
 
-      {isSearchMode && showMediaSearchResults ? <MediaSearchResults items={filteredMediaSearchItems} status={filteredMediaSearchStatus} query={searchQuery} onSelect={handleSelectMedia} /> : null}
+      {isSearchMode && showMediaSearchResults ? (
+        <MediaSearchResults
+          items={filteredMediaSearchItems}
+          status={filteredMediaSearchStatus}
+          query={searchQuery}
+          onSelect={handleSelectMedia}
+        />
+      ) : null}
       {isSearchMode && showPeopleSearchResults ? (
         <PersonSearchResults
           items={peopleSearch.items}
@@ -202,20 +226,34 @@ export function ExploreDashboard() {
 
       {!isSearchMode ? (
         <>
-          <GroupRecommendationPanel />
-
-          {recommendations.status === 'error' ? <div className="card-surface rounded-[20px] p-4 text-[13px] font-bold text-[#8b96a8]">추천을 불러오지 못했어요. 잠시 후 다시 시도해주세요.</div> : null}
+          {recommendations.status === 'error' ? (
+            <div className="card-surface rounded-[20px] p-4 text-[13px] font-bold text-[#8b96a8]">
+              추천을 불러오지 못했어요. 잠시 후 다시 시도해주세요.
+            </div>
+          ) : null}
 
           <div className="mt-7 border-t border-[#e4ebf4] pt-5">
-            <p className="mb-3 text-[11px] font-black uppercase tracking-[0.14em] text-[#8b96a8]">혼자 더 둘러보기</p>
-            <TodayRecommendationSection items={recommendations.todayItems} onSelect={handleRecommendationSelect} onViewAll={() => setShowAllToday((value) => !value)} />
+            <p className="mb-3 text-[11px] font-black uppercase tracking-[0.14em] text-[#8b96a8]">
+              혼자 더 둘러보기
+            </p>
+            <TodayRecommendationSection
+              items={recommendations.todayItems}
+              onSelect={handleRecommendationSelect}
+              onViewAll={() => setShowAllToday((value) => !value)}
+            />
           </div>
 
           {showAllToday ? (
             <div className="today-overview-list card-surface mt-3 rounded-[20px] p-3 shadow-[0_10px_24px_rgba(31,65,114,0.07)]">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-[13px] font-extrabold text-[#1f2a44]">오늘의 추천 전체</p>
-                <button type="button" onClick={() => setShowAllToday(false)} className="min-h-11 rounded-full px-3 text-[11px] font-bold text-[#65758a]">접기</button>
+                <button
+                  type="button"
+                  onClick={() => setShowAllToday(false)}
+                  className="min-h-11 rounded-full px-3 text-[11px] font-bold text-[#65758a]"
+                >
+                  접기
+                </button>
               </div>
               <div className="space-y-2">
                 {recommendations.todayItems.map((item) => (
@@ -226,10 +264,17 @@ export function ExploreDashboard() {
                     className="flex w-full items-center justify-between gap-3 rounded-[16px] bg-[#f7faff] px-3 py-2 text-left transition hover:bg-[#eef5ff]"
                   >
                     <span className="min-w-0">
-                      <span className="block truncate text-[12px] font-extrabold text-[#172947]">{item.title}</span>
-                      <span className="mt-0.5 block text-[10px] font-bold text-[#8b96a8]">{item.mediaType === 'TV' ? 'TV' : '영화'} · {item.releaseDate?.slice(0, 4) ?? '연도 미상'}</span>
+                      <span className="block truncate text-[12px] font-extrabold text-[#172947]">
+                        {item.title}
+                      </span>
+                      <span className="mt-0.5 block text-[10px] font-bold text-[#8b96a8]">
+                        {item.mediaType === 'TV' ? 'TV' : '영화'} ·{' '}
+                        {item.releaseDate?.slice(0, 4) ?? '연도 미상'}
+                      </span>
                     </span>
-                    <span className="shrink-0 text-[11px] font-extrabold text-[#2f7eea]">상세 보기 ›</span>
+                    <span className="shrink-0 text-[11px] font-extrabold text-[#2f7eea]">
+                      상세 보기 ›
+                    </span>
                   </button>
                 ))}
               </div>
@@ -246,7 +291,10 @@ export function ExploreDashboard() {
             onSelect={(item) => void handleRecommendationSelect(item as MediaRecommendationItem)}
           />
 
-          <GenreRecommendationSection tiles={recommendations.genreTiles} onSelect={handleRecommendationSelect} />
+          <GenreRecommendationSection
+            tiles={recommendations.genreTiles}
+            onSelect={handleRecommendationSelect}
+          />
 
           <ExploreShortcutGrid />
         </>

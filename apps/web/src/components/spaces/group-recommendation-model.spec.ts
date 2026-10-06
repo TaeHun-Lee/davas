@@ -63,12 +63,9 @@ describe('group recommendation request model', () => {
 
 describe('group recommendation presentation privacy and states', () => {
   it('uses server reason codes without exposing internal participant scores', () => {
-    assert.match(
-      recommendationReasonText('GROUP_CONTENT_AFFINITY'),
-      /참여자들의 함께 본 기록/,
-    );
+    assert.match(recommendationReasonText('GROUP_CONTENT_AFFINITY'), /참여자들의 함께 본 기록/);
     const panel = readFileSync(
-      join(process.cwd(), 'src/components/explore/GroupRecommendationPanel.tsx'),
+      join(process.cwd(), 'src/components/spaces/GroupRecommendationPanel.tsx'),
       'utf8',
     );
     assert.match(panel, /reason\.reasonCode/);
@@ -119,20 +116,18 @@ describe('group recommendation presentation privacy and states', () => {
       confidence: 0.7,
     };
     assert.equal(
-      availabilityPresentation(snapshot, Date.parse('2026-08-15T12:00:00.000Z'))
-        .state,
+      availabilityPresentation(snapshot, Date.parse('2026-08-15T12:00:00.000Z')).state,
       'UNCERTAIN',
     );
     assert.equal(
-      availabilityPresentation(snapshot, Date.parse('2026-08-16T01:00:00.000Z'))
-        .state,
+      availabilityPresentation(snapshot, Date.parse('2026-08-16T01:00:00.000Z')).state,
       'EXPIRED',
     );
   });
 
   it('keeps zero-candidate filters unchanged until an explicit user action', () => {
     const panel = readFileSync(
-      join(process.cwd(), 'src/components/explore/GroupRecommendationPanel.tsx'),
+      join(process.cwd(), 'src/components/spaces/GroupRecommendationPanel.tsx'),
       'utf8',
     );
     assert.match(panel, /필터는 몰래 완화하지 않았어요/);

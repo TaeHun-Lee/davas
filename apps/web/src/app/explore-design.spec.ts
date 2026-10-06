@@ -3,15 +3,14 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
-const source = (path: string) =>
-  readFileSync(join(process.cwd(), 'src', path), 'utf8');
+const source = (path: string) => readFileSync(join(process.cwd(), 'src', path), 'utf8');
 
 describe('explore flow contract', () => {
-  it('makes group choosing primary while retaining supporting discovery sections', () => {
+  it('keeps solo discovery sections; group choosing lives in the spaces screen', () => {
     const page = source('app/explore/page.tsx');
     const dashboard = source('components/explore/ExploreDashboard.tsx');
     assert.match(page, /<ExploreDashboard \/>/);
-    assert.match(dashboard, /<GroupRecommendationPanel \/>/);
+    assert.doesNotMatch(dashboard, /GroupRecommendationPanel/);
     assert.match(dashboard, /<TodayRecommendationSection/);
     assert.match(dashboard, /<GenreRecommendationSection/);
     assert.match(dashboard, /visibleTrendingItems/);

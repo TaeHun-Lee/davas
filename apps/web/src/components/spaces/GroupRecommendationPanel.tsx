@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import type { SpaceView } from '@davas/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { useGroupRecommendations } from '../../hooks/useGroupRecommendations';
 import {
@@ -15,55 +15,44 @@ const PROVIDERS = ['Netflix', 'Disney Plus', 'TVING', 'Wavve', 'Watcha'];
 const MOODS = ['가벼운', '따뜻한', '긴장감', '웃긴', '몰입감', '잔잔한'];
 
 function toggleValue(values: string[], value: string, checked: boolean) {
-  return checked
-    ? [...new Set([...values, value])]
-    : values.filter((item) => item !== value);
+  return checked ? [...new Set([...values, value])] : values.filter((item) => item !== value);
 }
 
-export function GroupRecommendationPanel() {
-  const group = useGroupRecommendations();
+type GroupRecommendationPanelProps = {
+  space: SpaceView;
+  myAccountId: string;
+};
+
+export function GroupRecommendationPanel({ space, myAccountId }: GroupRecommendationPanelProps) {
+  const group = useGroupRecommendations(space);
   const [participants, setParticipants] = useState<string[]>([]);
   const [region, setRegion] = useState('KR');
   const [services, setServices] = useState<string[]>(['Netflix']);
-  const [contentTypes, setContentTypes] = useState<Array<'MOVIE' | 'TV'>>([
-    'MOVIE',
-    'TV',
-  ]);
+  const [contentTypes, setContentTypes] = useState<Array<'MOVIE' | 'TV'>>(['MOVIE', 'TV']);
   const [runtimeMin, setRuntimeMin] = useState('');
   const [runtimeMax, setRuntimeMax] = useState('');
   const [moodTags, setMoodTags] = useState<string[]>([]);
   const [avoidTagsText, setAvoidTagsText] = useState('');
-  const [rewatchPolicy, setRewatchPolicy] = useState<'EXCLUDE' | 'ALLOW'>(
-    'EXCLUDE',
-  );
+  const [rewatchPolicy, setRewatchPolicy] = useState<'EXCLUDE' | 'ALLOW'>('EXCLUDE');
   const [decisionRule, setDecisionRule] = useState<'ALL' | 'MINIMUM'>('ALL');
   const [minimumApprovals, setMinimumApprovals] = useState(2);
   const [formError, setFormError] = useState('');
 
   const activeMembers = useMemo(
-    () =>
-      group.activeSpace?.members.filter((member) => member.status === 'ACTIVE') ??
-      [],
-    [group.activeSpace],
+    () => space.members.filter((member) => member.status === 'ACTIVE'),
+    [space],
   );
 
   useEffect(() => {
-    if (!group.activeSpace) {
-      setParticipants([]);
-      return;
-    }
     const memberIds = activeMembers.map((member) => member.accountId);
-    const defaultParticipants = group.myAccountId
-      ? [
-          group.myAccountId,
-          ...memberIds.filter((accountId) => accountId !== group.myAccountId),
-        ]
+    const defaultParticipants = myAccountId
+      ? [myAccountId, ...memberIds.filter((accountId) => accountId !== myAccountId)]
       : memberIds;
     const selected = defaultParticipants.slice(0, Math.min(2, memberIds.length));
     setParticipants(selected);
     setMinimumApprovals(Math.max(1, selected.length));
     setFormError('');
-  }, [activeMembers, group.activeSpace, group.myAccountId]);
+  }, [activeMembers, myAccountId]);
 
   useEffect(() => {
     setMinimumApprovals((current) =>
@@ -73,7 +62,7 @@ export function GroupRecommendationPanel() {
 
   const participantNames = participants.map((accountId) => {
     const member = activeMembers.find((item) => item.accountId === accountId);
-    if (accountId === group.myAccountId) return '나';
+    if (accountId === myAccountId) return '나';
     return member?.nickname || '공간 멤버';
   });
 
@@ -83,7 +72,7 @@ export function GroupRecommendationPanel() {
     let request: ReturnType<typeof buildGroupRecommendationRequest>;
     try {
       request = buildGroupRecommendationRequest({
-        spaceId: group.activeSpaceId,
+        spaceId: space.id,
         participantAccountIds: participants,
         region,
         services,
@@ -97,69 +86,15 @@ export function GroupRecommendationPanel() {
         minimumApprovals,
       });
     } catch (caught) {
-      setFormError(
-        caught instanceof Error ? caught.message : '추천 조건을 확인해 주세요.',
-      );
+      setFormError(caught instanceof Error ? caught.message : '추천 조건을 확인해 주세요.');
       return;
     }
     await group.requestRecommendations(request).catch(() => undefined);
   }
 
-  if (group.setupLoading) {
-    return (
-      <section
-        aria-busy="true"
-        aria-label="함께 고르기 준비 중"
-        className="card-surface rounded-[24px] p-5"
-      >
-        <div className="h-5 w-32 animate-pulse rounded-full bg-[#dfe9f7]" />
-        <div className="mt-3 h-16 animate-pulse rounded-2xl bg-[#f0f5fb]" />
-      </section>
-    );
-  }
-
-  if (group.setupError) {
-    return (
-      <section className="card-surface rounded-[24px] p-5" role="alert">
-        <h1 className="text-[18px] font-black text-[#172947]">함께 고르기</h1>
-        <p className="mt-2 text-[13px] font-semibold text-[#65758a]">
-          {group.setupError}
-        </p>
-        <button
-          type="button"
-          onClick={() => void group.loadSetup()}
-          className="mt-4 min-h-11 rounded-full bg-[#172947] px-5 text-[13px] font-extrabold text-white"
-        >
-          다시 불러오기
-        </button>
-      </section>
-    );
-  }
-
-  if (!group.spaces.length) {
-    return (
-      <section className="card-surface rounded-[24px] p-5">
-        <p className="text-[11px] font-black uppercase tracking-[0.14em] text-[#2f7eea]">
-          함께 고르기
-        </p>
-        <h1 className="mt-2 text-[20px] font-black text-[#172947]">
-          먼저 공유 공간을 만들어 주세요
-        </h1>
-        <p className="mt-2 text-[13px] font-semibold leading-6 text-[#65758a]">
-          활성 공간 구성원 2~5명이 같은 조건으로 후보를 보고 합의할 수 있어요.
-        </p>
-        <Link
-          href="/spaces"
-          className="mt-4 inline-flex min-h-11 items-center rounded-full bg-[#172947] px-5 text-[13px] font-extrabold text-white"
-        >
-          공간 관리로 이동
-        </Link>
-      </section>
-    );
-  }
-
   return (
     <section
+      id="group-recommendation"
       className="rounded-[26px] border border-[#dbe7f7] bg-gradient-to-br from-white via-[#f7fbff] to-[#edf5ff] p-4 shadow-[0_16px_42px_rgba(31,65,114,0.10)] sm:p-6"
       aria-labelledby="group-recommendation-title"
     >
@@ -168,15 +103,15 @@ export function GroupRecommendationPanel() {
           <p className="text-[11px] font-black uppercase tracking-[0.14em] text-[#2f7eea]">
             오늘, 함께 볼 작품
           </p>
-          <h1
+          <h2
             id="group-recommendation-title"
             className="mt-1 text-[22px] font-black text-[#172947]"
           >
             함께 고르기
-          </h1>
+          </h2>
           <p className="mt-1 max-w-xl text-[13px] font-semibold leading-6 text-[#65758a]">
-            참여자와 조건을 직접 정하면, 모두가 실제로 볼 수 있는 후보와 합의
-            진행만 보여드려요. 개인 점수와 숨은 선호는 공개하지 않아요.
+            참여자와 조건을 직접 정하면, 모두가 실제로 볼 수 있는 후보와 합의 진행만 보여드려요.
+            개인 점수와 숨은 선호는 공개하지 않아요.
           </p>
         </div>
         <span className="rounded-full bg-[#e7f1ff] px-3 py-1.5 text-[11px] font-extrabold text-[#2f7eea]">
@@ -186,24 +121,14 @@ export function GroupRecommendationPanel() {
 
       <form onSubmit={handleSubmit} className="mt-5 space-y-5">
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="block">
+          <div>
             <span className="text-[12px] font-extrabold text-[#263b59]">공간</span>
-            <select
-              value={group.activeSpaceId}
-              onChange={(event) => group.selectSpace(event.target.value)}
-              className="mt-2 min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[14px] font-bold text-[#172947]"
-            >
-              {group.spaces.map((space) => (
-                <option key={space.id} value={space.id}>
-                  {space.name}
-                </option>
-              ))}
-            </select>
-          </label>
+            <p className="mt-2 flex min-h-11 items-center rounded-2xl border border-[#d8e4f2] bg-[#f7f9fd] px-3 text-[14px] font-bold text-[#172947]">
+              {space.name}
+            </p>
+          </div>
           <label className="block">
-            <span className="text-[12px] font-extrabold text-[#263b59]">
-              지역
-            </span>
+            <span className="text-[12px] font-extrabold text-[#263b59]">지역</span>
             <select
               value={region}
               onChange={(event) => setRegion(event.target.value)}
@@ -221,7 +146,7 @@ export function GroupRecommendationPanel() {
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {activeMembers.map((member) => {
               const selected = participants.includes(member.accountId);
-              const isMe = member.accountId === group.myAccountId;
+              const isMe = member.accountId === myAccountId;
               const disabled = isMe || (!selected && participants.length >= 5);
               return (
                 <label
@@ -234,19 +159,13 @@ export function GroupRecommendationPanel() {
                     disabled={disabled}
                     onChange={(event) =>
                       setParticipants((current) =>
-                        toggleValue(
-                          current,
-                          member.accountId,
-                          event.target.checked,
-                        ),
+                        toggleValue(current, member.accountId, event.target.checked),
                       )
                     }
                     className="h-5 w-5 accent-[#2f7eea]"
                   />
                   <span>
-                    {isMe
-                      ? `${member.nickname || '내 계정'} (나)`
-                      : member.nickname || '공간 멤버'}
+                    {isMe ? `${member.nickname || '내 계정'} (나)` : member.nickname || '공간 멤버'}
                     {isMe ? (
                       <span className="ml-1 text-[10px] font-semibold text-[#8b96a8]">
                         요청자 필수
@@ -279,9 +198,7 @@ export function GroupRecommendationPanel() {
                     type="checkbox"
                     checked={services.includes(provider)}
                     onChange={(event) =>
-                      setServices((current) =>
-                        toggleValue(current, provider, event.target.checked),
-                      )
+                      setServices((current) => toggleValue(current, provider, event.target.checked))
                     }
                     className="h-4 w-4 accent-[#2f7eea]"
                   />
@@ -292,14 +209,14 @@ export function GroupRecommendationPanel() {
           </fieldset>
 
           <fieldset>
-            <legend className="text-[12px] font-extrabold text-[#263b59]">
-              작품 유형
-            </legend>
+            <legend className="text-[12px] font-extrabold text-[#263b59]">작품 유형</legend>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              {([
-                ['MOVIE', '영화'],
-                ['TV', '드라마'],
-              ] as const).map(([value, label]) => (
+              {(
+                [
+                  ['MOVIE', '영화'],
+                  ['TV', '드라마'],
+                ] as const
+              ).map(([value, label]) => (
                 <label
                   key={value}
                   className="flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[#263b59]"
@@ -308,12 +225,11 @@ export function GroupRecommendationPanel() {
                     type="checkbox"
                     checked={contentTypes.includes(value)}
                     onChange={(event) =>
-                      setContentTypes((current) =>
-                        toggleValue(
-                          current,
-                          value,
-                          event.target.checked,
-                        ) as Array<'MOVIE' | 'TV'>,
+                      setContentTypes(
+                        (current) =>
+                          toggleValue(current, value, event.target.checked) as Array<
+                            'MOVIE' | 'TV'
+                          >,
                       )
                     }
                     className="h-5 w-5 accent-[#2f7eea]"
@@ -326,9 +242,7 @@ export function GroupRecommendationPanel() {
         </div>
 
         <fieldset>
-          <legend className="text-[12px] font-extrabold text-[#263b59]">
-            러닝타임
-          </legend>
+          <legend className="text-[12px] font-extrabold text-[#263b59]">러닝타임</legend>
           <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
             <label>
               <span className="sr-only">최소 러닝타임</span>
@@ -361,9 +275,7 @@ export function GroupRecommendationPanel() {
         </fieldset>
 
         <fieldset>
-          <legend className="text-[12px] font-extrabold text-[#263b59]">
-            오늘의 분위기
-          </legend>
+          <legend className="text-[12px] font-extrabold text-[#263b59]">오늘의 분위기</legend>
           <div className="mt-2 flex flex-wrap gap-2">
             {MOODS.map((mood) => {
               const selected = moodTags.includes(mood);
@@ -372,11 +284,7 @@ export function GroupRecommendationPanel() {
                   key={mood}
                   type="button"
                   aria-pressed={selected}
-                  onClick={() =>
-                    setMoodTags((current) =>
-                      toggleValue(current, mood, !selected),
-                    )
-                  }
+                  onClick={() => setMoodTags((current) => toggleValue(current, mood, !selected))}
                   className={`min-h-11 rounded-full border px-4 text-[12px] font-extrabold ${
                     selected
                       ? 'border-[#2f7eea] bg-[#2f7eea] text-white'
@@ -391,12 +299,8 @@ export function GroupRecommendationPanel() {
         </fieldset>
 
         <label className="block">
-          <span className="text-[12px] font-extrabold text-[#263b59]">
-            제외 조건
-          </span>
-          <span className="ml-2 text-[11px] font-semibold text-[#8b96a8]">
-            쉼표로 구분
-          </span>
+          <span className="text-[12px] font-extrabold text-[#263b59]">제외 조건</span>
+          <span className="ml-2 text-[11px] font-semibold text-[#8b96a8]">쉼표로 구분</span>
           <input
             value={avoidTagsText}
             onChange={(event) => setAvoidTagsText(event.target.value)}
@@ -407,14 +311,14 @@ export function GroupRecommendationPanel() {
 
         <div className="grid gap-5 md:grid-cols-2">
           <fieldset>
-            <legend className="text-[12px] font-extrabold text-[#263b59]">
-              재감상 정책
-            </legend>
+            <legend className="text-[12px] font-extrabold text-[#263b59]">재감상 정책</legend>
             <div className="mt-2 space-y-2">
-              {([
-                ['EXCLUDE', '누군가 이미 본 작품 제외'],
-                ['ALLOW', '재감상 후보도 허용'],
-              ] as const).map(([value, label]) => (
+              {(
+                [
+                  ['EXCLUDE', '누군가 이미 본 작품 제외'],
+                  ['ALLOW', '재감상 후보도 허용'],
+                ] as const
+              ).map(([value, label]) => (
                 <label
                   key={value}
                   className="flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl bg-white px-3 text-[12px] font-bold text-[#263b59]"
@@ -434,14 +338,14 @@ export function GroupRecommendationPanel() {
           </fieldset>
 
           <fieldset>
-            <legend className="text-[12px] font-extrabold text-[#263b59]">
-              합의 규칙
-            </legend>
+            <legend className="text-[12px] font-extrabold text-[#263b59]">합의 규칙</legend>
             <div className="mt-2 space-y-2">
-              {([
-                ['ALL', '전원 동의'],
-                ['MINIMUM', '최소 인원 동의'],
-              ] as const).map(([value, label]) => (
+              {(
+                [
+                  ['ALL', '전원 동의'],
+                  ['MINIMUM', '최소 인원 동의'],
+                ] as const
+              ).map(([value, label]) => (
                 <label
                   key={value}
                   className="flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl bg-white px-3 text-[12px] font-bold text-[#263b59]"
@@ -463,9 +367,7 @@ export function GroupRecommendationPanel() {
                 <span className="sr-only">최소 동의 인원</span>
                 <select
                   value={Math.min(minimumApprovals, participants.length || 1)}
-                  onChange={(event) =>
-                    setMinimumApprovals(Number(event.target.value))
-                  }
+                  onChange={(event) => setMinimumApprovals(Number(event.target.value))}
                   className="min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[#172947]"
                 >
                   {Array.from(
@@ -483,19 +385,14 @@ export function GroupRecommendationPanel() {
         </div>
 
         <div className="rounded-2xl border border-[#cfe0f5] bg-white/80 p-4">
-          <p className="text-[12px] font-extrabold text-[#172947]">
-            요청 전 확인
-          </p>
+          <p className="text-[12px] font-extrabold text-[#172947]">요청 전 확인</p>
           <p className="mt-1 text-[12px] font-semibold leading-5 text-[#65758a]">
             {participantNames.join(', ') || '참여자 미선택'} · {region} ·{' '}
             {services.join(', ') || '시청 경로 미선택'} ·{' '}
-            {decisionRule === 'ALL'
-              ? '전원 동의'
-              : `${minimumApprovals}명 이상 동의`}
+            {decisionRule === 'ALL' ? '전원 동의' : `${minimumApprovals}명 이상 동의`}
           </p>
           <p className="mt-1 text-[11px] font-semibold text-[#8b96a8]">
-            이 조건은 자동으로 완화되지 않으며, 새 요청을 만들기 전까지 그대로
-            유지돼요.
+            이 조건은 자동으로 완화되지 않으며, 새 요청을 만들기 전까지 그대로 유지돼요.
           </p>
         </div>
 
@@ -516,14 +413,9 @@ export function GroupRecommendationPanel() {
       </form>
 
       {group.requestError ? (
-        <div
-          role="alert"
-          className="mt-5 rounded-2xl border border-[#f5c9d1] bg-[#fff5f7] p-4"
-        >
+        <div role="alert" className="mt-5 rounded-2xl border border-[#f5c9d1] bg-[#fff5f7] p-4">
           <p className="text-[13px] font-extrabold text-[#9f2942]">
-            {group.requestStatus === 'provider-error'
-              ? '공급자 확인 실패'
-              : '추천 요청 실패'}
+            {group.requestStatus === 'provider-error' ? '공급자 확인 실패' : '추천 요청 실패'}
           </p>
           <p className="mt-1 text-[12px] font-semibold leading-5 text-[#7a4652]">
             {group.requestError}
@@ -542,9 +434,7 @@ export function GroupRecommendationPanel() {
         <div className="mt-7" aria-live="polite">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 className="text-[18px] font-black text-[#172947]">
-                함께 볼 후보
-              </h2>
+              <h3 className="text-[18px] font-black text-[#172947]">함께 볼 후보</h3>
               <p className="mt-1 text-[11px] font-semibold text-[#8b96a8]">
                 {group.session.session.createdAt
                   ? `${new Date(group.session.session.createdAt).toLocaleString('ko-KR')} 요청`
@@ -574,15 +464,14 @@ export function GroupRecommendationPanel() {
 
           {group.session.items.length === 0 ? (
             <div className="mt-3 rounded-2xl border border-[#eed9aa] bg-[#fffaf0] p-4">
-              <h3 className="text-[14px] font-black text-[#875c10]">
+              <h4 className="text-[14px] font-black text-[#875c10]">
                 현재 조건과 정확히 맞는 후보가 없어요
-              </h3>
+              </h4>
               <p className="mt-1 text-[12px] font-semibold leading-5 text-[#806b43]">
-                필터는 몰래 완화하지 않았어요. 아래 변경은 버튼을 누른 뒤 다시
-                요청할 때만 적용돼요.
+                필터는 몰래 완화하지 않았어요. 아래 변경은 버튼을 누른 뒤 다시 요청할 때만 적용돼요.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {(runtimeMin || runtimeMax) ? (
+                {runtimeMin || runtimeMax ? (
                   <button
                     type="button"
                     onClick={() => {
@@ -640,14 +529,12 @@ export function GroupRecommendationPanel() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div>
-                            <h3 className="text-[16px] font-black text-[#172947]">
+                            <h4 className="text-[16px] font-black text-[#172947]">
                               {item.content.title || '제목 정보 없음'}
-                            </h3>
+                            </h4>
                             <p className="mt-1 text-[11px] font-bold text-[#8b96a8]">
                               {item.content.mediaType === 'TV' ? '드라마' : '영화'}
-                              {item.content.runtime
-                                ? ` · ${item.content.runtime}분`
-                                : ''}
+                              {item.content.runtime ? ` · ${item.content.runtime}분` : ''}
                             </p>
                           </div>
                           <span
@@ -670,9 +557,7 @@ export function GroupRecommendationPanel() {
                               : 'bg-[#fff7e8] text-[#805f27]'
                           }`}
                         >
-                          <p className="text-[12px] font-extrabold">
-                            {availability.title}
-                          </p>
+                          <p className="text-[12px] font-extrabold">{availability.title}</p>
                           <p className="mt-1 text-[11px] font-semibold leading-5">
                             {availability.detail}
                           </p>
@@ -688,9 +573,7 @@ export function GroupRecommendationPanel() {
                         </div>
 
                         <div className="mt-3">
-                          <p className="text-[12px] font-extrabold text-[#263b59]">
-                            추천 이유
-                          </p>
+                          <p className="text-[12px] font-extrabold text-[#263b59]">추천 이유</p>
                           <ul className="mt-2 space-y-2">
                             {item.reasons.map((reason, index) => (
                               <li
@@ -753,14 +636,9 @@ export function GroupRecommendationPanel() {
                                 key={option.kind}
                                 type="button"
                                 aria-pressed={selectedFeedback === option.kind}
-                                disabled={
-                                  closed || group.feedbackBusy === item.exposureId
-                                }
+                                disabled={closed || group.feedbackBusy === item.exposureId}
                                 onClick={() =>
-                                  void group.submitFeedback(
-                                    item.exposureId,
-                                    option.kind,
-                                  )
+                                  void group.submitFeedback(item.exposureId, option.kind)
                                 }
                                 className={`min-h-11 rounded-xl px-2 text-[11px] font-extrabold disabled:opacity-50 ${
                                   selectedFeedback === option.kind
