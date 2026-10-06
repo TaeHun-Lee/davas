@@ -895,8 +895,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/CoreUi.tsx": {
-    "mtime": 1791297525.7000108,
-    "ast_hash": "c916f32f156e02bae133de99a773cc54",
+    "mtime": 1791302852.5735557,
+    "ast_hash": "c76a35f73ad405f5c6740c6dcbef6fd5",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/RecordComposer.tsx": {
@@ -1405,8 +1405,8 @@
     "semantic_hash": ""
   },
   "packages/shared/src/index.ts": {
-    "mtime": 1791280838.511803,
-    "ast_hash": "6873818f32a992d97d2810a218c38561",
+    "mtime": 1791302841.9309664,
+    "ast_hash": "9b5d6d243005286541dbdf6729b0162b",
     "semantic_hash": ""
   },
   "packages/shared/tsconfig.json": {
@@ -1605,13 +1605,13 @@
     "semantic_hash": ""
   },
   "apps/api/src/diaries/watch-events.service.spec.ts": {
-    "mtime": 1791291597.4298275,
-    "ast_hash": "7c8fe788f452705a47d9269b4dd353d4",
+    "mtime": 1791303582.8662362,
+    "ast_hash": "a7ecd5a638af5c078f8e5e6133c607af",
     "semantic_hash": ""
   },
   "apps/api/src/diaries/watch-events.service.ts": {
-    "mtime": 1791291581.3493974,
-    "ast_hash": "2122ebce5c5aac223e5b8f07c44ac361",
+    "mtime": 1791302841.9319668,
+    "ast_hash": "76f360c04738dc2c265e0c406b600f0a",
     "semantic_hash": ""
   },
   "apps/api/src/database/entities/availability-observation.entity.ts": {
@@ -1835,8 +1835,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchEventDetailScreen.tsx": {
-    "mtime": 1791292000.0225482,
-    "ast_hash": "81e740aea9e94d5c2167376e4d60d994",
+    "mtime": 1791302967.4487224,
+    "ast_hash": "fff2b8eb36d55966f43474a2d653c1b9",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchRatingControl.tsx": {
@@ -2260,8 +2260,8 @@
     "semantic_hash": ""
   },
   "docs/development.md": {
-    "mtime": 1791295688.05144,
-    "ast_hash": "d09e52bb748247dcb5cba715dc48520b",
+    "mtime": 1791303423.7553675,
+    "ast_hash": "fb9508363d75c885667cff44e1001b5c",
     "semantic_hash": ""
   },
   "docs/operations.md": {
@@ -2290,8 +2290,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceWatchCard.tsx": {
-    "mtime": 1791287563.0753982,
-    "ast_hash": "817e1ea50a561fb5ece3169c9d2bb754",
+    "mtime": 1791303059.6386442,
+    "ast_hash": "3af36c4a9b0934bc5de2a06bd5fe8595",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/space-watch-model.spec.ts": {
@@ -2385,13 +2385,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchReviews.tsx": {
-    "mtime": 1791289424.2493525,
-    "ast_hash": "263c3b494d3c6d76042843fefc540b36",
+    "mtime": 1791302992.8563783,
+    "ast_hash": "5abfd65d3fa5e6f89d000c094f4265db",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/record-experience-design.spec.ts": {
-    "mtime": 1791298077.9622157,
-    "ast_hash": "d4e4f620caea12caa727408c278555b2",
+    "mtime": 1791303190.5610845,
+    "ast_hash": "c474c9fa88397789a9ce7a82019abbfc",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useWatchPhotoUploads.ts": {
