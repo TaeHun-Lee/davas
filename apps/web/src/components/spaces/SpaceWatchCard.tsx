@@ -7,6 +7,8 @@ import type { WatchEvent } from '../../lib/api/watch-events';
 import { Poster } from '../core/CoreUi';
 import { WatchPhoto } from '../core/WatchPhoto';
 import {
+  blindViewerRole,
+  lockedReviewHint,
   reactionRows,
   watchedDayLabel,
   watchSourceSummary,
@@ -15,11 +17,11 @@ import {
 
 const STRIP_SIZE = 3;
 
-function rowText(row: WatchReactionRow) {
+function rowText(row: WatchReactionRow, lockedHint: string) {
   if (row.status === 'PENDING') {
     return row.isMe ? '함께 봤는지 알려 주세요' : '함께 봤는지 확인을 기다리고 있어요';
   }
-  if (row.locked) return '리뷰가 잠겨 있어요 · 내 리뷰를 남기면 열려요';
+  if (row.locked) return `리뷰 잠김 · ${lockedHint}`;
   if (row.hasSpoiler && row.text) return '스포일러가 있는 리뷰예요';
   return row.text ?? (row.rating === null ? '아직 별점을 안 남겼어요' : '별점만 남겼어요');
 }
@@ -37,6 +39,7 @@ export function SpaceWatchCard({
 }) {
   const detail = `/records/${event.id}?returnTo=${encodeURIComponent(returnTo)}`;
   const rows = reactionRows(event, myAccountId);
+  const lockedHint = lockedReviewHint(blindViewerRole(event, myAccountId));
   const together = rows.filter((row) => row.status === 'CONFIRMED').length > 1;
   const meta = [
     watchedDayLabel(event.watchedDate),
@@ -89,7 +92,7 @@ export function SpaceWatchCard({
               {row.name.slice(0, 1)}
             </span>
             <span className="space-watch-text">
-              <b>{row.name}</b> {rowText(row)}
+              <b>{row.name}</b> {rowText(row, lockedHint)}
             </span>
             {row.locked ? (
               <span className="space-watch-rating" role="img" aria-label="별점 가려짐">

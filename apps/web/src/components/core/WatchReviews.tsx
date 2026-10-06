@@ -41,6 +41,7 @@ export function ReviewCard({
   name,
   isMe,
   waitingFor,
+  lockedHint,
   onLikeChange,
 }: {
   watchEventId: string;
@@ -49,6 +50,8 @@ export function ReviewCard({
   isMe: boolean;
   /** Who still has to write before my blind review opens, for the "공개 대기" badge. */
   waitingFor: string | null;
+  /** What opens a locked review for this viewer, which depends on whether they watched. */
+  lockedHint: string;
   onLikeChange: (next: { likeCount: number; likedByMe: boolean }) => void;
 }) {
   const [spoilerOpen, setSpoilerOpen] = useState(false);
@@ -89,7 +92,7 @@ export function ReviewCard({
           </span>
           <span>
             <strong>{name}님 리뷰가 잠겨 있어요</strong>
-            <span>내 리뷰를 남기면 열려요</span>
+            <span>{lockedHint}</span>
           </span>
         </div>
         <div className="review-actions">

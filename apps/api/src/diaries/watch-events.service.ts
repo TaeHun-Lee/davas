@@ -357,7 +357,11 @@ export class WatchEventsService {
       where: { id: diaryId, userId: accountId },
     });
     if (!diary) throw this.recordNotFound();
-    await this.diaries.softDelete({ id: diaryId, userId: accountId });
+    // The record is only hidden (soft delete), but its photos are removed for real.
+    await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(DiaryEntity).softDelete({ id: diaryId, userId: accountId });
+      await this.photos.removeAllForDiary(manager, diaryId);
+    });
     return { id: diaryId, deleted: true };
   }
 
@@ -771,9 +775,16 @@ export class WatchEventsService {
   ) {
     const existing = await shares.find({ where: { diaryId } });
     const now = new Date();
+    // Only a space that is shared again gets a new share time; editing a record that stays
+    // shared must not move it to the top of the timeline or look like a new viewing.
     for (const share of existing) {
-      share.revokedAt = spaceIds.includes(share.spaceId) ? null : now;
-      if (!share.revokedAt) share.sharedAt = now;
+      const keep = spaceIds.includes(share.spaceId);
+      if (keep && share.revokedAt) {
+        share.revokedAt = null;
+        share.sharedAt = now;
+      } else if (!keep && !share.revokedAt) {
+        share.revokedAt = now;
+      }
     }
     if (existing.length) await shares.save(existing);
     const existingSpaceIds = new Set(existing.map((share) => share.spaceId));

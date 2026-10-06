@@ -79,4 +79,23 @@ describe('blind review reveal rule', () => {
     });
     assert.deepEqual([...done], []);
   });
+
+  it('also waits for someone still asked to confirm, so a review never locks again', () => {
+    const participants = [
+      { accountId: 'jiwoo', status: 'CONFIRMED' as const },
+      { accountId: 'minho', status: 'PENDING' as const },
+    ];
+    const waiting = hiddenReviewAccountIds({
+      viewerId: 'seojun',
+      participants,
+      reactions: [review('jiwoo', true)],
+    });
+    assert.deepEqual([...waiting], ['jiwoo']);
+    const declined = hiddenReviewAccountIds({
+      viewerId: 'seojun',
+      participants: [participants[0], { accountId: 'minho', status: 'DECLINED' as const }],
+      reactions: [review('jiwoo', true)],
+    });
+    assert.deepEqual([...declined], []);
+  });
 });

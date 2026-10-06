@@ -18,6 +18,7 @@ import {
 } from '../database/entities';
 import { isAfterSeoulToday } from '../common/seoul-date';
 import { DiaryAccessService } from './diary-access.service';
+import { WatchPhotosService } from './watch-photos.service';
 import { CreateDiaryDto } from './dto/create-diary.dto';
 import { UpdateDiaryDto } from './dto/update-diary.dto';
 
@@ -91,6 +92,8 @@ export class DiariesService {
     @Optional()
     @InjectRepository(WatchReactionEntity)
     private readonly watchReactions?: Repository<WatchReactionEntity>,
+    @Optional()
+    private readonly photos?: WatchPhotosService,
   ) {}
 
   async create(userId: string, dto: CreateDiaryDto) {
@@ -214,7 +217,10 @@ export class DiariesService {
   async remove(userId: string, id: string) {
     const diary = await this.diaries.findOne({ where: { id, userId } });
     if (!diary) throw apiError(404, 'RECORD_NOT_FOUND', '기록을 찾을 수 없어요.');
-    await this.diaries.softDelete({ id, userId });
+    await this.diaries.manager.transaction(async (manager) => {
+      await manager.getRepository(DiaryEntity).softDelete({ id, userId });
+      await this.photos?.removeAllForDiary(manager, id);
+    });
     return { id, deleted: true };
   }
 

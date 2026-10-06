@@ -60,6 +60,9 @@ export class WatchPhotosController {
     response.type(file.mimeType);
     response.sendFile(file.path, { cacheControl: false }, (error) => {
       if (error && !response.headersSent) {
+        // The year-long cache header above must not stick to a "not found".
+        response.setHeader('Cache-Control', 'private, no-store');
+        response.removeHeader('Content-Disposition');
         response.status(404).json({
           statusCode: 404,
           code: 'PHOTO_NOT_FOUND',

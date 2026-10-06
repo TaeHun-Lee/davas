@@ -279,9 +279,12 @@ function setup() {
     spaceAccess,
   );
   const attachedPhotoIds: string[][] = [];
+  const removedPhotosOf: string[] = [];
   const photos = {
     replaceForDiary: async (_manager: unknown, _diaryId: string, _account: string, ids: string[]) =>
       void attachedPhotoIds.push(ids),
+    removeAllForDiary: async (_manager: unknown, diaryId: string) =>
+      void removedPhotosOf.push(diaryId),
     view: (photo: WatchPhotoEntity) => ({ id: photo.id }),
   } as unknown as WatchPhotosService;
   // Records every notify* call as { method, ...input }.
@@ -310,7 +313,16 @@ function setup() {
     notifications as never,
   );
   const memories = new SpaceMemoriesService(watchShares, spaceAccess, photos);
-  return { attachedPhotoIds, database, memories, notified, outboxEvents, service };
+  return {
+    access,
+    attachedPhotoIds,
+    database,
+    memories,
+    notified,
+    outboxEvents,
+    removedPhotosOf,
+    service,
+  };
 }
 
 async function coupleRecord(isBlind: boolean) {
@@ -517,6 +529,65 @@ describe('WatchEventsService', () => {
     assert.equal((await service.detail('owner', memberEvent.id)).source, null);
   });
 
+  it('stops showing the personal parts of a record once its author leaves', async () => {
+    const { access, database, service } = setup();
+    database.addMember('space-1', 'owner');
+    const membership = database.addMember('space-1', 'member');
+    const created = await service.create('member', {
+      mediaId: 'media-1',
+      watchedDate: '2026-08-06',
+      spaceIds: ['space-1'],
+    });
+    const record = { id: created.id, userId: 'member' };
+    assert.equal(await access.isAuthorVisibleTo(record, 'owner'), true);
+    membership.status = 'LEFT';
+    membership.leftAt = new Date();
+    assert.equal(await access.isAuthorVisibleTo(record, 'owner'), false);
+    assert.equal(await access.isAuthorVisibleTo(record, 'member'), true);
+  });
+
+  it('removes the photos of a deleted record with it', async () => {
+    const { database, removedPhotosOf, service } = setup();
+    database.addMember('space-1', 'owner');
+    const created = await service.create('owner', {
+      mediaId: 'media-1',
+      watchedDate: '2026-08-06',
+      spaceIds: ['space-1'],
+    });
+    await service.remove('owner', created.id);
+    assert.deepEqual(removedPhotosOf, [created.id]);
+  });
+
+  it('keeps the share time when a record is edited, and renews it when shared again', async () => {
+    const { database, service } = setup();
+    database.addMember('space-1', 'owner');
+    const created = await service.create('owner', {
+      mediaId: 'media-1',
+      watchedDate: '2026-08-06',
+      spaceIds: ['space-1'],
+    });
+    const share = database.shares.find((item) => item.diaryId === created.id)!;
+    const original = new Date('2026-08-06T12:00:00Z');
+    share.sharedAt = original;
+
+    await service.update('owner', created.id, {
+      memoryNote: '팝콘을 쏟았다',
+      spaceIds: ['space-1'],
+    });
+    assert.equal(share.sharedAt, original);
+    assert.equal(share.revokedAt, null);
+
+    await service.update('owner', created.id, { spaceIds: [] });
+    const revokedAt = share.revokedAt;
+    assert.ok(revokedAt);
+    await service.update('owner', created.id, { memoryNote: '다시 고침', spaceIds: [] });
+    assert.equal(share.revokedAt, revokedAt);
+
+    await service.update('owner', created.id, { spaceIds: ['space-1'] });
+    assert.equal(share.revokedAt, null);
+    assert.ok(share.sharedAt > original);
+  });
+
   it('keeps a blind review hidden from the partner until they write theirs, everywhere', async () => {
     const { created, service } = await coupleRecord(true);
 
@@ -686,6 +757,47 @@ describe('WatchEventsService', () => {
     const lastYear = await memories.memories('space-1', 'minho', 2025, new Date('2026-10-06'));
     assert.equal(lastYear.totals.records, 1);
     await assert.rejects(() => memories.memories('space-1', 'stranger'));
+  });
+
+  it('still counts a departed member record in memories, without its photos or source', async () => {
+    const { database, memories, service } = setup();
+    database.addMember('space-1', 'jiwoo');
+    const minho = database.addMember('space-1', 'minho');
+    const series = database.addMedia('media-tv');
+    Object.assign(series, { mediaType: 'TV' });
+    const theater = await service.create('minho', {
+      mediaId: 'media-1',
+      watchedDate: '2025-10-06',
+      spaceIds: ['space-1'],
+      source: { kind: 'THEATER' } as never,
+    });
+    await service.create('minho', {
+      mediaId: 'media-tv',
+      watchedDate: '2026-05-01',
+      spaceIds: ['space-1'],
+      source: { kind: 'OTT', episodeWatched: 3, episodeTotal: 12 } as never,
+    });
+    database.photos.push(
+      Object.assign(new WatchPhotoEntity(), {
+        id: 'photo-1',
+        diaryId: theater.id,
+        uploaderId: 'minho',
+        position: 0,
+      }),
+    );
+    minho.status = 'LEFT';
+    minho.leftAt = new Date();
+
+    const now = new Date('2026-10-06T03:00:00Z');
+    const thisYear = await memories.memories('space-1', 'jiwoo', undefined, now);
+    assert.equal(thisYear.totals.records, 1);
+    assert.deepEqual(thisYear.sources, { theater: 0, ott: 0, other: 0 });
+    assert.deepEqual(thisYear.inProgress, []);
+    assert.equal(thisYear.onThisDay[0].sourceKind, null);
+    assert.equal(thisYear.onThisDay[0].photoCount, 0);
+    assert.equal(thisYear.onThisDay[0].coverPhoto, null);
+    const lastYear = await memories.memories('space-1', 'jiwoo', 2025, now);
+    assert.equal(lastYear.totals.photos, 0);
   });
 
   it('reports where the viewer is up to in a series, from the newest record', async () => {

@@ -24,7 +24,8 @@ export function hasWrittenReaction(reaction: ReactionContent | undefined) {
  * - Someone who watched (confirmed or still asked to confirm) sees blind reviews once they
  *   have written their own.
  * - Anyone else who can see the record (a space member who was not there) sees them once
- *   every confirmed watcher has written theirs, so they cannot peek before the reveal.
+ *   every watcher has written theirs, counting people still asked to confirm, so they cannot
+ *   peek before the reveal and the review does not lock again when someone confirms.
  *
  * The viewer's own review is never hidden from them.
  */
@@ -44,7 +45,7 @@ export function hiddenReviewAccountIds({
   const unlocked = viewerWatched
     ? hasWrittenReaction(byAccount.get(viewerId))
     : participants
-        .filter((participant) => participant.status === 'CONFIRMED')
+        .filter((participant) => participant.status !== 'DECLINED')
         .every((participant) => hasWrittenReaction(byAccount.get(participant.accountId)));
 
   const hidden = new Set<string>();

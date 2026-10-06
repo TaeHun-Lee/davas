@@ -88,6 +88,8 @@ export function MemoriesScreen() {
 function MemoriesBody({ data }: { data: SpaceMemories }) {
   const { totals, sources } = data;
   const topCount = data.genres[0]?.count ?? 0;
+  // Records by someone who left the space have no known source, so the split uses its own sum.
+  const sourceTotal = sources.theater + sources.ott + sources.other;
   return (
     <>
       <section className="memories-total" aria-labelledby="memories-total-title">
@@ -125,10 +127,10 @@ function MemoriesBody({ data }: { data: SpaceMemories }) {
             <div
               className="memories-split"
               role="img"
-              aria-label={`극장 ${sources.theater}편 ${percent(sources.theater, totals.records)}%, OTT ${sources.ott}편 ${percent(sources.ott, totals.records)}%`}
+              aria-label={`극장 ${sources.theater}편 ${percent(sources.theater, sourceTotal)}%, OTT ${sources.ott}편 ${percent(sources.ott, sourceTotal)}%`}
             >
-              <span style={{ width: `${percent(sources.theater, totals.records)}%` }} />
-              <span style={{ width: `${percent(sources.ott, totals.records)}%` }} />
+              <span style={{ width: `${percent(sources.theater, sourceTotal)}%` }} />
+              <span style={{ width: `${percent(sources.ott, sourceTotal)}%` }} />
             </div>
             <ul className="memories-legend">
               <li data-tone="theater">극장 {sources.theater}편</li>

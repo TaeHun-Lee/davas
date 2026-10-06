@@ -1,4 +1,4 @@
-import type { WatchEvent, WatchParticipantStatus } from '../../lib/api/watch-events';
+import type { WatchEvent, WatchParticipantStatus, WatchReaction } from '../../lib/api/watch-events';
 
 const SOURCE_LABELS = {
   THEATER: '극장',
@@ -23,6 +23,54 @@ export type WatchReactionRow = {
   likeCount: number;
 };
 
+/** A rating alone counts, as on the server. A locked review is always a written one. */
+export function hasWrittenReaction(reaction: WatchReaction | undefined) {
+  return Boolean(
+    reaction &&
+    (reaction.locked ||
+      reaction.rating !== null ||
+      reaction.headline?.trim() ||
+      reaction.review?.trim()),
+  );
+}
+
+/**
+ * People who watched (or are still asked to confirm) and have not written yet, other than the
+ * viewer. While anyone is on this list, a blind review stays closed for them.
+ */
+export function waitingWatchers(event: WatchEvent, myAccountId: string) {
+  return event.participants.filter(
+    (participant) =>
+      participant.status !== 'DECLINED' &&
+      participant.accountId !== myAccountId &&
+      !hasWrittenReaction(
+        event.reactions.find((reaction) => reaction.accountId === participant.accountId),
+      ),
+  );
+}
+
+export type BlindViewerRole = 'watcher' | 'pending' | 'outsider';
+
+/** How the viewer relates to the record, which decides what opens a locked review for them. */
+export function blindViewerRole(event: WatchEvent, myAccountId: string): BlindViewerRole {
+  if (event.isMine) return 'watcher';
+  const status = event.participants.find(
+    (participant) => participant.accountId === myAccountId,
+  )?.status;
+  if (status === 'CONFIRMED') return 'watcher';
+  return status === 'PENDING' ? 'pending' : 'outsider';
+}
+
+const LOCKED_HINTS: Record<BlindViewerRole, string> = {
+  watcher: '내 리뷰를 남기면 열려요',
+  pending: '함께 봤다고 확인하고 리뷰를 남기면 열려요',
+  outsider: '함께 본 사람이 모두 리뷰를 남기면 열려요',
+};
+
+export function lockedReviewHint(role: BlindViewerRole) {
+  return LOCKED_HINTS[role];
+}
+
 /** `2026-10-04` → `10월 4일`. Falls back to the raw value for anything unexpected. */
 export function watchedDayLabel(date: string) {
   const match = /^\d{4}-(\d{2})-(\d{2})$/.exec(date);
@@ -42,13 +90,7 @@ export function watchSourceSummary(event: WatchEvent) {
  * the viewer labelled "나". Declined people are left out: they said they were not there.
  */
 export function reactionRows(event: WatchEvent, myAccountId: string): WatchReactionRow[] {
-  const written = new Set(event.reactions.map((reaction) => reaction.accountId));
-  const someoneConfirmedHasNotWritten = event.participants.some(
-    (participant) =>
-      participant.status === 'CONFIRMED' &&
-      participant.accountId !== myAccountId &&
-      !written.has(participant.accountId),
-  );
+  const someoneHasNotWritten = waitingWatchers(event, myAccountId).length > 0;
   const rows = event.participants
     .filter((participant) => participant.status !== 'DECLINED')
     .map((participant) => {
@@ -66,7 +108,7 @@ export function reactionRows(event: WatchEvent, myAccountId: string): WatchReact
         text: reaction?.headline?.trim() || reaction?.review?.trim() || null,
         hasSpoiler: reaction?.hasSpoiler ?? false,
         locked: reaction?.locked ?? false,
-        waitingToOpen: Boolean(isMe && reaction?.isBlind && someoneConfirmedHasNotWritten),
+        waitingToOpen: Boolean(isMe && reaction?.isBlind && someoneHasNotWritten),
         likeCount: reaction?.likeCount ?? 0,
       };
     });

@@ -18,7 +18,9 @@ const newestFirst = (left: DiaryEntity, right: DiaryEntity) =>
 /**
  * "우리 기록 모아보기": what a space watched in a year, what it watched on this day in
  * earlier years, and which series it is part-way through. Only records shared to the space
- * count, so a personal record never shows up here.
+ * count, so a personal record never shows up here. A record by someone who has left the space
+ * still counts as a title watched, but their photos and where and how far they watched do not
+ * show, matching the record view.
  */
 @Injectable()
 export class SpaceMemoriesService {
@@ -36,10 +38,16 @@ export class SpaceMemoriesService {
     now = new Date(),
   ): Promise<SpaceMemories> {
     await this.spaceAccess.assertActiveMember(spaceId, viewerId);
-    const shares = await this.shares.find({
-      where: { spaceId, revokedAt: IsNull(), diary: { deletedAt: IsNull() } },
-      relations: { diary: { media: true, watchSource: true, watchPhotos: true } },
-    });
+    const [shares, memberships] = await Promise.all([
+      this.shares.find({
+        where: { spaceId, revokedAt: IsNull(), diary: { deletedAt: IsNull() } },
+        relations: { diary: { media: true, watchSource: true, watchPhotos: true } },
+      }),
+      this.spaceAccess.activeMembersInSpaces([spaceId]),
+    ]);
+    const memberIds = new Set(memberships.map((membership) => membership.accountId));
+    const authorStayed = (diary: DiaryEntity) => memberIds.has(diary.userId);
+    const sourceOf = (diary: DiaryEntity) => (authorStayed(diary) ? diary.watchSource : null);
     const diaries = [
       ...new Map(
         shares.filter((share) => share.diary).map((share) => [share.diaryId, share.diary]),
@@ -56,15 +64,19 @@ export class SpaceMemoriesService {
         genreCounts.set(genre, (genreCounts.get(genre) ?? 0) + 1);
       }
     }
+    // Where a record was watched is only known while its author is still in the space.
+    const withSource = inYear.filter(authorStayed);
     const kindCount = (kind: string) =>
-      inYear.filter((diary) => diary.watchSource?.kind === kind).length;
+      withSource.filter((diary) => diary.watchSource?.kind === kind).length;
     const theater = kindCount('THEATER');
     const ott = kindCount('OTT');
 
     const attachedPhotos = (diary: DiaryEntity) =>
-      (diary.watchPhotos ?? [])
-        .filter((photo) => photo.diaryId === diary.id)
-        .sort((left, right) => left.position - right.position);
+      authorStayed(diary)
+        ? (diary.watchPhotos ?? [])
+            .filter((photo) => photo.diaryId === diary.id)
+            .sort((left, right) => left.position - right.position)
+        : [];
 
     const onThisDay = diaries
       .filter(
@@ -82,14 +94,14 @@ export class SpaceMemoriesService {
           posterUrl: diary.media?.posterUrl ?? null,
           watchedDate: diary.watchedDate,
           yearsAgo: currentYear - Number(diary.watchedDate.slice(0, 4)),
-          sourceKind: diary.watchSource?.kind ?? null,
+          sourceKind: sourceOf(diary)?.kind ?? null,
           photoCount: photos.length,
           coverPhoto: photos[0] ? this.photos.view(photos[0], viewerId) : null,
         };
       });
 
     const latestBySeries = new Map<string, DiaryEntity>();
-    for (const diary of [...diaries].sort(newestFirst)) {
+    for (const diary of diaries.filter(authorStayed).sort(newestFirst)) {
       if (diary.media?.mediaType !== 'TV' || latestBySeries.has(diary.mediaId)) continue;
       latestBySeries.set(diary.mediaId, diary);
     }
@@ -123,7 +135,7 @@ export class SpaceMemoriesService {
         .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
         .slice(0, TOP_GENRES)
         .map(([name, count]) => ({ name, count })),
-      sources: { theater, ott, other: inYear.length - theater - ott },
+      sources: { theater, ott, other: withSource.length - theater - ott },
       onThisDay,
       inProgress,
     };

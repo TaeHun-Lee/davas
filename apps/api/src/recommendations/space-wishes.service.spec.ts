@@ -162,14 +162,23 @@ describe('SpaceWishesService', () => {
     assert.equal(item.availability.onSpaceServices, false);
   });
 
-  it('treats a title as watched once a record of it is shared after it was added', async () => {
+  it('treats a title as watched once a record of it is made after it was added', async () => {
     const { service, shares } = setup();
     await service.add('space-1', 'jiwoo', 'm-pamyo');
+    // An old record that was just edited re-saves its share, but it is not a new viewing.
     shares.push(
       Object.assign(new WatchShareEntity(), {
         spaceId: 'space-1',
         sharedAt: new Date(Date.now() + 1000),
-        diary: { mediaId: 'm-pamyo' },
+        diary: { mediaId: 'm-pamyo', createdAt: new Date(Date.now() - 60_000) },
+      }),
+    );
+    assert.equal((await service.list('space-1', 'jiwoo')).items[0].watched, false);
+    shares.push(
+      Object.assign(new WatchShareEntity(), {
+        spaceId: 'space-1',
+        sharedAt: new Date(Date.now() + 1000),
+        diary: { mediaId: 'm-pamyo', createdAt: new Date(Date.now() + 1000) },
       }),
     );
     const [item] = (await service.list('space-1', 'jiwoo')).items;

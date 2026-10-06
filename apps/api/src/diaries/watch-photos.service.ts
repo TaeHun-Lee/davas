@@ -1,7 +1,14 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  type OnModuleDestroy,
+  type OnModuleInit,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { WATCH_PHOTO_MAX_COUNT, type WatchPhotoView } from '@davas/shared';
 import { EntityManager, In, IsNull, LessThan, Repository } from 'typeorm';
@@ -19,6 +26,9 @@ export type WatchPhotoVariant = 'thumb' | 'display' | 'original';
 const STAGED_PHOTO_TTL_MS = 24 * 60 * 60 * 1000;
 // Enough for one full composer (10) plus retries, without letting one account fill the disk.
 const MAX_STAGED_PHOTOS = 30;
+// Abandoned uploads are also swept hourly, not only on the same person's next upload.
+const SWEEP_INTERVAL_MS = 60 * 60 * 1000;
+const SWEEP_BATCH_SIZE = 200;
 
 const ORIGINAL_EXTENSIONS: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -45,7 +55,10 @@ const apiError = (status: 400 | 404, code: string, message: string) =>
     : new BadRequestException({ statusCode: status, code, message });
 
 @Injectable()
-export class WatchPhotosService {
+export class WatchPhotosService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(WatchPhotosService.name);
+  private sweepTimer?: NodeJS.Timeout;
+
   constructor(
     @InjectRepository(WatchPhotoEntity)
     private readonly photos: Repository<WatchPhotoEntity>,
@@ -156,6 +169,12 @@ export class WatchPhotosService {
       await this.access.assertCanView(diary, viewerId).catch(() => {
         throw notFound();
       });
+      // Someone who left the space takes their photos with them, as the record view does.
+      const uploaderVisible = await this.access.isAuthorVisibleTo(
+        { id: diary!.id, userId: photo.uploaderId },
+        viewerId,
+      );
+      if (!uploaderVisible) throw notFound();
     }
     const paths = this.paths(photo.storageKey, photo.originalMimeType);
     return variant === 'original'
@@ -165,6 +184,45 @@ export class WatchPhotosService {
           downloadName: `davas-${photo.id}.${ORIGINAL_EXTENSIONS[photo.originalMimeType] ?? 'jpg'}`,
         }
       : { path: paths[variant], mimeType: 'image/webp', downloadName: null };
+  }
+
+  /** Removes every photo of a record that is being deleted; files go after the commit. */
+  async removeAllForDiary(manager: EntityManager, diaryId: string) {
+    const repo = manager.getRepository(WatchPhotoEntity);
+    const photos = await repo.find({ where: { diaryId } });
+    if (!photos.length) return;
+    await repo.delete({ id: In(photos.map((photo) => photo.id)) });
+    await this.enqueueFileCleanup(manager, photos);
+  }
+
+  /** Staged photos older than a day that were never saved with a record, for every account. */
+  async sweepExpiredStaged(now = new Date()) {
+    const expired = await this.photos.find({
+      where: {
+        diaryId: IsNull(),
+        createdAt: LessThan(new Date(now.getTime() - STAGED_PHOTO_TTL_MS)),
+      },
+      take: SWEEP_BATCH_SIZE,
+    });
+    if (!expired.length) return 0;
+    await this.photos.manager.transaction(async (manager) => {
+      await manager.getRepository(WatchPhotoEntity).delete({ id: In(expired.map((p) => p.id)) });
+      await this.enqueueFileCleanup(manager, expired);
+    });
+    return expired.length;
+  }
+
+  onModuleInit() {
+    const sweep = () =>
+      void this.sweepExpiredStaged().catch((error) =>
+        this.logger.warn(`staged photo sweep failed: ${String(error)}`),
+      );
+    this.sweepTimer = setInterval(sweep, SWEEP_INTERVAL_MS);
+    this.sweepTimer.unref();
+  }
+
+  onModuleDestroy() {
+    if (this.sweepTimer) clearInterval(this.sweepTimer);
   }
 
   view(photo: WatchPhotoEntity, viewerId: string): WatchPhotoView {

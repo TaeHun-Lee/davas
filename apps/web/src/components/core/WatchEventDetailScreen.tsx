@@ -22,6 +22,7 @@ import { AsyncState, EmptyState, Poster, TaskShell } from './CoreUi';
 import { WatchPhotoGallery } from './WatchPhotoGallery';
 import { CommentsSection, ReviewCard } from './WatchReviews';
 import { WatchRatingControl } from './WatchRatingControl';
+import { blindViewerRole, lockedReviewHint, waitingWatchers } from '../spaces/space-watch-model';
 
 const sourceLabels: Record<WatchSourceKind, string> = {
   THEATER: '극장',
@@ -216,12 +217,10 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
   );
   const myReaction = watchEvent.reactions.find((reaction) => reaction.accountId === myAccountId);
   const someoneLocked = watchEvent.reactions.some((reaction) => reaction.locked);
-  // Watchers who have not written yet keep my blind review closed for them.
-  const notYetWritten = watchers.filter(
-    (participant) =>
-      participant.accountId !== myAccountId &&
-      !watchEvent.reactions.some((reaction) => reaction.accountId === participant.accountId),
-  );
+  const lockedHint = lockedReviewHint(blindViewerRole(watchEvent, myAccountId));
+  // Watchers who have not written yet, including people still asked to confirm, keep my blind
+  // review closed for them.
+  const notYetWritten = waitingWatchers(watchEvent, myAccountId);
   const waitingFor = notYetWritten.length
     ? notYetWritten
         .map((participant) => nameOf(participant.accountId, participant.nickname))
@@ -339,6 +338,7 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
                 name={nameOf(reaction.accountId, reaction.nickname)}
                 isMe={reaction.accountId === myAccountId}
                 waitingFor={waitingFor}
+                lockedHint={lockedHint}
                 onLikeChange={(next) =>
                   setWatchEvent({
                     ...watchEvent,

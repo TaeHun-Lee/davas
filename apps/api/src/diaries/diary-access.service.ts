@@ -50,6 +50,30 @@ export class DiaryAccessService {
     return hiddenReviewAccountIds({ viewerId, reactions, participants }).has(diary.userId);
   }
 
+  /**
+   * Whether the record's author still shares a space with the viewer. A record stays listed
+   * after its author leaves a space (the share is not revoked), but the author's personal
+   * parts (photos, memo, where and how far they watched) stop showing. Watch-event views apply
+   * the same rule as `authorVisible`.
+   */
+  async isAuthorVisibleTo(diary: Pick<DiaryEntity, 'id' | 'userId'>, viewerId: string) {
+    if (diary.userId === viewerId) return true;
+    const shares = await this.spaceShares.find({
+      where: { diaryId: diary.id, revokedAt: IsNull() },
+    });
+    const memberships = await this.spaceAccess.activeMembersInSpaces(
+      shares.map((share) => share.spaceId),
+    );
+    const viewerSpaces = new Set(
+      memberships
+        .filter((membership) => membership.accountId === viewerId)
+        .map((membership) => membership.spaceId),
+    );
+    return memberships.some(
+      (membership) => membership.accountId === diary.userId && viewerSpaces.has(membership.spaceId),
+    );
+  }
+
   async canView(
     diary: Pick<DiaryEntity, 'id' | 'userId' | 'visibility'>,
     viewerId: string,

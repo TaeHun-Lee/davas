@@ -2,8 +2,11 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { WatchEvent, WatchReaction } from '../../lib/api/watch-events';
 import {
+  blindViewerRole,
+  lockedReviewHint,
   pendingConfirmations,
   reactionRows,
+  waitingWatchers,
   watchedDayLabel,
   watchSourceSummary,
   withMyParticipation,
@@ -95,6 +98,48 @@ describe('space timeline card model', () => {
     const me = mine.find((row) => row.isMe)!;
     assert.equal(me.text, '한 줄');
     assert.equal(me.waitingToOpen, true);
+  });
+
+  it('keeps my blind review waiting for someone still asked to confirm', () => {
+    const pendingPartner = event({
+      author: { accountId: 'me', nickname: '지우', profileImageUrl: null },
+      isMine: true,
+      participants: [
+        { accountId: 'me', status: 'CONFIRMED', nickname: '지우' },
+        { accountId: 'minho', status: 'PENDING', nickname: '민호' },
+      ],
+      reactions: [reaction({ accountId: 'me', rating: 4, isBlind: true })],
+    });
+    assert.deepEqual(
+      waitingWatchers(pendingPartner, 'me').map((participant) => participant.accountId),
+      ['minho'],
+    );
+    assert.equal(reactionRows(pendingPartner, 'me').find((row) => row.isMe)!.waitingToOpen, true);
+
+    // A rating alone counts as written, and an empty reaction row does not.
+    const rated = event({
+      reactions: [reaction({ accountId: 'minho', rating: 3 }), reaction({ accountId: 'me' })],
+    });
+    assert.deepEqual(
+      waitingWatchers(rated, 'minho').map((item) => item.accountId),
+      ['me'],
+    );
+  });
+
+  it('says what opens a locked review for whoever is looking', () => {
+    const asked = event({
+      participants: [
+        { accountId: 'minho', status: 'CONFIRMED' },
+        { accountId: 'me', status: 'PENDING' },
+      ],
+    });
+    assert.equal(blindViewerRole(event(), 'me'), 'watcher');
+    assert.equal(blindViewerRole(asked, 'me'), 'pending');
+    assert.equal(blindViewerRole(event(), 'seo'), 'outsider');
+    assert.equal(blindViewerRole(event(), 'someone-else'), 'outsider');
+    assert.equal(lockedReviewHint('watcher'), '내 리뷰를 남기면 열려요');
+    assert.match(lockedReviewHint('pending'), /함께 봤다고 확인하고/);
+    assert.match(lockedReviewHint('outsider'), /모두 리뷰를 남기면/);
   });
 
   it('finds records that wait for the viewer to confirm, then reflects the answer', () => {

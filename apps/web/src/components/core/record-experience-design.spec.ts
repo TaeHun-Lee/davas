@@ -45,8 +45,18 @@ describe('record experience screens', () => {
     assert.match(reviews, /aria-label="잠긴 리뷰에는 좋아요를 누를 수 없어요"/);
     assert.match(reviews, /님이 남기면 공개돼요/);
     assert.match(reviews, /스포일러가 있어요 · 눌러서 보기/);
-    assert.match(card, /리뷰가 잠겨 있어요 · 내 리뷰를 남기면 열려요/);
+    assert.match(card, /`리뷰 잠김 · \$\{lockedHint\}`/);
+    assert.match(card, /lockedReviewHint\(blindViewerRole\(event, myAccountId\)\)/);
+    assert.match(reviews, /<span>\{lockedHint\}<\/span>/);
     assert.match(card, /내 리뷰 쓰기/);
+  });
+
+  it('applies the blind and spoiler rules in the member comparison panel too', () => {
+    const timeline = source('components/spaces/SpaceTimeline.tsx');
+    assert.match(timeline, /if \(reaction\.locked\)/);
+    assert.match(timeline, /잠긴 리뷰예요/);
+    assert.match(timeline, /스포일러가 있어요 · 눌러서 보기/);
+    assert.match(timeline, /reaction\.headline \? \(/);
   });
 
   it('opens photos in an accessible full-screen viewer with fast-loading previews', () => {

@@ -4,8 +4,62 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useSpaceTimeline } from '../../hooks/useSpaceTimeline';
 import { CoreApiError } from '../../lib/api/core';
-import { compareSpaceReactions, type SpaceReactionComparison } from '../../lib/api/watch-events';
+import {
+  compareSpaceReactions,
+  type SpaceReactionComparison,
+  type WatchReaction,
+} from '../../lib/api/watch-events';
 import { SpaceWatchCard } from './SpaceWatchCard';
+
+/** One person's reaction in the comparison panel, with the same blind and spoiler rules as the cards. */
+function ComparedReaction({ reaction, isMe }: { reaction: WatchReaction; isMe: boolean }) {
+  const [spoilerOpen, setSpoilerOpen] = useState(false);
+  const name = isMe ? '나' : reaction.nickname || '공간 멤버';
+  if (reaction.locked) {
+    return (
+      <li
+        className="rounded-xl bg-white p-3 text-[12px] text-[#52677e]"
+        aria-label={`${name}님 리뷰, 잠겨 있음`}
+      >
+        <strong>{name}</strong>
+        <span className="ml-2 font-black text-[#2f6fb4]" role="img" aria-label="별점 가려짐">
+          ★ ?.?
+        </span>
+        <p className="mt-1 font-semibold">잠긴 리뷰예요</p>
+      </li>
+    );
+  }
+  const hasText = Boolean(reaction.headline || reaction.review);
+  const hidden = reaction.hasSpoiler && !spoilerOpen && !isMe;
+  return (
+    <li className="rounded-xl bg-white p-3 text-[12px] text-[#52677e]">
+      <strong>{name}</strong>
+      <span className="ml-2 font-black text-[#2f6fb4]">
+        {reaction.rating === null ? '별점 없음' : `★ ${reaction.rating.toFixed(1)}`}
+      </span>
+      {!hasText ? (
+        <p className="mt-1 font-semibold">리뷰 없음</p>
+      ) : hidden ? (
+        <button
+          type="button"
+          className="mt-1 block font-black text-[#607eae]"
+          onClick={() => setSpoilerOpen(true)}
+        >
+          스포일러가 있어요 · 눌러서 보기
+        </button>
+      ) : (
+        <>
+          {reaction.headline ? (
+            <p className="mt-1 font-black text-[#284778]">{reaction.headline}</p>
+          ) : null}
+          {reaction.review ? (
+            <p className="mt-1 whitespace-pre-wrap font-semibold">{reaction.review}</p>
+          ) : null}
+        </>
+      )}
+    </li>
+  );
+}
 
 export function SpaceTimeline({
   spaceId,
@@ -159,20 +213,11 @@ export function SpaceTimeline({
                   {event.reactions.length ? (
                     <ul className="mt-2 space-y-2">
                       {event.reactions.map((reaction) => (
-                        <li
+                        <ComparedReaction
                           key={reaction.accountId}
-                          className="rounded-xl bg-white p-3 text-[12px] text-[#52677e]"
-                        >
-                          <strong>{reaction.nickname || '공간 멤버'}</strong>
-                          <span className="ml-2 font-black text-[#2f6fb4]">
-                            {reaction.rating === null
-                              ? '별점 없음'
-                              : `${reaction.rating.toFixed(1)}점`}
-                          </span>
-                          <p className="mt-1 whitespace-pre-wrap font-semibold">
-                            {reaction.review || '리뷰 없음'}
-                          </p>
-                        </li>
+                          reaction={reaction}
+                          isMe={reaction.accountId === myAccountId}
+                        />
                       ))}
                     </ul>
                   ) : (

@@ -49,7 +49,10 @@ function fakeRepository<T extends object>(rows: T[], create: () => T) {
   };
 }
 
-function setup(canView: (viewerId: string) => boolean) {
+function setup(
+  canView: (viewerId: string) => boolean,
+  uploaderVisible: (viewerId: string) => boolean = () => true,
+) {
   const photos: WatchPhotoEntity[] = [];
   const jobs: FileCleanupJobEntity[] = [];
   const diaries = [Object.assign(new DiaryEntity(), { id: 'diary-1', userId: 'jiwoo' })];
@@ -70,6 +73,7 @@ function setup(canView: (viewerId: string) => boolean) {
     assertCanView: async (_diary: unknown, viewerId: string) => {
       if (!canView(viewerId)) throw new NotFoundException();
     },
+    isAuthorVisibleTo: async (_diary: unknown, viewerId: string) => uploaderVisible(viewerId),
   } as unknown as DiaryAccessService;
   const service = new WatchPhotosService(
     photoRepository as never,
@@ -122,6 +126,48 @@ describe('WatchPhotosService', () => {
     assert.equal((await service.open(view.id, 'display', 'minho')).mimeType, 'image/webp');
     await assert.rejects(service.open(view.id, 'original', 'minho'), NotFoundException);
     await assert.rejects(service.open(view.id, 'thumb', 'stranger'), NotFoundException);
+  });
+
+  it('stops serving the photos of someone who has left the space', async () => {
+    const { manager, service } = setup(
+      () => true,
+      (viewerId) => viewerId !== 'minho',
+    );
+    const view = await service.stage('jiwoo', upload());
+    await service.replaceForDiary(manager, 'diary-1', 'jiwoo', [view.id]);
+    await assert.rejects(service.open(view.id, 'display', 'minho'), NotFoundException);
+    assert.equal((await service.open(view.id, 'display', 'jiwoo')).mimeType, 'image/webp');
+  });
+
+  it('removes every photo of a deleted record and queues its files', async () => {
+    const { jobs, manager, photos, service } = setup(() => true);
+    const first = await service.stage('jiwoo', upload());
+    const second = await service.stage('jiwoo', upload());
+    await service.replaceForDiary(manager, 'diary-1', 'jiwoo', [first.id, second.id]);
+    await service.removeAllForDiary(manager, 'diary-1');
+    assert.equal(photos.length, 0);
+    assert.equal(jobs.filter((job) => job.kind === 'WATCH_PHOTO').length, 6);
+  });
+
+  it('sweeps staged photos nobody saved after a day, for every account', async () => {
+    const { jobs, manager, photos, service } = setup(() => true);
+    const stale = await service.stage('minho', upload());
+    const fresh = await service.stage('jiwoo', upload());
+    const attached = await service.stage('jiwoo', upload());
+    await service.replaceForDiary(manager, 'diary-1', 'jiwoo', [attached.id]);
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+    for (const photo of photos) {
+      if (photo.id !== fresh.id) photo.createdAt = twoDaysAgo;
+    }
+
+    assert.equal(await service.sweepExpiredStaged(), 1);
+    assert.deepEqual(photos.map((photo) => photo.id).sort(), [attached.id, fresh.id].sort());
+    assert.equal(
+      photos.some((photo) => photo.id === stale.id),
+      false,
+    );
+    assert.equal(jobs.filter((job) => job.kind === 'WATCH_PHOTO').length, 3);
+    assert.equal(await service.sweepExpiredStaged(), 0);
   });
 
   it('attaches only your own staged photos, at most ten, and cleans up removed ones', async () => {

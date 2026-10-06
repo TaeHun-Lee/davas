@@ -75,13 +75,13 @@ export class SpaceWishesService {
       if (!memberIds.has(row.accountId) || !row.media) continue;
       byMedia.set(row.mediaId, [...(byMedia.get(row.mediaId) ?? []), row]);
     }
-    const lastShared = await this.lastSharedInSpace(spaceId, [...byMedia.keys()]);
+    const lastRecorded = await this.lastRecordedInSpace(spaceId, [...byMedia.keys()]);
 
     let refreshesLeft = AVAILABILITY_REFRESH_BUDGET;
     const items = await mapWithConcurrency([...byMedia.values()], 4, async (group) => {
       const media = group[0].media!;
       const addedAt = new Date(Math.min(...group.map((wish) => wish.createdAt.getTime())));
-      const shared = lastShared.get(media.id);
+      const recorded = lastRecorded.get(media.id);
       const availability = await this.availabilityFor(media.id, spaceServices, () => {
         if (refreshesLeft <= 0) return false;
         refreshesLeft -= 1;
@@ -102,7 +102,7 @@ export class SpaceWishesService {
         })),
         wantedByAll: memberIds.size > 1 && group.length >= memberIds.size,
         wantedByMe: group.some((wish) => wish.accountId === viewerId),
-        watched: Boolean(shared && shared.getTime() >= addedAt.getTime()),
+        watched: Boolean(recorded && recorded.getTime() >= addedAt.getTime()),
         availability,
         addedAt: addedAt.toISOString(),
       };
@@ -216,7 +216,12 @@ export class SpaceWishesService {
     return { item: best, reasons, remaining: pool.length - 1 };
   }
 
-  private async lastSharedInSpace(spaceId: string, mediaIds: string[]) {
+  /**
+   * When each title was last recorded in the space. Uses the record's creation time, not the
+   * share time: editing an old record (adding a photo) re-saves its share and must not mark a
+   * title someone wants to rewatch as watched.
+   */
+  private async lastRecordedInSpace(spaceId: string, mediaIds: string[]) {
     if (!mediaIds.length) return new Map<string, Date>();
     const shares = await this.shares.find({
       where: {
@@ -229,8 +234,9 @@ export class SpaceWishesService {
     const latest = new Map<string, Date>();
     for (const share of shares) {
       const mediaId = share.diary.mediaId;
+      const recordedAt = share.diary.createdAt;
       const current = latest.get(mediaId);
-      if (!current || share.sharedAt > current) latest.set(mediaId, share.sharedAt);
+      if (recordedAt && (!current || recordedAt > current)) latest.set(mediaId, recordedAt);
     }
     return latest;
   }
