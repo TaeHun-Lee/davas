@@ -86,7 +86,6 @@
   "apps/web/src/app/feed/page.tsx": "d75d7128c952e2228a795313d70633879754fde532d0afe88de751a4c973aeb9",
   "apps/web/src/app/friends/invite/[token]/page.tsx": "27b12e12dab1cffb5a4bed8c0d45adb9a5b3743b4349d9060798f3f668078f2d",
   "apps/web/src/app/friends/page.tsx": "14605dfd7832cadb38432439098b10523b417014c31a49fc0cc9f26d0c4a0edd",
-  "apps/web/src/app/globals.css": "ec2bde03729f3d1fdae293bd3fcfc9ff2eba0c91420c8cf89d9954738b020e62",
   "apps/web/src/app/home-design.spec.ts": "09d9b591c8baa4ec84ed6d0b6cb166bffcfa4e9ab84cdcea8104416d06a0a9d4",
   "apps/web/src/app/layout.tsx": "c8d76cd44c2d84c95fd7f3cfd62fadfb475582dbbd3a34d4485782eaba3d3366",
   "apps/web/src/app/loading.tsx": "f3c56dbad60a53960eff6b3329a0e90cc1eaa2ca89d7daa602deff71fad2489d",
