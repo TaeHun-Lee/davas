@@ -65,8 +65,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/common/api-exception.filter.ts": {
-    "mtime": 1791266531.253186,
-    "ast_hash": "e39d236df741ded0c7183135e9922897",
+    "mtime": 1791295635.1585178,
+    "ast_hash": "ef19aaec20d6f3ff04ee5c0d4f6b68da",
     "semantic_hash": ""
   },
   "apps/api/src/community/community.controller.ts": {
@@ -1345,8 +1345,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/media.ts": {
-    "mtime": 1791264715.5275176,
-    "ast_hash": "26504f6604122aacd9120bd7e21dd322",
+    "mtime": 1791295659.580143,
+    "ast_hash": "491f466970cfd8d563f708bfa9bd95d9",
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/notifications.ts": {
@@ -1395,8 +1395,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1791266531.3240337,
-    "ast_hash": "9d75ad8601550b8936d914632c6bb7db",
+    "mtime": 1791295660.037741,
+    "ast_hash": "9b40f48fd0a420cd7485ae84a84cff71",
     "semantic_hash": ""
   },
   "packages/shared/package.json": {
@@ -1420,8 +1420,8 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1791270343.5906723,
-    "ast_hash": "e262329292c81a3b6327cc4f21d046b1",
+    "mtime": 1791295688.05144,
+    "ast_hash": "ff90ccb3ae0a85221bd99635c527f9aa",
     "semantic_hash": ""
   },
   "README.md": {
@@ -2195,8 +2195,8 @@
     "semantic_hash": ""
   },
   "scripts/prettier-baseline.json": {
-    "mtime": 1791289188.8636258,
-    "ast_hash": "20faee1b752cc627167be1080951b721",
+    "mtime": 1791295659.9096918,
+    "ast_hash": "60d57da697ad1edabb09fe234b528197",
     "semantic_hash": ""
   },
   "scripts/run-tests.mjs": {
@@ -2260,8 +2260,8 @@
     "semantic_hash": ""
   },
   "docs/development.md": {
-    "mtime": 1791292273.7052114,
-    "ast_hash": "6792a8c647e57b62f819a857720d4521",
+    "mtime": 1791295688.05144,
+    "ast_hash": "d09e52bb748247dcb5cba715dc48520b",
     "semantic_hash": ""
   },
   "docs/operations.md": {
@@ -2572,6 +2572,16 @@
   "apps/api/src/common/public-uploads.ts": {
     "mtime": 1791288399.868451,
     "ast_hash": "cd989fa2ba119bb437ba3fe7af0e526f",
+    "semantic_hash": ""
+  },
+  "apps/api/src/common/api-exception.filter.spec.ts": {
+    "mtime": 1791295659.6294656,
+    "ast_hash": "fa5d48da307e081df1c89353325356af",
+    "semantic_hash": ""
+  },
+  "scripts/verify-client-contracts.mts": {
+    "mtime": 1791295659.6830397,
+    "ast_hash": "e9f3727bc207d36d2c9a16645d56f72f",
     "semantic_hash": ""
   }
 }
