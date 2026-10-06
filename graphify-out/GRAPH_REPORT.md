@@ -1,87 +1,87 @@
 # Graph Report - davas  (2026-10-06)
 
 ## Corpus Check
-- 451 files · ~140,651 words
+- 451 files · ~140,736 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3229 nodes · 6147 edges · 223 communities (188 shown, 35 thin omitted)
+- 3234 nodes · 6136 edges · 216 communities (180 shown, 36 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 17 edges (avg confidence: 0.66)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `304bcaf8`
+- Built from commit: `28846de6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - CommentsService
-- UsersController
+- users.controller.ts
 - WatchlistService
 - DiaryComposeScreen.tsx
 - devDependencies
 - group-recommendation-model.ts
-- GenreRecommendationSection.tsx
+- MoviePosterVisual.tsx
 - SpacesService
 - community.service.ts
-- WatchSourceEntity
+- DiaryAccessService
 - AuthenticatedRequest
 - Davas 개발 가이드
 - contracts.ts
-- app.module.ts
-- SpacesController
+- entities/index.ts
+- ExploreDashboard.tsx
 - recommendations.ts
-- CommentEntity
+- media.ts
 - HomeDashboard.tsx
 - ProfileDashboard.tsx
 - availability.service.ts
 - FriendsScreen.tsx
-- NotificationEntity
-- FriendshipEntity
+- NotificationsService
+- DiaryInsightGrid.tsx
 - scripts
 - DiariesController
 - WatchReactionEntity
 - CreateDiaryDto
-- spaces.service.ts
+- RecordComposer.tsx
 - SearchField.tsx
 - invites.controller.ts
 - Davas 제품 기준 문서
 - dependencies
-- DiariesService
+- diaries.service.ts
 - tmdb.client.ts
-- diaries-dashboard.service.ts
+- HomeRecommendations.tsx
 - watch-events.ts
 - DiariesDashboardService
 - app-security.ts
-- InviteCodeEntity
+- reactions.ts
 - scripts
 - Controller
 - AuthService
 - auth.ts
-- metadata-provider.port.ts
+- media.service.ts
 - WatchEventsService
 - verify-deployment-contracts.mjs
 - devDependencies
-- main.ts
-- users.service.ts
-- UsersService
+- FriendInvitesController
+- useExploreRecommendations.ts
+- MediaImageEntity
 - TodayRecommendationSection.tsx
 - Davas 제품 요구사항 상세 설계
 - RecommendationsService
 - ProfileNotificationsScreen.tsx
 - AppShell.tsx
-- WatchlistItemEntity
+- MediaFavoriteEntity
 - compilerOptions
 - TmdbClient
 - compilerOptions
 - shared/package.json
-- NotificationsService
+- NotificationsController
 - group-recommendations.service.ts
 - community.ts
 - core.ts
 - CreateRecommendationSessionDto
 - diaries.dashboard.spec.ts
-- diaries.controller.ts
+- DiaryListQueryDto
 - Q: 친구 기록 검색 UI, feed 로딩 실패, 친구 탭 진입점, TMDB 기록 작성 흐름을 어떻게 수정해야 하는가
 - MediaController
 - 1. 레거시 호환과 알려진 문제
@@ -92,8 +92,8 @@
 - compilerOptions
 - jwt-cookie-auth.guard.ts
 - compilerOptions
-- auth.service.ts
-- media.service.ts
+- route-rate-limit.spec.ts
+- MediaService
 - Davas 운영 가이드 (Raspberry Pi)
 - Davas Repository Instructions
 - Davas 기술 아키텍처 상세 설계
@@ -109,42 +109,36 @@
 - Q: 적당하게 AGNETS.md 작성해
 - RecommendationSessionEntity
 - coreFetch
-- RecordComposer.tsx
-- TransactionOutboxService
+- RecordScreens.tsx
+- upload-concurrency.interceptor.ts
 - verify-caddy-headers.mjs
 - .inspect
-- DiaryReactionEntity
-- UserConsentEntity
+- 4. 핵심 도메인 모델
+- 14. 단계별 확장
 - @nestjs/typeorm
 - passport
-- diary/[id]/page.tsx
+- jwt-config.ts
 - verify-auth-http.mjs
 - eslint.config.mjs
 - next.config.ts
 - next-env.d.ts
 - sw.js
-- .uploadProfileImage
 - AvailabilityObservationEntity
 - tailwind.config.ts
 - backup.sh
 - TmdbAvailabilityAdapter
-- FileCleanupJobEntity
-- 15. 단계별 고도화
-- ExploreDashboard.tsx
+- PersonCreditResults.tsx
 - diary-compose-utils.ts
 - src/index.ts
-- group-recommendations.controller.ts
+- .feedback
 - docs/README.md
-- DiaryLikeEntity
 - Q: Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy.
 - auth.service.spec.ts
-- TransactionOutboxEntity
-- UpdateDiaryDto
+- UsersService
+- diaries-dashboard.service.ts
 - core-record-migration.spec.ts
 - MediaSelectionDto
-- 5. 필요한 데이터
 - AuthUi.tsx
-- 8. 추천 파이프라인
 - 제품 요구사항 구현 추적표
 - FakeRepository
 - verify-edit-http.mjs
@@ -168,7 +162,6 @@
 - FakeLifecycleDataSource
 - DiaryEntity
 - Q: 그렇다고 무슨 새로고침 할 떄마다 노출되고 화면 이동할 때마다 노출되고 하는 게 누가봐도 버그잖아. 적절하게 수정해.
-- FakeOutbox
 - Q: Narrow TypeScript lint errors in migration specs and the spaces membership fixture
 - devDependencies
 - availability.service.spec.ts
@@ -180,7 +173,7 @@
 - TogetherMomentSection.tsx
 - @nestjs/common
 - Q: 기록 작성 화면 UIUX, 별점 슬라이더, 뒤로가기 흐름 분석
-- MediaPosterRowSection.tsx
+- diary-dashboard-types.ts
 - class-validator
 - Q: 작품 검색 관람 경로와 상세 확인 및 친구 기록 구조
 - @nestjs/platform-express
@@ -231,15 +224,15 @@
 ## Import Cycles
 - None detected.
 
-## Communities (223 total, 35 thin omitted)
+## Communities (216 total, 36 thin omitted)
 
 ### Community 0 - "CommentsService"
-Cohesion: 0.15
-Nodes (12): CommentsController, ApiTags, Body, Delete, Get, Param, Patch, Post (+4 more)
+Cohesion: 0.07
+Nodes (24): CommentsController, ApiTags, Body, Delete, Get, Param, Patch, Post (+16 more)
 
-### Community 1 - "UsersController"
-Cohesion: 0.14
-Nodes (13): DeleteMeDto, IsString, Length, ApiTags, Body, Delete, Get, Param (+5 more)
+### Community 1 - "users.controller.ts"
+Cohesion: 0.09
+Nodes (24): ACCESS_TOKEN_COOKIE, CancelDeletionDto, IsEmail, IsString, Length, DeleteMeDto, IsString, Length (+16 more)
 
 ### Community 2 - "WatchlistService"
 Cohesion: 0.11
@@ -254,28 +247,28 @@ Cohesion: 0.05
 Nodes (43): dependencies, @davas/shared, next, react, react-dom, @tanstack/react-query, zod, devDependencies (+35 more)
 
 ### Community 5 - "group-recommendation-model.ts"
-Cohesion: 0.15
-Nodes (19): availabilityPresentation, buildGroupRecommendationRequest(), consensusPresentation(), FEEDBACK_OPTIONS, GroupRecommendationDraft, GroupRecommendationItem, numberOrUndefined(), REASON_LABELS (+11 more)
+Cohesion: 0.18
+Nodes (17): availabilityPresentation, buildGroupRecommendationRequest(), consensusPresentation(), FEEDBACK_OPTIONS, GroupRecommendationDraft, GroupRecommendationItem, numberOrUndefined(), REASON_LABELS (+9 more)
 
-### Community 6 - "GenreRecommendationSection.tsx"
-Cohesion: 0.17
-Nodes (12): GenreRecommendationSection(), GenreRecommendationSectionProps, GenreRecommendationTile, placeholderGenreTiles, CalendarDayStateInput, cn(), getCalendarDayState(), MonthlyWatchCalendarSection() (+4 more)
+### Community 6 - "MoviePosterVisual.tsx"
+Cohesion: 0.25
+Nodes (8): CalendarDayStateInput, cn(), getCalendarDayState(), MonthlyWatchCalendarSection(), MonthlyWatchCalendarSectionProps, weekdays, MoviePosterVisual(), MoviePosterVisualProps
 
 ### Community 7 - "SpacesService"
-Cohesion: 0.25
-Nodes (4): hashToken(), response(), SpacesService, Injectable
+Cohesion: 0.09
+Nodes (23): SpacesController, Body, Delete, Get, Param, Patch, Post, Req (+15 more)
 
 ### Community 8 - "community.service.ts"
-Cohesion: 0.09
-Nodes (28): CommunityController, ApiTags, Get, Param, Query, Req, buildContentPreview(), CommunityAuthorProfileResponse (+20 more)
+Cohesion: 0.08
+Nodes (27): CommunityController, ApiTags, Get, Param, Query, Req, buildContentPreview(), CommunityAuthorProfileResponse (+19 more)
 
-### Community 9 - "WatchSourceEntity"
-Cohesion: 0.16
-Nodes (9): Column, Entity, Index, JoinColumn, OneToOne, PrimaryGeneratedColumn, WatchSourceEntity, FakeDatabase (+1 more)
+### Community 9 - "DiaryAccessService"
+Cohesion: 0.06
+Nodes (26): CommunityCommentView, Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, WatchShareEntity (+18 more)
 
 ### Community 10 - "AuthenticatedRequest"
-Cohesion: 0.10
-Nodes (17): Get, Req, AuthenticatedRequest, FriendsController, Body, Delete, Get, Param (+9 more)
+Cohesion: 0.12
+Nodes (15): AuthenticatedRequest, FriendsController, Body, Delete, Get, Param, Patch, Post (+7 more)
 
 ### Community 11 - "Davas 개발 가이드"
 Cohesion: 0.12
@@ -285,45 +278,45 @@ Nodes (16): 1. 준비물, 2. 로컬 실행, 3. 코드 지도, 4. API 보안 경�
 Cohesion: 0.06
 Nodes (34): AccountDeletionResponse, ApiErrorBody, AuthenticatedUser, CoreDiaryVisibility, CursorPage, DeleteResult, FriendInviteState, FriendRelationship (+26 more)
 
-### Community 13 - "app.module.ts"
-Cohesion: 0.18
-Nodes (18): AppModule, AuthModule, parseJwtExpirySeconds(), UNIT_SECONDS, CommentsModule, CommunityModule, DiariesModule, FriendsModule (+10 more)
+### Community 13 - "entities/index.ts"
+Cohesion: 0.09
+Nodes (36): AppModule, AuthModule, CommentsModule, CommunityModule, ExternalProvider, MediaEntity, Column, CreateDateColumn (+28 more)
 
-### Community 14 - "SpacesController"
-Cohesion: 0.25
-Nodes (8): SpacesController, Body, Delete, Get, Param, Patch, Post, Req
+### Community 14 - "ExploreDashboard.tsx"
+Cohesion: 0.16
+Nodes (12): ExploreDashboard(), recommendationToPosterItem(), ExploreFilter, ExploreFilterChips(), filters, ExploreShortcutGrid(), FavoriteMovie, FavoriteMoviesSection() (+4 more)
 
 ### Community 15 - "recommendations.ts"
-Cohesion: 0.08
-Nodes (31): HomeRecommendations(), RecommendationStatus, recommendationTabs, RecommendationType, ExploreRecommendationsState, GenreRecommendationTile, initialState, RecommendationStatus (+23 more)
-
-### Community 16 - "CommentEntity"
 Cohesion: 0.13
-Nodes (11): FakeCommentsRepository, CommentEntity, Column, CreateDateColumn, DeleteDateColumn, Entity, Index, JoinColumn (+3 more)
+Nodes (21): RequestStatus, createGroupRecommendationSession(), fetchRecommendation(), GenreRecommendationPresetsResponse, GenreRecommendationsResponse, getGenreRecommendationPresets(), getGenreRecommendations(), getGroupRecommendationSession() (+13 more)
+
+### Community 16 - "media.ts"
+Cohesion: 0.16
+Nodes (14): getDepartmentLabel(), PersonSearchResults(), PeopleSearchStatus, usePeopleSearch(), getPersonCredits(), MediaSearchResponse, MyMediaDiary, PersonCreditsResponse (+6 more)
 
 ### Community 17 - "HomeDashboard.tsx"
-Cohesion: 0.09
-Nodes (22): AuthenticatedLanding(), MeResponse, DiaryDashboardView, ArchiveHighlight, ArchiveHighlightSection(), ArchiveHighlightSectionProps, buildArchiveHeroItems(), buildCalendarDays() (+14 more)
+Cohesion: 0.10
+Nodes (20): AuthenticatedLanding(), MeResponse, DiaryDashboardView, buildCalendarDays(), buildHomeDashboardView(), formatRating(), getMediaMeta(), getPrimaryGenre() (+12 more)
 
 ### Community 18 - "ProfileDashboard.tsx"
-Cohesion: 0.09
-Nodes (25): ActivityIconName, ProfileActivitySection(), ProfileActivitySectionProps, buildProfileView(), buildRecentListCard(), ProfileDashboard(), ProfileListCard, ProfileMetric (+17 more)
+Cohesion: 0.10
+Nodes (18): ActivityIconName, ProfileActivitySection(), ProfileActivitySectionProps, buildProfileView(), buildRecentListCard(), ProfileDashboard(), ProfileListCard, ProfileMetric (+10 more)
 
 ### Community 19 - "availability.service.ts"
 Cohesion: 0.16
 Nodes (11): AvailabilityObservationStatus, AVAILABILITY_CACHE_OPTIONS, AvailabilityCacheOptions, AvailabilityResponse, AvailabilityState, DEFAULT_AVAILABILITY_TTL_MS, AVAILABILITY_PROVIDER, AvailabilityContentRef (+3 more)
 
 ### Community 20 - "FriendsScreen.tsx"
-Cohesion: 0.20
-Nodes (18): FriendInviteScreen(), empty, FriendsScreen(), acceptFriend(), acceptFriendInvite(), cancelFriend(), createFriendInvite(), FriendInviteState (+10 more)
+Cohesion: 0.18
+Nodes (20): AsyncState(), EmptyState(), FriendInviteScreen(), empty, FriendsScreen(), acceptFriend(), acceptFriendInvite(), cancelFriend() (+12 more)
 
-### Community 21 - "NotificationEntity"
-Cohesion: 0.08
-Nodes (22): NotificationEntity, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn (+14 more)
+### Community 21 - "NotificationsService"
+Cohesion: 0.06
+Nodes (29): NotificationEntity, NotificationType, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne (+21 more)
 
-### Community 22 - "FriendshipEntity"
-Cohesion: 0.14
-Nodes (10): FriendshipEntity, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn (+2 more)
+### Community 22 - "DiaryInsightGrid.tsx"
+Cohesion: 0.18
+Nodes (12): DiaryCalendarMarker, DiaryGenreRatio, getDiaryCalendarDays(), DiaryGenreRatioCard(), DiaryGenreRatioCardProps, iconByKind, DiaryInsightGrid(), DiaryInsightGridProps (+4 more)
 
 ### Community 23 - "scripts"
 Cohesion: 0.06
@@ -335,15 +328,15 @@ Nodes (12): DiariesController, ApiTags, Body, Delete, Get, Param, Patch, Post (+
 
 ### Community 25 - "WatchReactionEntity"
 Cohesion: 0.05
-Nodes (38): RecommendationExposureEntity, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, OneToMany (+30 more)
+Nodes (41): ParticipantPrediction, RecommendationExposureEntity, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne (+33 more)
 
 ### Community 26 - "CreateDiaryDto"
 Cohesion: 0.13
 Nodes (14): valid, CreateDiaryDto, ApiProperty, ApiPropertyOptional, IsBoolean, IsIn, IsInt, IsOptional (+6 more)
 
-### Community 27 - "spaces.service.ts"
-Cohesion: 0.25
-Nodes (11): CreateSpaceDto, CreateSpaceInviteDto, TransferSpaceOwnershipDto, IsInt, IsOptional, IsString, IsUUID, Length (+3 more)
+### Community 27 - "RecordComposer.tsx"
+Cohesion: 0.24
+Nodes (7): Draft, freshDraft(), RecordComposer(), sourceLabels, today(), getMediaDetail(), getWatchEvent()
 
 ### Community 28 - "SearchField.tsx"
 Cohesion: 0.15
@@ -361,57 +354,57 @@ Nodes (30): 0. 정책과 공급자 검증, 10. 후속 범위, 11. 출시 전 체
 Cohesion: 0.11
 Nodes (19): dependencies, bcrypt, class-transformer, @davas/shared, helmet, @nestjs/swagger, @nestjs/throttler, passport-jwt (+11 more)
 
-### Community 32 - "DiariesService"
-Cohesion: 0.24
-Nodes (6): apiError(), assertNotFuture(), DiariesService, fingerprint(), normalizedCreate(), Injectable
+### Community 32 - "diaries.service.ts"
+Cohesion: 0.14
+Nodes (12): media, payload, queryDtoSource, serviceSource, apiError(), assertNotFuture(), DiariesService, DiaryListQuery (+4 more)
 
 ### Community 33 - "tmdb.client.ts"
 Cohesion: 0.07
 Nodes (28): DavasPersonSearchItem, DiscoverRecommendationsInput, Fetcher, MediaDetailInput, MediaSearchInput, MediaSearchResponse, MediaSearchType, PersonCreditsInput (+20 more)
 
-### Community 34 - "diaries-dashboard.service.ts"
-Cohesion: 0.14
-Nodes (14): DiaryCompanionEntity, Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, buildContentPreview() (+6 more)
+### Community 34 - "HomeRecommendations.tsx"
+Cohesion: 0.15
+Nodes (10): HomeRecommendations(), RecommendationStatus, recommendationTabs, RecommendationType, GenreRecommendationSection(), GenreRecommendationSectionProps, GenreRecommendationTile, placeholderGenreTiles (+2 more)
 
 ### Community 35 - "watch-events.ts"
 Cohesion: 0.09
-Nodes (32): participantLabels, safeReturn(), sourceLabels, WatchEventDetailScreen(), WATCH_RATINGS, WatchRatingControl(), SpaceTimeline(), getRecord() (+24 more)
+Nodes (33): Poster(), participantLabels, safeReturn(), sourceLabels, WatchEventDetailScreen(), WATCH_RATINGS, WatchRatingControl(), SpaceTimeline() (+25 more)
 
 ### Community 36 - "DiariesDashboardService"
-Cohesion: 0.18
+Cohesion: 0.21
 Nodes (3): Optional, DiariesDashboardService, Injectable
 
 ### Community 37 - "app-security.ts"
-Cohesion: 0.17
-Nodes (13): configureHttpSecurity(), isPublicBootstrapInvitePlaceholder(), OriginGuard, PUBLIC_BOOTSTRAP_INVITE_PLACEHOLDER_SET, PUBLIC_BOOTSTRAP_INVITE_PLACEHOLDERS, resolveAllowedOrigins(), resolveTrustProxy(), SAFE_METHODS (+5 more)
+Cohesion: 0.10
+Nodes (19): ApiExceptionFilter, configureHttpSecurity(), isPublicBootstrapInvitePlaceholder(), OriginGuard, PUBLIC_BOOTSTRAP_INVITE_PLACEHOLDER_SET, PUBLIC_BOOTSTRAP_INVITE_PLACEHOLDERS, resolveAllowedOrigins(), resolveTrustProxy() (+11 more)
 
-### Community 38 - "InviteCodeEntity"
-Cohesion: 0.11
-Nodes (19): InjectRepository, Optional, InviteCodeEntity, Column, CreateDateColumn, Entity, Index, JoinColumn (+11 more)
+### Community 38 - "reactions.ts"
+Cohesion: 0.40
+Nodes (8): DiaryReactions(), options, addDiaryReaction(), DiaryReaction, getDiaryReactions(), parse(), ReactionEmoji, removeDiaryReaction()
 
 ### Community 39 - "scripts"
 Cohesion: 0.15
 Nodes (13): scripts, build, dev, lint, migration:revert, migration:revert:src, migration:run, migration:run:src (+5 more)
 
 ### Community 40 - "Controller"
-Cohesion: 0.18
-Nodes (10): AuthController, ApiTags, Body, Post, Res, Throttle, Controller, Public() (+2 more)
+Cohesion: 0.15
+Nodes (12): AuthController, ApiTags, Body, Get, Post, Req, Res, Throttle (+4 more)
 
 ### Community 41 - "AuthService"
 Cohesion: 0.17
 Nodes (11): AuthService, Injectable, SignupDto, ApiProperty, ApiPropertyOptional, IsBoolean, IsEmail, IsOptional (+3 more)
 
 ### Community 42 - "auth.ts"
-Cohesion: 0.08
-Nodes (28): CommentAvatar(), DavasHeader(), drawerItems, ProfileAvatar(), DefaultProfileAvatar(), DefaultProfileAvatarProps, ProfileAccountScreen(), genreOptions (+20 more)
+Cohesion: 0.10
+Nodes (24): drawerItems, ProfileAvatar(), DefaultProfileAvatar(), DefaultProfileAvatarProps, genreOptions, ProfileEditScreen(), ProfileHeaderCard(), ProfileHeaderCardProps (+16 more)
 
-### Community 43 - "metadata-provider.port.ts"
-Cohesion: 0.16
-Nodes (9): TmdbMetadataAdapter, Injectable, CatalogSearchInput, CatalogSearchItem, CatalogSearchResponse, CatalogTitleDetail, CatalogTitleRef, METADATA_PROVIDER (+1 more)
+### Community 43 - "media.service.ts"
+Cohesion: 0.12
+Nodes (14): TmdbMetadataAdapter, Injectable, FavoriteMediaItem, FavoriteMediaResponse, MediaDetailResponse, MediaFavoriteResponse, MyMediaDiary, CatalogSearchInput (+6 more)
 
 ### Community 44 - "WatchEventsService"
 Cohesion: 0.06
-Nodes (41): CreateWatchEventDto, SaveWatchReactionDto, ArrayMaxSize, ArrayUnique, IsArray, IsIn, IsInt, IsOptional (+33 more)
+Nodes (40): CreateWatchEventDto, SaveWatchReactionDto, ArrayMaxSize, ArrayUnique, IsArray, IsIn, IsInt, IsOptional (+32 more)
 
 ### Community 45 - "verify-deployment-contracts.mjs"
 Cohesion: 0.09
@@ -421,17 +414,21 @@ Nodes (19): apiDockerfile, apiPackage, auditIndex, backupScript, caddyIndex, dev
 Cohesion: 0.13
 Nodes (15): devDependencies, @nestjs/cli, sql.js, ts-node, tsx, @types/bcrypt, @types/passport-jwt, @types/pg (+7 more)
 
-### Community 47 - "main.ts"
-Cohesion: 0.20
-Nodes (6): ApiExceptionFilter, ConfigurableHttpServer, configureHttpServerTimeouts(), shouldEnableSwagger(), SwaggerEnvironment, Catch
+### Community 47 - "FriendInvitesController"
+Cohesion: 0.33
+Nodes (6): FriendInvitesController, Get, Param, Post, Req, UseGuards
 
-### Community 48 - "users.service.ts"
-Cohesion: 0.22
-Nodes (10): ALLOWED_DECLARED_MIME_TYPES, detectProfileImage(), hasPrefix(), PROFILE_IMAGE_MAX_BYTES, PROFILE_IMAGE_UPLOAD_OPTIONS, ProfileImageContent, ValidatedProfileImage, validateProfileImageContent() (+2 more)
+### Community 48 - "useExploreRecommendations.ts"
+Cohesion: 0.25
+Nodes (6): ExploreRecommendationsState, GenreRecommendationTile, initialState, RecommendationStatus, useExploreRecommendations(), GenreRecommendationPreset
+
+### Community 49 - "MediaImageEntity"
+Cohesion: 0.33
+Nodes (6): MediaImageEntity, Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn
 
 ### Community 50 - "TodayRecommendationSection.tsx"
-Cohesion: 0.18
-Nodes (9): buildTodayHeroItems(), getRecommendationMeta(), TodayRecommendationSection(), TodayRecommendationSectionProps, actionClass(), MediaHeroCarousel(), MediaHeroCarouselAction, MediaHeroCarouselItem (+1 more)
+Cohesion: 0.14
+Nodes (13): buildTodayHeroItems(), getRecommendationMeta(), TodayRecommendationSection(), TodayRecommendationSectionProps, ArchiveHighlight, ArchiveHighlightSection(), ArchiveHighlightSectionProps, buildArchiveHeroItems() (+5 more)
 
 ### Community 51 - "Davas 제품 요구사항 상세 설계"
 Cohesion: 0.06
@@ -446,19 +443,19 @@ Cohesion: 0.24
 Nodes (10): formatNotificationDate(), notificationMessage(), NotificationStatus, ProfileNotificationsScreen(), CommunityNotificationItem, CommunityNotificationsResponse, CommunityNotificationType, getCommunityNotifications() (+2 more)
 
 ### Community 54 - "AppShell.tsx"
-Cohesion: 0.12
-Nodes (11): AppShell(), AppShellProps, BottomTabBar(), renderTabIcon(), TabItem, TabName, tabs, PlaceholderPageProps (+3 more)
+Cohesion: 0.10
+Nodes (13): AppShell(), AppShellProps, BottomTabBar(), renderTabIcon(), TabItem, TabName, tabs, DavasHeader() (+5 more)
 
-### Community 55 - "WatchlistItemEntity"
-Cohesion: 0.09
-Nodes (21): MediaFavoriteEntity, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn (+13 more)
+### Community 55 - "MediaFavoriteEntity"
+Cohesion: 0.17
+Nodes (11): MediaFavoriteEntity, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn (+3 more)
 
 ### Community 56 - "compilerOptions"
 Cohesion: 0.14
 Nodes (13): packages/shared/src/index.ts, compilerOptions, baseUrl, esModuleInterop, forceConsistentCasingInFileNames, module, moduleResolution, paths (+5 more)
 
 ### Community 57 - "TmdbClient"
-Cohesion: 0.17
+Cohesion: 0.15
 Nodes (10): imageUrl(), TmdbClient, Inject, Injectable, Optional, DavasMediaSearchItem, imageUrl(), mapTmdbRecommendationResult() (+2 more)
 
 ### Community 58 - "compilerOptions"
@@ -469,9 +466,9 @@ Nodes (20): compilerOptions, declaration, emitDecoratorMetadata, experimentalDec
 Cohesion: 0.14
 Nodes (13): devDependencies, tsx, tsx, main, name, private, scripts, build (+5 more)
 
-### Community 60 - "NotificationsService"
-Cohesion: 0.05
-Nodes (30): NotificationType, NotificationPreferenceCategory, REQUIRED_NOTIFICATION_CATEGORIES, IsBoolean, IsIn, UpdateNotificationPreferenceDto, NotificationsController, ApiTags (+22 more)
+### Community 60 - "NotificationsController"
+Cohesion: 0.14
+Nodes (11): IsBoolean, IsIn, UpdateNotificationPreferenceDto, NotificationsController, ApiTags, Body, Get, Param (+3 more)
 
 ### Community 61 - "group-recommendations.service.ts"
 Cohesion: 0.14
@@ -479,11 +476,11 @@ Nodes (24): assignCandidateChannels(), calculateGroupBase(), CandidateAvailabili
 
 ### Community 62 - "community.ts"
 Cohesion: 0.07
-Nodes (37): CommunityAuthorPageProps, setCommunityDashboardQueryParam(), toCommunityTab(), CommunityAuthorProfileResponse, CommunityComment, CommunityCommentsResponse, CommunityDashboardResponse, CommunityDiaryCard (+29 more)
+Nodes (38): CommunityAuthorPageProps, setCommunityDashboardQueryParam(), toCommunityTab(), CommunityAuthorProfileResponse, CommunityComment, CommunityCommentsResponse, CommunityDashboardResponse, CommunityDiaryCard (+30 more)
 
 ### Community 63 - "core.ts"
 Cohesion: 0.14
-Nodes (16): ApiErrorBody, CoreFetchOptions, createRecord(), CursorPage, deleteRecord(), isFormDataBody(), listRecords(), query() (+8 more)
+Nodes (15): ApiErrorBody, CoreFetchOptions, createRecord(), CursorPage, deleteRecord(), isFormDataBody(), query(), RECORD_UPDATE_FIELDS (+7 more)
 
 ### Community 64 - "CreateRecommendationSessionDto"
 Cohesion: 0.09
@@ -493,7 +490,7 @@ Nodes (28): RecommendationFeedbackKind, RecommendationDecisionRule, Recommendati
 Cohesion: 0.20
 Nodes (6): controllerSource, diaryEntitySource, FakeMediaRepository, FakeRepository, moduleSource, serviceSource
 
-### Community 66 - "diaries.controller.ts"
+### Community 66 - "DiaryListQueryDto"
 Cohesion: 0.20
 Nodes (9): DiaryListQueryDto, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, Min (+1 more)
 
@@ -510,68 +507,68 @@ Cohesion: 0.14
 Nodes (14): 1. 레거시 호환과 알려진 문제, 2026-10 보안 보강 병합 기록, 2. 검증 요령, 3. 작업 요령, Davas 부록: 레거시·알려진 문제·작업 요령, 결과 기록 형식, 계약 회귀 점검 목록, 기본 흐름 (+6 more)
 
 ### Community 70 - "Davas 추천 전략 상세 설계"
-Cohesion: 0.09
-Nodes (22): 10. 그룹 점수, 11. 다양성과 탐색, 12. 설명과 개인정보, 13. 합의 흐름, 14. 피드백, 16. 평가 지표, 17. 운영 안전장치, 18. 구현 전 결정할 값 (+14 more)
+Cohesion: 0.06
+Nodes (36): 10. 그룹 점수, 11. 다양성과 탐색, 12. 설명과 개인정보, 13. 합의 흐름, 14. 피드백, 15. 단계별 고도화, 16. 평가 지표, 17. 운영 안전장치 (+28 more)
 
 ### Community 71 - "DiaryDashboard.tsx"
-Cohesion: 0.09
-Nodes (35): DiaryCalendarDay, DiaryCalendarMarker, DiaryDashboardCalendar, DiaryGenreRatio, DiaryListItemView, DiaryDateSelection, filterDiaryItems(), getAdjacentDiaryMonth() (+27 more)
+Cohesion: 0.20
+Nodes (16): DiaryCalendarDay, DiaryDateSelection, filterDiaryItems(), getAdjacentDiaryMonth(), isSameWatchedDate(), ReadonlyURLSearchParamsLike, setDiaryDashboardQueryParam(), sortByRecentlyWritten() (+8 more)
 
 ### Community 72 - "GroupRecommendationsService"
 Cohesion: 0.21
 Nodes (5): RankedCandidate, GroupRecommendationsService, normalized(), response(), Injectable
 
 ### Community 73 - "UserEntity"
-Cohesion: 0.06
-Nodes (35): FakeUserRepository, ExternalProvider, MediaEntity, Column, CreateDateColumn, Entity, Index, OneToMany (+27 more)
+Cohesion: 0.04
+Nodes (49): FakeUserRepository, InjectRepository, Optional, FriendshipEntity, Column, CreateDateColumn, Entity, Index (+41 more)
 
 ### Community 74 - "compilerOptions"
 Cohesion: 0.20
 Nodes (9): compilerOptions, declaration, declarationMap, outDir, rootDir, extends, include, src/**/*.ts (+1 more)
 
 ### Community 75 - "jwt-cookie-auth.guard.ts"
-Cohesion: 0.08
-Nodes (18): sourceRoot, ACCESS_TOKEN_COOKIE, JwtCookieAuthGuard, readCookie(), Injectable, OptionalJwtCookieAuthGuard, OptionallyAuthenticatedRequest, user (+10 more)
+Cohesion: 0.09
+Nodes (16): AuthResult, sourceRoot, LoginDto, ApiProperty, IsEmail, IsString, Length, JwtCookieAuthGuard (+8 more)
 
 ### Community 76 - "compilerOptions"
 Cohesion: 0.08
 Nodes (23): compilerOptions, allowJs, incremental, isolatedModules, jsx, lib, module, moduleResolution (+15 more)
 
-### Community 77 - "auth.service.ts"
-Cohesion: 0.17
-Nodes (11): AuthResult, LoginDto, ApiProperty, IsEmail, IsString, Length, DEFAULT_RATE_LIMIT, ROUTE_RATE_LIMITS (+3 more)
+### Community 77 - "route-rate-limit.spec.ts"
+Cohesion: 0.32
+Nodes (5): DEFAULT_RATE_LIMIT, ROUTE_RATE_LIMITS, auth, media, RateLimitContractModule
 
-### Community 78 - "media.service.ts"
-Cohesion: 0.12
-Nodes (11): buildContentPreview(), FavoriteMediaItem, FavoriteMediaResponse, formatWatchedDate(), MediaDetailResponse, MediaFavoriteResponse, MediaService, MyMediaDiary (+3 more)
+### Community 78 - "MediaService"
+Cohesion: 0.19
+Nodes (5): Optional, buildContentPreview(), formatWatchedDate(), MediaService, Injectable
 
 ### Community 79 - "Davas 운영 가이드 (Raspberry Pi)"
 Cohesion: 0.15
 Nodes (13): 1. 호스트와 네트워크, 2. 최초 설정, 3. 운영 DB 원칙, 4.1 백업, 4.2 코드 갱신과 빌드 (트래픽은 아직 기존 버전), 4.3 migration 확인과 적용, 4.4 트래픽 전환, 4. 배포 절차 (+5 more)
 
 ### Community 80 - "Davas Repository Instructions"
-Cohesion: 0.18
+Cohesion: 0.20
 Nodes (10): API Security Boundaries, Code Intelligence Routing, Database and Deployment Safety, Davas Repository Instructions, Documentation Hygiene, Editing Boundaries, Graphify, Repository Map (+2 more)
 
 ### Community 81 - "Davas 기술 아키텍처 상세 설계"
-Cohesion: 0.07
-Nodes (28): 10. 추천 모듈 경계, 11. 개인정보와 삭제 처리, 12. 관측성과 운영, 13. 테스트 전략, 14. 단계별 확장, 15. ADR로 확정할 항목, 1. 설계 목표, 1단계: 비공개 2~5명 (+20 more)
+Cohesion: 0.12
+Nodes (17): 10. 추천 모듈 경계, 11. 개인정보와 삭제 처리, 12. 관측성과 운영, 13. 테스트 전략, 15. ADR로 확정할 항목, 1. 설계 목표, 2. 권장 시스템 구성, 3. 애플리케이션 모듈 (+9 more)
 
 ### Community 82 - "ExternalContentRefEntity"
 Cohesion: 0.22
 Nodes (9): ExternalContentRefEntity, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn (+1 more)
 
 ### Community 84 - "FriendInviteEntity"
-Cohesion: 0.09
-Nodes (22): FriendInviteEntity, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn (+14 more)
+Cohesion: 0.06
+Nodes (28): FileCleanupJobEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, FriendInviteEntity, Column, CreateDateColumn (+20 more)
 
 ### Community 85 - "SpaceMembershipEntity"
 Cohesion: 0.07
-Nodes (29): SpaceEntity, Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn (+21 more)
+Nodes (32): RecommendationSessionStatus, SpaceEntity, SpaceStatus, Column, CreateDateColumn, Entity, JoinColumn, ManyToOne (+24 more)
 
 ### Community 86 - "MediaDetailModal.tsx"
-Cohesion: 0.17
-Nodes (11): BasicInfoGrid(), DetailInfoCard(), FriendRecordsCard(), FriendRecordsStatus, MyRatingCard(), StillCutStrip(), fallbackOverview(), MediaDetailModal() (+3 more)
+Cohesion: 0.16
+Nodes (12): BasicInfoGrid(), DetailInfoCard(), FriendRecordsCard(), FriendRecordsStatus, MyRatingCard(), StillCutStrip(), fallbackOverview(), MediaDetailModal() (+4 more)
 
 ### Community 87 - "Q: AGENTS.md에 Graphify랑 Serena 사용 지침 적당한지 확인해줘. 그리고 다른 AGNETS.md에 필요한 내용 있는지 알려줘"
 Cohesion: 0.40
@@ -598,36 +595,28 @@ Cohesion: 0.20
 Nodes (10): RecommendationSessionEntity, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, OneToMany (+2 more)
 
 ### Community 93 - "coreFetch"
-Cohesion: 0.15
-Nodes (22): chooseActiveSpace(), inviteStatusMessage(), spaceErrorMessage(), SpaceInviteScreen(), SpacesScreen(), CoreApiError, coreFetch(), acceptSpaceInvite() (+14 more)
+Cohesion: 0.13
+Nodes (24): SpacesPageProps, chooseActiveSpace(), inviteStatusMessage(), spaceErrorMessage(), SpaceInviteScreen(), SpacesScreen(), SpacesView, VIEW_OPTIONS (+16 more)
 
-### Community 95 - "RecordComposer.tsx"
+### Community 95 - "RecordScreens.tsx"
 Cohesion: 0.08
-Nodes (27): AsyncState(), CoreAppShell(), EmptyState(), MediaTypeControl(), Poster(), RecordCard(), SearchField(), SearchIcon() (+19 more)
-
-### Community 97 - "TransactionOutboxService"
-Cohesion: 0.28
-Nodes (4): TransactionOutboxService, Injectable, InjectRepository, Optional
+Nodes (21): DiaryDetailPageProps, CoreAppShell(), MediaTypeControl(), RecordCard(), SearchField(), SearchIcon(), tabs, ViewingMethodControl() (+13 more)
 
 ### Community 98 - "verify-caddy-headers.mjs"
 Cohesion: 0.12
 Nodes (9): fetchWhenReady(), apiOrigin, conflictingHeaders, expectedHeaders, projectRoot, sourceCaddyfile, tempDirectory, testCaddyfile (+1 more)
 
 ### Community 99 - ".inspect"
-Cohesion: 0.28
+Cohesion: 0.32
 Nodes (6): SpaceInvitesController, Get, Param, Post, Req, UseGuards
 
-### Community 100 - "DiaryReactionEntity"
-Cohesion: 0.25
-Nodes (8): DiaryReactionEntity, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn
+### Community 100 - "4. 핵심 도메인 모델"
+Cohesion: 0.33
+Nodes (6): 4.1 Identity, 4.2 Spaces, 4.3 Catalog, 4.4 Viewing Journal, 4.5 Availability와 추천, 4. 핵심 도메인 모델
 
-### Community 101 - "UserConsentEntity"
-Cohesion: 0.25
-Nodes (8): Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UserConsentEntity
-
-### Community 104 - "diary/[id]/page.tsx"
-Cohesion: 0.29
-Nodes (3): DiaryDetailPageProps, RecordDetailScreen(), DiaryDetailScreen()
+### Community 101 - "14. 단계별 확장"
+Cohesion: 0.40
+Nodes (5): 14. 단계별 확장, 1단계: 비공개 2~5명, 2단계: 친구와 복수 공간, 3단계: 큰 그룹, 4단계: 공개 탐색
 
 ### Community 105 - "verify-auth-http.mjs"
 Cohesion: 0.12
@@ -638,25 +627,13 @@ Nodes (12): {
   FriendInvitesController,
 } (+4 more)
 
-### Community 118 - ".uploadProfileImage"
-Cohesion: 0.33
-Nodes (5): Post, Throttle, ProfileImageFile, UploadedFile, UseInterceptors
-
 ### Community 119 - "AvailabilityObservationEntity"
 Cohesion: 0.17
 Nodes (11): AvailabilityObservationEntity, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn (+3 more)
 
-### Community 136 - "FileCleanupJobEntity"
-Cohesion: 0.11
-Nodes (11): FileCleanupJobEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, FileCleanupRunResult, FileCleanupService, CleanupJob (+3 more)
-
-### Community 137 - "15. 단계별 고도화"
-Cohesion: 0.33
-Nodes (6): 15. 단계별 고도화, 단계 0: 결정론적 MVP, 단계 1: 베이지안 개인화, 단계 2: 사용자별 학습 모델, 단계 3: 문맥 밴딧, 단계 4: 협업 필터링
-
-### Community 138 - "ExploreDashboard.tsx"
-Cohesion: 0.08
-Nodes (34): ExploreDashboard(), recommendationToPosterItem(), ExploreFilter, ExploreFilterChips(), filters, ExploreShortcutGrid(), getTmdbGenreNames(), TMDB_MOVIE_GENRES (+26 more)
+### Community 138 - "PersonCreditResults.tsx"
+Cohesion: 0.14
+Nodes (14): getTmdbGenreNames(), TMDB_MOVIE_GENRES, TMDB_TV_GENRES, MediaDetailLoadingIndicator(), MediaDetailLoadingIndicatorProps, GenreTags(), MediaSearchResults(), formatCreditMeta() (+6 more)
 
 ### Community 139 - "diary-compose-utils.ts"
 Cohesion: 0.16
@@ -664,15 +641,11 @@ Nodes (7): clampRating(), isValidDateInput(), ratingFromPointer(), validateDiary
 
 ### Community 140 - "src/index.ts"
 Cohesion: 0.07
-Nodes (25): LegalScreen(), legalDocuments, CORE_DIARY_VISIBILITIES, CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION, DAVAS_APP_NAME, DIARY_VISIBILITIES, FRIENDSHIP_STATUSES (+17 more)
+Nodes (27): TaskShell(), LegalScreen(), legalDocuments, CORE_DIARY_VISIBILITIES, CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION, DAVAS_APP_NAME, DIARY_VISIBILITIES (+19 more)
 
-### Community 141 - "group-recommendations.controller.ts"
-Cohesion: 0.27
+### Community 141 - ".feedback"
+Cohesion: 0.31
 Nodes (6): GroupRecommendationsController, Body, Get, Param, Post, Req
-
-### Community 143 - "DiaryLikeEntity"
-Cohesion: 0.25
-Nodes (8): DiaryLikeEntity, Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn
 
 ### Community 144 - "Q: Audit TO-BE integration: composition roots, entities/migrations, shared API/Web contracts, space audience policy, watch/availability/reaction separation, and outbox privacy."
 Cohesion: 0.40
@@ -682,33 +655,25 @@ Nodes (4): Answer, Outcome, Q: Audit TO-BE integration: composition roots, entit
 Cohesion: 0.12
 Nodes (6): FakeInviteRepository, FakeInviteUseRepository, FakeJwtService, legal, SavedUser, SerializedDataSource
 
-### Community 147 - "TransactionOutboxEntity"
-Cohesion: 0.15
-Nodes (10): TransactionOutboxEntity, TransactionOutboxStatus, Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, NotificationRequestInput (+2 more)
+### Community 147 - "UsersService"
+Cohesion: 0.06
+Nodes (25): TransactionOutboxEntity, TransactionOutboxStatus, Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, NotificationRequestInput (+17 more)
 
-### Community 148 - "UpdateDiaryDto"
-Cohesion: 0.14
-Nodes (13): IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max (+5 more)
+### Community 148 - "diaries-dashboard.service.ts"
+Cohesion: 0.09
+Nodes (25): matchesTopic(), buildContentPreview(), buildGenreRatios(), DiaryDashboardItem, formatWatchedDate(), GENRE_ICON_KINDS, LegacyCreateDiaryDto, LegacyUpdateDiaryDto (+17 more)
 
 ### Community 151 - "core-record-migration.spec.ts"
 Cohesion: 0.18
 Nodes (3): CoreRecordContract1720670500000, FriendInvitesAndConsents1720670600000, MediaCanonicalIdentity1720670700000
 
 ### Community 152 - "MediaSelectionDto"
-Cohesion: 0.09
-Nodes (16): selection, MediaSelectionDto, ApiProperty, IsEnum, IsString, Length, Optional, MediaSelectionService (+8 more)
-
-### Community 153 - "5. 필요한 데이터"
-Cohesion: 0.50
-Nodes (4): 5. 필요한 데이터, 명시적 신호, 암시적 신호, 콘텐츠 특징
+Cohesion: 0.10
+Nodes (15): selection, MediaSelectionDto, ApiProperty, IsEnum, IsString, Length, MediaSelectionService, canonicalDetail (+7 more)
 
 ### Community 154 - "AuthUi.tsx"
 Cohesion: 0.15
-Nodes (15): AuthShell(), LoginCard(), post(), safeReturn(), SignupCard(), hasOnlySingleValueParams(), isSafeAtDepth(), isSafeCoreReturnTo() (+7 more)
-
-### Community 155 - "8. 추천 파이프라인"
-Cohesion: 0.50
-Nodes (4): 8. 추천 파이프라인, 단계 1: 요청 정규화, 단계 2: 하드 필터, 단계 3: 후보 생성
+Nodes (16): AuthShell(), LoginCard(), post(), safeReturn(), SignupCard(), hasOnlySingleValueParams(), isSafeAtDepth(), isSafeCoreReturnTo() (+8 more)
 
 ### Community 156 - "제품 요구사항 구현 추적표"
 Cohesion: 0.67
@@ -733,10 +698,6 @@ Nodes (10): {
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Can Davas be deployed and verified on Raspberry Pi?, Source Nodes
 
-### Community 166 - "query-performance-contract.spec.ts"
-Cohesion: 0.15
-Nodes (5): CoreQueryIndexes1720670800000, FeedIndexSharedAtPredicate1720670900000, queryDtoSource, serviceSource, FEED_FRIENDS_ACCESS_PREDICATE
-
 ### Community 167 - "typeorm.config.ts"
 Cohesion: 0.27
 Nodes (3): CanonicalCatalogAvailability1720670900000, statements(), createTypeOrmOptions()
@@ -750,7 +711,7 @@ Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: Trace the diary dashboard persisted media and representative poster regression after canonical media/watch changes, Source Nodes
 
 ### Community 171 - "media.controller.ts"
-Cohesion: 0.12
+Cohesion: 0.13
 Nodes (14): AvailabilityQueryDto, ApiPropertyOptional, IsOptional, Matches, MediaSearchQueryDto, ApiPropertyOptional, IsEnum, IsInt (+6 more)
 
 ### Community 175 - "Q: 중간중간 새버전이 준비됐어요 안전하게 업데이트 이건 왜 뜨는 거야? 화면 이동마다 약간씩 뜨는데 이거 웹 버전인데 이게 왜 떠?"
@@ -758,8 +719,8 @@ Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: 중간중간 새버전이 준비됐어요 안전하게 업데이트 이건 왜 뜨는 거야? 화면 이동마다 약간씩 뜨는데 이거 웹 버전인데 이게 왜 떠?, Source Nodes
 
 ### Community 177 - "getApiBaseUrl"
-Cohesion: 0.19
-Nodes (16): DiaryReactions(), options, getApiBaseUrl(), CreatedDiaryResponse, createDiary(), CreateDiaryPayload, deleteDiary(), EditableDiary (+8 more)
+Cohesion: 0.23
+Nodes (14): WatchlistScreen(), getApiBaseUrl(), CreatedDiaryResponse, createDiary(), CreateDiaryPayload, deleteDiary(), EditableDiary, getDiary() (+6 more)
 
 ### Community 178 - "Q: What are the current Davas core functions and how are they delivered?"
 Cohesion: 0.40
@@ -778,8 +739,8 @@ Cohesion: 0.22
 Nodes (6): decoder, errors, files, forbidden, required, root
 
 ### Community 185 - "DiaryEntity"
-Cohesion: 0.05
-Nodes (46): CommunityCommentView, InjectRepository, Optional, InjectRepository, Optional, DiaryEntity, Column, CreateDateColumn (+38 more)
+Cohesion: 0.04
+Nodes (61): FakeCommentsRepository, InjectRepository, Optional, CommentEntity, Column, CreateDateColumn, DeleteDateColumn, Entity (+53 more)
 
 ### Community 187 - "Q: 그렇다고 무슨 새로고침 할 떄마다 노출되고 화면 이동할 때마다 노출되고 하는 게 누가봐도 버그잖아. 적절하게 수정해."
 Cohesion: 0.40
@@ -821,9 +782,9 @@ Nodes (4): Answer, Outcome, Q: Pi에서 친구 기록 feed가 마이그레이션
 Cohesion: 0.40
 Nodes (4): Answer, Outcome, Q: 기록 작성 화면 UIUX, 별점 슬라이더, 뒤로가기 흐름 분석, Source Nodes
 
-### Community 205 - "MediaPosterRowSection.tsx"
-Cohesion: 0.13
-Nodes (14): DiarySummary, DiarySummaryCard(), DiarySummaryCardProps, toneClasses, DiarySummarySection(), DiarySummarySectionProps, FavoriteMovie, FavoriteMoviesSection() (+6 more)
+### Community 205 - "diary-dashboard-types.ts"
+Cohesion: 0.15
+Nodes (14): DiaryDashboardCalendar, DiaryListItemView, DiarySummary, DiaryListItem(), DiaryListItemProps, DiaryRecentListSection(), DiaryRecentListSectionProps, DiarySummaryCard() (+6 more)
 
 ### Community 207 - "Q: 작품 검색 관람 경로와 상세 확인 및 친구 기록 구조"
 Cohesion: 0.40
@@ -858,38 +819,38 @@ Cohesion: 0.50
 Nodes (3): name, private, version
 
 ## Knowledge Gaps
-- **797 isolated node(s):** `Scope`, `Repository Map`, `Graphify`, `Code Intelligence Routing`, `Editing Boundaries` (+792 more)
+- **800 isolated node(s):** `SpacesPageProps`, `RecommendationType`, `RecommendationStatus`, `recommendationTabs`, `PROVIDERS` (+795 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **35 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **36 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Work-memory lessons
 
 **Preferred sources** — corroborated by past sessions; start here.
-- `RecordComposer()` (3× useful, score=0.938984774)
-- `RecordScreens.tsx` (3× useful, score=0.923698949)
-- `WatchEventsService` (3× useful, score=0.918923126)
-- `layout.tsx` (2× useful, score=0.617791537)
-- `PwaStatus.tsx` (2× useful, score=0.617791537)
-- `PwaStatus()` (2× useful, score=0.617791537)
-- `SpaceMembershipEntity` (2× useful, score=0.615214645)
-- `typeorm.config.ts` (2× useful, score=0.613407949)
-- `GroupRecommendationSessionRequest` (2× useful, score=0.613321488)
-- `api/package.json` (2× useful, score=0.552587225)
+- `RecordComposer()` (3× useful, score=0.938555275)
+- `RecordScreens.tsx` (3× useful, score=0.923276442)
+- `WatchEventsService` (3× useful, score=0.918502804)
+- `layout.tsx` (2× useful, score=0.617508954)
+- `PwaStatus.tsx` (2× useful, score=0.617508954)
+- `PwaStatus()` (2× useful, score=0.617508954)
+- `SpaceMembershipEntity` (2× useful, score=0.614933241)
+- `typeorm.config.ts` (2× useful, score=0.613127372)
+- `GroupRecommendationSessionRequest` (2× useful, score=0.61304095)
+- `api/package.json` (2× useful, score=0.552334467)
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `REACTION_EMOJIS` connect `NotificationsService` to `src/index.ts`?**
-  _High betweenness centrality (0.268) - this node is a cross-community bridge._
-- **Why does `AuthenticatedRequest` connect `AuthenticatedRequest` to `CommentsService`, `UsersController`, `WatchlistService`, `community.service.ts`, `group-recommendations.controller.ts`, `SpacesController`, `DiariesController`, `spaces.service.ts`, `invites.controller.ts`, `media.controller.ts`, `WatchEventsService`, `NotificationsService`, `diaries.controller.ts`, `MediaController`, `jwt-cookie-auth.guard.ts`, `auth.service.ts`, `FriendInviteEntity`, `.inspect`, `.uploadProfileImage`?**
-  _High betweenness centrality (0.167) - this node is a cross-community bridge._
-- **Why does `ReactionsController` connect `NotificationsService` to `Controller`, `app.module.ts`?**
-  _High betweenness centrality (0.161) - this node is a cross-community bridge._
-- **What connects `Scope`, `Repository Map`, `Graphify` to the rest of the system?**
-  _797 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `REACTION_EMOJIS` connect `CommentsService` to `src/index.ts`?**
+  _High betweenness centrality (0.271) - this node is a cross-community bridge._
+- **Why does `ReactionsController` connect `CommentsService` to `Controller`, `entities/index.ts`?**
+  _High betweenness centrality (0.179) - this node is a cross-community bridge._
+- **Why does `AuthenticatedRequest` connect `AuthenticatedRequest` to `CommentsService`, `upload-concurrency.interceptor.ts`, `users.controller.ts`, `.inspect`, `MediaController`, `WatchlistService`, `SpacesService`, `Controller`, `community.service.ts`, `jwt-cookie-auth.guard.ts`, `WatchEventsService`, `media.controller.ts`, `.feedback`, `FriendInvitesController`, `diaries-dashboard.service.ts`, `DiariesController`, `NotificationsController`, `invites.controller.ts`?**
+  _High betweenness centrality (0.133) - this node is a cross-community bridge._
+- **What connects `SpacesPageProps`, `RecommendationType`, `RecommendationStatus` to the rest of the system?**
+  _800 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `CommentsService` be split into smaller, more focused modules?**
-  _Cohesion score 0.14666666666666667 - nodes in this community are weakly interconnected._
-- **Should `UsersController` be split into smaller, more focused modules?**
-  _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06914893617021277 - nodes in this community are weakly interconnected._
+- **Should `users.controller.ts` be split into smaller, more focused modules?**
+  _Cohesion score 0.08858858858858859 - nodes in this community are weakly interconnected._
 - **Should `WatchlistService` be split into smaller, more focused modules?**
   _Cohesion score 0.1051693404634581 - nodes in this community are weakly interconnected._
