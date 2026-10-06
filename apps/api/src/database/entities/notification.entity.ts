@@ -1,4 +1,12 @@
-import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { DiaryEntity } from './diary.entity';
 import { UserEntity } from './user.entity';
 
@@ -34,7 +42,10 @@ export class NotificationEntity {
   @Column({ name: 'diary_id', type: 'uuid', nullable: true })
   diaryId!: string | null;
 
-  @ManyToOne(() => DiaryEntity, (diary) => diary.notifications, { nullable: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => DiaryEntity, (diary) => diary.notifications, {
+    nullable: true,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'diary_id' })
   diary!: DiaryEntity | null;
 

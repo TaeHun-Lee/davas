@@ -17,7 +17,7 @@ import { MediaImageEntity } from './media-image.entity';
 export type ExternalProvider = 'TMDB' | 'OMDB' | 'MANUAL';
 
 @Entity({ name: 'media' })
-@Index(['externalProvider', 'externalId'], { unique: true })
+@Index(['externalProvider', 'externalId', 'mediaType'], { unique: true })
 @Index(['title'])
 export class MediaEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -101,16 +101,10 @@ export class MediaEntity {
   @OneToMany(() => MediaFavoriteEntity, (favorite) => favorite.media)
   favorites?: MediaFavoriteEntity[];
 
-  @OneToMany(
-    () => ExternalContentRefEntity,
-    (externalRef) => externalRef.content,
-  )
+  @OneToMany(() => ExternalContentRefEntity, (externalRef) => externalRef.content)
   externalRefs!: ExternalContentRefEntity[];
 
-  @OneToMany(
-    () => AvailabilityObservationEntity,
-    (observation) => observation.content,
-  )
+  @OneToMany(() => AvailabilityObservationEntity, (observation) => observation.content)
   availabilityObservations!: AvailabilityObservationEntity[];
 
   @CreateDateColumn({ name: 'created_at' })

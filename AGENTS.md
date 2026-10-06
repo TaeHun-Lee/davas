@@ -40,12 +40,20 @@
 - Never commit `.env` files, credentials, tokens, production secrets, or local deployment archives. Update the appropriate `.env.example` file when the public configuration contract changes.
 - Keep reusable API/web contracts in `packages/shared`. When a shared export changes, build the shared package and validate affected consumers.
 
+## API Security Boundaries
+
+- Every API route requires the `davas_access_token` cookie by default (global `JwtCookieAuthGuard`). Mark intentionally public routes with `@Public()`, and add `OptionalJwtCookieAuthGuard` when a public route still personalizes for a signed-in viewer.
+- Controllers read the caller from `request.user` (`AuthenticatedRequest`); they must not parse cookies or call `AuthService` themselves (enforced by `controller-auth-policy.spec.ts`).
+- Unsafe methods are checked against `CORS_ORIGINS` (`OriginGuard`), and requests are rate limited per client IP (`ThrottlerGuard`, limits in `common/request-limits.ts`). Production trusts exactly one proxy hop (Caddy) unless `TRUST_PROXY_HOPS` says otherwise.
+- The media selection API accepts only provider identity fields; stored titles and images come from TMDB, never from the browser.
+- Web `returnTo` targets must pass `apps/web/src/lib/core-routes.ts`; extend its allow-list when adding a route that login should return to.
+
 ## Database and Deployment Safety
 
 - Represent TypeORM schema changes with a migration and add or update focused migration tests.
 - Never enable `TYPEORM_SYNC` in production or use schema synchronization as a recovery shortcut.
 - Do not run production deployment, migration, rollback, volume-removal, or database-mutating commands merely to validate a code change.
-- Before an explicitly requested production migration or rollback, follow `docs/deployment/raspberry-pi-duckdns.md`: back up the database and uploads, inspect migration state, and use the documented restore procedure for exact rollback.
+- Read `PRODUCTION_DATABASE_CAUTION.md` before touching production data. Before an explicitly requested production migration or rollback, follow `docs/operations/raspberry-pi-deployment.md`: back up the database and uploads, inspect migration state, and use the documented restore procedure for exact rollback.
 - Do not expose PostgreSQL or internal app ports publicly.
 
 ## Validation

@@ -29,6 +29,14 @@ export type DiaryListQuery = {
   limit?: number;
 };
 
+export const FEED_FRIENDS_ACCESS_PREDICATE =
+  `diary.visibility = 'FRIENDS' AND (` +
+  `diary.userId = :viewerId OR EXISTS (` +
+  `SELECT 1 FROM friendships f WHERE f.status = 'ACCEPTED' AND (` +
+  `(f.requester_id = diary.user_id AND f.receiver_id = :viewerId) OR ` +
+  `(f.receiver_id = diary.user_id AND f.requester_id = :viewerId)` +
+  `)))`;
+
 function apiError(
   statusCode: number,
   code: string,
@@ -48,12 +56,7 @@ function assertNotFuture(date: string) {
     month: '2-digit',
     day: '2-digit',
   }).format(new Date());
-  if (date > today)
-    throw apiError(
-      400,
-      'FUTURE_WATCHED_DATE',
-      '본 날짜는 오늘 이후일 수 없어요.',
-    );
+  if (date > today) throw apiError(400, 'FUTURE_WATCHED_DATE', '본 날짜는 오늘 이후일 수 없어요.');
 }
 
 function normalizedCreate(dto: CreateDiaryDto) {
@@ -104,8 +107,7 @@ export class DiariesService {
     if (replay) return this.resolveReplay(replay, requestFingerprint, userId);
 
     const media = await this.media.findOne({ where: { id: dto.mediaId } });
-    if (!media)
-      throw apiError(400, 'MEDIA_NOT_FOUND', '선택한 작품을 찾을 수 없어요.');
+    if (!media) throw apiError(400, 'MEDIA_NOT_FOUND', '선택한 작품을 찾을 수 없어요.');
 
     const existing = await this.diaries.findOne({
       where: {
@@ -117,19 +119,14 @@ export class DiariesService {
       relations: { media: true },
     });
     if (existing && !dto.allowDuplicate) {
-      throw apiError(
-        409,
-        'POSSIBLE_REWATCH',
-        '이미 같은 조건의 기록이 있어요.',
-        {
-          existingRecord: {
-            id: existing.id,
-            mediaTitle: existing.media?.title ?? existing.title,
-            watchedDate: existing.watchedDate,
-            viewingMethod: existing.viewingMethod,
-          },
+      throw apiError(409, 'POSSIBLE_REWATCH', '이미 같은 조건의 기록이 있어요.', {
+        existingRecord: {
+          id: existing.id,
+          mediaTitle: existing.media?.title ?? existing.title,
+          watchedDate: existing.watchedDate,
+          viewingMethod: existing.viewingMethod,
         },
-      );
+      });
     }
 
     const value = normalizedCreate(dto);
@@ -143,7 +140,8 @@ export class DiariesService {
       visibility: value.visibility,
       hasSpoiler: value.hasSpoiler,
       viewingMethod: value.viewingMethod,
-      sharedAt: value.visibility === 'FRIENDS' ? new Date() : null,
+      // The friend feed only lists rows with sharedAt (see FeedIndexSharedAtPredicate).
+      sharedAt: value.visibility === 'PRIVATE' ? null : new Date(),
       clientRequestId: dto.clientRequestId!,
       clientRequestFingerprint: requestFingerprint,
       watchedPlace: null,
@@ -183,31 +181,24 @@ export class DiariesService {
       where: { id, userId },
       relations: { media: true, user: true, selectedShares: true },
     });
-    if (!diary)
-      throw apiError(404, 'RECORD_NOT_FOUND', '기록을 찾을 수 없어요.');
+    if (!diary) throw apiError(404, 'RECORD_NOT_FOUND', '기록을 찾을 수 없어요.');
     if (dto.watchedDate) assertNotFuture(dto.watchedDate);
     if (dto.mediaId && dto.mediaId !== diary.mediaId) {
       const media = await this.media.findOne({ where: { id: dto.mediaId } });
-      if (!media)
-        throw apiError(400, 'MEDIA_NOT_FOUND', '선택한 작품을 찾을 수 없어요.');
+      if (!media) throw apiError(400, 'MEDIA_NOT_FOUND', '선택한 작품을 찾을 수 없어요.');
       diary.mediaId = media.id;
       diary.media = media;
       diary.title = media.title;
     }
-    if (dto.viewingMethod !== undefined)
-      diary.viewingMethod = dto.viewingMethod;
+    if (dto.viewingMethod !== undefined) diary.viewingMethod = dto.viewingMethod;
     if (dto.watchedDate !== undefined) diary.watchedDate = dto.watchedDate;
-    if (dto.rating !== undefined)
-      diary.rating = dto.rating === null ? null : dto.rating.toFixed(1);
+    if (dto.rating !== undefined) diary.rating = dto.rating === null ? null : dto.rating.toFixed(1);
     if (dto.content !== undefined) diary.content = dto.content.trim();
     if (dto.hasSpoiler !== undefined) diary.hasSpoiler = dto.hasSpoiler;
     if (!diary.content.trim()) diary.hasSpoiler = false;
     if (dto.visibility !== undefined && dto.visibility !== diary.visibility) {
-      const previous = diary.visibility;
       diary.visibility = dto.visibility;
-      if (dto.visibility === 'FRIENDS' && previous !== 'FRIENDS')
-        diary.sharedAt = new Date();
-      if (dto.visibility === 'PRIVATE') diary.sharedAt = null;
+      diary.sharedAt = dto.visibility === 'PRIVATE' ? null : new Date();
       await this.shares.delete({ diaryId: diary.id });
     }
     const saved = await this.diaries.save(diary);
@@ -219,8 +210,7 @@ export class DiariesService {
 
   async remove(userId: string, id: string) {
     const diary = await this.diaries.findOne({ where: { id, userId } });
-    if (!diary)
-      throw apiError(404, 'RECORD_NOT_FOUND', '기록을 찾을 수 없어요.');
+    if (!diary) throw apiError(404, 'RECORD_NOT_FOUND', '기록을 찾을 수 없어요.');
     await this.diaries.softDelete({ id, userId });
     return { id, deleted: true };
   }
@@ -231,16 +221,13 @@ export class DiariesService {
     qb.andWhere(
       new Brackets((where) => {
         where
-          .where(
-            `diary.visibility = 'FRIENDS' AND (diary.userId = :viewerId OR EXISTS (SELECT 1 FROM friendships f WHERE f.status = 'ACCEPTED' AND ((f.requester_id = diary.user_id AND f.receiver_id = :viewerId) OR (f.receiver_id = diary.user_id AND f.requester_id = :viewerId))))`,
-            { viewerId: userId },
-          )
-          .orWhere(
-            `diary.visibility = 'SELECTED' AND selectedShare.userId = :viewerId`,
-            { viewerId: userId },
-          );
+          .where(FEED_FRIENDS_ACCESS_PREDICATE, { viewerId: userId })
+          .orWhere(`diary.visibility = 'SELECTED' AND selectedShare.userId = :viewerId`, {
+            viewerId: userId,
+          });
       }),
     );
+    qb.andWhere('diary.sharedAt IS NOT NULL');
     this.applyFilters(qb, query, true);
     this.applyCursor(qb, query.cursor, 'feed');
     qb.orderBy('diary.sharedAt', 'DESC')
@@ -280,8 +267,7 @@ export class DiariesService {
         : '(media.title ILIKE :q OR media.originalTitle ILIKE :q)';
       qb.andWhere(fields, { q: `%${q}%` });
     }
-    if (query.mediaId)
-      qb.andWhere('diary.mediaId = :mediaId', { mediaId: query.mediaId });
+    if (query.mediaId) qb.andWhere('diary.mediaId = :mediaId', { mediaId: query.mediaId });
     if (query.mediaType)
       qb.andWhere('media.mediaType = :mediaType', {
         mediaType: query.mediaType,
@@ -299,9 +285,11 @@ export class DiariesService {
   ) {
     if (!raw) return;
     try {
-      const cursor = JSON.parse(
-        Buffer.from(raw, 'base64url').toString('utf8'),
-      ) as { first: string; createdAt: string; id: string };
+      const cursor = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8')) as {
+        first: string;
+        createdAt: string;
+        id: string;
+      };
       const first = mode === 'feed' ? 'diary.sharedAt' : 'diary.watchedDate';
       qb.andWhere(
         `(${first} < :cursorFirst OR (${first} = :cursorFirst AND diary.createdAt < :cursorCreated) OR (${first} = :cursorFirst AND diary.createdAt = :cursorCreated AND diary.id < :cursorId))`,
@@ -312,11 +300,7 @@ export class DiariesService {
         },
       );
     } catch {
-      throw apiError(
-        400,
-        'INVALID_CURSOR',
-        '목록 위치 정보가 올바르지 않아요.',
-      );
+      throw apiError(400, 'INVALID_CURSOR', '목록 위치 정보가 올바르지 않아요.');
     }
   }
 
@@ -335,10 +319,7 @@ export class DiariesService {
       hasMore && last
         ? Buffer.from(
             JSON.stringify({
-              first:
-                mode === 'feed'
-                  ? last.sharedAt?.toISOString()
-                  : last.watchedDate,
+              first: mode === 'feed' ? last.sharedAt?.toISOString() : last.watchedDate,
               createdAt: last.createdAt.toISOString(),
               id: last.id,
             }),
@@ -361,10 +342,7 @@ export class DiariesService {
     return { diary: this.toDetail(diary, userId), deduplicated: true };
   }
 
-  private async syncAuthorProjection(
-    diary: DiaryEntity,
-    syncReaction: boolean,
-  ) {
+  private async syncAuthorProjection(diary: DiaryEntity, syncReaction: boolean) {
     if (this.watchParticipants) {
       const participant =
         (await this.watchParticipants.findOne({
@@ -388,8 +366,7 @@ export class DiariesService {
           diaryId: diary.id,
           accountId: diary.userId,
         });
-      reaction.ratingScale =
-        diary.rating === null ? null : Math.round(Number(diary.rating) * 2);
+      reaction.ratingScale = diary.rating === null ? null : Math.round(Number(diary.rating) * 2);
       reaction.reviewText = diary.content.trim() || null;
       await this.watchReactions.save(reaction);
     }
@@ -416,8 +393,7 @@ export class DiariesService {
       viewingMethod: diary.viewingMethod ?? null,
       watchedDate: diary.watchedDate,
       rating: diary.rating === null ? null : Number(diary.rating),
-      reviewPreview:
-        !content || diary.hasSpoiler ? null : content.slice(0, 140),
+      reviewPreview: !content || diary.hasSpoiler ? null : content.slice(0, 140),
       hasSpoiler: diary.hasSpoiler,
       visibility: diary.visibility,
       sharedAt: diary.sharedAt?.toISOString() ?? null,

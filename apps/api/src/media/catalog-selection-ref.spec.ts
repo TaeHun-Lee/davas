@@ -39,8 +39,24 @@ describe('canonical media selection', () => {
         return input;
       },
     };
+    const tmdbClient = {
+      detail: async () => ({
+        ...selection,
+        tagline: null,
+        genres: ['SF'],
+        countries: ['US'],
+        runtime: 169,
+        tmdbRating: 8.4,
+        tmdbVoteCount: 1,
+        director: null,
+        creators: [],
+        cast: [],
+        certification: null,
+      }),
+    };
     const service = new MediaSelectionService(
       mediaRepository as never,
+      tmdbClient as never,
       refRepository as never,
     );
 

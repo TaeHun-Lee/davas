@@ -1,14 +1,13 @@
 import { ConflictException, Injectable, Optional, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { unlink } from 'node:fs/promises';
-import { extname, join } from 'node:path';
+import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { basename, join } from 'node:path';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { FileCleanupJobEntity, UserEntity } from '../database/entities';
 import { TransactionOutboxService } from '../outbox/transaction-outbox.service';
-import * as bcrypt from 'bcrypt';
+import { validateProfileImageContent } from './profile-image-upload';
 
 export type UserProfileResponse = {
   id: string;
@@ -32,26 +31,19 @@ export type ProfileImageFile = {
   size: number;
 };
 
-const MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024;
 const DELETION_GRACE_DAYS = 30;
-const ALLOWED_PROFILE_IMAGE_TYPES = new Map([
-  ['image/jpeg', '.jpg'],
-  ['image/png', '.png'],
-  ['image/webp', '.webp'],
-]);
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly users: Repository<UserEntity>,
-    private readonly jwt: JwtService,
     @Optional() private readonly dataSource?: DataSource,
     @Optional() private readonly outbox?: TransactionOutboxService,
   ) {}
 
-  async updateMe(accessToken: string | undefined, dto: UpdateMeDto) {
-    const user = await this.loadAuthenticatedUser(accessToken);
+  async updateMe(userId: string, dto: UpdateMeDto) {
+    const user = await this.loadUserById(userId);
     const nextNickname = dto.nickname?.trim();
 
     if (nextNickname && nextNickname !== user.nickname) {
@@ -68,63 +60,97 @@ export class UsersService {
     }
 
     if (dto.preferredGenres !== undefined) {
-      user.preferredGenres = dto.preferredGenres.map((genre) => genre.trim()).filter(Boolean).slice(0, 10);
+      user.preferredGenres = dto.preferredGenres
+        .map((genre) => genre.trim())
+        .filter(Boolean)
+        .slice(0, 10);
     }
 
     return this.toUserResponse(await this.users.save(user));
   }
 
-  async updateProfileImage(accessToken: string | undefined, imageUrl: string) {
-    const user = await this.loadAuthenticatedUser(accessToken);
+  async updateProfileImage(userId: string, imageUrl: string) {
+    const user = await this.loadUserById(userId);
     user.profileImageUrl = imageUrl;
     return this.toUserResponse(await this.users.save(user));
   }
 
-  async saveProfileImage(accessToken: string | undefined, file: ProfileImageFile | undefined) {
+  async saveProfileImage(userId: string, file: ProfileImageFile | undefined) {
     if (!file) {
       throw new ConflictException('프로필 이미지 파일이 필요합니다.');
     }
-    const extension = ALLOWED_PROFILE_IMAGE_TYPES.get(file.mimetype);
-    if (!extension) {
-      throw new ConflictException('JPG, PNG, WEBP 이미지만 업로드할 수 있습니다.');
-    }
-    if (file.size > MAX_PROFILE_IMAGE_SIZE) {
-      throw new ConflictException('프로필 이미지는 5MB 이하만 업로드할 수 있습니다.');
-    }
+    const validated = validateProfileImageContent(file);
 
-    const user = await this.loadAuthenticatedUser(accessToken);
+    const user = await this.loadUserById(userId);
     const uploadRoot = process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads');
-    const imageDir = join(uploadRoot, 'profile-images');
-    await mkdir(imageDir, { recursive: true });
-    const safeOriginalExtension = ALLOWED_PROFILE_IMAGE_TYPES.get(file.mimetype) ?? extname(file.originalname).toLowerCase();
-    const filename = `${user.id}-${randomUUID()}${safeOriginalExtension}`;
-    await writeFile(join(imageDir, filename), file.buffer);
-    user.profileImageUrl = `/uploads/profile-images/${filename}`;
-    return this.toUserResponse(await this.users.save(user));
+    const imageDirectory = join(uploadRoot, 'profile-images');
+    await mkdir(imageDirectory, { recursive: true });
+    const filename = `${user.id}-${randomUUID()}.${validated.extension}`;
+    const imageUrl = `/uploads/profile-images/${filename}`;
+    const previousImageUrl = user.profileImageUrl;
+    await writeFile(join(imageDirectory, filename), file.buffer);
+    user.profileImageUrl = imageUrl;
+
+    let savedUser: UserEntity;
+    try {
+      savedUser = await this.users.save(user);
+    } catch (error) {
+      await this.cleanupProfileImage(imageUrl, user.id);
+      throw error;
+    }
+
+    if (previousImageUrl && previousImageUrl !== imageUrl) {
+      await this.cleanupProfileImage(previousImageUrl, user.id);
+    }
+    return this.toUserResponse(savedUser);
   }
 
-  async deleteProfileImage(accessToken: string | undefined) {
-    const user = await this.loadAuthenticatedUser(accessToken);
+  async deleteProfileImage(userId: string) {
+    const user = await this.loadUserById(userId);
+    const previousImageUrl = user.profileImageUrl;
     user.profileImageUrl = null;
-    return this.toUserResponse(await this.users.save(user));
+    const savedUser = await this.users.save(user);
+    await this.cleanupProfileImage(previousImageUrl, user.id);
+    return this.toUserResponse(savedUser);
   }
 
-  async exportMe(accessToken: string | undefined, now = new Date()) {
-    const user = await this.loadAuthenticatedUser(accessToken);
+  async exportMe(userId: string, now = new Date()) {
+    const user = await this.loadUserById(userId);
     if (!this.dataSource?.isInitialized) {
       throw new ConflictException('데이터 내보내기를 지금 처리할 수 없습니다.');
     }
     const query = (sql: string) => this.dataSource!.query(sql, [user.id]);
-    const [consents, memberships, watchEvents, participations, reactions, watchSources, preferences] =
-      await Promise.all([
-        query(`SELECT "terms_version" AS "termsVersion", "privacy_version" AS "privacyVersion", "accepted_at" AS "acceptedAt" FROM "user_consents" WHERE "user_id" = $1 ORDER BY "accepted_at"`),
-        query(`SELECT "space_id" AS "spaceId", "role", "status", "joined_at" AS "joinedAt", "left_at" AS "leftAt" FROM "space_memberships" WHERE "account_id" = $1 ORDER BY "joined_at"`),
-        query(`SELECT "id", "media_id" AS "contentId", "title", "watched_date" AS "watchedOn", "visibility", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "diaries" WHERE "user_id" = $1 ORDER BY "created_at"`),
-        query(`SELECT "diary_id" AS "watchEventId", "status", "requested_at" AS "requestedAt", "responded_at" AS "respondedAt" FROM "watch_participants" WHERE "account_id" = $1 ORDER BY "requested_at"`),
-        query(`SELECT "diary_id" AS "watchEventId", "rating_scale" AS "ratingScale", "review_text" AS "reviewText", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "watch_reactions" WHERE "account_id" = $1 ORDER BY "created_at"`),
-        query(`SELECT s."diary_id" AS "watchEventId", s."kind", s."provider_name" AS "providerName", s."place_text" AS "placeText" FROM "watch_sources" s INNER JOIN "diaries" d ON d."id" = s."diary_id" WHERE d."user_id" = $1 ORDER BY s."diary_id"`),
-        query(`SELECT "category", "enabled", "updated_at" AS "updatedAt" FROM "notification_preferences" WHERE "user_id" = $1 ORDER BY "category"`),
-      ]);
+    const [
+      consents,
+      memberships,
+      watchEvents,
+      participations,
+      reactions,
+      watchSources,
+      preferences,
+    ] = await Promise.all([
+      query(
+        `SELECT "terms_version" AS "termsVersion", "privacy_version" AS "privacyVersion", "accepted_at" AS "acceptedAt" FROM "user_consents" WHERE "user_id" = $1 ORDER BY "accepted_at"`,
+      ),
+      query(
+        `SELECT "space_id" AS "spaceId", "role", "status", "joined_at" AS "joinedAt", "left_at" AS "leftAt" FROM "space_memberships" WHERE "account_id" = $1 ORDER BY "joined_at"`,
+      ),
+      query(
+        `SELECT "id", "media_id" AS "contentId", "title", "watched_date" AS "watchedOn", "visibility", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "diaries" WHERE "user_id" = $1 ORDER BY "created_at"`,
+      ),
+      query(
+        `SELECT "diary_id" AS "watchEventId", "status", "requested_at" AS "requestedAt", "responded_at" AS "respondedAt" FROM "watch_participants" WHERE "account_id" = $1 ORDER BY "requested_at"`,
+      ),
+      query(
+        `SELECT "diary_id" AS "watchEventId", "rating_scale" AS "ratingScale", "review_text" AS "reviewText", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "watch_reactions" WHERE "account_id" = $1 ORDER BY "created_at"`,
+      ),
+      query(
+        `SELECT s."diary_id" AS "watchEventId", s."kind", s."provider_name" AS "providerName", s."place_text" AS "placeText" FROM "watch_sources" s INNER JOIN "diaries" d ON d."id" = s."diary_id" WHERE d."user_id" = $1 ORDER BY s."diary_id"`,
+      ),
+      query(
+        `SELECT "category", "enabled", "updated_at" AS "updatedAt" FROM "notification_preferences" WHERE "user_id" = $1 ORDER BY "category"`,
+      ),
+    ]);
     return {
       schemaVersion: 1,
       exportedAt: now.toISOString(),
@@ -148,12 +174,8 @@ export class UsersService {
     };
   }
 
-  async requestDeletion(
-    accessToken: string | undefined,
-    password: string,
-    now = new Date(),
-  ) {
-    const user = await this.loadAuthenticatedUser(accessToken);
+  async requestDeletion(userId: string, password: string, now = new Date()) {
+    const user = await this.loadUserById(userId);
     if (!(await bcrypt.compare(password, user.passwordHash))) {
       throw new UnauthorizedException('비밀번호가 맞지 않아요.');
     }
@@ -190,8 +212,9 @@ export class UsersService {
     };
   }
 
-  async deleteMe(accessToken: string | undefined, password: string) {
-    return this.requestDeletion(accessToken, password);
+  // Account deletion always goes through the recoverable grace period.
+  async deleteMe(userId: string, password: string) {
+    return this.requestDeletion(userId, password);
   }
 
   async cancelDeletion(email: string, password: string, now = new Date()) {
@@ -250,16 +273,12 @@ export class UsersService {
       return due;
     });
     for (const profile of profiles) {
-      await this.cleanupProfileImage(profile.id, profile.profileImageUrl);
+      await this.cleanupProfileImage(profile.profileImageUrl, profile.id);
     }
     return { purged: profiles.length };
   }
 
-  private async anonymizeExpiredAccount(
-    manager: EntityManager,
-    userId: string,
-    now: Date,
-  ) {
+  private async anonymizeExpiredAccount(manager: EntityManager, userId: string, now: Date) {
     const sharedFact = `EXISTS (
       SELECT 1 FROM "watch_event_shares" wes
       WHERE wes."diary_id" = d."id" AND wes."revoked_at" IS NULL
@@ -335,48 +354,45 @@ export class UsersService {
     );
   }
 
-  private async cleanupProfileImage(userId: string, profileImageUrl: string | null) {
+  private async cleanupProfileImage(
+    profileImageUrl: string | null | undefined,
+    userId: string,
+  ): Promise<void> {
     if (!profileImageUrl?.startsWith('/uploads/profile-images/')) return;
+    const filename = profileImageUrl.split('/').at(-1);
+    if (!filename || basename(filename) !== filename) return;
+
     const uploadRoot = process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads');
-    const path = join(
-      uploadRoot,
-      'profile-images',
-      profileImageUrl.split('/').at(-1)!,
-    );
+    const path = join(uploadRoot, 'profile-images', filename);
     try {
       await unlink(path);
     } catch (error) {
-      await this.dataSource!.getRepository(FileCleanupJobEntity).save({
-        userId,
-        kind: 'PROFILE_IMAGE',
-        path,
-        attempts: 1,
-        lastError: String(error),
-        completedAt: null,
-      });
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+      if (this.dataSource?.isInitialized) {
+        await this.dataSource.getRepository(FileCleanupJobEntity).save({
+          userId,
+          kind: 'PROFILE_IMAGE',
+          path,
+          attempts: 1,
+          lastError: String(error),
+          completedAt: null,
+        });
+      }
       console.warn('profile-image-cleanup-pending', { userId });
     }
   }
 
-  private async loadAuthenticatedUser(accessToken: string | undefined) {
-    if (!accessToken) {
-      throw new UnauthorizedException('인증이 필요합니다.');
+  // The global JwtCookieAuthGuard already verified the token; re-reading the row keeps a
+  // concurrently deleted or deletion-pending account from mutating data.
+  private async loadUserById(userId: string) {
+    const user = await this.users.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
     }
-
-    try {
-      const payload = this.jwt.verify<{ sub: string }>(accessToken);
-      const user = await this.users.findOne({ where: { id: payload.sub } });
-      if (!user) {
-        throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
-      }
-      if (user.status && user.status !== 'ACTIVE') {
-        throw new UnauthorizedException('삭제 대기 또는 삭제된 계정은 이용할 수 없습니다.');
-      }
-      return user;
-    } catch (error) {
-      if (error instanceof UnauthorizedException) throw error;
-      throw new UnauthorizedException('유효하지 않은 인증 정보입니다.');
+    if (user.status && user.status !== 'ACTIVE') {
+      throw new UnauthorizedException('삭제 대기 또는 삭제된 계정은 이용할 수 없습니다.');
     }
+    return user;
   }
 
   private toUserResponse(user: UserEntity): UserProfileResponse {

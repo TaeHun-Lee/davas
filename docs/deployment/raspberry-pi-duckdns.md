@@ -2,6 +2,8 @@
 
 This deployment runs Davas with Docker Compose, PostgreSQL, the Nest API, the Next.js web app, and Caddy for HTTPS.
 
+This page is the short overview. The full release runbook (backup commands, migration gate, rollback, security spot checks) is [operations/raspberry-pi-deployment.md](../operations/raspberry-pi-deployment.md), and [PRODUCTION_DATABASE_CAUTION.md](../../PRODUCTION_DATABASE_CAUTION.md) lists what must never be done to the production database.
+
 ## DNS
 
 DuckDNS should point the subdomain to the public IP of the Raspberry Pi network.
@@ -27,7 +29,8 @@ cp .env.production.example .env.production
 Edit `.env.production` and replace at least:
 
 - `POSTGRES_PASSWORD`
-- `JWT_ACCESS_SECRET`
+- `JWT_ACCESS_SECRET` (at least 32 random characters)
+- `CORS_ORIGINS=https://davas.duckdns.org` (exact origin; the API refuses to start without it)
 - `TMDB_API_KEY`, if media search should use TMDB
 
 Start PostgreSQL and build the release images, but do not open the new Web/API traffic before its schema migration:

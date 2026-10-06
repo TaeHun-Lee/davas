@@ -35,7 +35,9 @@ describe('Spaces REST API contract', () => {
     assert.match(controller, /@Controller\('v1\/invites'\)/);
     assert.match(controller, /@Get\(':token'\)/);
     assert.match(controller, /@Post\(':token\/accept'\)/);
-    assert.match(controller, /auth\.findMe/);
+    assert.match(controller, /@Public\(\)\s+@UseGuards\(OptionalJwtCookieAuthGuard\)\s+inspect/);
+    assert.match(controller, /acceptInvite\(token, request\.user\.id\)/);
+    assert.doesNotMatch(controller, /AuthService|headers\.cookie/);
   });
 
   it('uses transaction-scoped write locks for invite and space capacity checks', () => {

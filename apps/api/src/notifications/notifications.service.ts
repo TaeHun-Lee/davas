@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  Optional,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import {
@@ -49,9 +44,7 @@ export class NotificationsService {
   ) {}
 
   async listPreferences(userId: string) {
-    const saved = this.preferences
-      ? await this.preferences.find({ where: { userId } })
-      : [];
+    const saved = this.preferences ? await this.preferences.find({ where: { userId } }) : [];
     const byCategory = new Map(saved.map((row) => [row.category, row.enabled]));
     return NOTIFICATION_PREFERENCE_CATEGORIES.map((category) => ({
       category,
@@ -62,11 +55,7 @@ export class NotificationsService {
     }));
   }
 
-  async setPreference(
-    userId: string,
-    category: NotificationPreferenceCategory,
-    enabled: boolean,
-  ) {
+  async setPreference(userId: string, category: NotificationPreferenceCategory, enabled: boolean) {
     if (REQUIRED_NOTIFICATION_CATEGORIES.has(category) && !enabled) {
       throw new BadRequestException('필수 알림은 끌 수 없습니다.');
     }
@@ -98,15 +87,27 @@ export class NotificationsService {
   }
 
   async notifyDiaryLiked(input: CreateNotificationInput) {
-    return this.createForOtherUser({ ...input, diaryId: input.diaryId ?? null, type: 'DIARY_LIKED' });
+    return this.createForOtherUser({
+      ...input,
+      diaryId: input.diaryId ?? null,
+      type: 'DIARY_LIKED',
+    });
   }
 
   async notifyDiaryCommented(input: CreateNotificationInput) {
-    return this.createForOtherUser({ ...input, diaryId: input.diaryId ?? null, type: 'DIARY_COMMENTED' });
+    return this.createForOtherUser({
+      ...input,
+      diaryId: input.diaryId ?? null,
+      type: 'DIARY_COMMENTED',
+    });
   }
 
-  async notifyFriendRequested(input: Omit<CreateNotificationInput, 'diaryId'>) { return this.createForOtherUser({ ...input, diaryId: null, type: 'FRIEND_REQUESTED' }); }
-  async notifyFriendAccepted(input: Omit<CreateNotificationInput, 'diaryId'>) { return this.createForOtherUser({ ...input, diaryId: null, type: 'FRIEND_ACCEPTED' }); }
+  async notifyFriendRequested(input: Omit<CreateNotificationInput, 'diaryId'>) {
+    return this.createForOtherUser({ ...input, diaryId: null, type: 'FRIEND_REQUESTED' });
+  }
+  async notifyFriendAccepted(input: Omit<CreateNotificationInput, 'diaryId'>) {
+    return this.createForOtherUser({ ...input, diaryId: null, type: 'FRIEND_ACCEPTED' });
+  }
   async notifySpaceInvite(input: Omit<CreateNotificationInput, 'diaryId'>) {
     return this.createForOtherUser({ ...input, diaryId: null, type: 'SPACE_INVITE' });
   }
@@ -143,10 +144,10 @@ export class NotificationsService {
     try {
       return await this.notifications.save(
         this.notifications.create({
-        userId: input.recipientId,
-        actorId: input.actorId,
-        diaryId: input.diaryId ?? null,
-        type: input.type,
+          userId: input.recipientId,
+          actorId: input.actorId,
+          diaryId: input.diaryId ?? null,
+          type: input.type,
           idempotencyKey,
         }),
       );

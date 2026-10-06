@@ -1,4 +1,12 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { CommentEntity } from './comment.entity';
 import { DiaryLikeEntity } from './diary-like.entity';
 import { DiaryEntity } from './diary.entity';

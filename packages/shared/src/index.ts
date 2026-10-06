@@ -6,6 +6,7 @@ export const VIEWING_METHODS = ['THEATER', 'OTT'] as const;
 export type ViewingMethod = (typeof VIEWING_METHODS)[number];
 export const DIARY_VISIBILITIES = ['PRIVATE', 'FRIENDS', 'SELECTED'] as const;
 export type DiaryVisibility = (typeof DIARY_VISIBILITIES)[number];
+export const CORE_DIARY_VISIBILITIES = ['PRIVATE', 'FRIENDS'] as const;
 
 export const CURRENT_TERMS_VERSION = '2026-07-12-dev';
 export const CURRENT_PRIVACY_VERSION = '2026-07-12-dev';
@@ -54,21 +55,10 @@ export type SpaceInviteInspection =
       expiresAt: string;
     }
   | {
-      status:
-        | 'INVALID'
-        | 'CANCELLED'
-        | 'USED'
-        | 'EXPIRED'
-        | 'CLOSED'
-        | 'ALREADY_MEMBER';
+      status: 'INVALID' | 'CANCELLED' | 'USED' | 'EXPIRED' | 'CLOSED' | 'ALREADY_MEMBER';
     };
 
-export const WATCH_SOURCE_KINDS = [
-  'THEATER',
-  'OTT',
-  'TV_OWNED',
-  'OTHER',
-] as const;
+export const WATCH_SOURCE_KINDS = ['THEATER', 'OTT', 'TV_OWNED', 'OTHER'] as const;
 export type WatchSourceKind = (typeof WATCH_SOURCE_KINDS)[number];
 export type WatchParticipantStatus = 'PENDING' | 'CONFIRMED' | 'DECLINED';
 export type WatchSourceView = {
@@ -138,11 +128,9 @@ export type SpaceReactionComparison = {
 };
 
 export const RECOMMENDATION_REWATCH_POLICIES = ['EXCLUDE', 'ALLOW'] as const;
-export type RecommendationRewatchPolicy =
-  (typeof RECOMMENDATION_REWATCH_POLICIES)[number];
+export type RecommendationRewatchPolicy = (typeof RECOMMENDATION_REWATCH_POLICIES)[number];
 export const RECOMMENDATION_DECISION_RULES = ['ALL', 'MINIMUM'] as const;
-export type RecommendationDecisionRule =
-  (typeof RECOMMENDATION_DECISION_RULES)[number];
+export type RecommendationDecisionRule = (typeof RECOMMENDATION_DECISION_RULES)[number];
 export const RECOMMENDATION_FEEDBACK_KINDS = [
   'INTERESTED',
   'HOLD',
@@ -151,8 +139,7 @@ export const RECOMMENDATION_FEEDBACK_KINDS = [
   'AVAILABILITY_ERROR',
   'WATCHED',
 ] as const;
-export type RecommendationFeedbackKind =
-  (typeof RECOMMENDATION_FEEDBACK_KINDS)[number];
+export type RecommendationFeedbackKind = (typeof RECOMMENDATION_FEEDBACK_KINDS)[number];
 
 export type GroupRecommendationSessionRequest = {
   spaceId: string;
@@ -228,3 +215,4 @@ export type GroupRecommendationFeedbackResponse = {
   };
   consensus: GroupRecommendationConsensus;
 };
+export * from './contracts.js';

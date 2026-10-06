@@ -9,7 +9,6 @@ RUN npm ci
 FROM node:24-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY . .
 RUN npm run build --workspace @davas/shared
 RUN npm run build --workspace @davas/api
@@ -20,7 +19,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=builder /app/package.json /app/package-lock.json ./
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.json
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/apps/api/package.json ./apps/api/package.json

@@ -8,10 +8,11 @@ RUN npm ci
 
 FROM node:24-alpine AS builder
 WORKDIR /app
-ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api
+ARG NEXT_PUBLIC_API_BASE_URL
+RUN test -n "$NEXT_PUBLIC_API_BASE_URL" || (echo "NEXT_PUBLIC_API_BASE_URL build argument is required" >&2; exit 1)
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+RUN node -e "const url = new URL(process.env.NEXT_PUBLIC_API_BASE_URL); const blocked = ['api', 'web', 'db', 'host.docker.internal']; if (!['http:', 'https:'].includes(url.protocol) || blocked.includes(url.hostname)) { console.error('NEXT_PUBLIC_API_BASE_URL must be an HTTP(S) browser-visible URL, not a Docker-only hostname'); process.exit(1); }"
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY . .
 RUN npm run build --workspace @davas/shared
 RUN npm run build --workspace @davas/web

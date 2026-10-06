@@ -100,7 +100,10 @@ describe('TmdbClient search', () => {
     const url = new URL(requestedUrl);
     assert.equal(url.pathname, '/3/person/20738/combined_credits');
     assert.equal(url.searchParams.get('language'), 'ko-KR');
-    assert.deepEqual(result.items.map((item) => item.mediaType), ['MOVIE', 'TV']);
+    assert.deepEqual(
+      result.items.map((item) => item.mediaType),
+      ['MOVIE', 'TV'],
+    );
     assert.equal(result.items[0].externalId, '496243');
     assert.equal(result.items[1].title, '나의 아저씨');
   });
@@ -111,19 +114,28 @@ describe('TmdbClient search', () => {
       apiKey: 'test-key',
       fetcher: async (url) => {
         requestedUrls.push(String(url));
-        return new Response(JSON.stringify({
-          id: 1124566,
-          title: '센티멘탈 밸류',
-          runtime: 133,
-          genres: [{ id: 18, name: '드라마' }],
-          credits: { cast: [], crew: [{ name: 'Joachim Trier', job: 'Director' }] },
-          images: { backdrops: [{ file_path: '/still.jpg' }] },
-          release_dates: { results: [{ iso_3166_1: 'KR', release_dates: [{ certification: '15' }] }] },
-        }), { status: 200 });
+        return new Response(
+          JSON.stringify({
+            id: 1124566,
+            title: '센티멘탈 밸류',
+            runtime: 133,
+            genres: [{ id: 18, name: '드라마' }],
+            credits: { cast: [], crew: [{ name: 'Joachim Trier', job: 'Director' }] },
+            images: { backdrops: [{ file_path: '/still.jpg' }] },
+            release_dates: {
+              results: [{ iso_3166_1: 'KR', release_dates: [{ certification: '15' }] }],
+            },
+          }),
+          { status: 200 },
+        );
       },
     });
 
-    const detail = await client.detail({ externalId: '1124566', mediaType: 'MOVIE', language: 'ko-KR' });
+    const detail = await client.detail({
+      externalId: '1124566',
+      mediaType: 'MOVIE',
+      language: 'ko-KR',
+    });
 
     const url = new URL(requestedUrls[0]);
     assert.equal(url.pathname, '/3/movie/1124566');
@@ -140,7 +152,9 @@ describe('TmdbClient search', () => {
       apiKey: 'test-key',
       fetcher: async (url) => {
         requestedUrls.push(String(url));
-        return new Response(JSON.stringify({ page: 1, total_pages: 1, results: [] }), { status: 200 });
+        return new Response(JSON.stringify({ page: 1, total_pages: 1, results: [] }), {
+          status: 200,
+        });
       },
     });
 
@@ -158,22 +172,28 @@ describe('TmdbClient search', () => {
   it('supports English search with the same API path and normalized Davas media result shape', async () => {
     const client = new TmdbClient(undefined, {
       apiKey: 'test-key',
-      fetcher: async () => new Response(JSON.stringify({
-        page: 1,
-        total_pages: 1,
-        results: [{
-          id: 157336,
-          media_type: 'movie',
-          title: 'Interstellar',
-          original_title: 'Interstellar',
-          overview: 'A team travels through a wormhole.',
-          poster_path: '/poster.jpg',
-          backdrop_path: '/backdrop.jpg',
-          release_date: '2014-11-06',
-          genre_ids: [12, 18, 878],
-          origin_country: ['US'],
-        }],
-      }), { status: 200 }),
+      fetcher: async () =>
+        new Response(
+          JSON.stringify({
+            page: 1,
+            total_pages: 1,
+            results: [
+              {
+                id: 157336,
+                media_type: 'movie',
+                title: 'Interstellar',
+                original_title: 'Interstellar',
+                overview: 'A team travels through a wormhole.',
+                poster_path: '/poster.jpg',
+                backdrop_path: '/backdrop.jpg',
+                release_date: '2014-11-06',
+                genre_ids: [12, 18, 878],
+                origin_country: ['US'],
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
     });
 
     const result = await client.search({ query: 'Interstellar', type: 'multi', page: 1 });
@@ -190,7 +210,9 @@ describe('TmdbClient search', () => {
       apiKey: 'test-key',
       fetcher: async (url) => {
         requestedPaths.push(new URL(String(url)).pathname);
-        return new Response(JSON.stringify({ page: 1, total_pages: 1, results: [] }), { status: 200 });
+        return new Response(JSON.stringify({ page: 1, total_pages: 1, results: [] }), {
+          status: 200,
+        });
       },
     });
 

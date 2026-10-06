@@ -34,8 +34,8 @@ import {
   WatchSourceEntity,
   TransactionOutboxEntity,
 } from './entities';
-import { HighValueFlows1720670400000 } from './migrations/1720670400000-HighValueFlows';
 import { BaseSchema1720670300000 } from './migrations/1720670300000-BaseSchema';
+import { HighValueFlows1720670400000 } from './migrations/1720670400000-HighValueFlows';
 import { CoreRecordContract1720670500000 } from './migrations/1720670500000-CoreRecordContract';
 import { FriendInvitesAndConsents1720670600000 } from './migrations/1720670600000-FriendInvitesAndConsents';
 import { SpacesMembershipInvites1720670700000 } from './migrations/1720670700000-SpacesMembershipInvites';
@@ -43,6 +43,11 @@ import { WatchEventsAndPersonalReactions1720670800000 } from './migrations/17206
 import { CanonicalCatalogAvailability1720670900000 } from './migrations/1720670900000-CanonicalCatalogAvailability';
 import { AccountLifecycleNotificationOutbox1720671000000 } from './migrations/1720671000000-AccountLifecycleNotificationOutbox';
 import { GroupRecommendationSessions1720671100000 } from './migrations/1720671100000-GroupRecommendationSessions';
+import { MediaCanonicalIdentity1720670700000 } from './migrations/1720670700000-MediaCanonicalIdentity';
+import { CoreQueryIndexes1720670800000 } from './migrations/1720670800000-CoreQueryIndexes';
+import { FeedIndexSharedAtPredicate1720670900000 } from './migrations/1720670900000-FeedIndexSharedAtPredicate';
+import { LegacyTmdbImageSafety1720671000000 } from './migrations/1720671000000-LegacyTmdbImageSafety';
+import { DropLegacyMediaIdentityIndex1720671100000 } from './migrations/1720671100000-DropLegacyMediaIdentityIndex';
 
 export function createTypeOrmOptions(): TypeOrmModuleOptions {
   return {
@@ -93,10 +98,19 @@ export function createTypeOrmOptions(): TypeOrmModuleOptions {
       HighValueFlows1720670400000,
       CoreRecordContract1720670500000,
       FriendInvitesAndConsents1720670600000,
+      // Two release lines reused the same timestamps. Production applied the remediation
+      // set first (ledger ids 5-9) and the TO-BE set second (10-14); both sets are
+      // idempotent and independent, so TypeORM's stable timestamp sort may interleave them
+      // on a fresh database. Never rename these classes: the ledger matches by name.
+      MediaCanonicalIdentity1720670700000,
       SpacesMembershipInvites1720670700000,
+      CoreQueryIndexes1720670800000,
       WatchEventsAndPersonalReactions1720670800000,
+      FeedIndexSharedAtPredicate1720670900000,
       CanonicalCatalogAvailability1720670900000,
+      LegacyTmdbImageSafety1720671000000,
       AccountLifecycleNotificationOutbox1720671000000,
+      DropLegacyMediaIdentityIndex1720671100000,
       GroupRecommendationSessions1720671100000,
     ],
     synchronize: process.env.TYPEORM_SYNC === 'true',

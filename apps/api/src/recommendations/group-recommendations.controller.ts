@@ -1,6 +1,5 @@
 import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
-import type { Request } from 'express';
-import { AuthService } from '../auth/auth.service';
+import type { AuthenticatedRequest } from '../auth/jwt-cookie-auth.guard';
 import {
   CreateRecommendationSessionDto,
   RecommendationFeedbackDto,
@@ -9,49 +8,24 @@ import { GroupRecommendationsService } from './group-recommendations.service';
 
 @Controller('v1')
 export class GroupRecommendationsController {
-  constructor(
-    private readonly recommendations: GroupRecommendationsService,
-    private readonly auth: AuthService,
-  ) {}
+  constructor(private readonly recommendations: GroupRecommendationsService) {}
 
   @Post('recommendation-sessions')
-  async create(
-    @Req() request: Request,
-    @Body() body: CreateRecommendationSessionDto,
-  ) {
-    return this.recommendations.create((await this.user(request)).id, body);
+  async create(@Req() request: AuthenticatedRequest, @Body() body: CreateRecommendationSessionDto) {
+    return this.recommendations.create(request.user.id, body);
   }
 
   @Get('recommendation-sessions/:sessionId')
-  async get(
-    @Req() request: Request,
-    @Param('sessionId') sessionId: string,
-  ) {
-    return this.recommendations.get(sessionId, (await this.user(request)).id);
+  async get(@Req() request: AuthenticatedRequest, @Param('sessionId') sessionId: string) {
+    return this.recommendations.get(sessionId, request.user.id);
   }
 
   @Post('recommendation-exposures/:exposureId/feedback')
   async feedback(
-    @Req() request: Request,
+    @Req() request: AuthenticatedRequest,
     @Param('exposureId') exposureId: string,
     @Body() body: RecommendationFeedbackDto,
   ) {
-    return this.recommendations.recordFeedback(
-      exposureId,
-      (await this.user(request)).id,
-      body,
-    );
-  }
-
-  private user(request: Request) {
-    return this.auth.findMe(this.token(request));
-  }
-
-  private token(request: Request) {
-    return request.headers.cookie
-      ?.split(';')
-      .map((entry) => entry.trim())
-      .find((entry) => entry.startsWith('davas_access_token='))
-      ?.split('=')[1];
+    return this.recommendations.recordFeedback(exposureId, request.user.id, body);
   }
 }

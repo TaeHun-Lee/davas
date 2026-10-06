@@ -1,41 +1,26 @@
-import { Controller, Get, Param, Post, Req } from '@nestjs/common';
-import type { Request } from 'express';
-import { AuthService } from '../auth/auth.service';
+import { Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import type { AuthenticatedRequest } from '../auth/jwt-cookie-auth.guard';
+import {
+  OptionalJwtCookieAuthGuard,
+  type OptionallyAuthenticatedRequest,
+} from '../auth/optional-jwt-cookie-auth.guard';
+import { Public } from '../auth/public.decorator';
 import { SpacesService } from './spaces.service';
 
 @Controller('v1/invites')
 export class SpaceInvitesController {
-  constructor(
-    private readonly spaces: SpacesService,
-    private readonly auth: AuthService,
-  ) {}
+  constructor(private readonly spaces: SpacesService) {}
 
+  // Anonymous visitors must see the invite context before choosing login or signup.
   @Get(':token')
-  async inspect(@Req() request: Request, @Param('token') token: string) {
-    return this.spaces.inspectInvite(token, await this.optionalUserId(request));
+  @Public()
+  @UseGuards(OptionalJwtCookieAuthGuard)
+  inspect(@Req() request: OptionallyAuthenticatedRequest, @Param('token') token: string) {
+    return this.spaces.inspectInvite(token, request.user?.id);
   }
 
   @Post(':token/accept')
-  async accept(@Req() request: Request, @Param('token') token: string) {
-    return this.spaces.acceptInvite(
-      token,
-      (await this.auth.findMe(this.token(request))).id,
-    );
-  }
-
-  private token(request: Request) {
-    return request.headers.cookie
-      ?.split(';')
-      .map((entry) => entry.trim())
-      .find((entry) => entry.startsWith('davas_access_token='))
-      ?.split('=')[1];
-  }
-
-  private async optionalUserId(request: Request) {
-    try {
-      return (await this.auth.findMe(this.token(request))).id;
-    } catch {
-      return undefined;
-    }
+  accept(@Req() request: AuthenticatedRequest, @Param('token') token: string) {
+    return this.spaces.acceptInvite(token, request.user.id);
   }
 }

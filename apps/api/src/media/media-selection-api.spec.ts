@@ -11,6 +11,15 @@ const controllerSource = source('media.controller.ts');
 const moduleSource = source('media.module.ts');
 const dtoSource = source('dto/media-selection.dto.ts');
 const availabilityDtoSource = source('dto/availability-query.dto.ts');
+const selectionServiceSource = source('media-selection.service.ts');
+const entitySource = readFileSync(
+  join(process.cwd(), 'src/database/entities/media.entity.ts'),
+  'utf8',
+);
+const canonicalMigrationSource = readFileSync(
+  join(process.cwd(), 'src/database/migrations/1720670700000-MediaCanonicalIdentity.ts'),
+  'utf8',
+);
 const watchlistControllerSource = readFileSync(
   join(process.cwd(), 'src/watchlist/watchlist.controller.ts'),
   'utf8',
@@ -32,11 +41,28 @@ describe('Media selection API contract', () => {
     ]) {
       assert.match(moduleSource, new RegExp(entity));
     }
+  });
+
+  it('accepts only provider identity fields from the browser', () => {
     assert.match(dtoSource, /externalProvider/);
     assert.match(dtoSource, /externalId/);
     assert.match(dtoSource, /mediaType/);
-    assert.match(dtoSource, /posterUrl/);
-    assert.match(dtoSource, /genreIds/);
+    assert.doesNotMatch(dtoSource, /title|posterUrl|backdropUrl|genreIds|overview/);
+  });
+
+  it('loads canonical metadata from TMDB before persistence', () => {
+    assert.match(selectionServiceSource, /tmdbClient\.detail/);
+    assert.match(selectionServiceSource, /detail\.title/);
+    assert.doesNotMatch(selectionServiceSource, /selection\.title|selection\.posterUrl/);
+    assert.match(selectionServiceSource, /detail\.externalId !== selection\.externalId/);
+  });
+
+  it('uses provider, external id, and media type as the database identity', () => {
+    assert.match(
+      entitySource,
+      /@Index\(\['externalProvider', 'externalId', 'mediaType'\], \{ unique: true \}\)/,
+    );
+    assert.match(canonicalMigrationSource, /UQ_media_provider_id_type/);
   });
 
   it('exposes Korean availability lookup and explicit refresh before the catch-all detail route', () => {
@@ -62,8 +88,7 @@ describe('Media selection API contract', () => {
     assert.match(controllerSource, /mediaService\.findPersonCredits/);
 
     assert.ok(
-      controllerSource.indexOf("@Get('people/search')") <
-        controllerSource.indexOf("@Get(':id')"),
+      controllerSource.indexOf("@Get('people/search')") < controllerSource.indexOf("@Get(':id')"),
       'people search route must be declared before @Get(:id)',
     );
     assert.ok(
@@ -74,10 +99,7 @@ describe('Media selection API contract', () => {
   });
 
   it('removes legacy favorite mutations and exposes watchlist as the single planning contract', () => {
-    assert.doesNotMatch(
-      controllerSource,
-      /favorites|:id\/favorite|toggleFavorite|findFavorites/,
-    );
+    assert.doesNotMatch(controllerSource, /favorites|:id\/favorite|toggleFavorite|findFavorites/);
     assert.match(watchlistControllerSource, /@Controller\('watchlist'\)/);
     assert.match(watchlistControllerSource, /CreateWatchlistDto/);
     assert.match(watchlistControllerSource, /UpdateWatchlistDto/);

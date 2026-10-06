@@ -1,59 +1,107 @@
-import { Injectable, Optional } from '@nestjs/common';
+import { BadGatewayException, Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { MediaEntity } from '../database/entities/media.entity';
 import { ExternalContentRefEntity } from '../database/entities/external-content-ref.entity';
+import { MediaEntity } from '../database/entities/media.entity';
 import { MediaSelectionDto } from './dto/media-selection.dto';
-import { resolveTmdbGenreLabels } from './tmdb-genres';
+import { TmdbClient } from './tmdb.client';
 
 @Injectable()
 export class MediaSelectionService {
+  private readonly logger = new Logger(MediaSelectionService.name);
+
   constructor(
     @InjectRepository(MediaEntity)
     private readonly mediaRepository: Repository<MediaEntity>,
+    private readonly tmdbClient: TmdbClient,
     @Optional()
     @InjectRepository(ExternalContentRefEntity)
     private readonly externalRefRepository?: Repository<ExternalContentRefEntity>,
   ) {}
 
+  // Client-supplied titles and image URLs are never trusted: the stored row always comes
+  // from TMDB's own detail response for the selected identity.
   async select(selection: MediaSelectionDto) {
-    const existing = await this.mediaRepository.findOne({
-      where: {
-        externalProvider: selection.externalProvider,
-        externalId: selection.externalId,
-      },
-    });
+    const where = {
+      externalProvider: selection.externalProvider,
+      externalId: selection.externalId,
+      mediaType: selection.mediaType,
+    } as const;
+    const existing = await this.mediaRepository.findOne({ where });
 
-    if (existing) {
+    let canonical: Partial<MediaEntity>;
+    try {
+      canonical = await this.fetchCanonical(selection);
+    } catch (error) {
+      // An already-stored row is still safe to reuse when TMDB is briefly unavailable.
+      if (!existing || error instanceof BadGatewayException) throw error;
+      this.logger.warn(`TMDB refresh skipped for media ${existing.id}: ${String(error)}`);
       await this.recordExternalRef(existing.id, selection);
       return existing;
     }
 
-    const media = this.mediaRepository.create({
-      externalProvider: selection.externalProvider,
-      externalId: selection.externalId,
-      mediaType: selection.mediaType,
-      title: selection.title,
-      originalTitle: selection.originalTitle ?? null,
-      overview: selection.overview ?? null,
-      shortPlot: selection.overview ?? null,
-      posterUrl: selection.posterUrl ?? null,
-      backdropUrl: selection.backdropUrl ?? null,
-      releaseDate: selection.releaseDate ?? null,
-      genres: resolveTmdbGenreLabels(selection.genreIds ?? []),
-      country: selection.country ?? null,
-      runtime: null,
-    });
+    if (existing) {
+      Object.assign(existing, canonical);
+      const refreshed = await this.mediaRepository.save(existing);
+      await this.recordExternalRef(refreshed.id, selection);
+      return refreshed;
+    }
 
-    const saved = await this.mediaRepository.save(media);
+    let saved: MediaEntity;
+    try {
+      saved = await this.mediaRepository.save(this.mediaRepository.create(canonical));
+    } catch (error) {
+      if ((error as { code?: string }).code !== '23505') throw error;
+      const raced = await this.mediaRepository.findOne({ where });
+      if (!raced) throw error;
+      Object.assign(raced, canonical);
+      saved = await this.mediaRepository.save(raced);
+    }
     await this.recordExternalRef(saved.id, selection);
     return saved;
   }
 
-  private async recordExternalRef(
-    contentId: string,
-    selection: MediaSelectionDto,
-  ) {
+  private async fetchCanonical(selection: MediaSelectionDto): Promise<Partial<MediaEntity>> {
+    const detail = await this.tmdbClient.detail({
+      externalId: selection.externalId,
+      mediaType: selection.mediaType,
+      language: 'ko-KR',
+    });
+    if (
+      detail.externalProvider !== selection.externalProvider ||
+      detail.externalId !== selection.externalId ||
+      detail.mediaType !== selection.mediaType ||
+      !detail.title.trim()
+    ) {
+      throw new BadGatewayException('TMDB returned mismatched media identity.');
+    }
+
+    return {
+      externalProvider: detail.externalProvider,
+      externalId: detail.externalId,
+      mediaType: detail.mediaType,
+      title: detail.title,
+      originalTitle: detail.originalTitle || null,
+      overview: detail.overview || null,
+      shortPlot: detail.overview || null,
+      posterUrl: detail.posterUrl,
+      backdropUrl: detail.backdropUrl,
+      tagline: detail.tagline,
+      releaseDate: detail.releaseDate,
+      genres: detail.genres,
+      country: detail.country,
+      countries: detail.countries,
+      runtime: detail.runtime,
+      tmdbRating: detail.tmdbRating == null ? null : String(detail.tmdbRating),
+      tmdbVoteCount: detail.tmdbVoteCount,
+      director: detail.director,
+      creators: detail.creators,
+      cast: detail.cast,
+      certification: detail.certification,
+    };
+  }
+
+  private async recordExternalRef(contentId: string, selection: MediaSelectionDto) {
     if (!this.externalRefRepository) {
       return;
     }

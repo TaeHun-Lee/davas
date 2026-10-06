@@ -1,0 +1,104 @@
+// Allow-list for in-app `returnTo` targets. Anything not listed falls back, so a crafted
+// link can never bounce a user to another origin or to an unexpected screen after login.
+const CORE_ORIGIN = 'https://davas.invalid';
+const SAFE_SEGMENT = /^[A-Za-z0-9_-]+$/;
+const MAX_NESTED_RETURN_DEPTH = 2;
+
+const PARAMLESS_PATHS = new Set(['/', '/me', '/friends', '/settings', '/spaces', '/diary']);
+
+function hasOnlySingleValueParams(params: URLSearchParams, allowed: ReadonlySet<string>) {
+  for (const key of params.keys()) {
+    if (!allowed.has(key) || params.getAll(key).length !== 1) return false;
+  }
+  return true;
+}
+
+function isSafeSearchQuery(params: URLSearchParams) {
+  const allowed = new Set(['scope', 'q', 'mediaId', 'mediaType', 'viewingMethod']);
+  if (!hasOnlySingleValueParams(params, allowed)) return false;
+
+  const scope = params.get('scope');
+  const mediaId = params.get('mediaId');
+  const mediaType = params.get('mediaType');
+  const viewingMethod = params.get('viewingMethod');
+  return (
+    (scope === null || scope === 'friends' || scope === 'mine') &&
+    (mediaId === null || SAFE_SEGMENT.test(mediaId)) &&
+    (mediaType === null || mediaType === 'MOVIE' || mediaType === 'TV') &&
+    (viewingMethod === null || viewingMethod === 'THEATER' || viewingMethod === 'OTT')
+  );
+}
+
+function isSafeNewRecordQuery(params: URLSearchParams, depth: number) {
+  const allowed = new Set(['mediaId', 'step', 'detail', 'returnTo']);
+  if (!hasOnlySingleValueParams(params, allowed)) return false;
+
+  const mediaId = params.get('mediaId');
+  const step = params.get('step');
+  const detail = params.get('detail');
+  const returnTo = params.get('returnTo');
+  return (
+    (mediaId === null || SAFE_SEGMENT.test(mediaId)) &&
+    (step === null || step === 'find' || step === 'write') &&
+    (detail === null || SAFE_SEGMENT.test(detail)) &&
+    (returnTo === null || isSafeAtDepth(returnTo, depth + 1))
+  );
+}
+
+function isSafeRecordDetailQuery(params: URLSearchParams, depth: number) {
+  const allowed = new Set(['returnTo', 'saved']);
+  if (!hasOnlySingleValueParams(params, allowed)) return false;
+
+  const returnTo = params.get('returnTo');
+  const saved = params.get('saved');
+  return (
+    (returnTo === null || isSafeAtDepth(returnTo, depth + 1)) &&
+    (saved === null || saved === 'private' || saved === 'friends' || saved === 'space')
+  );
+}
+
+function isSafeAtDepth(value: string | null | undefined, depth: number): value is string {
+  if (depth > MAX_NESTED_RETURN_DEPTH) return false;
+  if (
+    !value ||
+    !value.startsWith('/') ||
+    value.startsWith('//') ||
+    value.includes('\\') ||
+    value.includes('#') ||
+    /[\u0000-\u001F\u007F]/.test(value)
+  ) {
+    return false;
+  }
+
+  let url: URL;
+  try {
+    url = new URL(value, CORE_ORIGIN);
+  } catch {
+    return false;
+  }
+  if (url.origin !== CORE_ORIGIN) return false;
+  if (/%2f|%5c/i.test(url.pathname)) return false;
+
+  const { pathname, searchParams } = url;
+  if (PARAMLESS_PATHS.has(pathname)) return searchParams.size === 0;
+  if (pathname === '/search') return isSafeSearchQuery(searchParams);
+  if (pathname === '/records/new') {
+    return searchParams.size === 0 || isSafeNewRecordQuery(searchParams, depth);
+  }
+
+  const recordMatch = pathname.match(/^\/records\/([A-Za-z0-9_-]+)(\/edit)?$/);
+  if (recordMatch) {
+    if (recordMatch[2]) return searchParams.size === 0;
+    return searchParams.size === 0 || isSafeRecordDetailQuery(searchParams, depth);
+  }
+
+  return /^\/(?:friends|spaces)\/invite\/[A-Za-z0-9_-]+$/.test(pathname) && searchParams.size === 0;
+}
+
+export function isSafeCoreReturnTo(value: string | null | undefined): value is string {
+  return isSafeAtDepth(value, 0);
+}
+
+export function safeCoreReturnTo(value: string | null | undefined, fallback: string): string {
+  return isSafeCoreReturnTo(value) ? value : fallback;
+}
