@@ -3,8 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
-const source = (path: string) =>
-  readFileSync(join(process.cwd(), 'src', path), 'utf8');
+const source = (path: string) => readFileSync(join(process.cwd(), 'src', path), 'utf8');
 
 describe('core record compose', () => {
   it('keeps viewing source in writing while search only filters by media type', () => {
@@ -54,14 +53,12 @@ describe('core record compose', () => {
   it('does not let a saved draft skip the generic TMDB search entry', () => {
     const composer = source('components/core/RecordComposer.tsx');
     const savedDraftBranch = composer.slice(
-      composer.indexOf('const saved = sessionStorage.getItem'),
+      composer.indexOf('const saved = readSavedDraft(storageKey)'),
       composer.indexOf('if (editId) {'),
     );
+    assert.ok(savedDraftBranch.length > 0, 'the saved-draft branch is still where the test looks');
     assert.doesNotMatch(savedDraftBranch, /setStep\('write'\)/);
-    assert.match(
-      composer,
-      /mediaId \|\| requestedStep === 'write' \? 'write' : 'find'/,
-    );
+    assert.match(composer, /mediaId \|\| requestedStep === 'write' \? 'write' : 'find'/);
     assert.match(composer, /router\.replace\('\/records\/new\?step=find'\)/);
   });
 

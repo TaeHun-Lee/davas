@@ -8,6 +8,7 @@ import { BadRequestException, Injectable, NotFoundException, Optional } from '@n
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, MoreThan, Repository } from 'typeorm';
 import { mapWithConcurrency } from '../common/concurrency';
+import { seoulToday } from '../common/seoul-date';
 import {
   AvailabilityObservationEntity,
   DiaryEntity,
@@ -128,7 +129,7 @@ export class GroupRecommendationsService {
           });
         }
       }
-      const today = new Date().toISOString().slice(0, 10);
+      const today = seoulToday();
       const pool = await this.media.find({
         where: { mediaType: In(request.contentTypes) },
         order: { tmdbVoteCount: 'DESC', id: 'ASC' },

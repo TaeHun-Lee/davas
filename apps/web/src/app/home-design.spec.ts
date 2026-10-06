@@ -54,11 +54,12 @@ describe('four-tab core shell', () => {
     const composer = source('components/core/RecordComposer.tsx');
     assert.match(recommendations, /\/records\/new\?step=find&detail=/);
     assert.doesNotMatch(recommendations, /\/records\/new\?mediaId=/);
+    // The requested title is fetched first and only then decides whether the draft resumes.
     assert.ok(
-      composer.indexOf("const mediaId = params.get('mediaId')") <
-        composer.indexOf('const saved = sessionStorage.getItem'),
+      composer.indexOf('const requested = mediaId ?? detailMediaId') <
+        composer.indexOf('canResumeDraft(saved, requested)'),
     );
-    assert.match(composer, /resumedDraft\.selected\s*=/);
+    assert.match(composer, /next\.selected = asSelected\(media\)/);
   });
 
   it('centres home on the active space with independent space and recommendation errors', () => {
@@ -83,11 +84,10 @@ describe('four-tab core shell', () => {
 
   it('defaults a new record to the active space and the partner of a two-person space', () => {
     const composer = source('components/core/RecordComposer.tsx');
-    assert.match(composer, /chooseActiveSpace\(spaceItems, readActiveSpaceId\(\)\)/);
-    assert.match(
-      composer,
-      /next\.participantAccountIds = defaultWatchPartners\(defaultSpace, id\)/,
-    );
+    const draft = source('components/core/composer-draft.ts');
+    assert.match(draft, /chooseActiveSpace\(spaces, readActiveSpaceId\(\)\)/);
+    assert.match(draft, /draft\.participantAccountIds = defaultWatchPartners\(space, accountId\)/);
+    assert.match(composer, /draftWithDefaults\(spaceItems, id\)/);
     assert.match(composer, /개인 기록 · 나만 보기/);
     assert.match(composer, /shared \? '\/' : '\/me'/);
   });

@@ -175,6 +175,8 @@ npm run migration:show --workspace @davas/api
 기록 계약 요약:
 
 - 영화·드라마 구분은 작품(`MOVIE`/`TV`)에, 시청 방식(`THEATER`/`OTT` 등)은 기록마다 저장한다.
+- 날짜는 한국 날짜 기준이다. "오늘 이후는 저장할 수 없음" 같은 판단은 `common/seoul-date.ts`를 쓴다(UTC로 비교하면 밤 12시~오전 9시에 오늘이 내일로 판정된다).
+- 작성 화면은 탭에 저장하지 않은 기록 하나를 임시로 남기고, 같은 작품을 다시 열거나 작품 선택 전일 때만 되살린다. 다른 작품이면 새로 시작한다(`components/core/composer-draft.ts`).
 - 감상 사건(`/v1/watch-events`)의 별점은 미평가 또는 0.5~5.0(0.5 단위)이다. 예전 `/diaries` API는 1~5 정수 별점을 유지한다.
 - 개인 리뷰(`watch_reactions`)는 별점·한줄평(40자)·소감(2,000자)·스포일러·블라인드 여부를 가진다. 블라인드 공개 규칙은 `diaries/blind-review.ts` 한 곳에 있고, 감상 상세·타임라인·반응 비교·예전 `/diaries/:id`·`/community/diaries/:id`가 모두 이 규칙으로 가린다. 가려진 리뷰는 내용·별점·좋아요 수·수정 시각을 보내지 않는다.
 - 구독 OTT: 사람마다 `users.ott_services`에 `OTT_SERVICES` 키(넷플릭스·티빙·쿠팡플레이·웨이브·디즈니+·왓챠·Apple TV+·프라임 비디오)를 저장한다(`PATCH /users/me`의 `ottServices`). 공유 타입의 `OTT_SERVICES`가 키, 한국어 이름, TMDB 제공자 이름을 함께 정의하고 서버·웹이 같이 쓴다.
@@ -184,7 +186,7 @@ npm run migration:show --workspace @davas/api
 - 그룹 추천 후보: 저장된 작품이 60편보다 적으면 TMDB 주간 인기작을 20편까지 저장하고, 표가 많은 작품 60편 중 볼 수 있는 곳 정보가 없거나 만료된 24편까지 세션을 만들 때 새로 받는다. 실패해도 세션은 있는 정보로 계속 만든다.
 - 볼 수 있는 곳 정보는 TMDB의 JustWatch 제공 데이터다. 이 정보를 보여 주는 화면에는 출처를 적는다.
 - 리뷰 좋아요: `PUT`/`DELETE /v1/watch-events/:id/reactions/:reactionId/like`. 내 리뷰와 잠긴 리뷰에는 누를 수 없다. 댓글은 기록 단위로 `/diaries/:id/comments`를 쓴다(500자).
-- 사진: 작성 화면에서 고르는 즉시 `POST /v1/watch-photos`로 올리고(한 장 15MB, JPEG·PNG·WebP), 기록을 저장할 때 `photoIds` 순서대로 붙인다(최대 10장, 첫 장이 대표). 서버는 sharp로 바로 세운 메타데이터 없는 WebP 썸네일(480px)·화면용(1600px)과 흐린 미리보기를 만들고 원본은 그대로 둔다. 파일은 `UPLOADS_DIR/watch-photos`에 있고 `/uploads` 정적 경로로는 나가지 않는다. `GET /v1/watch-photos/:id/thumb|display|original`이 기록을 볼 수 있는 사람에게만 주고, `original`은 올린 사람만 받는다. 기록에 붙지 않은 사진은 하루 뒤 정리한다.
+- 사진: 작성 화면에서 고르는 즉시 `POST /v1/watch-photos`로 올리고(한 장 15MB, JPEG·PNG·WebP), 서버가 한 사람의 업로드를 동시에 2개까지만 받으므로 화면은 2장씩 차례로 보내고 바쁘다는 응답(429)이나 연결 끊김은 잠시 뒤 다시 보낸다. 큰 사진이 느린 망에서도 들어오도록 요청 수신 제한은 5분이다. 기록을 저장할 때 `photoIds` 순서대로 붙인다(최대 10장, 첫 장이 대표). 서버는 sharp로 바로 세운 메타데이터 없는 WebP 썸네일(480px)·화면용(1600px)과 흐린 미리보기를 만들고 원본은 그대로 둔다. 파일은 `UPLOADS_DIR/watch-photos`에 있고 `/uploads` 정적 경로로는 나가지 않는다. `GET /v1/watch-photos/:id/thumb|display|original`이 기록을 볼 수 있는 사람에게만 주고, `original`은 올린 사람만 받는다. 기록에 붙지 않은 사진은 하루 뒤 정리한다.
 - `clientRequestId`로 같은 생성 요청의 중복 저장을 막는다. 같은 키에 다른 내용이면 충돌로 거부한다.
 - 새 감상 기록은 공간 공유(`watch_event_shares`)로만 퍼지고 홈과 `/spaces`의 공간 타임라인에 보인다. 친구 기록 검색(`/search?scope=friends`)은 예전 `/diaries`의 친구 공개 기록(`sharedAt`이 있는 기록)만 보여 준다.
 

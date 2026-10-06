@@ -15,7 +15,8 @@ describe('record experience screens', () => {
     // Saving waits for uploads still in flight and refuses to drop failed ones silently.
     assert.match(composer, /await photoUploads\.settle\(\)/);
     assert.match(composer, /올리지 못한 사진이 있어요/);
-    assert.match(uploads, /WATCH_PHOTO_MAX_COUNT - itemsRef\.current\.length/);
+    assert.match(uploads, /WATCH_PHOTO_MAX_COUNT - items\.length/);
+    assert.match(uploads, /MAX_PARALLEL_UPLOADS = 2/);
     assert.match(picker, /role="progressbar"/);
     assert.match(picker, /다시 시도/);
     assert.match(client, /new XMLHttpRequest\(\)/);
@@ -27,7 +28,7 @@ describe('record experience screens', () => {
     const fields = source('components/core/ComposerFields.tsx');
     assert.match(composer, /legend="상영 형식 \(선택\)"/);
     assert.match(composer, /<SeriesProgress/);
-    assert.match(composer, /media\.numberOfEpisodes/);
+    assert.match(source('components/core/composer-draft.ts'), /media\.numberOfEpisodes/);
     assert.match(composer, /label="한줄평 \(선택\)"/);
     assert.match(composer, /label="스포일러 포함"/);
     assert.match(composer, /isBlind: shared && draft!\.isBlind/);

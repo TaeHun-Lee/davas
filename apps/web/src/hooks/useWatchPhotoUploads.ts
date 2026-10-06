@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { WATCH_PHOTO_MAX_COUNT } from '@davas/shared';
 import { CoreApiError } from '../lib/api/core';
 import { photoSrc, uploadWatchPhoto, type WatchPhotoView } from '../lib/api/watch-events';
@@ -8,10 +8,15 @@ import { photoSrc, uploadWatchPhoto, type WatchPhotoView } from '../lib/api/watc
 export const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
 const ACCEPTED_TYPES = new Set(PHOTO_ACCEPT.split(','));
 const MAX_BYTES = 15 * 1024 * 1024;
+// The API processes at most two uploads per person at once and answers 429 to a third, so
+// the queue never sends more than that.
+export const MAX_PARALLEL_UPLOADS = 2;
+// A 429 can still happen (another tab, the per-IP limit); a short wait usually clears it.
+const RETRY_DELAYS_MS = [1500, 4000];
 
 export type PhotoUploadItem = {
   key: string;
-  status: 'uploading' | 'done' | 'error';
+  status: 'queued' | 'uploading' | 'done' | 'error';
   progress: number;
   previewUrl: string;
   photo: WatchPhotoView | null;
@@ -21,76 +26,131 @@ export type PhotoUploadItem = {
 
 export type AddPhotosResult = { added: number; overLimit: number; unsupported: number };
 
+export type UploadPhoto = (
+  file: File,
+  onProgress: (percent: number) => void,
+  signal: AbortSignal,
+) => Promise<WatchPhotoView>;
+
 let keySequence = 0;
 
+const errorMessage = (error: unknown) =>
+  error instanceof CoreApiError && error.status !== 0 && error.body.message
+    ? error.body.message
+    : '사진을 올리지 못했어요.';
+
+const retryable = (error: unknown) =>
+  error instanceof CoreApiError && (error.status === 429 || error.body.code === 'NETWORK_ERROR');
+
+function wait(ms: number, signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        reject(new Error('aborted'));
+      },
+      { once: true },
+    );
+  });
+}
+
 /**
- * Photos upload as soon as they are picked, so the record itself saves quickly. The list is
- * kept in a ref as well as state: `save` awaits `settle()` and must read the final list
- * without waiting for a re-render.
+ * The upload queue, kept outside React state so `settle()` can wait for it and read the final
+ * list without waiting for a re-render. Photos upload as soon as they are picked, at most
+ * MAX_PARALLEL_UPLOADS at a time, so the record itself saves quickly.
  */
-export function useWatchPhotoUploads() {
-  const [items, setItems] = useState<PhotoUploadItem[]>([]);
-  const itemsRef = useRef<PhotoUploadItem[]>([]);
-  const inflight = useRef(new Map<string, { promise: Promise<void>; abort: () => void }>());
-  const objectUrls = useRef(new Set<string>());
+export function createPhotoUploadQueue(
+  publish: (items: PhotoUploadItem[]) => void,
+  upload: UploadPhoto = uploadWatchPhoto,
+  retryDelaysMs: readonly number[] = RETRY_DELAYS_MS,
+) {
+  let items: PhotoUploadItem[] = [];
+  const waiting: string[] = [];
+  const inflight = new Map<string, { promise: Promise<void>; abort: () => void }>();
+  const objectUrls = new Set<string>();
 
-  const commit = useCallback((next: PhotoUploadItem[]) => {
-    itemsRef.current = next;
-    setItems(next);
-  }, []);
-  const update = useCallback(
-    (key: string, change: Partial<PhotoUploadItem>) =>
-      commit(itemsRef.current.map((item) => (item.key === key ? { ...item, ...change } : item))),
-    [commit],
-  );
+  const commit = (next: PhotoUploadItem[]) => {
+    items = next;
+    publish(next);
+  };
+  const find = (key: string) => items.find((item) => item.key === key);
+  const update = (key: string, change: Partial<PhotoUploadItem>) => {
+    if (!find(key)) return;
+    commit(items.map((item) => (item.key === key ? { ...item, ...change } : item)));
+  };
+  const revoke = (url: string) => {
+    if (!objectUrls.has(url)) return;
+    URL.revokeObjectURL(url);
+    objectUrls.delete(url);
+  };
 
-  useEffect(() => {
-    const urls = objectUrls.current;
-    const uploads = inflight.current;
-    return () => {
-      uploads.forEach((upload) => upload.abort());
-      urls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, []);
+  async function uploadWithRetry(key: string, file: File, signal: AbortSignal) {
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        return await upload(
+          file,
+          (percent) => update(key, { progress: Math.min(percent, 99) }),
+          signal,
+        );
+      } catch (error) {
+        if (signal.aborted || !retryable(error) || attempt >= retryDelaysMs.length) throw error;
+        update(key, { progress: 0 });
+        await wait(retryDelaysMs[attempt], signal);
+      }
+    }
+  }
 
-  const start = useCallback(
-    (key: string, file: File) => {
-      const controller = new AbortController();
-      const promise = uploadWatchPhoto(
-        file,
-        (progress) => update(key, { progress: Math.min(progress, 99) }),
-        controller.signal,
-      )
-        .then((photo) => update(key, { status: 'done', progress: 100, photo, error: null }))
-        .catch((error: unknown) => {
-          if (controller.signal.aborted) return;
-          update(key, {
-            status: 'error',
-            error:
-              error instanceof CoreApiError && error.status !== 0 && error.body.message
-                ? error.body.message
-                : '사진을 올리지 못했어요.',
-          });
-        })
-        .finally(() => inflight.current.delete(key));
-      inflight.current.set(key, { promise, abort: () => controller.abort() });
-    },
-    [update],
-  );
+  function start(key: string, file: File) {
+    const controller = new AbortController();
+    update(key, { status: 'uploading', progress: 0, error: null });
+    const promise = uploadWithRetry(key, file, controller.signal)
+      .then((photo) => update(key, { status: 'done', progress: 100, photo, error: null }))
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted)
+          update(key, { status: 'error', error: errorMessage(error) });
+      })
+      .finally(() => {
+        inflight.delete(key);
+        pump();
+      });
+    inflight.set(key, { promise, abort: () => controller.abort() });
+  }
 
-  const add = useCallback(
-    (files: FileList | File[]): AddPhotosResult => {
+  function pump() {
+    while (inflight.size < MAX_PARALLEL_UPLOADS && waiting.length) {
+      const key = waiting.shift()!;
+      const item = find(key);
+      if (item?.file && item.status === 'queued') start(key, item.file);
+    }
+  }
+
+  function enqueue(key: string) {
+    waiting.push(key);
+    pump();
+  }
+
+  function stopAll() {
+    waiting.length = 0;
+    inflight.forEach((entry) => entry.abort());
+    objectUrls.forEach((url) => URL.revokeObjectURL(url));
+    objectUrls.clear();
+  }
+
+  return {
+    add(files: FileList | File[]): AddPhotosResult {
       const picked = Array.from(files);
       const supported = picked.filter((file) => ACCEPTED_TYPES.has(file.type));
-      const room = Math.max(0, WATCH_PHOTO_MAX_COUNT - itemsRef.current.length);
+      const room = Math.max(0, WATCH_PHOTO_MAX_COUNT - items.length);
       const accepted = supported.slice(0, room);
       const created = accepted.map((file): PhotoUploadItem => {
         const previewUrl = URL.createObjectURL(file);
-        objectUrls.current.add(previewUrl);
+        objectUrls.add(previewUrl);
         const tooLarge = file.size > MAX_BYTES;
         return {
           key: `local-${++keySequence}`,
-          status: tooLarge ? 'error' : 'uploading',
+          status: tooLarge ? 'error' : 'queued',
           progress: 0,
           previewUrl,
           photo: null,
@@ -98,55 +158,46 @@ export function useWatchPhotoUploads() {
           error: tooLarge ? '15MB 이하 사진만 올릴 수 있어요.' : null,
         };
       });
-      commit([...itemsRef.current, ...created]);
-      for (const item of created) if (item.file) start(item.key, item.file);
+      commit([...items, ...created]);
+      for (const item of created) if (item.file) enqueue(item.key);
       return {
         added: created.length,
         overLimit: supported.length - accepted.length,
         unsupported: picked.length - supported.length,
       };
     },
-    [commit, start],
-  );
 
-  const retry = useCallback(
-    (key: string) => {
-      const item = itemsRef.current.find((candidate) => candidate.key === key);
-      if (!item?.file) return;
-      update(key, { status: 'uploading', progress: 0, error: null });
-      start(key, item.file);
+    retry(key: string) {
+      const item = find(key);
+      if (!item?.file || item.status !== 'error') return;
+      update(key, { status: 'queued', progress: 0, error: null });
+      enqueue(key);
     },
-    [start, update],
-  );
 
-  const remove = useCallback(
-    (key: string) => {
-      inflight.current.get(key)?.abort();
-      const item = itemsRef.current.find((candidate) => candidate.key === key);
-      if (item && objectUrls.current.has(item.previewUrl)) {
-        URL.revokeObjectURL(item.previewUrl);
-        objectUrls.current.delete(item.previewUrl);
-      }
-      commit(itemsRef.current.filter((candidate) => candidate.key !== key));
+    remove(key: string) {
+      inflight.get(key)?.abort();
+      const index = waiting.indexOf(key);
+      if (index >= 0) waiting.splice(index, 1);
+      const item = find(key);
+      if (item) revoke(item.previewUrl);
+      commit(items.filter((candidate) => candidate.key !== key));
     },
-    [commit],
-  );
 
-  const move = useCallback(
-    (key: string, offset: -1 | 1) => {
-      const next = [...itemsRef.current];
+    move(key: string, offset: -1 | 1) {
+      const next = [...items];
       const index = next.findIndex((item) => item.key === key);
       const target = index + offset;
       if (index < 0 || target < 0 || target >= next.length) return;
       [next[index], next[target]] = [next[target], next[index]];
       commit(next);
     },
-    [commit],
-  );
 
-  /** Starts from photos the record already has (editing, or a restored draft). */
-  const reset = useCallback(
-    (photos: WatchPhotoView[]) =>
+    /**
+     * Starts from photos a record already has (editing, or a restored draft). Uploads still
+     * running for the previous list are cancelled so none of them lands in the new one.
+     */
+    reset(photos: WatchPhotoView[]) {
+      stopAll();
       commit(
         photos.map((photo) => ({
           key: photo.id,
@@ -157,24 +208,41 @@ export function useWatchPhotoUploads() {
           file: null,
           error: null,
         })),
-      ),
-    [commit],
-  );
+      );
+    },
 
-  const settle = useCallback(async () => {
-    await Promise.allSettled([...inflight.current.values()].map((upload) => upload.promise));
-    return itemsRef.current;
-  }, []);
+    /** Resolves once nothing is queued or uploading, including photos added meanwhile. */
+    async settle() {
+      while (inflight.size || waiting.length) {
+        if (!inflight.size) pump();
+        if (!inflight.size) break;
+        await Promise.allSettled([...inflight.values()].map((entry) => entry.promise));
+      }
+      return items;
+    },
+
+    dispose: stopAll,
+  };
+}
+
+export function useWatchPhotoUploads() {
+  const [items, setItems] = useState<PhotoUploadItem[]>([]);
+  const queueRef = useRef<ReturnType<typeof createPhotoUploadQueue> | null>(null);
+  if (!queueRef.current) queueRef.current = createPhotoUploadQueue(setItems);
+  const queue = queueRef.current;
+
+  useEffect(() => () => queue.dispose(), [queue]);
 
   return {
     items,
-    add,
-    retry,
-    remove,
-    move,
-    reset,
-    settle,
-    uploadingCount: items.filter((item) => item.status === 'uploading').length,
+    add: queue.add,
+    retry: queue.retry,
+    remove: queue.remove,
+    move: queue.move,
+    reset: queue.reset,
+    settle: queue.settle,
+    uploadingCount: items.filter((item) => item.status === 'uploading' || item.status === 'queued')
+      .length,
     failedCount: items.filter((item) => item.status === 'error').length,
   };
 }

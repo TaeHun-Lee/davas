@@ -732,4 +732,19 @@ describe('WatchEventsService', () => {
     await service.setReviewLike(created.id, jiwooReaction.id, 'minho', true);
     assert.deepEqual(sent(), [['notifyReviewLiked', 'jiwoo', 'minho']]);
   });
+
+  it('accepts today in Korea during the hours when UTC is still on yesterday', async (t) => {
+    // 2026-10-06 16:30 UTC is 01:30 on 2026-10-07 in Seoul, right after a late movie.
+    t.mock.timers.enable({ apis: ['Date'], now: new Date('2026-10-06T16:30:00Z') });
+    const { service } = setup();
+    const created = await service.create('owner', {
+      mediaId: 'media-1',
+      watchedDate: '2026-10-07',
+    });
+    assert.equal(created.watchedDate, '2026-10-07');
+    await assert.rejects(
+      () => service.create('owner', { mediaId: 'media-1', watchedDate: '2026-10-08' }),
+      (error) => exceptionCode(error) === 'WATCH_DATE_IN_FUTURE',
+    );
+  });
 });

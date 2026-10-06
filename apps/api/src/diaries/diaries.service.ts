@@ -16,6 +16,7 @@ import {
   WatchParticipantEntity,
   WatchReactionEntity,
 } from '../database/entities';
+import { isAfterSeoulToday } from '../common/seoul-date';
 import { DiaryAccessService } from './diary-access.service';
 import { CreateDiaryDto } from './dto/create-diary.dto';
 import { UpdateDiaryDto } from './dto/update-diary.dto';
@@ -50,13 +51,9 @@ function apiError(
 }
 
 function assertNotFuture(date: string) {
-  const today = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
-  if (date > today) throw apiError(400, 'FUTURE_WATCHED_DATE', '본 날짜는 오늘 이후일 수 없어요.');
+  if (isAfterSeoulToday(date)) {
+    throw apiError(400, 'FUTURE_WATCHED_DATE', '본 날짜는 오늘 이후일 수 없어요.');
+  }
 }
 
 function normalizedCreate(dto: CreateDiaryDto) {

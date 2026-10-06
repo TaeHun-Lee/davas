@@ -3,22 +3,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import type { SpaceMemories } from '@davas/shared';
 import { IsNull, Repository } from 'typeorm';
 import { DiaryEntity, WatchShareEntity } from '../database/entities';
+import { seoulToday } from '../common/seoul-date';
 import { SpaceAccessService } from '../spaces/space-access.service';
 import { WatchPhotosService } from './watch-photos.service';
 
 const TOP_GENRES = 5;
 const ON_THIS_DAY_LIMIT = 3;
 const IN_PROGRESS_LIMIT = 5;
-
-/** Today's date in Korea, which is the calendar the couple lives on. */
-export function seoulToday(now = new Date()) {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(now);
-}
 
 const newestFirst = (left: DiaryEntity, right: DiaryEntity) =>
   right.watchedDate.localeCompare(left.watchedDate) ||

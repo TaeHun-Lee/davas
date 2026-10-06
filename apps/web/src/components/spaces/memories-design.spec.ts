@@ -31,9 +31,13 @@ describe('memories, drama progress, and the notification center', () => {
 
   it('continues a series from the latest record when a new one starts', () => {
     const composer = source('components/core/RecordComposer.tsx');
-    assert.match(composer, /async function continueSeries/);
-    assert.match(composer, /getWatchProgress\(media\.id\)/);
-    assert.match(composer, /progress\.episodeWatched \+ 1/);
+    const draft = source('components/core/composer-draft.ts');
+    assert.match(draft, /export async function continueSeries/);
+    assert.match(
+      draft,
+      /loadProgress: \(mediaId: string\) => Promise<WatchProgress \| null> = getWatchProgress/,
+    );
+    assert.match(composer, /continueSeries\(next, media\)/);
     assert.match(composer, /다음 화부터 이어서 적었어요/);
   });
 

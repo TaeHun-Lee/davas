@@ -15,9 +15,8 @@ import {
   selectMedia,
   type MediaDetail,
   type MediaSearchResult,
-  type SelectedMedia,
 } from '../../lib/api/media';
-import { getWatchProgress, type WatchProgress } from '../../lib/api/memories';
+import type { WatchProgress } from '../../lib/api/memories';
 import { listSpaces } from '../../lib/api/spaces';
 import {
   createWatchEvent,
@@ -25,7 +24,6 @@ import {
   updateWatchEvent,
   type TheaterFormat,
   type WatchEventWritePayload,
-  type WatchPhotoView,
   type WatchSourceKind,
 } from '../../lib/api/watch-events';
 import { useMediaSearch } from '../../hooks/useMediaSearch';
@@ -49,79 +47,15 @@ import {
 import { PhotoPicker } from './PhotoPicker';
 import { WatchRatingControl } from './WatchRatingControl';
 import { MediaDetailModal } from '../media/MediaDetailModal';
-import { chooseActiveSpace, defaultWatchPartners, readActiveSpaceId } from '../spaces/space-ui';
-
-type Draft = {
-  selected: SelectedMedia | null;
-  sourceKind: WatchSourceKind | null;
-  providerName: string;
-  placeText: string;
-  watchedDate: string;
-  rating: number | null;
-  /** 한줄평 */
-  headline: string;
-  /** 소감 */
-  content: string;
-  hasSpoiler: boolean;
-  isBlind: boolean;
-  memoryNote: string;
-  theaterFormat: TheaterFormat | null;
-  seatText: string;
-  episodeWatched: number | null;
-  episodeTotal: number | null;
-  completed: boolean;
-  spaceIds: string[];
-  participantAccountIds: string[];
-  /** Photos already uploaded; kept so a reloaded draft does not lose them. */
-  photos: WatchPhotoView[];
-};
-const today = () =>
-  new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
-const freshDraft = (): Draft => ({
-  selected: null,
-  sourceKind: null,
-  providerName: '',
-  placeText: '',
-  watchedDate: today(),
-  rating: null,
-  headline: '',
-  content: '',
-  hasSpoiler: false,
-  isBlind: false,
-  memoryNote: '',
-  theaterFormat: null,
-  seatText: '',
-  episodeWatched: null,
-  episodeTotal: null,
-  completed: false,
-  spaceIds: [],
-  participantAccountIds: [],
-  photos: [],
-});
-
-/**
- * A new record of a series carries on from the latest one: same service, the next episode,
- * and the series' episode count. Returns the progress it continued from, for the hint.
- */
-async function continueSeries(draft: Draft, media: MediaDetail) {
-  if (media.mediaType !== 'TV') return null;
-  draft.episodeTotal = media.numberOfEpisodes ?? null;
-  const progress = await getWatchProgress(media.id).catch(() => null);
-  if (!progress) return null;
-  draft.sourceKind = draft.sourceKind ?? progress.sourceKind;
-  draft.providerName = draft.providerName || progress.providerName || '';
-  draft.episodeTotal = draft.episodeTotal ?? progress.episodeTotal;
-  if (progress.episodeWatched && !progress.completed) {
-    const next = progress.episodeWatched + 1;
-    draft.episodeWatched = draft.episodeTotal ? Math.min(next, draft.episodeTotal) : next;
-  }
-  return progress;
-}
+import {
+  asSelected,
+  canResumeDraft,
+  continueSeries,
+  draftWithDefaults,
+  readSavedDraft,
+  today,
+  type Draft,
+} from './composer-draft';
 
 const sourceLabels: Record<WatchSourceKind, string> = {
   THEATER: '극장',
@@ -201,46 +135,16 @@ export function RecordComposer({ editId }: { editId?: string }) {
         if (spaceItems) setSpaces(spaceItems);
         else setSpacesError(true);
         const storageKey = `davas:draft:${id}:${editId ? 'edit' : 'create'}:${editId ?? 'new'}`;
-        const saved = sessionStorage.getItem(storageKey);
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved) as Partial<Draft> & {
-              viewingMethod?: 'THEATER' | 'OTT';
-            };
-            const resumedDraft = {
-              ...freshDraft(),
-              ...parsed,
-              sourceKind: parsed.sourceKind ?? parsed.viewingMethod ?? null,
-              spaceIds: parsed.spaceIds ?? [],
-              participantAccountIds: parsed.participantAccountIds ?? [],
-              photos: parsed.photos ?? [],
-            };
-            if (mediaId) {
-              const media = await getMediaDetail(mediaId);
-              resumedDraft.selected = {
-                ...media,
-                externalProvider: media.externalProvider,
-                genreIds: media.genreIds ?? [],
-              };
-            } else if (detailMediaId) {
-              const media = await getMediaDetail(detailMediaId);
-              resumedDraft.selected = {
-                ...media,
-                externalProvider: media.externalProvider,
-                genreIds: media.genreIds ?? [],
-              };
-              if (active) setDetailPreview(media);
-            }
-            if (!active) return;
-            resetPhotos(resumedDraft.photos);
-            setDraft(resumedDraft);
-            return;
-          } catch {
-            sessionStorage.removeItem(storageKey);
-          }
-        }
+        const saved = readSavedDraft(storageKey);
+
         if (editId) {
+          if (saved) {
+            resetPhotos(saved.photos);
+            setDraft(saved);
+            return;
+          }
           const record = await getWatchEvent(editId);
+          if (!active) return;
           const mine = record.reactions.find(
             (reaction) => reaction.accountId === record.author.accountId,
           );
@@ -284,42 +188,31 @@ export function RecordComposer({ editId }: { editId?: string }) {
                   participant.status !== 'DECLINED',
               )
               .map((participant) => participant.accountId),
+            seriesPrefilledFor: record.media.id,
           });
           return;
         }
-        const next = freshDraft();
-        // New records go to the space the user is looking at, with the partner of a
-        // two-person space preselected. Both stay visible and can be changed before saving.
-        const defaultSpace = spaceItems ? chooseActiveSpace(spaceItems, readActiveSpaceId()) : null;
-        if (defaultSpace) {
-          next.spaceIds = [defaultSpace.id];
-          next.participantAccountIds = defaultWatchPartners(defaultSpace, id);
-        }
-        if (mediaId) {
-          const media = await getMediaDetail(mediaId);
-          next.selected = {
-            ...media,
-            externalProvider: media.externalProvider,
-            genreIds: media.genreIds ?? [],
-          };
-          const progress = await continueSeries(next, media);
-          if (active) setContinuedFrom(progress);
-        } else if (detailMediaId) {
-          const media = await getMediaDetail(detailMediaId);
-          next.selected = {
-            ...media,
-            externalProvider: media.externalProvider,
-            genreIds: media.genreIds ?? [],
-          };
-          const progress = await continueSeries(next, media);
-          if (active) setContinuedFrom(progress);
-          if (active) setDetailPreview(media);
+
+        // Fetched before anything is reset: if TMDB is briefly down, the saved draft stays.
+        const requested = mediaId ?? detailMediaId;
+        const media = requested ? await getMediaDetail(requested) : null;
+        if (!active) return;
+        const resumable = canResumeDraft(saved, requested);
+        const next = resumable ? saved : draftWithDefaults(spaceItems, id);
+        let progress: WatchProgress | null = null;
+        if (media) {
+          next.selected = asSelected(media);
+          if (next.seriesPrefilledFor !== media.id) progress = await continueSeries(next, media);
         }
         if (!active) return;
-        resetPhotos([]);
+        setContinuedFrom(progress);
+        if (detailMediaId && media) setDetailPreview(media);
+        resetPhotos(resumable ? next.photos : []);
         setDraft(next);
       })
-      .catch(() => setError('작성 화면을 준비하지 못했어요.'));
+      .catch(() => {
+        if (active) setError('작성 화면을 준비하지 못했어요. 연결을 확인하고 다시 시도해 주세요.');
+      });
     return () => {
       active = false;
     };
@@ -378,7 +271,13 @@ export function RecordComposer({ editId }: { editId?: string }) {
     try {
       const selected = await selectMedia(item);
       const detail = await getMediaDetail(selected.id);
-      setDraft((value) => value && { ...value, selected });
+      const switching = Boolean(draft?.selected && draft.selected.id !== selected.id);
+      if (switching) resetPhotos([]);
+      setDraft((value) =>
+        value && !switching
+          ? { ...value, selected }
+          : { ...draftWithDefaults(spaces, userId), selected },
+      );
       setDetailPreview(detail);
       router.push(`/records/new?step=find&detail=${encodeURIComponent(selected.id)}`);
     } catch {

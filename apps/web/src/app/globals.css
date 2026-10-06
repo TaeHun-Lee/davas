@@ -1882,6 +1882,7 @@ a {
   height: 100%;
   object-fit: cover;
 }
+.photo-tile[data-status='queued'] > img,
 .photo-tile[data-status='uploading'] > img,
 .photo-tile[data-status='error'] > img {
   filter: saturate(0.4) brightness(0.8);
@@ -1965,6 +1966,7 @@ a {
   display: flex;
   justify-content: space-between;
 }
+.photo-tile[data-status='queued'] .photo-tile-order,
 .photo-tile[data-status='uploading'] .photo-tile-order {
   display: none;
 }

@@ -14,7 +14,7 @@ describe('configureHttpServerTimeouts', () => {
     configureHttpServerTimeouts(server);
 
     assert.deepEqual(server, {
-      requestTimeout: 60_000,
+      requestTimeout: 300_000,
       headersTimeout: 15_000,
       keepAliveTimeout: 5_000,
       maxRequestsPerSocket: 100,

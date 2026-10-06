@@ -30,6 +30,7 @@ import {
   WatchSourceEntity,
 } from '../database/entities';
 import { NotificationsService } from '../notifications/notifications.service';
+import { isAfterSeoulToday } from '../common/seoul-date';
 import { TransactionOutboxService } from '../outbox/transaction-outbox.service';
 import { SpaceAccessService } from '../spaces/space-access.service';
 import type { WatchProgress } from '@davas/shared';
@@ -916,7 +917,7 @@ export class WatchEventsService {
   }
 
   private assertNotFuture(value: string) {
-    if (value > new Date().toISOString().slice(0, 10)) {
+    if (isAfterSeoulToday(value)) {
       throw new BadRequestException(
         response(400, 'WATCH_DATE_IN_FUTURE', '미래 날짜의 감상 기록은 저장할 수 없어요.'),
       );

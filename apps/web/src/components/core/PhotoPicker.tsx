@@ -39,6 +39,11 @@ export function PhotoPicker({ uploads }: { uploads: WatchPhotoUploads }) {
             {index === 0 && item.status === 'done' ? (
               <span className="photo-tile-badge">대표</span>
             ) : null}
+            {item.status === 'queued' ? (
+              <div className="photo-tile-overlay">
+                <span>차례를 기다리는 중</span>
+              </div>
+            ) : null}
             {item.status === 'uploading' ? (
               <div className="photo-tile-overlay">
                 <span>올리는 중 {item.progress}%</span>
@@ -73,7 +78,7 @@ export function PhotoPicker({ uploads }: { uploads: WatchPhotoUploads }) {
               className="photo-tile-remove"
               onClick={() => uploads.remove(item.key)}
               aria-label={
-                item.status === 'uploading'
+                item.status === 'uploading' || item.status === 'queued'
                   ? `사진 ${index + 1} 올리기 취소`
                   : `사진 ${index + 1} 삭제`
               }
