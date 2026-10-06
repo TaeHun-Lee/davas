@@ -365,8 +365,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/main.ts": {
-    "mtime": 1791266531.2812624,
-    "ast_hash": "1632fbee43891234a35f326ab44d8825",
+    "mtime": 1791266874.193746,
+    "ast_hash": "a527407439a2d65a8eb8d08632bbaf90",
     "semantic_hash": ""
   },
   "apps/api/src/media/dto/media-search-query.dto.ts": {
@@ -2050,8 +2050,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/common/core-runtime-surface.spec.ts": {
-    "mtime": 1791266531.254187,
-    "ast_hash": "3b4dc328598ee2cf815745ed6e1b7c73",
+    "mtime": 1791266874.195254,
+    "ast_hash": "b15ecd319e6d84a4808caee7a682c115",
     "semantic_hash": ""
   },
   "apps/api/src/common/http-server-timeouts.spec.ts": {
@@ -2240,8 +2240,8 @@
     "semantic_hash": ""
   },
   "scripts/verify-caddy-headers.mjs": {
-    "mtime": 1791266531.3303735,
-    "ast_hash": "be60797b25ed206829432736c8614984",
+    "mtime": 1791268927.5662148,
+    "ast_hash": "e032dcdae8be736f01bdd876de1df73c",
     "semantic_hash": ""
   },
   "scripts/verify-deployment-contracts.mjs": {
