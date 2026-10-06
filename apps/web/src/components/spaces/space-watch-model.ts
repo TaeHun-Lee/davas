@@ -1,4 +1,9 @@
-import type { WatchEvent, WatchParticipantStatus, WatchReaction } from '../../lib/api/watch-events';
+import type {
+  TheaterFormat,
+  WatchEvent,
+  WatchParticipantStatus,
+  WatchReaction,
+} from '../../lib/api/watch-events';
 
 const SOURCE_LABELS = {
   THEATER: '극장',
@@ -20,7 +25,24 @@ export type WatchReactionRow = {
   locked: boolean;
   /** The viewer's own blind review, still hidden from someone who has not written yet. */
   waitingToOpen: boolean;
+  /** For the viewer's own blind review: who still has to write before it opens. */
+  waitingFor: string | null;
   likeCount: number;
+  likedByMe: boolean;
+  /** Null for a legacy review kept only on the old diary row; it cannot be liked. */
+  reactionId: string | null;
+  headline: string | null;
+  review: string | null;
+  isBlind: boolean;
+  /** Has a rating, headline or review; a locked review always has one. */
+  written: boolean;
+};
+
+const FORMAT_LABELS: Record<TheaterFormat, string> = {
+  STANDARD: '일반',
+  IMAX: 'IMAX',
+  FOUR_DX: '4DX',
+  DOLBY: '돌비',
 };
 
 /** A rating alone counts, as on the server. A locked review is always a written one. */
@@ -86,11 +108,53 @@ export function watchSourceSummary(event: WatchEvent) {
 }
 
 /**
+ * The timeline card's two lines under the title, as on the C안 board: when, how and how far
+ * ("10월 4일 · 극장 · IMAX", "10월 5일 · 넷플릭스 · 8화까지"), then where.
+ */
+export function watchCardSource(event: WatchEvent) {
+  const source = event.source;
+  const parts = [watchedDayLabel(event.watchedDate)];
+  if (source) {
+    parts.push(
+      source.kind === 'OTT' && source.providerName
+        ? source.providerName
+        : SOURCE_LABELS[source.kind],
+    );
+    if (source.kind === 'THEATER' && source.theaterFormat) {
+      parts.push(FORMAT_LABELS[source.theaterFormat]);
+    }
+    if (source.completed) parts.push('끝까지 다 봤어요');
+    else if (source.episodeWatched) parts.push(`${source.episodeWatched}화까지`);
+  }
+  return { line: parts.join(' · '), place: source?.placeText || null };
+}
+
+/**
+ * Every watcher has written and at least one of them chose blind: the card shows the
+ * reviews together under "둘 다 리뷰를 남겨서 열렸어요".
+ */
+export function openedTogether(rows: WatchReactionRow[]) {
+  return (
+    rows.length > 1 &&
+    rows.every((row) => row.status === 'CONFIRMED' && row.written && !row.locked) &&
+    rows.some((row) => row.isBlind)
+  );
+}
+
+/**
  * One row per person who watched (or is asked to confirm watching), author first and
  * the viewer labelled "나". Declined people are left out: they said they were not there.
  */
 export function reactionRows(event: WatchEvent, myAccountId: string): WatchReactionRow[] {
-  const someoneHasNotWritten = waitingWatchers(event, myAccountId).length > 0;
+  const waiting = waitingWatchers(event, myAccountId);
+  const waitingNames = waiting
+    .map(
+      (participant) =>
+        participant.nickname ||
+        (participant.accountId === event.author.accountId ? event.author.nickname : undefined) ||
+        '공간 멤버',
+    )
+    .join(', ');
   const rows = event.participants
     .filter((participant) => participant.status !== 'DECLINED')
     .map((participant) => {
@@ -108,8 +172,15 @@ export function reactionRows(event: WatchEvent, myAccountId: string): WatchReact
         text: reaction?.headline?.trim() || reaction?.review?.trim() || null,
         hasSpoiler: reaction?.hasSpoiler ?? false,
         locked: reaction?.locked ?? false,
-        waitingToOpen: Boolean(isMe && reaction?.isBlind && someoneHasNotWritten),
+        waitingToOpen: Boolean(isMe && reaction?.isBlind && waiting.length > 0),
+        waitingFor: isMe && reaction?.isBlind && waiting.length ? waitingNames : null,
         likeCount: reaction?.likeCount ?? 0,
+        likedByMe: reaction?.likedByMe ?? false,
+        reactionId: reaction?.id ?? null,
+        headline: reaction?.headline?.trim() || null,
+        review: reaction?.review?.trim() || null,
+        isBlind: reaction?.isBlind ?? false,
+        written: hasWrittenReaction(reaction),
       };
     });
   return rows.sort(

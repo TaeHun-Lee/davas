@@ -792,60 +792,36 @@ a {
   border-radius: 22px;
   padding: 16px;
 }
-.space-watch-meta {
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 17px;
-  font-weight: 700;
+.space-watch-card svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-.space-watch-media {
+.space-watch-byline {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 10px;
+  gap: 10px;
 }
-.space-watch-media .poster {
-  width: 48px;
-  height: 72px;
-  flex: none;
-  border-radius: 11px;
-}
-.space-watch-media h3 {
-  overflow: hidden;
-  color: var(--heading);
-  font-size: 16px;
-  line-height: 22px;
-  font-weight: 850;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.space-watch-media p {
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 12px;
+.space-watch-byline p {
+  min-width: 0;
+  color: #4a5a70;
+  font-size: 13px;
   line-height: 18px;
   font-weight: 650;
 }
-.space-watch-reactions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 12px;
-}
-.space-watch-reactions li {
-  display: grid;
-  min-height: 44px;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  border-radius: 14px;
-  background: #f5f8fc;
-  padding: 0 12px 0 8px;
+.space-watch-byline b {
+  color: var(--heading);
+  font-weight: 850;
 }
 .space-watch-avatar {
   display: inline-flex;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
+  flex: none;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
@@ -854,55 +830,54 @@ a {
   font-size: 11px;
   font-weight: 900;
 }
-.space-watch-reactions li[data-me] .space-watch-avatar {
+.space-watch-byline .space-watch-avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+}
+.space-watch-avatar[data-me] {
   background: var(--blue);
 }
-/* Two lines, so a lock hint ("…확인하고 리뷰를 남기면 열려요") is read to the end. */
-.space-watch-text {
-  display: -webkit-box;
-  min-width: 0;
-  overflow: hidden;
-  padding: 6px 0;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 18px;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-.space-watch-text b {
-  color: var(--heading);
-  font-weight: 850;
-}
-.space-watch-rating {
-  color: #b63b36;
-  font-size: 13px;
-  font-weight: 850;
-}
-.space-watch-rate {
-  display: inline-flex;
-  min-height: 44px;
+.space-watch-media {
+  display: flex;
   align-items: center;
-  margin-right: -8px;
-  padding: 0 8px;
-  color: var(--blue);
-  font-size: 13px;
-  font-weight: 850;
-}
-.space-watch-actions {
-  display: grid;
-  grid-auto-columns: minmax(0, 1fr);
-  grid-auto-flow: column;
-  gap: 8px;
+  gap: 12px;
   margin-top: 12px;
+  border-radius: 14px;
+  color: inherit;
 }
-.space-watch-actions .secondary-button {
-  min-height: 44px;
-  padding: 0 10px;
-  font-size: 13px;
+.space-watch-media .poster {
+  width: 48px;
+  height: 72px;
+  flex: none;
+  border-radius: 11px;
 }
-.space-watch-counts {
+.space-watch-media > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.space-watch-media strong {
+  overflow: hidden;
+  color: var(--heading);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.space-watch-media > span > span {
+  color: #4a5a70;
+  font-size: 12px;
+  line-height: 17px;
   font-weight: 700;
+}
+.space-watch-media .space-watch-place {
+  overflow: hidden;
+  color: var(--muted);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .space-watch-photos {
   display: grid;
@@ -933,25 +908,251 @@ a {
   font-size: 16px;
   font-weight: 900;
 }
-.space-watch-reactions li[data-locked] {
+.space-watch-reactions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+/* One person's review: a head row (avatar, name, rating, like) and the text in full. */
+.space-watch-review {
+  border-radius: 16px;
+  background: #f5f8fc;
+  padding: 2px 4px 12px 12px;
+}
+.space-watch-review[data-locked] {
   background: #eef2f8;
 }
-.space-watch-badge {
-  grid-column: 2 / -1;
-  justify-self: start;
-  margin: -6px 0 8px;
-  border-radius: 999px;
-  background: var(--blue-soft);
-  padding: 3px 9px;
+.space-watch-review-head {
+  display: flex;
+  min-height: 44px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.space-watch-review-head b {
+  min-width: 0;
+  flex: 1 1 auto;
+  color: var(--heading);
+  font-size: 13px;
+  font-weight: 850;
+}
+.space-watch-rating {
+  color: #b63b36;
+  font-size: 13px;
+  font-weight: 850;
+}
+.space-watch-review[data-locked] .space-watch-rating {
+  color: #4a5a70;
+}
+.space-watch-like,
+.space-watch-like-count {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  padding: 0 8px;
+  color: #56667b;
+  font-size: 12px;
+  font-weight: 850;
+}
+.space-watch-like[aria-pressed='true'] {
   color: var(--blue-ink);
+}
+.space-watch-like svg[data-filled] {
+  fill: currentColor;
+}
+.space-watch-like:disabled {
+  cursor: not-allowed;
+  color: #a3b0c2;
+}
+/* My blind review, still closed for someone: who it waits for. */
+.space-watch-badge {
+  order: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: -4px 0 4px;
+  border-radius: 999px;
+  background: #fff1d9;
+  padding: 4px 9px;
+  color: #7a4b00;
   font-size: 11px;
   font-weight: 850;
+}
+.space-watch-badge svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2.4;
+}
+.space-watch-lock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 8px 0 0;
+  border: 1px dashed #b4c2d6;
+  border-radius: 14px;
+  background: white;
+  padding: 12px;
+}
+.space-watch-lock-icon {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e3e9f2;
+  color: #3d4b60;
+}
+.space-watch-lock > span:last-child {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  color: #56667b;
+  font-size: 12px;
+  line-height: 17px;
+  font-weight: 650;
+}
+.space-watch-lock strong {
+  color: var(--heading);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 850;
+}
+.space-watch-review-body {
+  padding-right: 8px;
+}
+.space-watch-headline {
+  color: var(--heading);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+/* Up to three lines on the card; the record shows the rest. */
+.space-watch-review-text {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 2px;
+  padding-right: 8px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.space-watch-muted {
+  color: var(--muted);
+}
+.space-watch-spoiler {
+  width: calc(100% - 8px);
+  min-height: 44px;
+  border: 1px dashed #c9d6e6;
+  border-radius: 12px;
+  background: white;
+  color: var(--heading);
+  font-size: 12px;
+  font-weight: 800;
+}
+/* Someone who has not written, or not yet said whether they watched. */
+.space-watch-empty {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  border: 1px dashed #d3dce8;
+  border-radius: 14px;
+  padding: 0 0 0 12px;
+  color: #56667b;
+  font-size: 12px;
+  line-height: 17px;
+  font-weight: 700;
+}
+.space-watch-empty .space-watch-avatar {
+  width: 22px;
+  height: 22px;
+  background: #9fb2b0;
+  font-size: 10px;
+}
+.space-watch-empty .space-watch-avatar[data-me] {
+  background: #8fb0e3;
+}
+.space-watch-empty > span:nth-child(2) {
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 6px 0;
+}
+.space-watch-rate {
+  display: inline-flex;
+  min-height: 44px;
+  flex: none;
+  align-items: center;
+  padding: 0 12px;
+  color: var(--blue-ink);
+  font-size: 13px;
+  font-weight: 850;
+}
+/* Every watcher wrote and a blind review is part of it: shown together. */
+.space-watch-opened {
+  margin-top: 12px;
+  border: 1px solid #b9cff2;
+  border-radius: 16px;
+  background: var(--blue-soft);
+  padding: 10px;
+}
+.space-watch-opened > p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--blue-ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+.space-watch-opened > p svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+  stroke: none;
+}
+.space-watch-opened .space-watch-reactions {
+  gap: 6px;
+  margin-top: 8px;
+}
+.space-watch-opened .space-watch-review {
+  border-radius: 13px;
+  background: white;
 }
 .space-watch-write {
   width: 100%;
   min-height: 46px;
   margin-top: 10px;
   font-size: 14px;
+}
+.space-watch-actions {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.space-watch-actions .secondary-button {
+  min-height: 44px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+.space-watch-counts {
+  font-weight: 700;
 }
 
 .core-header-actions {

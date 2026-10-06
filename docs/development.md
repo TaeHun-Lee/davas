@@ -188,7 +188,7 @@ npm run migration:show --workspace @davas/api
 - 리뷰 좋아요: `PUT`/`DELETE /v1/watch-events/:id/reactions/:reactionId/like`. 내 리뷰와 잠긴 리뷰에는 누를 수 없다. 댓글은 기록 단위로 `/diaries/:id/comments`를 쓴다(500자).
 - 사진: 작성 화면에서 고르는 즉시 `POST /v1/watch-photos`로 올리고(한 장 15MB, JPEG·PNG·WebP), 서버가 한 사람의 업로드를 동시에 2개까지만 받으므로 화면은 2장씩 차례로 보내고 바쁘다는 응답(429)이나 연결 끊김은 잠시 뒤 다시 보낸다. 큰 사진이 느린 망에서도 들어오도록 요청 수신 제한은 5분이다. 기록을 저장할 때 `photoIds` 순서대로 붙인다(최대 10장, 첫 장이 대표). 서버는 sharp로 바로 세운 메타데이터 없는 WebP 썸네일(480px)·화면용(1600px)과 흐린 미리보기를 만들고 원본은 그대로 둔다. 파일은 `UPLOADS_DIR/watch-photos`에 있고 `/uploads` 정적 경로로는 나가지 않는다. `GET /v1/watch-photos/:id/thumb|display|original`이 기록을 볼 수 있는 사람에게만 주고, `original`은 올린 사람만 받는다. 공간을 떠난 사람의 사진은 기록 화면처럼 다른 구성원에게 더 이상 주지 않는다. 기록에 붙지 않은 사진은 한 시간마다 하루 지난 것을 지우고, 기록을 지우면 기록은 소프트 삭제로 숨기되 그 기록의 사진 행은 바로 지운다. 두 경우 모두 파일은 `file_cleanup_jobs`에 넣어 정리 작업이 지운다.
 - `clientRequestId`로 같은 생성 요청의 중복 저장을 막는다. 같은 키에 다른 내용이면 충돌로 거부한다.
-- 새 감상 기록은 공간 공유(`watch_event_shares`)로만 퍼지고 홈과 `/spaces`의 공간 타임라인에 보인다. 타임라인 한 페이지는 관계마다 한 번씩 묶어 읽고(`relationLoadStrategy: 'query'`), 공간 구성원과 댓글 수도 페이지 전체를 한 번에 센다. 한 번의 JOIN으로 읽으면 기록마다 참여자×리뷰×좋아요×사진×공유 수만큼 행이 불어난다. 친구 기록 검색(`/search?scope=friends`)은 예전 `/diaries`의 친구 공개 기록(`sharedAt`이 있는 기록)만 보여 준다.
+- 새 감상 기록은 공간 공유(`watch_event_shares`)로만 퍼지고 홈과 `/spaces`의 공간 타임라인에 보인다. 타임라인 한 페이지는 관계마다 한 번씩 묶어 읽고(`relationLoadStrategy: 'query'`), 공간 구성원과 댓글 수도 페이지 전체를 한 번에 센다. 타임라인 카드(`SpaceWatchCard.tsx`)는 누가 언제 남겼는지, 작품·감상 방식·장소, 사진 줄, 사람마다 리뷰(본문 3줄까지, 카드에서 바로 좋아요)를 보여 주고, 아직 안 쓴 사람은 한 줄로, 잠긴 리뷰는 자물쇠 상자로 보여 준다. 모두 썼고 블라인드가 섞여 있으면 "둘 다(모두) 리뷰를 남겨서 열렸어요" 상자로 묶는다. 한 번의 JOIN으로 읽으면 기록마다 참여자×리뷰×좋아요×사진×공유 수만큼 행이 불어난다. 친구 기록 검색(`/search?scope=friends`)은 예전 `/diaries`의 친구 공개 기록(`sharedAt`이 있는 기록)만 보여 준다.
 
 ## 6. 검증
 

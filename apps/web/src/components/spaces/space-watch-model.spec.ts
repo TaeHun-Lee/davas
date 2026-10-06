@@ -4,9 +4,11 @@ import type { WatchEvent, WatchReaction } from '../../lib/api/watch-events';
 import {
   blindViewerRole,
   lockedReviewHint,
+  openedTogether,
   pendingConfirmations,
   reactionRows,
   waitingWatchers,
+  watchCardSource,
   watchedDayLabel,
   watchSourceSummary,
   withMyParticipation,
@@ -140,6 +142,68 @@ describe('space timeline card model', () => {
     assert.equal(lockedReviewHint('watcher'), '내 리뷰를 남기면 열려요');
     assert.match(lockedReviewHint('pending'), /함께 봤다고 확인하고/);
     assert.match(lockedReviewHint('outsider'), /모두 리뷰를 남기면/);
+  });
+
+  it('writes the card lines as on the board: when, how, how far, then where', () => {
+    assert.deepEqual(
+      watchCardSource(
+        event({
+          source: {
+            kind: 'THEATER',
+            providerName: null,
+            placeText: 'CGV 용산',
+            theaterFormat: 'IMAX',
+          },
+        }),
+      ),
+      { line: '10월 4일 · 극장 · IMAX', place: 'CGV 용산' },
+    );
+    assert.deepEqual(
+      watchCardSource(
+        event({
+          source: { kind: 'OTT', providerName: '넷플릭스', episodeWatched: 8, episodeTotal: 16 },
+        }),
+      ),
+      { line: '10월 4일 · 넷플릭스 · 8화까지', place: null },
+    );
+    assert.deepEqual(watchCardSource(event({ source: null })), { line: '10월 4일', place: null });
+  });
+
+  it('names who my blind review waits for, and groups reviews once everyone wrote', () => {
+    const waiting = reactionRows(
+      event({
+        author: { accountId: 'me', nickname: '지우', profileImageUrl: null },
+        isMine: true,
+        reactions: [reaction({ accountId: 'me', rating: 4, isBlind: true })],
+      }),
+      'me',
+    );
+    assert.equal(waiting.find((row) => row.isMe)!.waitingFor, '민호');
+    assert.equal(openedTogether(waiting), false);
+
+    const both = reactionRows(
+      event({
+        reactions: [
+          reaction({
+            accountId: 'minho',
+            rating: 4.5,
+            isBlind: true,
+            likeCount: 2,
+            likedByMe: true,
+          }),
+          reaction({ accountId: 'me', headline: '좋았다', review: '긴 소감' }),
+        ],
+      }),
+      'me',
+    );
+    assert.equal(openedTogether(both), true);
+    const minho = both.find((row) => row.accountId === 'minho')!;
+    assert.deepEqual(
+      [minho.reactionId, minho.likedByMe, minho.written, minho.waitingFor],
+      ['reaction-minho', true, true, null],
+    );
+    const me = both.find((row) => row.isMe)!;
+    assert.deepEqual([me.headline, me.review], ['좋았다', '긴 소감']);
   });
 
   it('finds records that wait for the viewer to confirm, then reflects the answer', () => {

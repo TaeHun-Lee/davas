@@ -63,8 +63,10 @@ describe('record experience screens', () => {
     assert.match(reviews, /aria-label="잠긴 리뷰에는 좋아요를 누를 수 없어요"/);
     assert.match(reviews, /님이 남기면 공개돼요/);
     assert.match(reviews, /스포일러가 있어요 · 눌러서 보기/);
-    assert.match(card, /`리뷰 잠김 · \$\{lockedHint\}`/);
-    assert.match(card, /lockedReviewHint\(blindViewerRole\(event, myAccountId\)\)/);
+    assert.match(card, /const role = blindViewerRole\(event, myAccountId\);/);
+    assert.match(card, /const lockedHint = lockedReviewHint\(role\);/);
+    assert.match(card, /<strong>\{row\.name\}님 리뷰가 잠겨 있어요<\/strong>/);
+    assert.match(card, /aria-label="잠긴 리뷰에는 좋아요를 누를 수 없어요"/);
     assert.match(reviews, /<span>\{lockedHint\}<\/span>/);
     assert.match(card, /내 리뷰 쓰기/);
   });
