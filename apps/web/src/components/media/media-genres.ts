@@ -39,7 +39,13 @@ const TMDB_TV_GENRES: Record<number, string> = {
   10768: '전쟁·정치',
 };
 
-export function getTmdbGenreNames({ genreIds, mediaType }: { genreIds?: Array<number | string>; mediaType: 'MOVIE' | 'TV' }) {
+export function getTmdbGenreNames({
+  genreIds,
+  mediaType,
+}: {
+  genreIds?: Array<number | string>;
+  mediaType: 'MOVIE' | 'TV';
+}) {
   const map = mediaType === 'TV' ? TMDB_TV_GENRES : TMDB_MOVIE_GENRES;
   return (genreIds ?? [])
     .map((genreId) => Number(genreId))

@@ -1,4 +1,8 @@
-import type { DiaryCalendarDay, DiaryCalendarMarker, DiaryListItemView } from './diary-dashboard-types';
+import type {
+  DiaryCalendarDay,
+  DiaryCalendarMarker,
+  DiaryListItemView,
+} from './diary-dashboard-types';
 
 export function getDiaryCalendarDays({
   year,
@@ -33,8 +37,12 @@ export function getDiaryCalendarDays({
       day,
       currentMonth,
       selected: currentMonth && day === selectedDay,
-      today: currentMonth && today.getFullYear() === year && today.getMonth() + 1 === month && today.getDate() === day,
-      entryCount: currentMonth ? markerMap.get(day) ?? 0 : 0,
+      today:
+        currentMonth &&
+        today.getFullYear() === year &&
+        today.getMonth() + 1 === month &&
+        today.getDate() === day,
+      entryCount: currentMonth ? (markerMap.get(day) ?? 0) : 0,
     };
   });
 }
@@ -45,7 +53,11 @@ export type DiaryDateSelection = {
   day?: number;
 };
 
-export function filterDiaryItems(items: DiaryListItemView[], query: string, selectedDate?: DiaryDateSelection) {
+export function filterDiaryItems(
+  items: DiaryListItemView[],
+  query: string,
+  selectedDate?: DiaryDateSelection,
+) {
   const normalizedQuery = query.trim().toLocaleLowerCase('ko-KR');
   const filteredItems = normalizedQuery
     ? items.filter((item) =>
@@ -69,7 +81,9 @@ export function sortByRecentlyWritten(items: DiaryListItemView[]) {
 
 export function sortByWatchedDate(items: DiaryListItemView[]) {
   return [...items].sort((a, b) => {
-    const dateDiff = Number(new Date(toIsoWatchedDate(b.watchedDate))) - Number(new Date(toIsoWatchedDate(a.watchedDate)));
+    const dateDiff =
+      Number(new Date(toIsoWatchedDate(b.watchedDate))) -
+      Number(new Date(toIsoWatchedDate(a.watchedDate)));
     return dateDiff || Number(new Date(b.createdAt)) - Number(new Date(a.createdAt));
   });
 }

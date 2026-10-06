@@ -1,12 +1,24 @@
 import Link from 'next/link';
 import type { MediaDetail } from '../../lib/api/media';
 
-export function DetailInfoCard({ title, children, showChevron = false }: { title: string; children: React.ReactNode; showChevron?: boolean }) {
+export function DetailInfoCard({
+  title,
+  children,
+  showChevron = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  showChevron?: boolean;
+}) {
   return (
     <section className="rounded-[20px] bg-white p-4 shadow-[0_10px_24px_rgba(31,65,114,0.07)] ring-1 ring-[#edf2f8]">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-[15px] font-black leading-[20px] tracking-[-0.025em] text-[#1f4e82]">{title}</h3>
-        {showChevron ? <span className="text-[18px] font-black leading-none text-[#9aa6b8]">›</span> : null}
+        <h3 className="text-[15px] font-black leading-[20px] tracking-[-0.025em] text-[#1f4e82]">
+          {title}
+        </h3>
+        {showChevron ? (
+          <span className="text-[18px] font-black leading-none text-[#9aa6b8]">›</span>
+        ) : null}
       </div>
       <div className="mt-2 text-[12px] font-semibold leading-[19px] text-[#5f6b7a]">{children}</div>
     </section>
@@ -14,17 +26,26 @@ export function DetailInfoCard({ title, children, showChevron = false }: { title
 }
 
 export function StillCutStrip({ media }: { media: MediaDetail }) {
-  const stills = media.stillCuts?.length ? media.stillCuts : ([media.backdropUrl].filter(Boolean) as string[]);
+  const stills = media.stillCuts?.length
+    ? media.stillCuts
+    : ([media.backdropUrl].filter(Boolean) as string[]);
 
   return (
     <section className="mt-5">
       <div className="flex items-center justify-between">
-        <h3 className="text-[16px] font-black leading-[22px] tracking-[-0.025em] text-[#1f4e82]">스틸 컷</h3>
+        <h3 className="text-[16px] font-black leading-[22px] tracking-[-0.025em] text-[#1f4e82]">
+          스틸 컷
+        </h3>
       </div>
       {stills.length > 0 ? (
         <div className="mt-3 grid grid-cols-3 gap-2.5 max-[374px]:grid-cols-2">
           {stills.slice(0, 6).map((still, index) => (
-            <img key={still} src={still} alt={`${media.title} 스틸 컷 ${index + 1}`} className="h-[92px] w-full rounded-[16px] object-cover shadow-[0_8px_18px_rgba(21,38,69,0.10)]" />
+            <img
+              key={still}
+              src={still}
+              alt={`${media.title} 스틸 컷 ${index + 1}`}
+              className="h-[92px] w-full rounded-[16px] object-cover shadow-[0_8px_18px_rgba(21,38,69,0.10)]"
+            />
           ))}
         </div>
       ) : (
@@ -38,45 +59,88 @@ export function StillCutStrip({ media }: { media: MediaDetail }) {
 
 export function BasicInfoGrid({ media }: { media: MediaDetail }) {
   const runtimeText = media.runtime ? `${media.runtime}분` : '정보 준비 중';
-  const countries = media.countries?.length ? media.countries.join(', ') : media.country ?? '정보 준비 중';
+  const countries = media.countries?.length
+    ? media.countries.join(', ')
+    : (media.country ?? '정보 준비 중');
   const cast = media.cast?.length ? media.cast.slice(0, 4).join(', ') : '정보 준비 중';
   const directorLabel = media.mediaType === 'TV' ? '크리에이터' : '감독';
   return (
     <section className="rounded-[20px] bg-white p-4 shadow-[0_10px_24px_rgba(31,65,114,0.07)] ring-1 ring-[#edf2f8]">
-      <h3 className="text-[15px] font-black leading-[20px] tracking-[-0.025em] text-[#1f4e82]">기본 정보</h3>
+      <h3 className="text-[15px] font-black leading-[20px] tracking-[-0.025em] text-[#1f4e82]">
+        기본 정보
+      </h3>
       <dl className="mt-3 space-y-2 text-[11px] leading-[16px]">
-        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">{directorLabel}</dt><dd className="font-semibold text-[#6e7889]">{media.director ?? '정보 준비 중'}</dd></div>
-        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">출연</dt><dd className="font-semibold text-[#6e7889]">{cast}</dd></div>
-        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">개봉일</dt><dd className="font-semibold text-[#6e7889]">{media.releaseDate ?? '정보 준비 중'}</dd></div>
-        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">러닝타임</dt><dd className="font-semibold text-[#6e7889]">{runtimeText}</dd></div>
-        <div className="flex gap-3"><dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">국가</dt><dd className="font-semibold text-[#6e7889]">{countries}</dd></div>
+        <div className="flex gap-3">
+          <dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">{directorLabel}</dt>
+          <dd className="font-semibold text-[#6e7889]">{media.director ?? '정보 준비 중'}</dd>
+        </div>
+        <div className="flex gap-3">
+          <dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">출연</dt>
+          <dd className="font-semibold text-[#6e7889]">{cast}</dd>
+        </div>
+        <div className="flex gap-3">
+          <dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">개봉일</dt>
+          <dd className="font-semibold text-[#6e7889]">{media.releaseDate ?? '정보 준비 중'}</dd>
+        </div>
+        <div className="flex gap-3">
+          <dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">러닝타임</dt>
+          <dd className="font-semibold text-[#6e7889]">{runtimeText}</dd>
+        </div>
+        <div className="flex gap-3">
+          <dt className="w-14 shrink-0 font-extrabold text-[#2f4d73]">국가</dt>
+          <dd className="font-semibold text-[#6e7889]">{countries}</dd>
+        </div>
       </dl>
     </section>
   );
 }
 
-export function MyRatingCard({ diaries = [], averageRating }: { diaries?: NonNullable<MediaDetail['myDiaries']>; averageRating?: MediaDetail['myAverageRating'] } = {}) {
+export function MyRatingCard({
+  diaries = [],
+  averageRating,
+}: {
+  diaries?: NonNullable<MediaDetail['myDiaries']>;
+  averageRating?: MediaDetail['myAverageRating'];
+} = {}) {
   const currentRating = averageRating ?? 0;
   const hasDiaries = diaries.length > 0;
   return (
     <section className="rounded-[20px] bg-white p-4 shadow-[0_10px_24px_rgba(31,65,114,0.07)] ring-1 ring-[#edf2f8]">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-[15px] font-black leading-[20px] tracking-[-0.025em] text-[#1f4e82]">나의 별점</h3>
+        <h3 className="text-[15px] font-black leading-[20px] tracking-[-0.025em] text-[#1f4e82]">
+          나의 별점
+        </h3>
       </div>
       <div className="mt-3 flex items-center gap-1 text-[18px] leading-none" aria-label="나의 별점">
         {Array.from({ length: 5 }).map((_, index) => (
-          <span key={index} className={index < currentRating ? 'text-[#ff5a52]' : 'text-[#d6dce6]'}>★</span>
+          <span key={index} className={index < currentRating ? 'text-[#ff5a52]' : 'text-[#d6dce6]'}>
+            ★
+          </span>
         ))}
-        <strong className="ml-2 text-[16px] font-black text-[#1f4e82]">{currentRating.toFixed(1)}</strong>
+        <strong className="ml-2 text-[16px] font-black text-[#1f4e82]">
+          {currentRating.toFixed(1)}
+        </strong>
       </div>
       {hasDiaries ? (
         <div className="mt-3 space-y-2.5">
           {diaries.map((diary) => (
-            <article key={diary.id} className="relative rounded-[14px] bg-[#f6f8fc] p-3 pr-20 text-[11px] font-bold leading-[16px] text-[#5f6b7a]">
-              <Link href={`/diary/${diary.id}/edit`} className="absolute right-3 top-3 rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold text-[#647189] shadow-[0_4px_10px_rgba(31,65,114,0.06)] ring-1 ring-[#edf2f8]">수정</Link>
+            <article
+              key={diary.id}
+              className="relative rounded-[14px] bg-[#f6f8fc] p-3 pr-20 text-[11px] font-bold leading-[16px] text-[#5f6b7a]"
+            >
+              <Link
+                href={`/diary/${diary.id}/edit`}
+                className="absolute right-3 top-3 rounded-full bg-white px-2.5 py-1 text-[10px] font-extrabold text-[#647189] shadow-[0_4px_10px_rgba(31,65,114,0.06)] ring-1 ring-[#edf2f8]"
+              >
+                수정
+              </Link>
               <p className="line-clamp-1 text-[12px] font-black text-[#1f4e82]">{diary.title}</p>
-              <p className="mt-1 text-[10px] font-extrabold text-[#8a94a6]">감상일 {diary.watchedDate} · 별점 {diary.rating.toFixed(1)}</p>
-              {diary.contentPreview ? <p className="mt-2 line-clamp-3">{diary.contentPreview}</p> : null}
+              <p className="mt-1 text-[10px] font-extrabold text-[#8a94a6]">
+                감상일 {diary.watchedDate} · 별점 {diary.rating.toFixed(1)}
+              </p>
+              {diary.contentPreview ? (
+                <p className="mt-2 line-clamp-3">{diary.contentPreview}</p>
+              ) : null}
             </article>
           ))}
         </div>

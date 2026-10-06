@@ -98,7 +98,9 @@ export class RecommendationsService {
     return { item: { ...item, reason: 'today:trending' } };
   }
 
-  async todayCarousel(query: RecommendationQuery = {}): Promise<{ items: MediaRecommendationItem[] }> {
+  async todayCarousel(
+    query: RecommendationQuery = {},
+  ): Promise<{ items: MediaRecommendationItem[] }> {
     const trending = await this.trending({ ...query, limit: query.limit ?? 3 });
     const items = trending.items.map((item) => ({ ...item, reason: 'today:carousel' }));
     if (items.length === 0) {

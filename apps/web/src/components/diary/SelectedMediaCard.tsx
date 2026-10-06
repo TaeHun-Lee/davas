@@ -14,7 +14,11 @@ function PosterPlaceholder() {
 }
 function SelectedMediaLoadingPlaceholder() {
   return (
-    <section data-design="selected-media-placeholder" aria-label="선택한 작품을 불러오는 중" className="card-surface flex gap-4 rounded-[24px] p-4 shadow-[0_14px_32px_rgba(31,65,114,0.09)]">
+    <section
+      data-design="selected-media-placeholder"
+      aria-label="선택한 작품을 불러오는 중"
+      className="card-surface flex gap-4 rounded-[24px] p-4 shadow-[0_14px_32px_rgba(31,65,114,0.09)]"
+    >
       <PosterPlaceholder />
       <div className="min-w-0 flex-1 py-1" aria-hidden="true">
         <div className="h-7 w-3/4 rounded-full bg-[#edf3fb]" />
@@ -28,7 +32,13 @@ function SelectedMediaLoadingPlaceholder() {
     </section>
   );
 }
-export function SelectedMediaCard({ media, isLoading = false }: { media: DiaryComposeMedia | null; isLoading?: boolean }) {
+export function SelectedMediaCard({
+  media,
+  isLoading = false,
+}: {
+  media: DiaryComposeMedia | null;
+  isLoading?: boolean;
+}) {
   if (isLoading || !media) {
     return <SelectedMediaLoadingPlaceholder />;
   }
@@ -36,17 +46,26 @@ export function SelectedMediaCard({ media, isLoading = false }: { media: DiaryCo
   return (
     <section className="card-surface flex gap-4 rounded-[24px] p-4 shadow-[0_14px_32px_rgba(31,65,114,0.09)]">
       {media.posterUrl ? (
-        <img src={media.posterUrl} alt={`${media.title} 포스터`} className="h-[126px] w-[86px] shrink-0 rounded-[16px] object-cover shadow-[0_12px_22px_rgba(21,38,69,0.18)]" />
+        <img
+          src={media.posterUrl}
+          alt={`${media.title} 포스터`}
+          className="h-[126px] w-[86px] shrink-0 rounded-[16px] object-cover shadow-[0_12px_22px_rgba(21,38,69,0.18)]"
+        />
       ) : (
         <PosterPlaceholder />
       )}
       <div className="min-w-0 flex-1 py-1">
-        <h2 className="truncate text-[21px] font-black leading-[28px] tracking-[-0.04em] text-[#2f6fb4]">{media.title}</h2>
+        <h2 className="truncate text-[21px] font-black leading-[28px] tracking-[-0.04em] text-[#2f6fb4]">
+          {media.title}
+        </h2>
         <p className="mt-1 truncate text-[13px] font-bold text-[#8996aa]">{media.originalTitle}</p>
         <p className="mt-3 text-[12px] font-extrabold text-[#728095]">{media.meta}</p>
         <div className="mt-4 flex flex-wrap gap-1.5">
           {media.genres.map((genre) => (
-            <span key={genre} className="inline-flex rounded-full bg-[#eef5ff] px-3 py-1.5 text-[11px] font-extrabold text-[#2f7eea]">
+            <span
+              key={genre}
+              className="inline-flex rounded-full bg-[#eef5ff] px-3 py-1.5 text-[11px] font-extrabold text-[#2f7eea]"
+            >
               {genre}
             </span>
           ))}

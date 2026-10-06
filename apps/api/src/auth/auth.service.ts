@@ -1,22 +1,30 @@
 import { createHash } from 'node:crypto';
-import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from '@davas/shared';
-import { BadRequestException, ConflictException, Injectable, Optional, UnauthorizedException } from '@nestjs/common';
+import {
+  CURRENT_PRIVACY_VERSION,
+  CURRENT_TERMS_VERSION,
+  type AuthenticatedUser,
+} from '@davas/shared';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Optional,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { DataSource, EntityManager, Repository } from 'typeorm';
-import { FriendInviteEntity, FriendshipEntity, InviteCodeEntity, InviteUseEntity, UserConsentEntity, UserEntity } from '../database/entities';
+import {
+  FriendInviteEntity,
+  FriendshipEntity,
+  InviteCodeEntity,
+  InviteUseEntity,
+  UserConsentEntity,
+  UserEntity,
+} from '../database/entities';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
-
-export type AuthenticatedUser = {
-  id: string;
-  email: string;
-  nickname: string;
-  profileImageUrl: string | null;
-  bio: string | null;
-  preferredGenres: string[];
-};
 
 export type AuthResult = {
   accessToken: string;
@@ -29,11 +37,21 @@ export class AuthService {
     @InjectRepository(UserEntity)
     private readonly users: Repository<UserEntity>,
     private readonly jwt: JwtService,
-    @Optional() @InjectRepository(InviteCodeEntity) private readonly invites?: Repository<InviteCodeEntity>,
-    @Optional() @InjectRepository(InviteUseEntity) private readonly inviteUses?: Repository<InviteUseEntity>,
-    @Optional() @InjectRepository(FriendInviteEntity) private readonly friendInvites?: Repository<FriendInviteEntity>,
-    @Optional() @InjectRepository(FriendshipEntity) private readonly friendships?: Repository<FriendshipEntity>,
-    @Optional() @InjectRepository(UserConsentEntity) private readonly consents?: Repository<UserConsentEntity>,
+    @Optional()
+    @InjectRepository(InviteCodeEntity)
+    private readonly invites?: Repository<InviteCodeEntity>,
+    @Optional()
+    @InjectRepository(InviteUseEntity)
+    private readonly inviteUses?: Repository<InviteUseEntity>,
+    @Optional()
+    @InjectRepository(FriendInviteEntity)
+    private readonly friendInvites?: Repository<FriendInviteEntity>,
+    @Optional()
+    @InjectRepository(FriendshipEntity)
+    private readonly friendships?: Repository<FriendshipEntity>,
+    @Optional()
+    @InjectRepository(UserConsentEntity)
+    private readonly consents?: Repository<UserConsentEntity>,
     @Optional() private readonly dataSource?: DataSource,
   ) {}
 
@@ -48,14 +66,20 @@ export class AuthService {
     const result = await this.createUser(dto, this.users);
     invite.usedCount += 1;
     await this.invites?.save(invite);
-    await this.inviteUses?.save(this.inviteUses.create({ inviteId: invite.id, userId: result.user.id }));
+    await this.inviteUses?.save(
+      this.inviteUses.create({ inviteId: invite.id, userId: result.user.id }),
+    );
     await this.saveConsent(result.user.id, dto, this.consents);
     return result;
   }
 
   async validateInvite(code: string) {
     const invite = await this.loadUsableInvite(code, this.invites);
-    return { valid: true, expiresAt: invite.expiresAt.toISOString(), remainingUses: invite.maxUses - invite.usedCount };
+    return {
+      valid: true,
+      expiresAt: invite.expiresAt.toISOString(),
+      remainingUses: invite.maxUses - invite.usedCount,
+    };
   }
 
   private async signupInTransaction(dto: SignupDto, manager: EntityManager) {
@@ -65,7 +89,13 @@ export class AuthService {
     const result = await this.createUser(dto, manager.getRepository(UserEntity));
     invite.usedCount += 1;
     await inviteRepository.save(invite);
-    await manager.getRepository(InviteUseEntity).save(manager.getRepository(InviteUseEntity).create({ inviteId: invite.id, userId: result.user.id }));
+    await manager
+      .getRepository(InviteUseEntity)
+      .save(
+        manager
+          .getRepository(InviteUseEntity)
+          .create({ inviteId: invite.id, userId: result.user.id }),
+      );
     await this.saveConsent(result.user.id, dto, manager.getRepository(UserConsentEntity));
     return result;
   }
@@ -73,12 +103,22 @@ export class AuthService {
   private async signupWithFriendInvite(dto: SignupDto, manager: EntityManager) {
     const inviteRepository = manager.getRepository(FriendInviteEntity);
     const tokenHash = createHash('sha256').update(dto.friendInviteToken!).digest('hex');
-    const invite = await inviteRepository.findOne({ where: { tokenHash }, lock: { mode: 'pessimistic_write' } });
+    const invite = await inviteRepository.findOne({
+      where: { tokenHash },
+      lock: { mode: 'pessimistic_write' },
+    });
     this.assertUsableFriendInvite(invite);
     const result = await this.createUser(dto, manager.getRepository(UserEntity));
     const friendshipRepository = manager.getRepository(FriendshipEntity);
     const pairKey = [invite!.inviterId, result.user.id].sort().join(':');
-    await friendshipRepository.save(friendshipRepository.create({ pairKey, requesterId: invite!.inviterId, receiverId: result.user.id, status: 'ACCEPTED' }));
+    await friendshipRepository.save(
+      friendshipRepository.create({
+        pairKey,
+        requesterId: invite!.inviterId,
+        receiverId: result.user.id,
+        status: 'ACCEPTED',
+      }),
+    );
     invite!.usedAt = new Date();
     invite!.usedByUserId = result.user.id;
     await inviteRepository.save(invite!);
@@ -87,32 +127,62 @@ export class AuthService {
   }
 
   private async signupWithFriendInviteWithoutTransaction(dto: SignupDto) {
-    if (!this.friendInvites || !this.friendships) throw new BadRequestException('친구 초대 기능을 사용할 수 없습니다.');
+    if (!this.friendInvites || !this.friendships)
+      throw new BadRequestException('친구 초대 기능을 사용할 수 없습니다.');
     const tokenHash = createHash('sha256').update(dto.friendInviteToken!).digest('hex');
     const invite = await this.friendInvites.findOne({ where: { tokenHash } });
     this.assertUsableFriendInvite(invite);
     const result = await this.createUser(dto, this.users);
-    await this.friendships.save(this.friendships.create({ pairKey: [invite!.inviterId, result.user.id].sort().join(':'), requesterId: invite!.inviterId, receiverId: result.user.id, status: 'ACCEPTED' }));
-    invite!.usedAt = new Date(); invite!.usedByUserId = result.user.id; await this.friendInvites.save(invite!);
+    await this.friendships.save(
+      this.friendships.create({
+        pairKey: [invite!.inviterId, result.user.id].sort().join(':'),
+        requesterId: invite!.inviterId,
+        receiverId: result.user.id,
+        status: 'ACCEPTED',
+      }),
+    );
+    invite!.usedAt = new Date();
+    invite!.usedByUserId = result.user.id;
+    await this.friendInvites.save(invite!);
     await this.saveConsent(result.user.id, dto, this.consents);
     return result;
   }
 
   private validateSignupContract(dto: SignupDto) {
-    if (Boolean(dto.inviteCode?.trim()) === Boolean(dto.friendInviteToken?.trim())) throw new BadRequestException('가입 초대 코드 또는 친구 초대 링크 중 하나가 필요합니다.');
-    if (dto.termsAccepted !== true || dto.termsVersion !== CURRENT_TERMS_VERSION || dto.privacyVersion !== CURRENT_PRIVACY_VERSION) throw new BadRequestException('현재 약관과 개인정보처리방침에 동의해 주세요.');
+    if (Boolean(dto.inviteCode?.trim()) === Boolean(dto.friendInviteToken?.trim()))
+      throw new BadRequestException('가입 초대 코드 또는 친구 초대 링크 중 하나가 필요합니다.');
+    if (
+      dto.termsAccepted !== true ||
+      dto.termsVersion !== CURRENT_TERMS_VERSION ||
+      dto.privacyVersion !== CURRENT_PRIVACY_VERSION
+    )
+      throw new BadRequestException('현재 약관과 개인정보처리방침에 동의해 주세요.');
   }
 
   private assertUsableFriendInvite(invite: FriendInviteEntity | null) {
-    if (!invite || invite.revokedAt || invite.usedAt || invite.expiresAt.getTime() <= Date.now()) throw new ConflictException('이미 사용됐거나 만료된 친구 초대 링크입니다.');
+    if (!invite || invite.revokedAt || invite.usedAt || invite.expiresAt.getTime() <= Date.now())
+      throw new ConflictException('이미 사용됐거나 만료된 친구 초대 링크입니다.');
   }
 
-  private async saveConsent(userId: string, dto: SignupDto, repository?: Repository<UserConsentEntity>) {
+  private async saveConsent(
+    userId: string,
+    dto: SignupDto,
+    repository?: Repository<UserConsentEntity>,
+  ) {
     if (!repository) return;
-    await repository.save(repository.create({ userId, termsVersion: dto.termsVersion!, privacyVersion: dto.privacyVersion! }));
+    await repository.save(
+      repository.create({
+        userId,
+        termsVersion: dto.termsVersion!,
+        privacyVersion: dto.privacyVersion!,
+      }),
+    );
   }
 
-  private async createUser(dto: SignupDto, repository: Repository<UserEntity>): Promise<AuthResult> {
+  private async createUser(
+    dto: SignupDto,
+    repository: Repository<UserEntity>,
+  ): Promise<AuthResult> {
     const email = this.normalizeEmail(dto.email);
     const nickname = dto.nickname.trim();
 
@@ -136,12 +206,21 @@ export class AuthService {
     return this.createAuthResult(user);
   }
 
-  private async loadUsableInvite(code: string, repository?: Repository<InviteCodeEntity>, lock = false) {
+  private async loadUsableInvite(
+    code: string,
+    repository?: Repository<InviteCodeEntity>,
+    lock = false,
+  ) {
     if (!repository) throw new BadRequestException('초대 코드 기능을 사용할 수 없습니다.');
-    const invite = await repository.findOne({ where: { code: code.trim().toUpperCase() }, ...(lock ? { lock: { mode: 'pessimistic_write' as const } } : {}) });
+    const invite = await repository.findOne({
+      where: { code: code.trim().toUpperCase() },
+      ...(lock ? { lock: { mode: 'pessimistic_write' as const } } : {}),
+    });
     if (!invite) throw new BadRequestException('유효하지 않은 초대 코드입니다.');
-    if (invite.expiresAt.getTime() <= Date.now()) throw new BadRequestException('만료된 초대 코드입니다.');
-    if (invite.usedCount >= invite.maxUses) throw new ConflictException('이미 모두 사용된 초대 코드입니다.');
+    if (invite.expiresAt.getTime() <= Date.now())
+      throw new BadRequestException('만료된 초대 코드입니다.');
+    if (invite.usedCount >= invite.maxUses)
+      throw new ConflictException('이미 모두 사용된 초대 코드입니다.');
     return invite;
   }
 
@@ -183,7 +262,11 @@ export class AuthService {
   private createAuthResult(user: UserEntity): AuthResult {
     const safeUser = this.toUserResponse(user);
     return {
-      accessToken: this.jwt.sign({ sub: safeUser.id, email: safeUser.email, nickname: safeUser.nickname }),
+      accessToken: this.jwt.sign({
+        sub: safeUser.id,
+        email: safeUser.email,
+        nickname: safeUser.nickname,
+      }),
       user: safeUser,
     };
   }

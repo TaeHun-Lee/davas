@@ -1,10 +1,16 @@
-import type { PersonSearchResult } from '../../lib/api/media';
+import type { PersonSearchResult } from '../../lib/api/media-legacy';
 import type { PeopleSearchStatus } from '../../hooks/usePeopleSearch';
 import { MediaDetailLoadingIndicator } from './MediaDetailLoadingIndicator';
 
 function PersonProfileImage({ person }: { person: PersonSearchResult }) {
   if (person.profileUrl) {
-    return <img src={person.profileUrl} alt={`${person.name} 프로필`} className="h-[58px] w-[58px] shrink-0 rounded-[18px] object-cover shadow-[0_8px_18px_rgba(21,38,69,0.12)]" />;
+    return (
+      <img
+        src={person.profileUrl}
+        alt={`${person.name} 프로필`}
+        className="h-[58px] w-[58px] shrink-0 rounded-[18px] object-cover shadow-[0_8px_18px_rgba(21,38,69,0.12)]"
+      />
+    );
   }
 
   return (
@@ -22,17 +28,28 @@ function getDepartmentLabel(department?: string | null) {
     Production: '제작',
   };
 
-  return department ? labels[department] ?? department : '직군 정보 없음';
+  return department ? (labels[department] ?? department) : '직군 정보 없음';
 }
 
 function KnownForText({ person }: { person: PersonSearchResult }) {
-  const knownFor = person.knownFor.map((work) => work.title).filter(Boolean).slice(0, 3);
+  const knownFor = person.knownFor
+    .map((work) => work.title)
+    .filter(Boolean)
+    .slice(0, 3);
 
   if (knownFor.length === 0) {
-    return <span className="mt-1.5 block text-[11px] font-semibold leading-[16px] text-[#97a2b3]">대표작 정보가 아직 없어요.</span>;
+    return (
+      <span className="mt-1.5 block text-[11px] font-semibold leading-[16px] text-[#97a2b3]">
+        대표작 정보가 아직 없어요.
+      </span>
+    );
   }
 
-  return <span className="mt-1.5 block line-clamp-1 text-[11px] font-semibold leading-[16px] text-[#788395]">대표작 · {knownFor.join(', ')}</span>;
+  return (
+    <span className="mt-1.5 block line-clamp-1 text-[11px] font-semibold leading-[16px] text-[#788395]">
+      대표작 · {knownFor.join(', ')}
+    </span>
+  );
 }
 
 export function PersonSearchResults({
@@ -55,12 +72,24 @@ export function PersonSearchResults({
   return (
     <section className="mt-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[16px] font-extrabold leading-[22px] tracking-[-0.02em] text-[#1f2a44]">인물 검색 결과</h2>
+        <h2 className="text-[16px] font-extrabold leading-[22px] tracking-[-0.02em] text-[#1f2a44]">
+          인물 검색 결과
+        </h2>
         <span className="text-[11px] font-bold text-[#9aa6b8]">이름으로 작품 찾기</span>
       </div>
-      {status === 'searching' ? <MediaDetailLoadingIndicator label="인물 검색 중" fullScreen={false} /> : null}
-      {status === 'empty' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#8b96a8]">일치하는 인물이 없어요</div> : null}
-      {status === 'error' ? <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#ef4444]">인물 검색을 불러오지 못했어요.</div> : null}
+      {status === 'searching' ? (
+        <MediaDetailLoadingIndicator label="인물 검색 중" fullScreen={false} />
+      ) : null}
+      {status === 'empty' ? (
+        <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#8b96a8]">
+          일치하는 인물이 없어요
+        </div>
+      ) : null}
+      {status === 'error' ? (
+        <div className="card-surface mt-3 rounded-[18px] p-4 text-[13px] font-bold text-[#ef4444]">
+          인물 검색을 불러오지 못했어요.
+        </div>
+      ) : null}
       {status === 'results' ? (
         <div className="mt-3 space-y-3">
           {items.map((person) => {
@@ -77,11 +106,17 @@ export function PersonSearchResults({
               >
                 <PersonProfileImage person={person} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] font-extrabold leading-[20px] text-[#1f2a44]">{person.name}</span>
-                  <span className="mt-1 block text-[11px] font-bold text-[#8b96a8]">{getDepartmentLabel(person.knownForDepartment)}</span>
+                  <span className="block truncate text-[15px] font-extrabold leading-[20px] text-[#1f2a44]">
+                    {person.name}
+                  </span>
+                  <span className="mt-1 block text-[11px] font-bold text-[#8b96a8]">
+                    {getDepartmentLabel(person.knownForDepartment)}
+                  </span>
                   <KnownForText person={person} />
                 </span>
-                <span className="shrink-0 rounded-full bg-[#edf5ff] px-3 py-2 text-[11px] font-extrabold text-[#216bd8]">작품 보기</span>
+                <span className="shrink-0 rounded-full bg-[#edf5ff] px-3 py-2 text-[11px] font-extrabold text-[#216bd8]">
+                  작품 보기
+                </span>
               </button>
             );
           })}

@@ -89,7 +89,8 @@ export class MediaService {
     private readonly diaryRepository?: Repository<DiaryEntity>,
     @InjectRepository(MediaFavoriteEntity)
     private readonly favoriteRepository?: Repository<MediaFavoriteEntity>,
-    @InjectRepository(WatchlistItemEntity) private readonly watchlistRepository?: Repository<WatchlistItemEntity>,
+    @InjectRepository(WatchlistItemEntity)
+    private readonly watchlistRepository?: Repository<WatchlistItemEntity>,
   ) {}
 
   async search(query: MediaSearchQueryDto) {
@@ -125,10 +126,19 @@ export class MediaService {
     const myDiaries = await this.findMyDiaries(id, userId);
     const myDiary = myDiaries[0] ?? null;
     const myAverageRating = this.calculateAverageRating(myDiaries);
-    const watchlist = userId ? await this.watchlistRepository?.findOne({ where: { userId, mediaId: id } }) : null;
+    const watchlist = userId
+      ? await this.watchlistRepository?.findOne({ where: { userId, mediaId: id } })
+      : null;
 
     if (media.externalProvider !== 'TMDB') {
-      return { ...this.fromCachedMedia(media), myDiary, myDiaries, myAverageRating, watchlistItemId: watchlist?.id ?? null, watchlistStatus: watchlist?.status ?? null };
+      return {
+        ...this.fromCachedMedia(media),
+        myDiary,
+        myDiaries,
+        myAverageRating,
+        watchlistItemId: watchlist?.id ?? null,
+        watchlistStatus: watchlist?.status ?? null,
+      };
     }
 
     const detail = await this.tmdbClient.detail({
@@ -233,7 +243,9 @@ export class MediaService {
       where: { userId, mediaId },
       order: { updatedAt: 'DESC', createdAt: 'DESC' },
     } as const;
-    const repository = this.diaryRepository as Repository<DiaryEntity> & { find?: Repository<DiaryEntity>['find'] };
+    const repository = this.diaryRepository as Repository<DiaryEntity> & {
+      find?: Repository<DiaryEntity>['find'];
+    };
     const diaries = repository.find ? await repository.find(options) : [];
 
     return diaries.map((diary) => ({

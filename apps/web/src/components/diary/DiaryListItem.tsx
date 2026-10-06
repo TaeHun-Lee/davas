@@ -9,8 +9,17 @@ type DiaryListItemProps = {
 export function DiaryListItem({ item }: DiaryListItemProps) {
   return (
     <article className="relative flex gap-3 rounded-[24px] bg-white p-3 shadow-[0_12px_30px_rgba(31,42,68,0.07)]">
-      <Link href={`/diary/${item.id}`} aria-label={`${item.mediaTitle} 기록 상세 보기`} className="absolute inset-0 rounded-[24px]" />
-      <MoviePosterVisual gradient={item.posterGradient} imageUrl={item.posterUrl} label={item.posterUrl ? undefined : item.mediaTitle} className="h-[104px] w-[72px] shrink-0 rounded-[18px]" />
+      <Link
+        href={`/diary/${item.id}`}
+        aria-label={`${item.mediaTitle} 기록 상세 보기`}
+        className="absolute inset-0 rounded-[24px]"
+      />
+      <MoviePosterVisual
+        gradient={item.posterGradient}
+        imageUrl={item.posterUrl}
+        label={item.posterUrl ? undefined : item.mediaTitle}
+        className="h-[104px] w-[72px] shrink-0 rounded-[18px]"
+      />
       <div className="min-w-0 flex-1">
         <div className="min-w-0">
           <h3 className="truncate text-[15px] font-extrabold text-[#1f2a44]">{item.mediaTitle}</h3>
@@ -18,16 +27,28 @@ export function DiaryListItem({ item }: DiaryListItemProps) {
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-bold text-[#8d98aa]">
           <span>{item.watchedDate}</span>
-          <span aria-label={`평점 ${item.rating}점`} className="text-[#ef9b2d]">★ {item.rating.toFixed(1)}</span>
+          <span aria-label={`평점 ${item.rating}점`} className="text-[#ef9b2d]">
+            ★ {item.rating.toFixed(1)}
+          </span>
         </div>
-        <p className="mt-2 line-clamp-2 text-[12px] font-medium leading-[18px] text-[#6d7890]">{item.contentPreview}</p>
+        <p className="mt-2 line-clamp-2 text-[12px] font-medium leading-[18px] text-[#6d7890]">
+          {item.contentPreview}
+        </p>
         <div className="mt-2 flex min-w-0 items-end justify-between gap-2">
           <div className="flex min-w-0 gap-1 overflow-hidden">
             {item.genreNames.slice(0, 2).map((genre) => (
-              <span key={genre} className="shrink-0 rounded-full bg-[#eef5ff] px-2 py-1 text-[10px] font-bold text-[#216bd8]">{genre}</span>
+              <span
+                key={genre}
+                className="shrink-0 rounded-full bg-[#eef5ff] px-2 py-1 text-[10px] font-bold text-[#216bd8]"
+              >
+                {genre}
+              </span>
             ))}
           </div>
-          <Link href={`/diary/${item.id}/edit`} className="relative z-10 flex min-h-11 shrink-0 items-center rounded-full bg-[#eef5ff] px-3 text-[11px] font-extrabold text-[#216bd8]">
+          <Link
+            href={`/diary/${item.id}/edit`}
+            className="relative z-10 flex min-h-11 shrink-0 items-center rounded-full bg-[#eef5ff] px-3 text-[11px] font-extrabold text-[#216bd8]"
+          >
             수정
           </Link>
         </div>

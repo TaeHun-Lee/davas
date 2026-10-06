@@ -56,21 +56,24 @@ describe('mapTmdbSearchResult', () => {
 
 describe('mapTmdbRecommendationResult', () => {
   it('normalizes movie recommendation fields shared by trending and discover responses', () => {
-    const result = mapTmdbRecommendationResult({
-      id: 157336,
-      media_type: 'movie',
-      title: '인터스텔라',
-      original_title: 'Interstellar',
-      overview: '우주를 향한 여정.',
-      poster_path: '/poster.jpg',
-      backdrop_path: '/backdrop.jpg',
-      release_date: '2014-11-06',
-      genre_ids: [12, 18, 878],
-      origin_country: ['US'],
-      vote_average: 8.4,
-      vote_count: 36000,
-      popularity: 122.5,
-    }, 'trending');
+    const result = mapTmdbRecommendationResult(
+      {
+        id: 157336,
+        media_type: 'movie',
+        title: '인터스텔라',
+        original_title: 'Interstellar',
+        overview: '우주를 향한 여정.',
+        poster_path: '/poster.jpg',
+        backdrop_path: '/backdrop.jpg',
+        release_date: '2014-11-06',
+        genre_ids: [12, 18, 878],
+        origin_country: ['US'],
+        vote_average: 8.4,
+        vote_count: 36000,
+        popularity: 122.5,
+      },
+      'trending',
+    );
 
     assert.deepEqual(result, {
       externalProvider: 'TMDB',
@@ -92,18 +95,21 @@ describe('mapTmdbRecommendationResult', () => {
   });
 
   it('normalizes tv recommendation results with nullable rating signals', () => {
-    const result = mapTmdbRecommendationResult({
-      id: 1399,
-      media_type: 'tv',
-      name: '왕좌의 게임',
-      original_name: 'Game of Thrones',
-      overview: '가문들의 전쟁.',
-      poster_path: null,
-      backdrop_path: null,
-      first_air_date: '2011-04-17',
-      genre_ids: [18, 10765],
-      origin_country: ['US'],
-    }, 'genre:immersive-thriller');
+    const result = mapTmdbRecommendationResult(
+      {
+        id: 1399,
+        media_type: 'tv',
+        name: '왕좌의 게임',
+        original_name: 'Game of Thrones',
+        overview: '가문들의 전쟁.',
+        poster_path: null,
+        backdrop_path: null,
+        first_air_date: '2011-04-17',
+        genre_ids: [18, 10765],
+        origin_country: ['US'],
+      },
+      'genre:immersive-thriller',
+    );
 
     assert.equal(result.mediaType, 'TV');
     assert.equal(result.title, '왕좌의 게임');

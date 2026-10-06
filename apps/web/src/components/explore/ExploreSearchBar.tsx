@@ -6,5 +6,11 @@ type ExploreSearchBarProps = {
 };
 
 export function ExploreSearchBar({ value, onChange }: ExploreSearchBarProps) {
-  return <SearchField value={value} onChange={onChange} placeholder="영화, 드라마, 배우를 검색해보세요" />;
+  return (
+    <SearchField
+      value={value}
+      onChange={onChange}
+      placeholder="영화, 드라마, 배우를 검색해보세요"
+    />
+  );
 }

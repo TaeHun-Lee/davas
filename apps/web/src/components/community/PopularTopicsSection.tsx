@@ -11,7 +11,10 @@ export function PopularTopicsSection({ topics, onTopicSelect }: PopularTopicsSec
   return (
     <section className="mb-6" aria-labelledby="popular-topics-title">
       <div className="mb-3 flex items-center justify-between">
-        <h2 id="popular-topics-title" className="text-[16px] font-extrabold leading-[22px] tracking-[-0.02em] text-[#1f2a44]">
+        <h2
+          id="popular-topics-title"
+          className="text-[16px] font-extrabold leading-[22px] tracking-[-0.02em] text-[#1f2a44]"
+        >
           지금 인기 있는 토픽
         </h2>
       </div>

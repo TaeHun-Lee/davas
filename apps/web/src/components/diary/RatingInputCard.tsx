@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useRef } from 'react';
 import { clampRating, ratingFromPointer } from './diary-compose-utils';
@@ -7,14 +7,24 @@ function Star({ fillPercent }: { fillPercent: number }) {
   return (
     <span className="relative inline-grid size-8 place-items-center text-[30px] leading-none text-[#dde4ee]">
       <span aria-hidden="true">★</span>
-      <span className="absolute inset-0 overflow-hidden text-[#ff5a52]" style={{ width: `${fillPercent}%` }} aria-hidden="true">
+      <span
+        className="absolute inset-0 overflow-hidden text-[#ff5a52]"
+        style={{ width: `${fillPercent}%` }}
+        aria-hidden="true"
+      >
         ★
       </span>
     </span>
   );
 }
 
-export function RatingInputCard({ value, onChange }: { value: number; onChange: (value: number) => void }) {
+export function RatingInputCard({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+}) {
   const ratingTrackRef = useRef<HTMLDivElement | null>(null);
   const clampedValue = clampRating(value);
 
@@ -38,11 +48,22 @@ export function RatingInputCard({ value, onChange }: { value: number; onChange: 
             aria-valuenow={clampedValue}
             tabIndex={0}
             onKeyDown={(event) => {
-              if (!['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+              if (
+                !['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowUp', 'Home', 'End'].includes(
+                  event.key,
+                )
+              )
+                return;
               event.preventDefault();
               if (event.key === 'Home') onChange(0);
               else if (event.key === 'End') onChange(5);
-              else onChange(clampRating(clampedValue + (event.key === 'ArrowRight' || event.key === 'ArrowUp' ? 0.5 : -0.5)));
+              else
+                onChange(
+                  clampRating(
+                    clampedValue +
+                      (event.key === 'ArrowRight' || event.key === 'ArrowUp' ? 0.5 : -0.5),
+                  ),
+                );
             }}
             onPointerDown={(event) => {
               event.currentTarget.setPointerCapture(event.pointerId);
@@ -61,7 +82,9 @@ export function RatingInputCard({ value, onChange }: { value: number; onChange: 
           </div>
         </div>
         <div className="h-12 w-px bg-[#e8eef6]" />
-        <output className="min-w-[52px] text-right text-[28px] font-black tracking-[-0.04em] text-[#2f6fb4]">{clampedValue.toFixed(1)}</output>
+        <output className="min-w-[52px] text-right text-[28px] font-black tracking-[-0.04em] text-[#2f6fb4]">
+          {clampedValue.toFixed(1)}
+        </output>
       </div>
     </section>
   );

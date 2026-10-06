@@ -67,7 +67,10 @@ export function mapTmdbSearchResult(result: TmdbSearchResult): DavasMediaSearchI
   };
 }
 
-export function mapTmdbRecommendationResult(result: TmdbSearchResult, reason: string): MediaRecommendationItem {
+export function mapTmdbRecommendationResult(
+  result: TmdbSearchResult,
+  reason: string,
+): MediaRecommendationItem {
   return {
     ...mapTmdbSearchResult(result),
     voteAverage: typeof result.vote_average === 'number' ? result.vote_average : null,

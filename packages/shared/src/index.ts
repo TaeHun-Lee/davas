@@ -6,6 +6,7 @@ export const VIEWING_METHODS = ['THEATER', 'OTT'] as const;
 export type ViewingMethod = (typeof VIEWING_METHODS)[number];
 export const DIARY_VISIBILITIES = ['PRIVATE', 'FRIENDS', 'SELECTED'] as const;
 export type DiaryVisibility = (typeof DIARY_VISIBILITIES)[number];
+export const CORE_DIARY_VISIBILITIES = ['PRIVATE', 'FRIENDS'] as const;
 
 export const CURRENT_TERMS_VERSION = '2026-07-12-dev';
 export const CURRENT_PRIVACY_VERSION = '2026-07-12-dev';
@@ -20,3 +21,5 @@ export type WatchlistStatus = (typeof WATCHLIST_STATUSES)[number];
 
 export const REACTION_EMOJIS = ['HEART', 'CLAP', 'SMILE', 'TEAR'] as const;
 export type ReactionEmoji = (typeof REACTION_EMOJIS)[number];
+
+export * from './contracts.js';

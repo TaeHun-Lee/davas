@@ -54,8 +54,15 @@ export class CommentsService {
     const diary = await this.ensureAccessibleDiary(diaryId, userId);
     const comment = this.comments.create({ diaryId, userId, content: normalizeContent(content) });
     const saved = await this.comments.save(comment);
-    await this.notifications?.notifyDiaryCommented({ diaryId, recipientId: diary.userId, actorId: userId });
-    const savedWithUser = await this.comments.findOne({ where: { id: saved.id, userId }, relations: { user: true } });
+    await this.notifications?.notifyDiaryCommented({
+      diaryId,
+      recipientId: diary.userId,
+      actorId: userId,
+    });
+    const savedWithUser = await this.comments.findOne({
+      where: { id: saved.id, userId },
+      relations: { user: true },
+    });
     return this.toCommentView(savedWithUser ?? saved, userId);
   }
 

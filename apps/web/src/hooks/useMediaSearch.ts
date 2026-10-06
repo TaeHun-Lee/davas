@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from 'react';
 import { searchMedia, type MediaSearchResult } from '../lib/api/media';
@@ -26,7 +26,8 @@ export function useMediaSearch(query: string, type: 'movie' | 'tv' | 'multi' = '
         const result = await searchMedia({ query: trimmedQuery, type, page: 1, language: 'ko-KR' });
         if (!isActive) return;
         setItems(result.items);
-        setPage(result.page); setTotalPages(result.totalPages);
+        setPage(result.page);
+        setTotalPages(result.totalPages);
         setStatus(result.items.length > 0 ? 'results' : 'empty');
       } catch {
         if (!isActive) return;
@@ -42,9 +43,23 @@ export function useMediaSearch(query: string, type: 'movie' | 'tv' | 'multi' = '
   }, [query, type]);
 
   async function loadMore() {
-    const trimmedQuery = query.trim(); if (trimmedQuery.length < 2 || page >= totalPages) return;
+    const trimmedQuery = query.trim();
+    if (trimmedQuery.length < 2 || page >= totalPages) return;
     setStatus('searching');
-    try { const result = await searchMedia({ query: trimmedQuery, type, page: page + 1, language: 'ko-KR' }); setItems((current) => [...current, ...result.items]); setPage(result.page); setTotalPages(result.totalPages); setStatus(result.items.length ? 'results' : 'empty'); } catch { setStatus('error'); }
+    try {
+      const result = await searchMedia({
+        query: trimmedQuery,
+        type,
+        page: page + 1,
+        language: 'ko-KR',
+      });
+      setItems((current) => [...current, ...result.items]);
+      setPage(result.page);
+      setTotalPages(result.totalPages);
+      setStatus(result.items.length ? 'results' : 'empty');
+    } catch {
+      setStatus('error');
+    }
   }
 
   return { items, status, page, totalPages, hasMore: page < totalPages, loadMore };

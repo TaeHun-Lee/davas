@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+umask 077
 stamp="$(date +%Y%m%d-%H%M%S)"
 root="${BACKUP_DIR:-/backups}"
 mkdir -p "$root/$stamp"

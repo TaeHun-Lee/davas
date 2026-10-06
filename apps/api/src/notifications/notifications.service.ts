@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
-import { NotificationEntity, type NotificationType } from '../database/entities/notification.entity';
+import {
+  NotificationEntity,
+  type NotificationType,
+} from '../database/entities/notification.entity';
 
 export type CreateNotificationInput = {
   recipientId: string;
@@ -46,15 +49,27 @@ export class NotificationsService {
   }
 
   async notifyDiaryLiked(input: CreateNotificationInput) {
-    return this.createForOtherUser({ ...input, diaryId: input.diaryId ?? null, type: 'DIARY_LIKED' });
+    return this.createForOtherUser({
+      ...input,
+      diaryId: input.diaryId ?? null,
+      type: 'DIARY_LIKED',
+    });
   }
 
   async notifyDiaryCommented(input: CreateNotificationInput) {
-    return this.createForOtherUser({ ...input, diaryId: input.diaryId ?? null, type: 'DIARY_COMMENTED' });
+    return this.createForOtherUser({
+      ...input,
+      diaryId: input.diaryId ?? null,
+      type: 'DIARY_COMMENTED',
+    });
   }
 
-  async notifyFriendRequested(input: Omit<CreateNotificationInput, 'diaryId'>) { return this.createForOtherUser({ ...input, diaryId: null, type: 'FRIEND_REQUESTED' }); }
-  async notifyFriendAccepted(input: Omit<CreateNotificationInput, 'diaryId'>) { return this.createForOtherUser({ ...input, diaryId: null, type: 'FRIEND_ACCEPTED' }); }
+  async notifyFriendRequested(input: Omit<CreateNotificationInput, 'diaryId'>) {
+    return this.createForOtherUser({ ...input, diaryId: null, type: 'FRIEND_REQUESTED' });
+  }
+  async notifyFriendAccepted(input: Omit<CreateNotificationInput, 'diaryId'>) {
+    return this.createForOtherUser({ ...input, diaryId: null, type: 'FRIEND_ACCEPTED' });
+  }
 
   async markRead(notificationId: string, userId: string) {
     const notification = await this.notifications.findOne({

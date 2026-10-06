@@ -1,6 +1,7 @@
 import { getApiBaseUrl } from './base-url';
 
-export type CommunityNotificationType = 'DIARY_LIKED' | 'DIARY_COMMENTED' | 'FRIEND_REQUESTED' | 'FRIEND_ACCEPTED';
+export type CommunityNotificationType =
+  'DIARY_LIKED' | 'DIARY_COMMENTED' | 'FRIEND_REQUESTED' | 'FRIEND_ACCEPTED';
 
 export type CommunityNotificationItem = {
   id: string;
@@ -34,7 +35,10 @@ export async function getCommunityNotifications() {
   const response = await fetch(`${getApiBaseUrl()}/notifications`, {
     credentials: 'include',
   });
-  return parseJsonResponse<CommunityNotificationsResponse>(response, 'community notifications failed');
+  return parseJsonResponse<CommunityNotificationsResponse>(
+    response,
+    'community notifications failed',
+  );
 }
 
 export async function markCommunityNotificationRead(id: string) {

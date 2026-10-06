@@ -160,7 +160,10 @@ describe('RecommendationsService', () => {
     const result = await service.todayCarousel({ limit: 3 });
 
     assert.equal(result.items.length, 3);
-    assert.deepEqual(result.items.map((item) => item.reason), ['today:carousel', 'today:carousel', 'today:carousel']);
+    assert.deepEqual(
+      result.items.map((item) => item.reason),
+      ['today:carousel', 'today:carousel', 'today:carousel'],
+    );
     assert.deepEqual(tmdbClient.trendingCalls[0], { period: 'day', page: 1, language: 'ko-KR' });
   });
 
@@ -168,7 +171,10 @@ describe('RecommendationsService', () => {
     const tmdbClient = new FakeTmdbClient();
     const service = new RecommendationsService(tmdbClient as never);
 
-    const result = await service.randomGenreRecommendations({ seed: 'immersive-thriller', limit: 1 });
+    const result = await service.randomGenreRecommendations({
+      seed: 'immersive-thriller',
+      limit: 1,
+    });
 
     assert.equal(result.preset.id, 'immersive-thriller');
     assert.equal(result.items[0].reason, 'genre:immersive-thriller');

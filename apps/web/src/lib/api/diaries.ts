@@ -48,9 +48,12 @@ export async function getDiaryDashboard(params?: { year?: number; month?: number
   if (params?.month) searchParams.set('month', String(params.month));
   if (params?.day) searchParams.set('day', String(params.day));
   const queryString = searchParams.toString();
-  const response = await fetch(`${getApiBaseUrl()}/diaries/dashboard${queryString ? `?${queryString}` : ''}`, {
-    credentials: 'include',
-  });
+  const response = await fetch(
+    `${getApiBaseUrl()}/diaries/dashboard${queryString ? `?${queryString}` : ''}`,
+    {
+      credentials: 'include',
+    },
+  );
 
   if (!response.ok) {
     throw new Error('diary dashboard failed');
@@ -81,14 +84,19 @@ export async function getDiary(id: string) {
     credentials: 'include',
   });
 
-  if (!response.ok) throw Object.assign(new Error('diary detail failed'), { status: response.status });
+  if (!response.ok)
+    throw Object.assign(new Error('diary detail failed'), { status: response.status });
 
   return ((await response.json()) as { diary: EditableDiary }).diary;
 }
 
 export async function deleteDiary(id: string) {
-  const response = await fetch(`${getApiBaseUrl()}/diaries/${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
-  if (!response.ok) throw Object.assign(new Error('diary delete failed'), { status: response.status });
+  const response = await fetch(`${getApiBaseUrl()}/diaries/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  if (!response.ok)
+    throw Object.assign(new Error('diary delete failed'), { status: response.status });
   return response.json() as Promise<{ id: string; deleted: true }>;
 }
 

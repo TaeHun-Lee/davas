@@ -1,12 +1,26 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Req, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Req,
+  Res,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
-import type { Request } from 'express';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
-import { UpdateMeDto, UsersService, type ProfileImageFile } from './users.service';
+import { ACCESS_TOKEN_COOKIE, type AuthenticatedRequest } from '../auth/jwt-cookie-auth.guard';
 import { DeleteMeDto } from './dto/delete-me.dto';
-
-const ACCESS_TOKEN_COOKIE = 'davas_access_token';
+import { PROFILE_IMAGE_UPLOAD_OPTIONS } from './profile-image-upload';
+import { UploadConcurrencyInterceptor } from './upload-concurrency.interceptor';
+import { type ProfileImageFile, type UpdateMeDto, UsersService } from './users.service';
 
 @ApiTags('Users')
 @Controller('users')
@@ -19,36 +33,47 @@ export class UsersController {
   }
 
   @Patch('me')
-  async updateMe(@Req() request: Request, @Body() body: UpdateMeDto) {
-    return { user: await this.users.updateMe(this.readCookie(request, ACCESS_TOKEN_COOKIE), body) };
+  async updateMe(@Req() request: AuthenticatedRequest, @Body() body: UpdateMeDto) {
+    return { user: await this.users.updateMe(request.user.id, body) };
   }
 
   @Post('me/profile-image')
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadProfileImage(@Req() request: Request, @UploadedFile() file?: ProfileImageFile) {
-    return { user: await this.users.saveProfileImage(this.readCookie(request, ACCESS_TOKEN_COOKIE), file) };
+  @Throttle({
+    default: { limit: 5, ttl: 60_000, blockDuration: 60_000 },
+  })
+  @UseInterceptors(
+    UploadConcurrencyInterceptor,
+    FileInterceptor('file', PROFILE_IMAGE_UPLOAD_OPTIONS),
+  )
+  async uploadProfileImage(
+    @Req() request: AuthenticatedRequest,
+    @UploadedFile() file?: ProfileImageFile,
+  ) {
+    return {
+      user: await this.users.saveProfileImage(request.user.id, file),
+    };
   }
 
   @Delete('me/profile-image')
-  async deleteProfileImage(@Req() request: Request) {
-    return { user: await this.users.deleteProfileImage(this.readCookie(request, ACCESS_TOKEN_COOKIE)) };
+  async deleteProfileImage(@Req() request: AuthenticatedRequest) {
+    return {
+      user: await this.users.deleteProfileImage(request.user.id),
+    };
   }
 
   @Delete('me')
   @HttpCode(204)
-  async deleteMe(@Req() request: Request, @Res({ passthrough: true }) response: Response, @Body() body: DeleteMeDto) {
-    await this.users.deleteMe(this.readCookie(request, ACCESS_TOKEN_COOKIE), body.password);
-    response.clearCookie(ACCESS_TOKEN_COOKIE, { httpOnly: true, sameSite: 'lax', secure: process.env.COOKIE_SECURE === 'true', path: '/' });
-  }
-
-  private readCookie(request: Request, name: string): string | undefined {
-    const cookieHeader = request.headers.cookie;
-    if (!cookieHeader) return undefined;
-
-    return cookieHeader
-      .split(';')
-      .map((part) => part.trim())
-      .map((part) => part.split('='))
-      .find(([key]) => key === name)?.[1];
+  async deleteMe(
+    @Req() request: AuthenticatedRequest,
+    @Res({ passthrough: true }) response: Response,
+    @Body() body: DeleteMeDto,
+  ) {
+    await this.users.deleteMe(request.user.id, body.password);
+    response.clearCookie(ACCESS_TOKEN_COOKIE, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.COOKIE_SECURE === 'true',
+      path: '/',
+    });
   }
 }
