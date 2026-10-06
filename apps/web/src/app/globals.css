@@ -2903,6 +2903,9 @@ label:has(> input.sr-only:focus-visible) {
   gap: 8px;
   margin-top: 14px;
 }
+.card-actions > :only-child {
+  grid-column: 1 / -1;
+}
 .card-actions a {
   display: flex;
   min-height: 44px;

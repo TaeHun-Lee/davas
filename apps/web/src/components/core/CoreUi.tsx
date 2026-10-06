@@ -361,7 +361,10 @@ export function RecordCard({ item, returnTo }: { item: RecordCardData; returnTo?
       ) : null}
       <div className="card-actions">
         <Link href={detail}>자세히 보기</Link>
-        <Link href={`/records/new?mediaId=${item.media.id}`}>나도 기록하기</Link>
+        {/* "I watched it too" only makes sense on someone else's record. */}
+        {item.isMine ? null : (
+          <Link href={`/records/new?mediaId=${item.media.id}`}>나도 기록하기</Link>
+        )}
       </div>
     </article>
   );

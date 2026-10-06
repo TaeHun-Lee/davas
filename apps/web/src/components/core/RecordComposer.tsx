@@ -484,9 +484,6 @@ export function RecordComposer({ editId }: { editId?: string }) {
           </div>
         </section>
         <section className="record-compose-panel mt-4">
-          <PhotoPicker uploads={photoUploads} />
-        </section>
-        <section className="record-compose-panel mt-4">
           <div>
             <span className="field-label">어디서 봤나요? *</span>
             <SourceKindControl
@@ -775,6 +772,10 @@ export function RecordComposer({ editId }: { editId?: string }) {
             value={draft.memoryNote}
             onChange={(memoryNote) => setDraft({ ...draft, memoryNote })}
           />
+        </section>
+        {/* Optional, so it comes after everything about the viewing itself. */}
+        <section className="record-compose-panel mt-4">
+          <PhotoPicker uploads={photoUploads} />
         </section>
         {error ? (
           <p className="form-error mt-4" role="alert">

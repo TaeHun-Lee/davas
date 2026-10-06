@@ -12,6 +12,13 @@ describe('record experience screens', () => {
     const uploads = source('hooks/useWatchPhotoUploads.ts');
     const client = source('lib/api/watch-events.ts');
     assert.match(composer, /<PhotoPicker uploads=\{photoUploads\} \/>/);
+    // Optional photos come after the memory note, under a plain "attach photos" heading.
+    assert.ok(
+      composer.indexOf('<PhotoPicker uploads={photoUploads} />') >
+        composer.indexOf('추억 메모 · 공간 사람만 봐요'),
+    );
+    assert.match(picker, /<span>사진 첨부 \(옵션\)<\/span>/);
+    assert.doesNotMatch(picker, /데이트 사진/);
     // Saving waits for uploads still in flight and refuses to drop failed ones silently.
     assert.match(composer, /await photoUploads\.settle\(\)/);
     assert.match(composer, /올리지 못한 사진이 있어요/);
@@ -79,6 +86,15 @@ describe('record experience screens', () => {
     assert.match(photo, /photo\.placeholder/);
     assert.match(photo, /loading=\{variant === 'thumb' \? 'lazy' : 'eager'\}/);
     assert.match(css, /\.watch-photo\[data-loaded\] img/);
+  });
+
+  it('offers "나도 기록하기" only on someone else\'s record', () => {
+    const card = source('components/core/CoreUi.tsx');
+    assert.match(card, /\{item\.isMine \? null : \(\s*<Link href=\{`\/records\/new\?mediaId=/);
+    assert.match(
+      source('app/globals.css'),
+      /\.card-actions > :only-child \{\s*grid-column: 1 \/ -1;/,
+    );
   });
 
   it('keeps comments on the record for space-shared records only', () => {

@@ -27,7 +27,7 @@ export function PhotoPicker({ uploads }: { uploads: WatchPhotoUploads }) {
   return (
     <fieldset className="photo-picker">
       <legend>
-        <span>데이트 사진</span>
+        <span>사진 첨부 (옵션)</span>
         <span className="photo-picker-count">
           {items.length}/{WATCH_PHOTO_MAX_COUNT}
         </span>
@@ -130,7 +130,8 @@ export function PhotoPicker({ uploads }: { uploads: WatchPhotoUploads }) {
         </li>
       </ul>
       <p className="photo-picker-help">
-        최대 10장까지 올릴 수 있어요. 첫 번째 사진이 대표 사진이 되고, 원본은 그대로 보관해요.
+        사진 없이도 저장할 수 있어요. 최대 10장까지 첨부할 수 있고, 첫 번째 사진이 대표 사진으로
+        보여요. 원본은 그대로 보관돼요.
       </p>
       {message ? (
         <p className="photo-picker-help" role="status">
