@@ -215,7 +215,7 @@ export function SignupCard() {
           </div>
         </div>
       ) : (
-        <p className="mt-5 rounded-2xl bg-[var(--blue-soft)] p-4 text-sm font-bold text-[var(--blue)]">
+        <p className="mt-5 rounded-2xl bg-[var(--blue-soft)] p-4 text-sm font-bold text-[var(--blue-ink)]">
           친구 초대 링크로 가입하고 있어요. 가입하면 바로 친구로 연결돼요.
         </p>
       )}

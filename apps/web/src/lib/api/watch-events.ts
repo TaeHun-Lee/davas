@@ -90,6 +90,11 @@ export function getSpaceTimeline(
   return coreFetch<WatchTimelinePage>(`/v1/spaces/${encode(spaceId)}/timeline${suffix}`);
 }
 
+/** Records shared to the space that still wait for me to say whether I watched. */
+export function getPendingConfirmations(spaceId: string) {
+  return coreFetch<{ items: WatchEvent[] }>(`/v1/spaces/${encode(spaceId)}/pending-confirmations`);
+}
+
 export function compareSpaceReactions(spaceId: string, mediaId: string) {
   return coreFetch<SpaceReactionComparison>(
     `/v1/spaces/${encode(spaceId)}/titles/${encode(mediaId)}/reactions`,

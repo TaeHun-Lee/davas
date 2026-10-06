@@ -384,16 +384,31 @@ export function EmptyState({
     </section>
   );
 }
-export function AsyncState({ kind, onRetry }: { kind: 'loading' | 'error'; onRetry?: () => void }) {
+/**
+ * Loading skeleton or load error for a whole screen. `loadingLabel` and `errorTitle` name
+ * what is loading (알림, 목록…) so a failure on the notification screen does not say "기록".
+ */
+export function AsyncState({
+  kind,
+  onRetry,
+  loadingLabel = '기록 불러오는 중',
+  errorTitle = '기록을 불러오지 못했어요',
+}: {
+  kind: 'loading' | 'error';
+  onRetry?: () => void;
+  loadingLabel?: string;
+  errorTitle?: string;
+}) {
   return kind === 'loading' ? (
-    <div className="space-y-3" aria-label="기록 불러오는 중">
+    <div className="space-y-3" role="status" aria-busy="true">
+      <span className="sr-only">{loadingLabel}</span>
       {[0, 1, 2].map((value) => (
-        <div key={value} className="skeleton-card" />
+        <div key={value} className="skeleton-card" aria-hidden="true" />
       ))}
     </div>
   ) : (
     <EmptyState
-      title="기록을 불러오지 못했어요"
+      title={errorTitle}
       description="연결을 확인하고 다시 시도해 주세요."
       action={
         <button type="button" className="secondary-button" onClick={onRetry}>

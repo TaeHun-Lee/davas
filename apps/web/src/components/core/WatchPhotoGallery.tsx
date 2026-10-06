@@ -117,7 +117,8 @@ function PhotoViewer({
         <button type="button" onClick={close} aria-label="사진 보기 닫기">
           <span aria-hidden="true">×</span>
         </button>
-        <span aria-hidden="true">
+        <span aria-live="polite" aria-atomic="true">
+          <span className="sr-only">사진 </span>
           {index + 1} / {photos.length}
         </span>
         <a

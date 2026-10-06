@@ -26,7 +26,11 @@ export function SettingsScreen() {
   if (!user)
     return (
       <TaskShell title="설정" fallback="/">
-        {error ? <p className="form-error">{error}</p> : <AsyncState kind="loading" />}
+        {error ? (
+          <p className="form-error">{error}</p>
+        ) : (
+          <AsyncState kind="loading" loadingLabel="내 정보 불러오는 중" />
+        )}
       </TaskShell>
     );
   const save = async () => {
@@ -72,7 +76,7 @@ export function SettingsScreen() {
               className="h-16 w-16 rounded-full object-cover"
             />
           ) : (
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--blue-soft)] text-2xl font-black text-[var(--blue)]">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--blue-soft)] text-2xl font-black text-[var(--blue-ink)]">
               {user.nickname.slice(0, 1)}
             </span>
           )}

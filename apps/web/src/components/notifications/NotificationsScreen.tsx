@@ -81,9 +81,9 @@ export function NotificationsScreen() {
         </p>
       ) : null}
       {status === 'loading' ? (
-        <AsyncState kind="loading" />
+        <AsyncState kind="loading" loadingLabel="알림 불러오는 중" />
       ) : status === 'error' ? (
-        <AsyncState kind="error" onRetry={load} />
+        <AsyncState kind="error" onRetry={load} errorTitle="알림을 불러오지 못했어요" />
       ) : !items.length ? (
         <EmptyState
           title="아직 알림이 없어요"

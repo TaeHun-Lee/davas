@@ -65,7 +65,21 @@ export function WishPickCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load, refreshKey]);
 
-  if (variant === 'home' && (status === 'error' || (status === 'ready' && !pick?.item))) {
+  // A failed lookup says so; only a list that really has nothing to pick invites adding titles.
+  if (variant === 'home' && status === 'error') {
+    return (
+      <div className="home-feed-message" role="status">
+        <div>
+          <h3>오늘 밤 후보를 불러오지 못했어요.</h3>
+          <p>같이 보고 싶어요 목록은 그대로예요.</p>
+        </div>
+        <button type="button" onClick={() => void load({ mood })}>
+          다시 시도
+        </button>
+      </div>
+    );
+  }
+  if (variant === 'home' && status === 'ready' && !pick?.item) {
     return (
       <Link href="/spaces/wishes" className="wish-pick-empty">
         <span>
@@ -145,8 +159,14 @@ export function WishPickCard({
               </p>
               {pick.reasons.length ? (
                 <ul className="wish-pick-reasons">
-                  {pick.reasons.map((reason) => (
-                    <li key={reason}>{reason}</li>
+                  {/* Only "everyone wants it" (sent first) gets the highlight, never a warning. */}
+                  {pick.reasons.map((reason, index) => (
+                    <li
+                      key={reason}
+                      data-tone={index === 0 && item.wantedByAll ? 'match' : undefined}
+                    >
+                      {reason}
+                    </li>
                   ))}
                 </ul>
               ) : null}

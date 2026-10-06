@@ -582,6 +582,60 @@ describe('WatchEventsService', () => {
     assert.deepEqual(removedPhotosOf, [created.id]);
   });
 
+  it('keeps a service name only on a streaming viewing', async () => {
+    const { database, service } = setup();
+    await service.create('owner', {
+      mediaId: 'media-1',
+      watchedDate: '2026-08-06',
+      source: { kind: 'THEATER', providerName: '넷플릭스', placeText: 'CGV 용산' } as never,
+    });
+    assert.equal(database.sources[0].providerName, null);
+    assert.equal(database.sources[0].placeText, 'CGV 용산');
+  });
+
+  it('lists the records still waiting for my answer, however many newer ones came after', async () => {
+    const { database, service } = setup();
+    database.addMember('space-1', 'jiwoo');
+    database.addMember('space-1', 'minho');
+    const asked = await service.create('minho', {
+      mediaId: 'media-1',
+      watchedDate: '2026-08-01',
+      spaceIds: ['space-1'],
+      participantAccountIds: ['jiwoo'],
+    });
+    for (let day = 2; day <= 8; day += 1) {
+      await service.create('minho', {
+        mediaId: 'media-1',
+        watchedDate: `2026-08-0${day}`,
+        spaceIds: ['space-1'],
+      });
+    }
+    // A request in another space or a deleted record is not offered here.
+    database.addMember('space-2', 'jiwoo');
+    database.addMember('space-2', 'minho');
+    const elsewhere = await service.create('minho', {
+      mediaId: 'media-1',
+      watchedDate: '2026-08-03',
+      spaceIds: ['space-2'],
+      participantAccountIds: ['jiwoo'],
+    });
+
+    const first = await service.pendingConfirmations('space-1', 'jiwoo');
+    assert.deepEqual(
+      first.items.map((item) => item.id),
+      [asked.id],
+    );
+    assert.ok(!first.items.some((item) => item.id === elsewhere.id));
+    assert.deepEqual((await service.pendingConfirmations('space-1', 'minho')).items, []);
+
+    await service.respondToParticipation(asked.id, 'jiwoo', 'CONFIRMED');
+    assert.deepEqual((await service.pendingConfirmations('space-1', 'jiwoo')).items, []);
+    await assert.rejects(
+      () => service.pendingConfirmations('space-1', 'stranger'),
+      (error) => exceptionCode(error) === 'SPACE_NOT_FOUND',
+    );
+  });
+
   it('keeps the share time when a record is edited, and renews it when shared again', async () => {
     const { database, service } = setup();
     database.addMember('space-1', 'owner');

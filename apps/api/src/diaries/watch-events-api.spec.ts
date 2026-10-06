@@ -25,6 +25,7 @@ describe('watch events REST API contract', () => {
     assert.match(controller, /@Controller\('v1\/spaces'\)/);
     assert.match(controller, /@Get\(':spaceId\/timeline'\)/);
     assert.match(controller, /@Get\(':spaceId\/titles\/:mediaId\/reactions'\)/);
+    assert.match(controller, /@Get\(':spaceId\/pending-confirmations'\)/);
   });
 
   it('keeps legacy FRIENDS and SELECTED reads while adding active membership checks', () => {

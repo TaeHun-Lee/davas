@@ -6,7 +6,11 @@ import { useSpaceTimeline } from '../../hooks/useSpaceTimeline';
 import { getMe } from '../../lib/api/auth';
 import { CoreApiError } from '../../lib/api/core';
 import { listSpaces, type SpaceView } from '../../lib/api/spaces';
-import { respondToWatchParticipation, type WatchEvent } from '../../lib/api/watch-events';
+import {
+  getPendingConfirmations,
+  respondToWatchParticipation,
+  type WatchEvent,
+} from '../../lib/api/watch-events';
 import { SpaceWatchCard } from '../spaces/SpaceWatchCard';
 import { WishPickCard } from '../spaces/WishPickCard';
 import {
@@ -146,7 +150,21 @@ export function SpaceHome() {
 
 function SpaceHomeTimeline({ space, myAccountId }: { space: SpaceView; myAccountId: string }) {
   const timeline = useSpaceTimeline(space.id, HOME_TIMELINE_LIMIT);
-  const pending = pendingConfirmations(timeline.items, myAccountId);
+  // Requests are fetched on their own: one older than the five newest records still shows.
+  const [asked, setAsked] = useState<WatchEvent[]>([]);
+  useEffect(() => {
+    let active = true;
+    getPendingConfirmations(space.id)
+      .then(({ items }) => {
+        if (active) setAsked(items);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [space.id]);
+  const byId = new Map([...asked, ...timeline.items].map((event) => [event.id, event]));
+  const pending = pendingConfirmations([...byId.values()], myAccountId);
 
   return (
     <>
@@ -155,7 +173,10 @@ function SpaceHomeTimeline({ space, myAccountId }: { space: SpaceView; myAccount
           key={event.id}
           event={event}
           myAccountId={myAccountId}
-          onAnswered={(next) => timeline.updateItem(event.id, () => next)}
+          onAnswered={(next) => {
+            setAsked((current) => current.map((item) => (item.id === event.id ? next : item)));
+            timeline.updateItem(event.id, () => next);
+          }}
         />
       ))}
       <section className="space-home-timeline" aria-labelledby="space-home-timeline-title">

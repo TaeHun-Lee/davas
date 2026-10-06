@@ -76,7 +76,7 @@ export function WishesScreen() {
   if (state.status === 'loading')
     return (
       <TaskShell title="같이 보고 싶어요" fallback="/spaces">
-        <AsyncState kind="loading" />
+        <AsyncState kind="loading" loadingLabel="공간 불러오는 중" />
       </TaskShell>
     );
   if (state.status === 'error' || !space)
@@ -155,9 +155,9 @@ export function WishesScreen() {
       ) : null}
 
       {status === 'loading' && !items.length ? (
-        <AsyncState kind="loading" />
+        <AsyncState kind="loading" loadingLabel="같이 보고 싶어요 목록 불러오는 중" />
       ) : status === 'error' ? (
-        <AsyncState kind="error" onRetry={load} />
+        <AsyncState kind="error" onRetry={load} errorTitle="목록을 불러오지 못했어요" />
       ) : !items.length ? (
         <EmptyState
           title="아직 담긴 작품이 없어요"

@@ -41,7 +41,9 @@ describe('choosing together screens', () => {
     assert.match(card, /exclude/);
     assert.match(card, /다른 후보/);
     assert.match(card, /aria-label="오늘 기분"/);
-    assert.match(card, /variant === 'home' && \(status === 'error'/);
+    assert.match(card, /variant === 'home' && status === 'error'/);
+    assert.match(card, /오늘 밤 후보를 불러오지 못했어요/);
+    assert.match(card, /variant === 'home' && status === 'ready' && !pick\?\.item/);
     assert.match(card, /\/records\/new\?mediaId=/);
   });
 

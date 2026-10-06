@@ -88,4 +88,29 @@ describe('record experience screens', () => {
     assert.match(reviews, /maxLength=\{WATCH_COMMENT_MAX_LENGTH\}/);
     assert.match(reviews, /aria-label="내 댓글 삭제"/);
   });
+
+  it('keeps the record steady after an action and shows the result where it can be seen', () => {
+    const detail = source('components/core/WatchEventDetailScreen.tsx');
+    const css = source('app/globals.css');
+    // Saving a review or answering a request refreshes without swapping in the loader.
+    assert.equal((detail.match(/await load\(\{ quiet: true \}\)/g) ?? []).length, 2);
+    assert.match(detail, /className="action-toast" data-tone="error"/);
+    assert.match(css, /\.action-toast \{\s*position: fixed;/);
+    // The delete confirmation is inline, keeps its own error and returns where it came from.
+    assert.doesNotMatch(detail, /aria-modal="true"/);
+    assert.match(detail, /setDeleteError\(/);
+    assert.match(detail, /router\.replace\(fallback\)/);
+  });
+
+  it('saves only what the composer shows and keeps its controls reachable', () => {
+    const composer = source('components/core/RecordComposer.tsx');
+    const fields = source('components/core/ComposerFields.tsx');
+    const css = source('app/globals.css');
+    assert.match(composer, /providerName: draft!\.sourceKind === 'OTT' \?/);
+    assert.match(composer, /'본 날짜를 골라 주세요'/);
+    assert.match(composer, /<div className="sticky-commit-bar">/);
+    assert.match(fields, /type="number"\s+inputMode="numeric"/);
+    assert.match(css, /label:has\(> input\.sr-only:focus-visible\)/);
+    assert.match(css, /--blue-ink: #1c5ab5;/);
+  });
 });

@@ -58,6 +58,9 @@ const REVIEW_FIELDS = ['rating', 'headline', 'review', 'hasSpoiler', 'isBlind'] 
 const hasReviewFields = (dto: SaveWatchReactionDto) =>
   REVIEW_FIELDS.some((field) => dto[field] !== undefined);
 
+// More than this many open requests means something is off; the rest stay in notifications.
+const PENDING_CONFIRMATIONS_LIMIT = 10;
+
 // Relations every watch-record view needs; the timeline loads the same tree under `diary`.
 // Loaded with relationLoadStrategy 'query': one query per relation for the whole page. A
 // single JOIN would return participants x reactions x likes x photos x shares rows per record.
@@ -550,6 +553,34 @@ export class WatchEventsService {
     };
   }
 
+  /**
+   * Records shared to the space that still wait for the viewer to say whether they watched.
+   * Home shows these on their own, so a request does not drop out of sight once newer
+   * records push it past the first timeline page.
+   */
+  async pendingConfirmations(spaceId: string, accountId: string) {
+    await this.access.assertActiveSpaceMember(spaceId, accountId);
+    const asked = await this.participants.find({ where: { accountId, status: 'PENDING' } });
+    if (!asked.length) return { items: [] };
+    const shares = await this.spaceShares.find({
+      where: {
+        spaceId,
+        revokedAt: IsNull(),
+        diaryId: In(asked.map((participant) => participant.diaryId)),
+        diary: { deletedAt: IsNull() },
+      },
+      relations: { diary: WATCH_VIEW_RELATIONS },
+      relationLoadStrategy: 'query',
+      order: { sharedAt: 'DESC', id: 'DESC' },
+      take: PENDING_CONFIRMATIONS_LIMIT,
+    });
+    const items = await this.toViews(
+      shares.map((share) => share.diary),
+      accountId,
+    );
+    return { items };
+  }
+
   /** Where the viewer is up to in a series: their latest record of it, written or joined. */
   async progress(accountId: string, mediaId: string): Promise<WatchProgress | null> {
     const [own, joined] = await Promise.all([
@@ -874,7 +905,9 @@ export class WatchEventsService {
     }
     const source = (await sources.findOne({ where: { diaryId } })) ?? sources.create({ diaryId });
     source.kind = dto.kind;
-    source.providerName = dto.providerName?.trim() || null;
+    // A service name only belongs to a streaming viewing; switching a draft from OTT to the
+    // theater must not leave "넷플릭스" behind as where it was watched.
+    source.providerName = dto.kind === 'OTT' ? dto.providerName?.trim() || null : null;
     source.placeText = dto.placeText?.trim() || null;
     source.theaterFormat = theater ? (dto.theaterFormat ?? null) : null;
     source.seatText = theater ? dto.seatText?.trim() || null : null;

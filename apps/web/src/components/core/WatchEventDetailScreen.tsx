@@ -93,6 +93,14 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
   const [actionError, setActionError] = useState('');
   const [notice, setNotice] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  // A saved notice clears itself; an error stays until it is dismissed or the next try.
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(''), 4000);
+    return () => clearTimeout(timer);
+  }, [notice]);
 
   const loadComments = useCallback(async () => {
     setCommentStatus('loading');
@@ -104,25 +112,36 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
     }
   }, [id]);
 
-  const load = useCallback(async () => {
-    setStatus('loading');
-    setActionError('');
-    try {
-      const [nextEvent, me] = await Promise.all([getWatchEvent(id), getMe()]);
-      const accountId = me.id ?? '';
-      const myReaction = nextEvent.reactions.find((reaction) => reaction.accountId === accountId);
-      setWatchEvent(nextEvent);
-      setMyAccountId(accountId);
-      setRating(myReaction?.rating ?? null);
-      setHeadline(myReaction?.headline ?? '');
-      setReview(myReaction?.review ?? '');
-      setHasSpoiler(myReaction?.hasSpoiler ?? false);
-      setIsBlind(myReaction?.isBlind ?? false);
-      setStatus('ready');
-    } catch (error) {
-      setStatus(error instanceof CoreApiError && error.status === 404 ? 'missing' : 'error');
-    }
-  }, [id]);
+  // `quiet` refreshes after an action without swapping the screen for a loader, so the
+  // scroll position, an open spoiler and a half-written comment survive.
+  const load = useCallback(
+    async (options: { quiet?: boolean } = {}) => {
+      if (!options.quiet) {
+        setStatus('loading');
+        setActionError('');
+      }
+      try {
+        const [nextEvent, me] = await Promise.all([getWatchEvent(id), getMe()]);
+        const accountId = me.id ?? '';
+        const myReaction = nextEvent.reactions.find((reaction) => reaction.accountId === accountId);
+        setWatchEvent(nextEvent);
+        setMyAccountId(accountId);
+        setRating(myReaction?.rating ?? null);
+        setHeadline(myReaction?.headline ?? '');
+        setReview(myReaction?.review ?? '');
+        setHasSpoiler(myReaction?.hasSpoiler ?? false);
+        setIsBlind(myReaction?.isBlind ?? false);
+        setStatus('ready');
+      } catch (error) {
+        if (options.quiet) {
+          setActionError('반영했지만 최신 내용을 불러오지 못했어요. 새로고침해 주세요.');
+          return;
+        }
+        setStatus(error instanceof CoreApiError && error.status === 404 ? 'missing' : 'error');
+      }
+    },
+    [id],
+  );
 
   useEffect(() => {
     void load();
@@ -140,7 +159,7 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
           ? '함께 본 감상으로 확인했어요. 이제 내 별점과 리뷰를 남길 수 있어요.'
           : '참여 요청을 거절했어요.',
       );
-      await load();
+      await load({ quiet: true });
     } catch (error) {
       setActionError(error instanceof Error ? error.message : '참여 상태를 저장하지 못했어요.');
     } finally {
@@ -161,7 +180,7 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
         isBlind: watchEvent?.visibility === 'SPACES' && isBlind,
       });
       setNotice('내 별점과 리뷰를 저장했어요.');
-      await load();
+      await load({ quiet: true });
     } catch (error) {
       setActionError(error instanceof Error ? error.message : '내 반응을 저장하지 못했어요.');
     } finally {
@@ -225,7 +244,7 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
       {params.get('saved') ? (
         <p
           role="status"
-          className="mb-3 rounded-2xl bg-[var(--blue-soft)] p-3 text-sm font-bold text-[var(--blue)]"
+          className="mb-3 rounded-2xl bg-[var(--blue-soft)] p-3 text-sm font-bold text-[var(--blue-ink)]"
         >
           {params.get('saved') === 'space'
             ? '선택한 공간에 이 감상만 공유했어요.'
@@ -233,16 +252,20 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
         </p>
       ) : null}
       {notice ? (
-        <p
-          role="status"
-          className="mb-3 rounded-2xl bg-[#eef7f1] p-3 text-sm font-bold text-[#327653]"
-        >
-          {notice}
+        <p role="status" className="action-toast" data-tone="ok">
+          <span>{notice}</span>
+          <button type="button" aria-label="안내 닫기" onClick={() => setNotice('')}>
+            <span aria-hidden="true">×</span>
+          </button>
         </p>
       ) : null}
+      {/* Shown over the bottom of the screen: the actions that fail sit far below the top. */}
       {actionError ? (
-        <p role="alert" className="form-error mb-3">
-          {actionError}
+        <p role="alert" className="action-toast" data-tone="error">
+          <span>{actionError}</span>
+          <button type="button" aria-label="오류 안내 닫기" onClick={() => setActionError('')}>
+            <span aria-hidden="true">×</span>
+          </button>
         </p>
       ) : null}
 
@@ -447,22 +470,29 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
           <Link className="secondary-button" href={`/records/${watchEvent.id}/edit`}>
             수정
           </Link>
-          <button className="danger-button" onClick={() => setConfirmDelete(true)}>
+          <button
+            className="danger-button"
+            onClick={() => {
+              setDeleteError('');
+              setConfirmDelete(true);
+            }}
+          >
             삭제
           </button>
         </div>
       ) : null}
       {confirmDelete ? (
-        <section
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="delete-watch-title"
-          className="core-card mt-4 p-5"
-        >
+        // An inline confirmation, not a modal: the rest of the page stays usable.
+        <section aria-labelledby="delete-watch-title" className="core-card mt-4 p-5">
           <h2 id="delete-watch-title" className="section-title">
             이 감상 기록을 삭제할까요?
           </h2>
           <p className="page-description">삭제하면 개인 기록과 공유 공간 타임라인에서 사라져요.</p>
+          {deleteError ? (
+            <p role="alert" className="form-error mt-2">
+              {deleteError}
+            </p>
+          ) : null}
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button className="secondary-button" autoFocus onClick={() => setConfirmDelete(false)}>
               취소
@@ -472,13 +502,14 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
               disabled={busy}
               onClick={async () => {
                 setBusy(true);
+                setDeleteError('');
                 try {
                   await deleteWatchEvent(watchEvent.id);
-                  router.replace('/me');
+                  router.replace(fallback);
                 } catch (error) {
                   setBusy(false);
-                  setConfirmDelete(false);
-                  setActionError(
+                  // Kept open next to the button that failed, so the failure is seen.
+                  setDeleteError(
                     error instanceof Error ? error.message : '감상을 삭제하지 못했어요.',
                   );
                 }

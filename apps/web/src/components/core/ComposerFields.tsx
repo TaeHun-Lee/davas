@@ -154,6 +154,7 @@ export function SeriesProgress({
   onChange: (value: { watched: number | null; total: number | null; completed: boolean }) => void;
 }) {
   const totalId = useId();
+  const watchedId = useId();
   const clamp = (value: number) => Math.max(1, Math.min(total ?? 2000, value));
   const current = watched ?? 0;
   return (
@@ -171,7 +172,31 @@ export function SeriesProgress({
         >
           <span aria-hidden="true">−</span>
         </button>
-        <output aria-live="polite">{watched ? `${watched}화까지` : '회차 미선택'}</output>
+        {/* Typed directly too: a daily drama past episode 100 should not take 100 taps. */}
+        <label htmlFor={watchedId} className="series-progress-value">
+          <span className="sr-only">본 회차</span>
+          <input
+            id={watchedId}
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={total ?? 2000}
+            placeholder="미선택"
+            value={watched ?? ''}
+            onChange={(event) => {
+              const raw = event.target.value;
+              if (!raw) {
+                onChange({ watched: null, total, completed: false });
+                return;
+              }
+              const parsed = Number(raw);
+              if (!Number.isInteger(parsed) || parsed < 1) return;
+              const next = clamp(parsed);
+              onChange({ watched: next, total, completed: total !== null && next === total });
+            }}
+          />
+          {watched ? <span aria-hidden="true">화까지</span> : null}
+        </label>
         <button
           type="button"
           aria-label="본 회차 하나 늘리기"

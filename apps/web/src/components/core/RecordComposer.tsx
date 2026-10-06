@@ -76,7 +76,7 @@ function SourceKindControl({
       {(Object.keys(sourceLabels) as WatchSourceKind[]).map((kind) => (
         <label
           key={kind}
-          className="flex min-h-11 cursor-pointer items-center justify-center rounded-xl text-sm font-bold has-[:checked]:bg-[var(--blue-soft)] has-[:checked]:text-[var(--blue)]"
+          className="flex min-h-11 cursor-pointer items-center justify-center rounded-xl text-sm font-bold has-[:checked]:bg-[var(--blue-soft)] has-[:checked]:text-[var(--blue-ink)]"
         >
           <input
             className="sr-only"
@@ -311,7 +311,8 @@ export function RecordComposer({ editId }: { editId?: string }) {
       watchedDate: draft!.watchedDate,
       source: {
         kind: draft!.sourceKind,
-        providerName: draft!.providerName.trim() || null,
+        // The service field is only shown for OTT; a name left from before switching stays out.
+        providerName: draft!.sourceKind === 'OTT' ? draft!.providerName.trim() || null : null,
         placeText: draft!.placeText.trim() || null,
         theaterFormat: theater ? draft!.theaterFormat : null,
         seatText: theater ? draft!.seatText.trim() || null : null,
@@ -406,7 +407,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
                       .filter(Boolean)
                       .join(' · ')}
                   </p>
-                  <span className="mt-2 inline-flex rounded-full bg-[var(--blue-soft)] px-2 py-1 text-xs font-bold text-[var(--blue)]">
+                  <span className="mt-2 inline-flex rounded-full bg-[var(--blue-soft)] px-2 py-1 text-xs font-bold text-[var(--blue-ink)]">
                     {item.mediaType === 'MOVIE' ? '영화' : '드라마'}
                   </span>
                   <button
@@ -692,7 +693,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
           <button
             type="button"
             aria-pressed={draft.spaceIds.length === 0}
-            className={`mt-3 min-h-12 w-full rounded-2xl px-4 text-left text-sm font-black ${draft.spaceIds.length === 0 ? 'bg-[var(--blue-soft)] text-[var(--blue)]' : 'bg-white text-[var(--text)] shadow-sm'}`}
+            className={`mt-3 min-h-12 w-full rounded-2xl px-4 text-left text-sm font-black ${draft.spaceIds.length === 0 ? 'bg-[var(--blue-soft)] text-[var(--blue-ink)]' : 'bg-white text-[var(--text)] shadow-sm'}`}
             onClick={() =>
               setDraft({
                 ...draft,
@@ -780,34 +781,38 @@ export function RecordComposer({ editId }: { editId?: string }) {
             {error}
           </p>
         ) : null}
-        {photoUploads.uploadingCount > 0 ? (
-          <p className="record-compose-note mt-4" role="status">
-            사진 {photoUploads.uploadingCount}장을 올리는 중이에요. 저장을 누르면 다 올라간 뒤에
-            저장돼요.
-          </p>
-        ) : null}
         <p className="record-compose-note mt-4">
           같은 작품을 다시 봤다면 날짜와 감상 경로가 같은 경우에도 새 감상으로 저장돼요.
         </p>
-        <button
-          className="commit-button sticky-commit mt-5"
-          disabled={busy || !draft.selected || !draft.sourceKind || !draft.watchedDate}
-          onClick={() => save()}
-        >
-          {waitingForPhotos
-            ? '사진을 올리는 중… 끝나면 저장돼요'
-            : busy
-              ? '저장 중…'
-              : !draft.sourceKind
-                ? '감상 경로를 선택해 주세요'
-                : editId
-                  ? '수정 내용 저장하기'
-                  : draft.spaceIds.length === 0
-                    ? '개인 기록으로 저장하기'
-                    : draft.spaceIds.length === 1
-                      ? `${spaces.find((space) => space.id === draft.spaceIds[0])?.name ?? '선택한 공간'}에 공유하기`
-                      : `공간 ${draft.spaceIds.length}곳에 공유하기`}
-        </button>
+        <div className="sticky-commit-bar">
+          {photoUploads.uploadingCount > 0 ? (
+            <p className="sticky-commit-status" role="status">
+              사진 {photoUploads.uploadingCount}장을 올리는 중이에요. 저장을 누르면 다 올라간 뒤에
+              저장돼요.
+            </p>
+          ) : null}
+          <button
+            className="commit-button"
+            disabled={busy || !draft.selected || !draft.sourceKind || !draft.watchedDate}
+            onClick={() => save()}
+          >
+            {waitingForPhotos
+              ? '사진을 올리는 중… 끝나면 저장돼요'
+              : busy
+                ? '저장 중…'
+                : !draft.sourceKind
+                  ? '감상 경로를 선택해 주세요'
+                  : !draft.watchedDate
+                    ? '본 날짜를 골라 주세요'
+                    : editId
+                      ? '수정 내용 저장하기'
+                      : draft.spaceIds.length === 0
+                        ? '개인 기록으로 저장하기'
+                        : draft.spaceIds.length === 1
+                          ? `${spaces.find((space) => space.id === draft.spaceIds[0])?.name ?? '선택한 공간'}에 공유하기`
+                          : `공간 ${draft.spaceIds.length}곳에 공유하기`}
+          </button>
+        </div>
       </div>
     </TaskShell>
   );

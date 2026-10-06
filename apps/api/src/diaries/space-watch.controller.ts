@@ -40,6 +40,14 @@ export class SpaceWatchController {
     return this.watchEvents.timeline(spaceId, request.user.id, query);
   }
 
+  @Get(':spaceId/pending-confirmations')
+  async pendingConfirmations(
+    @Req() request: AuthenticatedRequest,
+    @Param('spaceId', ParseUUIDPipe) spaceId: string,
+  ) {
+    return this.watchEvents.pendingConfirmations(spaceId, request.user.id);
+  }
+
   @Get(':spaceId/titles/:mediaId/reactions')
   async compareReactions(
     @Req() request: AuthenticatedRequest,

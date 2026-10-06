@@ -175,11 +175,7 @@ export function FeedScreen() {
   return (
     <CoreAppShell>
       <h1 className="sr-only">홈</h1>
-      <Link
-        href="/records/new?step=find"
-        className="wide-cta home-record-cta"
-        aria-label="TMDB에서 본 작품을 검색해 기록하기"
-      >
+      <Link href="/records/new?step=find" className="wide-cta home-record-cta">
         <span className="wide-cta-label">
           <SearchIcon className="wide-cta-icon" />본 작품 기록하기
         </span>

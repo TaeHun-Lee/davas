@@ -71,7 +71,8 @@ describe('four-tab core shell', () => {
     assert.match(home, /chooseActiveSpace\(items, readActiveSpaceId\(\)\)/);
     assert.match(home, /data-state="no-space"/);
     assert.match(home, /우리 공간 타임라인/);
-    assert.match(home, /pendingConfirmations\(timeline\.items, myAccountId\)/);
+    assert.match(home, /getPendingConfirmations\(space\.id\)/);
+    assert.match(home, /pendingConfirmations\(\[\.\.\.byId\.values\(\)\], myAccountId\)/);
     assert.match(home, /respondToWatchParticipation\(event\.id, status\)/);
     assert.match(home, /<SpaceHomeTimeline key=\{space\.id\}/);
   });

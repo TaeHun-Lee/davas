@@ -40,7 +40,7 @@ export function MemoriesScreen() {
   if (state.status === 'loading')
     return (
       <TaskShell title="우리 기록 모아보기" fallback="/spaces">
-        <AsyncState kind="loading" />
+        <AsyncState kind="loading" loadingLabel="공간 불러오는 중" />
       </TaskShell>
     );
   if (state.status === 'error' || !space)
@@ -80,9 +80,9 @@ export function MemoriesScreen() {
       </div>
 
       {status === 'loading' && !data ? (
-        <AsyncState kind="loading" />
+        <AsyncState kind="loading" loadingLabel="모아보기 불러오는 중" />
       ) : status === 'error' ? (
-        <AsyncState kind="error" onRetry={load} />
+        <AsyncState kind="error" onRetry={load} errorTitle="모아보기를 불러오지 못했어요" />
       ) : data ? (
         <MemoriesBody data={data} />
       ) : null}
