@@ -4,8 +4,10 @@ import { join } from 'node:path';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import type { NextFunction, Request, Response } from 'express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { ApiExceptionFilter } from './common/api-exception.filter';
 import { configureHttpSecurity, validateProductionConfiguration } from './common/app-security';
 import { configureHttpServerTimeouts } from './common/http-server-timeouts';
 import { shouldEnableSwagger } from './common/swagger-config';
@@ -15,6 +17,12 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.setGlobalPrefix('api');
   configureHttpSecurity(app);
+  // API responses carry personal records; never let browsers or proxies keep them.
+  app.use((_request: Request, response: Response, next: NextFunction) => {
+    response.setHeader('Cache-Control', 'private, no-store');
+    response.setHeader('Pragma', 'no-cache');
+    next();
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -22,6 +30,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  app.useGlobalFilters(new ApiExceptionFilter());
 
   const uploadsDir = process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads');
   mkdirSync(uploadsDir, { recursive: true });

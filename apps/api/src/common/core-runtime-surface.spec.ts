@@ -71,4 +71,10 @@ describe('API runtime surface', () => {
     const main = source('main.ts');
     assert.match(main, /if \(shouldEnableSwagger\(\)\)/);
   });
+
+  it('keeps the shared error shape and uncacheable API responses', () => {
+    const main = source('main.ts');
+    assert.match(main, /app\.useGlobalFilters\(new ApiExceptionFilter\(\)\)/);
+    assert.match(main, /'Cache-Control', 'private, no-store'/);
+  });
 });
