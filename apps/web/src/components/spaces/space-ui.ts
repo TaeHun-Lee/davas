@@ -1,13 +1,42 @@
 import { CoreApiError } from '../../lib/api/core';
 import type { SpaceInviteInspection, SpaceView } from '../../lib/api/spaces';
 
-export function chooseActiveSpace(
-  spaces: SpaceView[],
-  preferredSpaceId?: string | null,
-) {
-  return (
-    spaces.find((space) => space.id === preferredSpaceId) ?? spaces[0] ?? null
-  );
+export const ACTIVE_SPACE_KEY = 'davas:active-space-id';
+
+export function chooseActiveSpace(spaces: SpaceView[], preferredSpaceId?: string | null) {
+  return spaces.find((space) => space.id === preferredSpaceId) ?? spaces[0] ?? null;
+}
+
+// Storage can throw in private windows or when site data is blocked; the active space is
+// only a convenience, so fall back to the first space instead of failing the screen.
+export function readActiveSpaceId() {
+  try {
+    return window.localStorage.getItem(ACTIVE_SPACE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function rememberActiveSpace(spaceId: string | null) {
+  try {
+    if (spaceId) window.localStorage.setItem(ACTIVE_SPACE_KEY, spaceId);
+    else window.localStorage.removeItem(ACTIVE_SPACE_KEY);
+  } catch {
+    // Keep working with the in-memory selection.
+  }
+}
+
+export function activeMembers(space: SpaceView) {
+  return space.members.filter((member) => member.status === 'ACTIVE');
+}
+
+// In a two-person space the other member is almost always the one you watched with, so the
+// composer preselects them. They still have to confirm before the record counts as theirs.
+export function defaultWatchPartners(space: SpaceView | null, myAccountId: string) {
+  if (!space) return [];
+  const members = activeMembers(space);
+  const others = members.filter((member) => member.accountId !== myAccountId);
+  return members.length === 2 && others.length === 1 ? [others[0].accountId] : [];
 }
 
 export function spaceErrorMessage(error: unknown) {
@@ -35,9 +64,7 @@ export function spaceErrorMessage(error: unknown) {
   }
 }
 
-export function inviteStatusMessage(
-  status: Exclude<SpaceInviteInspection['status'], 'VALID'>,
-) {
+export function inviteStatusMessage(status: Exclude<SpaceInviteInspection['status'], 'VALID'>) {
   switch (status) {
     case 'EXPIRED':
       return '초대 링크가 만료됐어요.';

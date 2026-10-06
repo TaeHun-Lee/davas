@@ -3,8 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
-const source = (path: string) =>
-  readFileSync(join(process.cwd(), 'src', path), 'utf8');
+const source = (path: string) => readFileSync(join(process.cwd(), 'src', path), 'utf8');
 
 describe('four-tab core shell', () => {
   it('renders exactly the four navigation labels with home first and no drawer', () => {
@@ -13,7 +12,7 @@ describe('four-tab core shell', () => {
       code.indexOf('const tabs'),
       code.indexOf('export function CoreHeader'),
     );
-    for (const label of ['홈', '기록하기', '내 기록', '친구']) {
+    for (const label of ['홈', '기록하기', '공간', '내 기록']) {
       assert.match(tabContract, new RegExp(label));
     }
     assert.equal((tabContract.match(/label:/g) ?? []).length, 4);
@@ -37,25 +36,18 @@ describe('four-tab core shell', () => {
   });
 
   it('provides padded movie and drama carousel controls', () => {
-    const recommendations = source(
-      'components/core/HomeRecommendations.tsx',
-    );
+    const recommendations = source('components/core/HomeRecommendations.tsx');
     const css = source('app/globals.css');
     assert.match(recommendations, /carouselRef/);
     assert.match(recommendations, /scrollBy/);
     assert.match(recommendations, /이전.*추천/);
     assert.match(recommendations, /다음.*추천/);
     assert.match(css, /scroll-snap-type: x mandatory/);
-    assert.doesNotMatch(
-      css,
-      /home-recommendation-row \{[^}]*margin-(right|left):-/,
-    );
+    assert.doesNotMatch(css, /home-recommendation-row \{[^}]*margin-(right|left):-/);
   });
 
   it('opens recommendation detail before starting a new record', () => {
-    const recommendations = source(
-      'components/core/HomeRecommendations.tsx',
-    );
+    const recommendations = source('components/core/HomeRecommendations.tsx');
     const composer = source('components/core/RecordComposer.tsx');
     assert.match(recommendations, /\/records\/new\?step=find&detail=/);
     assert.doesNotMatch(recommendations, /\/records\/new\?mediaId=/);
@@ -66,11 +58,35 @@ describe('four-tab core shell', () => {
     assert.match(composer, /resumedDraft\.selected\s*=/);
   });
 
-  it('keeps independent compact recommendation and friend-feed errors', () => {
+  it('centres home on the active space with independent space and recommendation errors', () => {
     const feed = source('components/core/RecordScreens.tsx');
-    assert.match(feed, /home-feed-message/);
-    assert.match(feed, /<RecordList scope="friends" compact \/>/);
-    assert.match(feed, /<HomeRecommendations \/>/);
+    const home = source('components/core/SpaceHome.tsx');
+    assert.match(feed, /<SpaceHome \/>\s*<HomeRecommendations \/>/);
+    assert.doesNotMatch(feed, /친구들의 최근 기록|scope="friends" compact/);
+    assert.match(home, /home-feed-message/);
+    assert.match(home, /chooseActiveSpace\(items, readActiveSpaceId\(\)\)/);
+    assert.match(home, /data-state="no-space"/);
+    assert.match(home, /우리 공간 타임라인/);
+    assert.match(home, /pendingConfirmations\(timeline\.items, myAccountId\)/);
+    assert.match(home, /respondToWatchParticipation\(event\.id, status\)/);
+    assert.match(home, /<SpaceHomeTimeline key=\{space\.id\}/);
+  });
+
+  it('puts the space tab in the nav and keeps friends reachable under it', () => {
+    const code = source('components/core/CoreUi.tsx');
+    assert.match(code, /href: '\/spaces', label: '공간', icon: 'space', activeOn: \['\/friends'\]/);
+    assert.doesNotMatch(code, /href: '\/friends'/);
+  });
+
+  it('defaults a new record to the active space and the partner of a two-person space', () => {
+    const composer = source('components/core/RecordComposer.tsx');
+    assert.match(composer, /chooseActiveSpace\(spaceItems, readActiveSpaceId\(\)\)/);
+    assert.match(
+      composer,
+      /next\.participantAccountIds = defaultWatchPartners\(defaultSpace, id\)/,
+    );
+    assert.match(composer, /개인 기록 · 나만 보기/);
+    assert.match(composer, /shared \? '\/' : '\/me'/);
   });
 
   it('keeps the 430px shell, safe area and focus treatment in shared styles', () => {

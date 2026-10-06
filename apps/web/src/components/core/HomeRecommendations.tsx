@@ -161,7 +161,7 @@ export function HomeRecommendations() {
           <p>
             <strong>추천을 불러오지 못했어요.</strong>
             <br />
-            친구 기록과 관계없이 다시 불러올 수 있어요.
+            우리 공간 기록은 그대로 두고 추천만 다시 불러올 수 있어요.
           </p>
           <button type="button" onClick={() => setRetryKey((value) => value + 1)}>
             다시 시도

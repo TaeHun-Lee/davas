@@ -16,10 +16,8 @@ import {
 } from '../../lib/api/spaces';
 import { CoreAppShell } from '../core/CoreUi';
 import { GroupRecommendationPanel } from './GroupRecommendationPanel';
-import { chooseActiveSpace, spaceErrorMessage } from './space-ui';
+import { ACTIVE_SPACE_KEY, chooseActiveSpace, spaceErrorMessage } from './space-ui';
 import { SpaceTimeline } from './SpaceTimeline';
-
-const ACTIVE_SPACE_KEY = 'davas:active-space-id';
 
 export type SpacesView = 'timeline' | 'recommend';
 
@@ -333,7 +331,13 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                 </div>
                 {/* Both views stay mounted so switching keeps an in-progress recommendation. */}
                 <div hidden={view !== 'timeline'}>
-                  <SpaceTimeline spaceId={activeSpace.id} spaceName={activeSpace.name} />
+                  {/* Keyed by space so a comparison panel never outlives the space it came from. */}
+                  <SpaceTimeline
+                    key={activeSpace.id}
+                    spaceId={activeSpace.id}
+                    spaceName={activeSpace.name}
+                    myAccountId={myAccountId ?? ''}
+                  />
                 </div>
                 <div hidden={view !== 'recommend'} className="mt-4">
                   <GroupRecommendationPanel space={activeSpace} myAccountId={myAccountId ?? ''} />

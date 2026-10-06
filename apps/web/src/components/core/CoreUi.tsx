@@ -12,19 +12,35 @@ import {
   type RecordCardData,
 } from '../../lib/api/core';
 
+// Friends live under the space tab: the space is the main place to share, and the friends
+// screen is reached from the spaces screen.
 const tabs = [
-  { href: '/', label: '홈', icon: 'home' },
-  { href: '/records/new', label: '기록하기', icon: 'add' },
-  { href: '/me', label: '내 기록', icon: 'records' },
-  { href: '/friends', label: '친구', icon: 'friends' },
+  { href: '/', label: '홈', icon: 'home', activeOn: [] },
+  { href: '/records/new', label: '기록하기', icon: 'add', activeOn: [] },
+  { href: '/spaces', label: '공간', icon: 'space', activeOn: ['/friends'] },
+  { href: '/me', label: '내 기록', icon: 'records', activeOn: [] },
 ] as const;
 
 function CoreNavIcon({ icon }: { icon: (typeof tabs)[number]['icon'] }) {
   const paths = {
-    home: <path d="M3 10.8 12 3l9 7.8v9.7a.5.5 0 0 1-.5.5h-5.25v-6.4h-6.5V21H3.5a.5.5 0 0 1-.5-.5v-9.7Z" />,
-    add: <><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></>,
-    records: <><path d="M5 4.5h14v15H5z" /><path d="M8 8h8M8 12h8M8 16h5" /></>,
-    friends: <><circle cx="9" cy="9" r="3" /><circle cx="16.5" cy="10" r="2.5" /><path d="M3.5 19c.5-3.3 2.3-5 5.5-5s5 1.7 5.5 5M14 15c3.5-.4 5.5.9 6 4" /></>,
+    home: (
+      <path d="M3 10.8 12 3l9 7.8v9.7a.5.5 0 0 1-.5.5h-5.25v-6.4h-6.5V21H3.5a.5.5 0 0 1-.5-.5v-9.7Z" />
+    ),
+    add: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 8v8M8 12h8" />
+      </>
+    ),
+    records: (
+      <>
+        <path d="M5 4.5h14v15H5z" />
+        <path d="M8 8h8M8 12h8M8 16h5" />
+      </>
+    ),
+    space: (
+      <path d="M5 10V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2M3 12a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3ZM6 17v2M18 17v2" />
+    ),
   } as const;
 
   return (
@@ -64,7 +80,9 @@ export function CoreBottomNav() {
     <nav className="core-bottom-nav" aria-label="주요 메뉴">
       {tabs.map((tab) => {
         const active =
-          tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href);
+          tab.href === '/'
+            ? pathname === '/'
+            : [tab.href, ...tab.activeOn].some((prefix) => pathname.startsWith(prefix));
         return (
           <Link
             key={tab.href}
@@ -94,13 +112,7 @@ export function CoreAppShell({ children }: { children: ReactNode }) {
   );
 }
 
-export function BackHeader({
-  title,
-  fallback,
-}: {
-  title: string;
-  fallback: string;
-}) {
+export function BackHeader({ title, fallback }: { title: string; fallback: string }) {
   const router = useRouter();
   return (
     <header className="back-header">
@@ -194,11 +206,7 @@ export function SearchField({
         placeholder={placeholder}
       />
       {value ? (
-        <button
-          type="button"
-          onClick={() => onChange('')}
-          aria-label="검색어 지우기"
-        >
+        <button type="button" onClick={() => onChange('')} aria-label="검색어 지우기">
           ×
         </button>
       ) : null}
@@ -279,23 +287,13 @@ export function Poster({ url, title }: { url: string | null; title: string }) {
       className="poster"
     />
   ) : (
-    <div
-      className="poster poster-empty"
-      role="img"
-      aria-label={`${title} 포스터 없음`}
-    >
+    <div className="poster poster-empty" role="img" aria-label={`${title} 포스터 없음`}>
       {title.slice(0, 1)}
     </div>
   );
 }
 
-export function RecordCard({
-  item,
-  returnTo,
-}: {
-  item: RecordCardData;
-  returnTo?: string;
-}) {
+export function RecordCard({ item, returnTo }: { item: RecordCardData; returnTo?: string }) {
   const detail = `/records/${item.id}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`;
   return (
     <article className="core-card record-card">
@@ -313,21 +311,13 @@ export function RecordCard({
         <Poster url={item.media.posterUrl} title={item.media.title} />
         <div className="min-w-0 flex-1">
           <h3>{item.media.title}</h3>
-          <p>
-            {[item.media.originalTitle, item.media.releaseYear]
-              .filter(Boolean)
-              .join(' · ')}
-          </p>
+          <p>{[item.media.originalTitle, item.media.releaseYear].filter(Boolean).join(' · ')}</p>
           <div className="badge-row">
             <span>{mediaTypeLabel(item.media.mediaType)}</span>
             <span>{viewingMethodLabel(item.viewingMethod)}</span>
-            {item.isMine ? (
-              <span>{visibilityLabel(item.visibility)}</span>
-            ) : null}
+            {item.isMine ? <span>{visibilityLabel(item.visibility)}</span> : null}
           </div>
-          {item.rating !== null ? (
-            <p className="rating">★ {item.rating}</p>
-          ) : null}
+          {item.rating !== null ? <p className="rating">★ {item.rating}</p> : null}
         </div>
       </div>
       {item.hasSpoiler ? (
@@ -339,9 +329,7 @@ export function RecordCard({
       ) : null}
       <div className="card-actions">
         <Link href={detail}>자세히 보기</Link>
-        <Link href={`/records/new?mediaId=${item.media.id}`}>
-          나도 기록하기
-        </Link>
+        <Link href={`/records/new?mediaId=${item.media.id}`}>나도 기록하기</Link>
       </div>
     </article>
   );
@@ -364,13 +352,7 @@ export function EmptyState({
     </section>
   );
 }
-export function AsyncState({
-  kind,
-  onRetry,
-}: {
-  kind: 'loading' | 'error';
-  onRetry?: () => void;
-}) {
+export function AsyncState({ kind, onRetry }: { kind: 'loading' | 'error'; onRetry?: () => void }) {
   return kind === 'loading' ? (
     <div className="space-y-3" aria-label="기록 불러오는 중">
       {[0, 1, 2].map((value) => (

@@ -86,12 +86,12 @@ graphify-out/      Graphify 코드 그래프 (도구가 생성, 손으로 수정
 
 ### Web 화면
 
-하단 탭은 홈(`/`), 기록하기(`/records/new`), 내 기록(`/me`), 친구(`/friends`) 네 개이고, 설정(`/settings`)은 헤더 아이콘으로 연다.
+하단 탭은 홈(`/`), 기록하기(`/records/new`), 공간(`/spaces`), 내 기록(`/me`) 네 개이고, 설정(`/settings`)은 헤더 아이콘으로 연다. 친구 화면(`/friends`)은 공간 화면에서 들어가며, 그동안 공간 탭이 선택된 상태로 보인다.
 
 | 경로 | 역할 |
 |---|---|
-| `/` | 친구 기록 피드와 추천 작품 |
-| `/records/new` | 작품 찾기 → 기록 작성 (`?step=find`, `?mediaId=`) |
+| `/` | 활성 공간(마지막으로 고른 공간)의 멤버, 함께 봤는지 확인 요청, 최근 기록 5개와 추천 작품. 공간이 없으면 공간 만들기 안내 |
+| `/records/new` | 작품 찾기 → 기록 작성 (`?step=find`, `?mediaId=`). 새 기록은 활성 공간이 공유 대상으로, 2명 공간이면 상대가 함께 본 사람으로 미리 선택된다 |
 | `/records/:id`, `/records/:id/edit` | 감상 상세(참여자·개인 반응 포함), 수정 |
 | `/search?scope=friends` 또는 `/search?scope=mine` | 기록 검색 |
 | `/me` | 내 기록 |
@@ -105,8 +105,8 @@ graphify-out/      Graphify 코드 그래프 (도구가 생성, 손으로 수정
 
 주요 Web 코드:
 
-- `src/components/core/`: 공통 화면 틀(`CoreUi.tsx`), 기록 작성(`RecordComposer.tsx`), 목록·검색(`RecordScreens.tsx`), 감상 상세(`WatchEventDetailScreen.tsx`)
-- `src/components/spaces/`: 공간 화면(`SpacesScreen.tsx`), 타임라인, 그룹 추천 패널(`GroupRecommendationPanel.tsx`). 홈의 "함께 고르기"가 `/spaces?view=recommend`로 연결된다.
+- `src/components/core/`: 공통 화면 틀(`CoreUi.tsx`), 홈의 공간 영역(`SpaceHome.tsx`), 기록 작성(`RecordComposer.tsx`), 목록·검색(`RecordScreens.tsx`), 감상 상세(`WatchEventDetailScreen.tsx`)
+- `src/components/spaces/`: 공간 화면(`SpacesScreen.tsx`), 타임라인(`SpaceTimeline.tsx`, 홈과 같이 쓰는 카드 `SpaceWatchCard.tsx`, 불러오기 `hooks/useSpaceTimeline.ts`), 활성 공간·기본 참여자 규칙(`space-ui.ts`), 그룹 추천 패널(`GroupRecommendationPanel.tsx`). 홈의 "함께 고르기"가 `/spaces?view=recommend`로 연결된다.
 - `src/components/friends/`, `settings/`
 - `src/lib/api/`: API 호출 함수. 공통 호출기 `core.ts`의 `coreFetch`가 401이면 임시저장을 지우고 로그인 화면으로 보낸다.
 - `src/lib/core-routes.ts`: 로그인 후 돌아갈 수 있는 경로의 허용 목록
@@ -174,7 +174,7 @@ npm run migration:show --workspace @davas/api
 - 영화·드라마 구분은 작품(`MOVIE`/`TV`)에, 시청 방식(`THEATER`/`OTT` 등)은 기록마다 저장한다.
 - 감상 사건(`/v1/watch-events`)의 별점은 미평가 또는 0.5~5.0(0.5 단위)이다. 예전 `/diaries` API는 1~5 정수 별점을 유지한다.
 - `clientRequestId`로 같은 생성 요청의 중복 저장을 막는다. 같은 키에 다른 내용이면 충돌로 거부한다.
-- 친구 피드는 `sharedAt`이 있는 기록만 보여 준다. 비공개가 아닌 기록은 저장할 때 `sharedAt`이 채워진다.
+- 새 감상 기록은 공간 공유(`watch_event_shares`)로만 퍼지고 홈과 `/spaces`의 공간 타임라인에 보인다. 친구 기록 검색(`/search?scope=friends`)은 예전 `/diaries`의 친구 공개 기록(`sharedAt`이 있는 기록)만 보여 준다.
 
 ## 6. 검증
 

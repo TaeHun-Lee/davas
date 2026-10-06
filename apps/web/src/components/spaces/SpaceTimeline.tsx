@@ -1,56 +1,26 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useSpaceTimeline } from '../../hooks/useSpaceTimeline';
 import { CoreApiError } from '../../lib/api/core';
-import {
-  compareSpaceReactions,
-  getSpaceTimeline,
-  type SpaceReactionComparison,
-  type WatchEvent,
-} from '../../lib/api/watch-events';
+import { compareSpaceReactions, type SpaceReactionComparison } from '../../lib/api/watch-events';
+import { SpaceWatchCard } from './SpaceWatchCard';
 
-export function SpaceTimeline({ spaceId, spaceName }: { spaceId: string; spaceName: string }) {
-  const [items, setItems] = useState<WatchEvent[]>([]);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'empty' | 'forbidden' | 'error'>(
-    'loading',
-  );
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [moreBusy, setMoreBusy] = useState(false);
+export function SpaceTimeline({
+  spaceId,
+  spaceName,
+  myAccountId,
+}: {
+  spaceId: string;
+  spaceName: string;
+  myAccountId: string;
+}) {
+  const timeline = useSpaceTimeline(spaceId);
+  const { items, status, cursor, hasMore, moreBusy } = timeline;
   const [comparison, setComparison] = useState<SpaceReactionComparison | null>(null);
   const [comparisonBusy, setComparisonBusy] = useState(false);
   const [comparisonError, setComparisonError] = useState('');
-
-  const load = useCallback(
-    async (nextCursor?: string) => {
-      if (nextCursor) setMoreBusy(true);
-      else setStatus('loading');
-      try {
-        const page = await getSpaceTimeline(spaceId, {
-          cursor: nextCursor,
-          limit: 20,
-        });
-        setItems((current) => (nextCursor ? [...current, ...page.items] : page.items));
-        setCursor(page.nextCursor);
-        setHasMore(page.hasMore);
-        setStatus(page.items.length || nextCursor ? 'ready' : 'empty');
-      } catch (error) {
-        setStatus(error instanceof CoreApiError && error.status === 404 ? 'forbidden' : 'error');
-      } finally {
-        setMoreBusy(false);
-      }
-    },
-    [spaceId],
-  );
-
-  useEffect(() => {
-    setItems([]);
-    setCursor(null);
-    setHasMore(false);
-    setComparison(null);
-    void load();
-  }, [load]);
 
   async function showComparison(mediaId: string) {
     setComparisonBusy(true);
@@ -119,7 +89,7 @@ export function SpaceTimeline({ spaceId, spaceName }: { spaceId: string; spaceNa
       {status === 'error' ? (
         <div data-state="error" className="mt-4 rounded-2xl bg-[#fff8f7] p-4 text-center">
           <p className="text-[13px] font-black text-[#a93530]">타임라인을 불러오지 못했어요.</p>
-          <button type="button" className="secondary-button mt-3" onClick={() => load()}>
+          <button type="button" className="secondary-button mt-3" onClick={timeline.reload}>
             다시 시도
           </button>
         </div>
@@ -128,38 +98,12 @@ export function SpaceTimeline({ spaceId, spaceName }: { spaceId: string; spaceNa
       {status === 'ready' ? (
         <div className="mt-4 space-y-3">
           {items.map((item) => (
-            <article key={item.id} className="rounded-2xl bg-[#f7f9fd] p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-black text-[#607eae]">
-                    {item.author.nickname || '공간 멤버'} · {item.watchedDate}
-                  </p>
-                  <h3 className="mt-1 truncate text-[16px] font-black text-[#284778]">
-                    {item.media.title}
-                  </h3>
-                </div>
-                <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[11px] font-black text-[#5575a6]">
-                  반응 {item.reactions.length}
-                </span>
-              </div>
-              <p className="mt-2 text-[12px] font-bold text-[#738096]">
-                참여 확인{' '}
-                {
-                  item.participants.filter((participant) => participant.status === 'CONFIRMED')
-                    .length
-                }
-                명
-                {item.participants.some((participant) => participant.status === 'PENDING')
-                  ? ' · 응답 대기 있음'
-                  : ''}
-              </p>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <Link
-                  href={`/records/${item.id}?returnTo=${encodeURIComponent('/spaces')}`}
-                  className="secondary-button"
-                >
-                  상세·참여 응답
-                </Link>
+            <SpaceWatchCard
+              key={item.id}
+              event={item}
+              myAccountId={myAccountId}
+              returnTo="/spaces"
+              actions={
                 <button
                   type="button"
                   className="secondary-button"
@@ -168,15 +112,15 @@ export function SpaceTimeline({ spaceId, spaceName }: { spaceId: string; spaceNa
                 >
                   구성원 반응 비교
                 </button>
-              </div>
-            </article>
+              }
+            />
           ))}
           {hasMore && cursor ? (
             <button
               type="button"
               className="secondary-button w-full"
               disabled={moreBusy}
-              onClick={() => load(cursor)}
+              onClick={timeline.loadMore}
             >
               {moreBusy ? '불러오는 중…' : '이전 감상 더 보기'}
             </button>

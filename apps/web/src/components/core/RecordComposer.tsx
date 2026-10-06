@@ -30,6 +30,7 @@ import {
 } from './CoreUi';
 import { WatchRatingControl } from './WatchRatingControl';
 import { MediaDetailModal } from '../media/MediaDetailModal';
+import { chooseActiveSpace, defaultWatchPartners, readActiveSpaceId } from '../spaces/space-ui';
 
 type Draft = {
   selected: SelectedMedia | null;
@@ -105,9 +106,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
   const requestedStep = params.get('step');
   const [userId, setUserId] = useState('');
   const [draft, setDraft] = useState<Draft | null>(null);
-  const [step, setStep] = useState<'find' | 'write'>(
-    editId || mediaId ? 'write' : 'find',
-  );
+  const [step, setStep] = useState<'find' | 'write'>(editId || mediaId ? 'write' : 'find');
   const [query, setQuery] = useState('');
   const [mediaType, setMediaType] = useState<MediaType | null>(null);
   const [spaces, setSpaces] = useState<SpaceView[]>([]);
@@ -115,8 +114,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [detailPreview, setDetailPreview] = useState<MediaDetail | null>(null);
-  const searchType =
-    mediaType === 'MOVIE' ? 'movie' : mediaType === 'TV' ? 'tv' : 'multi';
+  const searchType = mediaType === 'MOVIE' ? 'movie' : mediaType === 'TV' ? 'tv' : 'multi';
   const results = useMediaSearch(query, searchType);
   const key = userId
     ? `davas:draft:${userId}:${editId ? 'edit' : 'create'}:${editId ?? 'new'}`
@@ -124,18 +122,19 @@ export function RecordComposer({ editId }: { editId?: string }) {
 
   useEffect(() => {
     let active = true;
-    getMe()
-      .then(async (user) => {
+    Promise.all([
+      getMe(),
+      // A failed space list still lets the user save a private record.
+      listSpaces()
+        .then(({ items }) => items)
+        .catch(() => null),
+    ])
+      .then(async ([user, spaceItems]) => {
         if (!active) return;
         const id = user.id!;
         setUserId(id);
-        void listSpaces()
-          .then(({ items }) => {
-            if (active) setSpaces(items);
-          })
-          .catch(() => {
-            if (active) setSpacesError(true);
-          });
+        if (spaceItems) setSpaces(spaceItems);
+        else setSpacesError(true);
         const storageKey = `davas:draft:${id}:${editId ? 'edit' : 'create'}:${editId ?? 'new'}`;
         const saved = sessionStorage.getItem(storageKey);
         if (saved) {
@@ -195,13 +194,11 @@ export function RecordComposer({ editId }: { editId?: string }) {
             placeText: record.source?.placeText ?? '',
             watchedDate: record.watchedDate,
             rating:
-              record.reactions.find(
-                (reaction) => reaction.accountId === record.author.accountId,
-              )?.rating ?? null,
+              record.reactions.find((reaction) => reaction.accountId === record.author.accountId)
+                ?.rating ?? null,
             content:
-              record.reactions.find(
-                (reaction) => reaction.accountId === record.author.accountId,
-              )?.review ?? '',
+              record.reactions.find((reaction) => reaction.accountId === record.author.accountId)
+                ?.review ?? '',
             spaceIds: record.spaceIds,
             participantAccountIds: record.participants
               .filter(
@@ -214,6 +211,13 @@ export function RecordComposer({ editId }: { editId?: string }) {
           return;
         }
         const next = freshDraft();
+        // New records go to the space the user is looking at, with the partner of a
+        // two-person space preselected. Both stay visible and can be changed before saving.
+        const defaultSpace = spaceItems ? chooseActiveSpace(spaceItems, readActiveSpaceId()) : null;
+        if (defaultSpace) {
+          next.spaceIds = [defaultSpace.id];
+          next.participantAccountIds = defaultWatchPartners(defaultSpace, id);
+        }
         if (mediaId) {
           const media = await getMediaDetail(mediaId);
           next.selected = {
@@ -243,9 +247,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
   }, [key, draft]);
   useEffect(() => {
     if (editId) return;
-    setStep(
-      mediaId || requestedStep === 'write' ? 'write' : 'find',
-    );
+    setStep(mediaId || requestedStep === 'write' ? 'write' : 'find');
   }, [editId, mediaId, requestedStep]);
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
@@ -263,11 +265,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
         title={editId ? '기록 수정' : '기록 작성'}
         fallback={editId ? `/records/${editId}` : '/'}
       >
-        {error ? (
-          <p className="form-error">{error}</p>
-        ) : (
-          <AsyncState kind="loading" />
-        )}
+        {error ? <p className="form-error">{error}</p> : <AsyncState kind="loading" />}
       </TaskShell>
     );
 
@@ -289,9 +287,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
       const detail = await getMediaDetail(selected.id);
       setDraft((value) => value && { ...value, selected });
       setDetailPreview(detail);
-      router.push(
-        `/records/new?step=find&detail=${encodeURIComponent(selected.id)}`,
-      );
+      router.push(`/records/new?step=find&detail=${encodeURIComponent(selected.id)}`);
     } catch {
       setError('작품 상세 정보를 불러오지 못했어요. 다시 시도해 주세요.');
     } finally {
@@ -332,13 +328,12 @@ export function RecordComposer({ editId }: { editId?: string }) {
           })
         : await createWatchEvent(payload);
       sessionStorage.removeItem(key);
+      const shared = draft!.spaceIds.length > 0;
       router.replace(
-        `/records/${result.id}?returnTo=${encodeURIComponent('/me')}&saved=${draft!.spaceIds.length ? 'space' : 'private'}`,
+        `/records/${result.id}?returnTo=${encodeURIComponent(shared ? '/' : '/me')}&saved=${shared ? 'space' : 'private'}`,
       );
     } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : '기록을 저장하지 못했어요.',
-      );
+      setError(cause instanceof Error ? cause.message : '기록을 저장하지 못했어요.');
     } finally {
       setBusy(false);
     }
@@ -348,9 +343,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
     return (
       <CoreAppShell>
         <h1 className="page-title">어떤 작품을 봤나요?</h1>
-        <p className="page-description">
-          제목을 검색한 뒤 작품 정보를 확인해 주세요.
-        </p>
+        <p className="page-description">제목을 검색한 뒤 작품 정보를 확인해 주세요.</p>
         <div className="mt-6">
           <SearchField
             value={query}
@@ -387,9 +380,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
               조건에 맞는 작품을 찾지 못했어요.
             </p>
           ) : results.status === 'error' ? (
-            <p className="form-error">
-              검색하지 못했어요. 입력값을 확인해 주세요.
-            </p>
+            <p className="form-error">검색하지 못했어요. 입력값을 확인해 주세요.</p>
           ) : (
             results.items.map((item) => (
               <article
@@ -422,10 +413,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
           )}
         </div>
         {results.hasMore ? (
-          <button
-            className="secondary-button mt-4 w-full"
-            onClick={results.loadMore}
-          >
+          <button className="secondary-button mt-4 w-full" onClick={results.loadMore}>
             다음 결과 보기
           </button>
         ) : null}
@@ -506,9 +494,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
                 maxLength={80}
                 placeholder="예: 넷플릭스, 왓챠"
                 value={draft.providerName}
-                onChange={(event) =>
-                  setDraft({ ...draft, providerName: event.target.value })
-                }
+                onChange={(event) => setDraft({ ...draft, providerName: event.target.value })}
               />
             </label>
           ) : null}
@@ -519,14 +505,10 @@ export function RecordComposer({ editId }: { editId?: string }) {
                 className="date-input"
                 maxLength={160}
                 placeholder={
-                  draft.sourceKind === 'THEATER'
-                    ? '예: 대한극장 3관'
-                    : '예: 우리 집 거실'
+                  draft.sourceKind === 'THEATER' ? '예: 대한극장 3관' : '예: 우리 집 거실'
                 }
                 value={draft.placeText}
-                onChange={(event) =>
-                  setDraft({ ...draft, placeText: event.target.value })
-                }
+                onChange={(event) => setDraft({ ...draft, placeText: event.target.value })}
               />
             </label>
           ) : (
@@ -541,9 +523,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
               type="date"
               max={today()}
               value={draft.watchedDate}
-              onChange={(event) =>
-                setDraft({ ...draft, watchedDate: event.target.value })
-              }
+              onChange={(event) => setDraft({ ...draft, watchedDate: event.target.value })}
             />
           </label>
         </section>
@@ -575,142 +555,141 @@ export function RecordComposer({ editId }: { editId?: string }) {
             </span>
           </label>
         </section>
-      <section className="core-card mt-5 p-4" aria-labelledby="share-scope-title">
-        <h2 id="share-scope-title" className="section-title">공유 범위 *</h2>
-        <p className="page-description">
-          개인 기록으로 남기거나 지금 참여 중인 공간에만 공유할 수 있어요. 새 공간에 가입해도 과거 기록은 자동으로 공유되지 않아요.
-        </p>
-        <button
-          type="button"
-          aria-pressed={draft.spaceIds.length === 0}
-          className={`mt-3 min-h-12 w-full rounded-2xl px-4 text-left text-sm font-black ${draft.spaceIds.length === 0 ? 'bg-[var(--blue-soft)] text-[var(--blue)]' : 'bg-white text-[var(--text)] shadow-sm'}`}
-          onClick={() =>
-            setDraft({
-              ...draft,
-              spaceIds: [],
-              participantAccountIds: [],
-            })
-          }
-        >
-          개인 기록 · 나만 보기
-        </button>
-        {spaces.length ? (
-          <fieldset className="mt-3">
-            <legend className="field-label">공간에 공유</legend>
-            <div className="space-y-2">
-              {spaces.map((space) => (
-                <label
-                  key={space.id}
-                  className="flex min-h-12 items-center gap-3 rounded-2xl bg-white px-4 text-sm font-bold shadow-sm"
-                >
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 accent-[var(--blue)]"
-                    checked={draft.spaceIds.includes(space.id)}
-                    onChange={(event) => {
-                      const spaceIds = event.target.checked
-                        ? [...new Set([...draft.spaceIds, space.id])]
-                        : draft.spaceIds.filter((id) => id !== space.id);
-                      const allowedAccounts = new Set(
-                        spaces
-                          .filter((item) => spaceIds.includes(item.id))
-                          .flatMap((item) => item.members)
-                          .map((member) => member.accountId),
-                      );
-                      setDraft({
-                        ...draft,
-                        spaceIds,
-                        participantAccountIds:
-                          draft.participantAccountIds.filter((id) =>
+        <section className="core-card mt-5 p-4" aria-labelledby="share-scope-title">
+          <h2 id="share-scope-title" className="section-title">
+            어디에 남길까요? *
+          </h2>
+          <p className="page-description">
+            지금 보고 있는 공간이 기본으로 선택돼요. 나만 보려면 개인 기록을 고르세요. 새 공간에
+            가입해도 과거 기록은 자동으로 공유되지 않아요.
+          </p>
+          {spaces.length ? (
+            <fieldset className="mt-3">
+              <legend className="field-label">공간에 공유</legend>
+              <div className="space-y-2">
+                {spaces.map((space) => (
+                  <label
+                    key={space.id}
+                    className="flex min-h-12 items-center gap-3 rounded-2xl bg-white px-4 text-sm font-bold shadow-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5 accent-[var(--blue)]"
+                      checked={draft.spaceIds.includes(space.id)}
+                      onChange={(event) => {
+                        const spaceIds = event.target.checked
+                          ? [...new Set([...draft.spaceIds, space.id])]
+                          : draft.spaceIds.filter((id) => id !== space.id);
+                        const allowedAccounts = new Set(
+                          spaces
+                            .filter((item) => spaceIds.includes(item.id))
+                            .flatMap((item) => item.members)
+                            .map((member) => member.accountId),
+                        );
+                        setDraft({
+                          ...draft,
+                          spaceIds,
+                          participantAccountIds: draft.participantAccountIds.filter((id) =>
                             allowedAccounts.has(id),
                           ),
-                      });
-                    }}
-                  />
-                  <span>{space.name}</span>
-                  <small className="ml-auto text-xs text-[var(--muted)]">
-                    {space.members.length}명
-                  </small>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        ) : (
-          <p className="page-description mt-3">
-            {spacesError
-              ? '공간 목록을 불러오지 못했어요. 개인 기록으로는 저장할 수 있어요.'
-              : '참여 중인 공간이 없어요. 개인 기록으로 저장돼요.'}
-          </p>
-        )}
-      </section>
-      {draft.spaceIds.length > 0 && !editId ? (
-        <fieldset className="core-card mt-4 p-4">
-          <legend className="section-title px-1">함께 본 사람</legend>
-          <p className="page-description">
-            선택한 사람에게 참여 요청이 가며, 확인한 뒤 각자 별점과 리뷰를 남길 수 있어요.
-          </p>
-          {participantOptions.length ? (
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {participantOptions.map((member) => (
-                <label
-                  key={member.accountId}
-                  className="flex min-h-11 items-center gap-2 rounded-xl bg-white px-3 text-sm font-bold shadow-sm"
-                >
-                  <input
-                    type="checkbox"
-                    checked={draft.participantAccountIds.includes(
-                      member.accountId,
-                    )}
-                    onChange={(event) =>
-                      setDraft({
-                        ...draft,
-                        participantAccountIds: event.target.checked
-                          ? [
-                              ...new Set([
-                                ...draft.participantAccountIds,
-                                member.accountId,
-                              ]),
-                            ]
-                          : draft.participantAccountIds.filter(
-                              (id) => id !== member.accountId,
-                            ),
-                      })
-                    }
-                  />
-                  {member.nickname || '공간 멤버'}
-                </label>
-              ))}
-            </div>
+                        });
+                      }}
+                    />
+                    <span>{space.name}</span>
+                    <small className="ml-auto text-xs text-[var(--muted)]">
+                      {space.members.length}명
+                    </small>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
           ) : (
-            <p className="page-description mt-3">요청할 다른 공간 멤버가 없어요.</p>
+            <p className="page-description mt-3">
+              {spacesError
+                ? '공간 목록을 불러오지 못했어요. 개인 기록으로는 저장할 수 있어요.'
+                : '참여 중인 공간이 없어요. 개인 기록으로 저장돼요.'}
+            </p>
           )}
-        </fieldset>
-      ) : null}
-      {error ? (
-        <p className="form-error mt-4" role="alert">
-          {error}
+          <button
+            type="button"
+            aria-pressed={draft.spaceIds.length === 0}
+            className={`mt-3 min-h-12 w-full rounded-2xl px-4 text-left text-sm font-black ${draft.spaceIds.length === 0 ? 'bg-[var(--blue-soft)] text-[var(--blue)]' : 'bg-white text-[var(--text)] shadow-sm'}`}
+            onClick={() =>
+              setDraft({
+                ...draft,
+                spaceIds: [],
+                participantAccountIds: [],
+              })
+            }
+          >
+            개인 기록 · 나만 보기
+          </button>
+        </section>
+        {draft.spaceIds.length > 0 && !editId ? (
+          <fieldset className="core-card mt-4 p-4">
+            <legend className="section-title px-1">함께 본 사람</legend>
+            <p className="page-description">
+              선택한 사람에게 &lsquo;함께 봤어요&rsquo; 확인 요청이 가요. 상대가 확인하면 각자
+              별점과 리뷰를 남길 수 있어요.
+            </p>
+            {participantOptions.length === 1 ? (
+              <p className="record-compose-helper">
+                둘이 쓰는 공간이라 상대를 미리 골라 뒀어요. 혼자 봤다면 선택을 풀어 주세요.
+              </p>
+            ) : null}
+            {participantOptions.length ? (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {participantOptions.map((member) => (
+                  <label
+                    key={member.accountId}
+                    className="flex min-h-11 items-center gap-2 rounded-xl bg-white px-3 text-sm font-bold shadow-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={draft.participantAccountIds.includes(member.accountId)}
+                      onChange={(event) =>
+                        setDraft({
+                          ...draft,
+                          participantAccountIds: event.target.checked
+                            ? [...new Set([...draft.participantAccountIds, member.accountId])]
+                            : draft.participantAccountIds.filter((id) => id !== member.accountId),
+                        })
+                      }
+                    />
+                    {member.nickname || '공간 멤버'}
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="page-description mt-3">요청할 다른 공간 멤버가 없어요.</p>
+            )}
+          </fieldset>
+        ) : null}
+        {error ? (
+          <p className="form-error mt-4" role="alert">
+            {error}
+          </p>
+        ) : null}
+        <p className="record-compose-note mt-4">
+          같은 작품을 다시 봤다면 날짜와 감상 경로가 같은 경우에도 새 감상으로 저장돼요.
         </p>
-      ) : null}
-      <p className="record-compose-note mt-4">
-        같은 작품을 다시 봤다면 날짜와 감상 경로가 같은 경우에도 새 감상으로 저장돼요.
-      </p>
-      <button
-        className="commit-button sticky-commit mt-5"
-        disabled={
-          busy || !draft.selected || !draft.sourceKind || !draft.watchedDate
-        }
-        onClick={() => save()}
-      >
-        {busy
-          ? '저장 중…'
-          : !draft.sourceKind
-            ? '감상 경로를 선택해 주세요'
-            : editId
-              ? '수정 내용 저장하기'
-              : draft.spaceIds.length === 0
-                ? '개인 기록으로 저장하기'
-                : '선택한 공간에 공유하기'}
-      </button>
+        <button
+          className="commit-button sticky-commit mt-5"
+          disabled={busy || !draft.selected || !draft.sourceKind || !draft.watchedDate}
+          onClick={() => save()}
+        >
+          {busy
+            ? '저장 중…'
+            : !draft.sourceKind
+              ? '감상 경로를 선택해 주세요'
+              : editId
+                ? '수정 내용 저장하기'
+                : draft.spaceIds.length === 0
+                  ? '개인 기록으로 저장하기'
+                  : draft.spaceIds.length === 1
+                    ? `${spaces.find((space) => space.id === draft.spaceIds[0])?.name ?? '선택한 공간'}에 공유하기`
+                    : `공간 ${draft.spaceIds.length}곳에 공유하기`}
+        </button>
       </div>
     </TaskShell>
   );

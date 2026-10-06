@@ -9,9 +9,7 @@ import {
   type SpaceInviteInspection,
 } from '../../lib/api/spaces';
 import { TaskShell } from '../core/CoreUi';
-import { inviteStatusMessage, spaceErrorMessage } from './space-ui';
-
-const ACTIVE_SPACE_KEY = 'davas:active-space-id';
+import { ACTIVE_SPACE_KEY, inviteStatusMessage, spaceErrorMessage } from './space-ui';
 
 export function SpaceInviteScreen({ token }: { token: string }) {
   const [inspection, setInspection] = useState<SpaceInviteInspection | null>(null);

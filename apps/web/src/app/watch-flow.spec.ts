@@ -3,8 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
-const source = (path: string) =>
-  readFileSync(join(process.cwd(), 'src', path), 'utf8');
+const source = (path: string) => readFileSync(join(process.cwd(), 'src', path), 'utf8');
 
 describe('space watch flow', () => {
   it('keeps required media/date, half-star ratings, source/place, and explicit sharing in the common composer', () => {
@@ -21,7 +20,7 @@ describe('space watch flow', () => {
     assert.match(rating, /step=\{0\.5\}/);
     assert.match(rating, /별점 슬라이더/);
     assert.match(composer, /spaceIds: draft!\.spaceIds/);
-    assert.match(composer, /새 공간에 가입해도 과거 기록은 자동으로 공유되지 않아요/);
+    assert.match(composer, /새 공간에\s+가입해도 과거 기록은 자동으로 공유되지 않아요/);
     assert.match(composer, /participantAccountIds/);
     assert.match(composer, /같은 작품을 다시 봤다면/);
   });
@@ -50,7 +49,10 @@ describe('space watch flow', () => {
 
   it('handles active timeline comparison plus empty, loading, error, and unauthorized states', () => {
     const timeline = source('components/spaces/SpaceTimeline.tsx');
-    assert.match(timeline, /getSpaceTimeline/);
+    const hook = source('hooks/useSpaceTimeline.ts');
+    assert.match(timeline, /useSpaceTimeline\(spaceId\)/);
+    assert.match(hook, /getSpaceTimeline/);
+    assert.match(hook, /request !== latestRequest\.current/);
     assert.match(timeline, /compareSpaceReactions/);
     assert.match(timeline, /data-state="loading"/);
     assert.match(timeline, /data-state="empty"/);

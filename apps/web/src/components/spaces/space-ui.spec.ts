@@ -4,6 +4,7 @@ import { CoreApiError } from '../../lib/api/core';
 import type { SpaceView } from '../../lib/api/spaces';
 import {
   chooseActiveSpace,
+  defaultWatchPartners,
   inviteStatusMessage,
   spaceErrorMessage,
 } from './space-ui';
@@ -28,24 +29,35 @@ describe('space UI state policy', () => {
     assert.equal(chooseActiveSpace([], 'removed'), null);
   });
 
+  it('preselects the partner only in a two-person space', () => {
+    const member = (accountId: string, status: 'ACTIVE' | 'LEFT' = 'ACTIVE') => ({
+      accountId,
+      role: 'MEMBER' as const,
+      status,
+      profileImageUrl: null,
+    });
+    const couple = { ...space('couple'), members: [member('me'), member('partner')] };
+    const group = {
+      ...space('group'),
+      members: [member('me'), member('a'), member('b')],
+    };
+    const leftPartner = {
+      ...space('left'),
+      members: [member('me'), member('partner'), member('gone', 'LEFT')],
+    };
+    assert.deepEqual(defaultWatchPartners(couple, 'me'), ['partner']);
+    assert.deepEqual(defaultWatchPartners(group, 'me'), []);
+    assert.deepEqual(defaultWatchPartners(leftPartner, 'me'), ['partner']);
+    assert.deepEqual(defaultWatchPartners({ ...space('solo'), members: [member('me')] }, 'me'), []);
+    assert.deepEqual(defaultWatchPartners(null, 'me'), []);
+  });
+
   it('distinguishes capacity, expiry, already accepted, permission, and hidden 404 errors', () => {
     assert.match(spaceErrorMessage(apiError(409, 'SPACE_FULL')), /정원 5명/);
-    assert.match(
-      spaceErrorMessage(apiError(410, 'SPACE_INVITE_EXPIRED')),
-      /만료/,
-    );
-    assert.match(
-      spaceErrorMessage(apiError(409, 'SPACE_INVITE_USED')),
-      /이미 수락/,
-    );
-    assert.match(
-      spaceErrorMessage(apiError(403, 'SPACE_OWNER_REQUIRED')),
-      /소유자만/,
-    );
-    assert.match(
-      spaceErrorMessage(apiError(404, 'SPACE_NOT_FOUND')),
-      /접근 권한/,
-    );
+    assert.match(spaceErrorMessage(apiError(410, 'SPACE_INVITE_EXPIRED')), /만료/);
+    assert.match(spaceErrorMessage(apiError(409, 'SPACE_INVITE_USED')), /이미 수락/);
+    assert.match(spaceErrorMessage(apiError(403, 'SPACE_OWNER_REQUIRED')), /소유자만/);
+    assert.match(spaceErrorMessage(apiError(404, 'SPACE_NOT_FOUND')), /접근 권한/);
   });
 
   it('renders distinct invite inspection states', () => {

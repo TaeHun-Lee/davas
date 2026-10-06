@@ -4,11 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import type { MediaType, ViewingMethod } from '@davas/shared';
-import {
-  CoreApiError,
-  listRecords,
-  type RecordCardData,
-} from '../../lib/api/core';
+import { CoreApiError, listRecords, type RecordCardData } from '../../lib/api/core';
 import { getFriends } from '../../lib/api/friends';
 import {
   AsyncState,
@@ -22,6 +18,7 @@ import {
   ViewingMethodControl,
 } from './CoreUi';
 import { HomeRecommendations } from './HomeRecommendations';
+import { SpaceHome } from './SpaceHome';
 import { WatchEventDetailScreen } from './WatchEventDetailScreen';
 
 function useRecords(
@@ -32,9 +29,7 @@ function useRecords(
   const [items, setItems] = useState<RecordCardData[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(
-    'loading',
-  );
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [key, setKey] = useState(0);
   const [moreBusy, setMoreBusy] = useState(false);
   const [error, setError] = useState<CoreApiError | null>(null);
@@ -82,7 +77,6 @@ function useRecords(
 function RecordList({
   scope,
   filters = {},
-  compact = false,
   returnTo,
 }: {
   scope: 'friends' | 'mine';
@@ -91,7 +85,6 @@ function RecordList({
     mediaType?: MediaType;
     viewingMethod?: ViewingMethod;
   };
-  compact?: boolean;
   returnTo?: string;
 }) {
   const data = useRecords(scope, filters);
@@ -102,31 +95,13 @@ function RecordList({
         .then((value) => setHasFriends(value.friends.length > 0))
         .catch(() => setHasFriends(null));
   }, [scope]);
-  if (data.status === 'loading')
-    return compact ? (
-      <div className="home-feed-loading" aria-label="친구 기록 불러오는 중">
-        <span />
-        <span />
-      </div>
-    ) : (
-      <AsyncState kind="loading" />
-    );
+  if (data.status === 'loading') return <AsyncState kind="loading" />;
   if (data.status === 'error')
-    return compact ? (
-      <section className="home-feed-message" role="status" aria-live="polite">
-        <div>
-          <h3>친구 기록을 불러오지 못했어요.</h3>
-          <p>추천 작품은 그대로 둘러볼 수 있어요.</p>
-        </div>
-        <button type="button" onClick={data.retry}>다시 시도</button>
-      </section>
-    ) : (
+    return (
       <section role="status" aria-live="polite">
         <EmptyState
           title={
-            scope === 'friends'
-              ? '친구 기록을 불러오지 못했어요'
-              : '내 기록을 불러오지 못했어요'
+            scope === 'friends' ? '친구 기록을 불러오지 못했어요' : '내 기록을 불러오지 못했어요'
           }
           description={
             data.error?.status && data.error.status >= 500
@@ -134,11 +109,7 @@ function RecordList({
               : '연결 상태를 확인하고 다시 시도해 주세요.'
           }
           action={
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={data.retry}
-            >
+            <button type="button" className="secondary-button" onClick={data.retry}>
               다시 시도
             </button>
           }
@@ -146,9 +117,7 @@ function RecordList({
       </section>
     );
   if (!data.items.length) {
-    const filtered = Boolean(
-      filters.q || filters.mediaType || filters.viewingMethod,
-    );
+    const filtered = Boolean(filters.q || filters.mediaType || filters.viewingMethod);
     const noFriends = scope === 'friends' && hasFriends === false;
     return (
       <EmptyState
@@ -171,10 +140,7 @@ function RecordList({
                 : '본 영화나 드라마를 첫 기록으로 남겨보세요.'
         }
         action={
-          <Link
-            className="primary-button"
-            href={noFriends ? '/friends' : '/records/new?step=find'}
-          >
+          <Link className="primary-button" href={noFriends ? '/friends' : '/records/new?step=find'}>
             {noFriends ? '친구 초대하기' : '본 작품 기록하기'}
           </Link>
         }
@@ -215,20 +181,12 @@ export function FeedScreen() {
         aria-label="TMDB에서 본 작품을 검색해 기록하기"
       >
         <span className="wide-cta-label">
-          <SearchIcon className="wide-cta-icon" />
-          본 작품 기록하기
+          <SearchIcon className="wide-cta-icon" />본 작품 기록하기
         </span>
         <span aria-hidden="true">›</span>
       </Link>
+      <SpaceHome />
       <HomeRecommendations />
-      <div className="home-section-heading home-friend-heading">
-        <div>
-          <h2 className="section-title">친구들의 최근 기록</h2>
-          <p>친구들이 남긴 최신 감상을 확인해 보세요.</p>
-        </div>
-        <Link href="/friends">친구 <span aria-hidden="true">›</span></Link>
-      </div>
-      <RecordList scope="friends" compact />
     </CoreAppShell>
   );
 }
@@ -237,9 +195,7 @@ export function MineScreen() {
   return (
     <CoreAppShell>
       <h1 className="page-title">내 기록</h1>
-      <p className="page-description">
-        공개 여부와 관계없이 내가 본 작품을 모아봐요.
-      </p>
+      <p className="page-description">공개 여부와 관계없이 내가 본 작품을 모아봐요.</p>
       <div className="mt-5">
         <Link href="/search?scope=mine" aria-label="내 기록 검색">
           <SearchField
@@ -265,8 +221,7 @@ export function SearchScreen() {
   const scope = params.get('scope') === 'mine' ? 'mine' : 'friends';
   const [q, setQ] = useState(params.get('q') ?? '');
   const mediaType = (params.get('mediaType') as MediaType | null) || null;
-  const viewingMethod =
-    (params.get('viewingMethod') as ViewingMethod | null) || null;
+  const viewingMethod = (params.get('viewingMethod') as ViewingMethod | null) || null;
   const hasFilters = Boolean(q || mediaType || viewingMethod);
   const returnParams = new URLSearchParams(params.toString());
   returnParams.set('scope', scope);
@@ -279,9 +234,7 @@ export function SearchScreen() {
     const p = new URLSearchParams(params.toString());
     p.set('scope', scope);
     const values = { q, mediaType, viewingMethod, ...next };
-    Object.entries(values).forEach(([key, value]) =>
-      value ? p.set(key, value) : p.delete(key),
-    );
+    Object.entries(values).forEach(([key, value]) => (value ? p.set(key, value) : p.delete(key)));
     router.replace(`/search?${p}`);
   };
   useEffect(() => {
@@ -303,11 +256,7 @@ export function SearchScreen() {
         value={q}
         onChange={setQ}
         label="기록 검색"
-        placeholder={
-          scope === 'mine'
-            ? '작품 제목으로 내 기록 찾기'
-            : '작품 제목 또는 친구 이름'
-        }
+        placeholder={scope === 'mine' ? '작품 제목으로 내 기록 찾기' : '작품 제목 또는 친구 이름'}
       />
       <section className="record-search-filters" aria-label="검색 필터">
         <div className="record-search-filter-heading">
@@ -329,10 +278,7 @@ export function SearchScreen() {
         </div>
         <div className="record-search-filter-row">
           <span className="field-label">작품 종류</span>
-          <MediaTypeControl
-            value={mediaType}
-            onChange={(value) => update({ mediaType: value })}
-          />
+          <MediaTypeControl value={mediaType} onChange={(value) => update({ mediaType: value })} />
         </div>
         <div className="record-search-filter-row">
           <span className="field-label">관람 방식</span>
