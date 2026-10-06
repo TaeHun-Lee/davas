@@ -1,3 +1,4 @@
+import type { MediaSelectionInput } from '@davas/shared';
 import { getApiBaseUrl } from './base-url';
 
 export type MediaSearchResult = {
@@ -77,7 +78,6 @@ export type MediaDetail = Omit<SelectedMedia, 'genreIds'> & {
   genreIds?: number[];
 };
 
-
 export async function searchMedia({
   query,
   type = 'multi',
@@ -130,13 +130,19 @@ export async function searchPeople({
   return (await response.json()) as PersonSearchResponse;
 }
 
-export async function getPersonCredits(personId: string, { language = 'ko-KR' }: { language?: string } = {}) {
+export async function getPersonCredits(
+  personId: string,
+  { language = 'ko-KR' }: { language?: string } = {},
+) {
   const params = new URLSearchParams();
   params.set('language', language);
 
-  const response = await fetch(`${getApiBaseUrl()}/media/people/${personId}/credits?${params.toString()}`, {
-    credentials: 'include',
-  });
+  const response = await fetch(
+    `${getApiBaseUrl()}/media/people/${personId}/credits?${params.toString()}`,
+    {
+      credentials: 'include',
+    },
+  );
 
   if (!response.ok) {
     throw new Error('person credits failed');
@@ -145,19 +151,13 @@ export async function getPersonCredits(personId: string, { language = 'ko-KR' }:
   return (await response.json()) as PersonCreditsResponse;
 }
 
-function toMediaSelectionPayload(selection: MediaSearchResult): MediaSearchResult {
+// Only the provider identity is sent: the API stores titles and images from TMDB itself and
+// rejects any other field (forbidNonWhitelisted), so a title or poster here fails the request.
+function toMediaSelectionPayload(selection: MediaSearchResult): MediaSelectionInput {
   return {
     externalProvider: selection.externalProvider,
     externalId: selection.externalId,
     mediaType: selection.mediaType,
-    title: selection.title,
-    originalTitle: selection.originalTitle,
-    overview: selection.overview,
-    posterUrl: selection.posterUrl,
-    backdropUrl: selection.backdropUrl,
-    releaseDate: selection.releaseDate,
-    genreIds: selection.genreIds,
-    country: selection.country,
   };
 }
 

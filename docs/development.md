@@ -212,9 +212,11 @@ npm run verify:release  # verify + Caddy 헤더 검사 + 운영 의존성 감사
 | 빌드 | `npm run build` | shared, API, Web 운영 빌드 | 운영 DB migration |
 | 인증 경계 | `npm run verify:auth` | 빌드된 API의 공개·비공개 경로 동작 | 실제 TLS·프록시 |
 | 업로드 | `npm run verify:upload` | 비로그인 401, 초과 413, 위장 파일 400, 정상 201, 과다 429 | 운영 볼륨 |
+| 화면↔API 계약 | `npm run verify:contracts` | Web API 클라이언트가 실제로 보내는 요청 50여 개를 빌드된 API 컨트롤러에 운영과 같은 `ValidationPipe`(허용하지 않은 필드는 400)로 보내 모두 받아들여지는지. 새 클라이언트 함수를 만들면 `scripts/verify-client-contracts.mts`에 호출을 더한다 | 서비스 동작(전부 가짜로 대체), 사진 업로드(XHR) |
 | Caddy | `npm run verify:caddy` | 실제 Caddy 컨테이너의 보안 헤더 적용 (Docker 필요) | DNS·인증서 |
 | 의존성 | `npm run audit:prod` | 운영 의존성의 알려진 취약점 | 실제 악용 가능성 |
 
+- API 오류 필터는 400(허용하지 않은 필드 등 입력 거절)과 5xx를 메서드·경로와 함께 로그에 남긴다. 값이나 주소의 검색어는 남기지 않는다. 운영에서 화면 오류가 보이면 `docker logs davas-api`에서 이 줄부터 찾는다.
 - 테스트는 `scripts/run-tests.mjs`가 파일을 찾아 Node 테스트 러너에 넘긴다. package script에 따옴표 친 `**` glob을 직접 넣지 않는다.
 - 포맷 검사는 바뀐 파일만 Prettier 형식을 요구한다. 아직 정리하지 않은 기존 파일은 `scripts/prettier-baseline.json`에 해시로 등록돼 있고, 그 파일을 수정하면 함께 포맷해야 한다.
 - 실제 DB·브라우저·기기가 필요한 검증은 그 환경에서 실행했을 때만 통과로 본다. 판정 기준과 수동 QA 목록은 [부록](appendix.md#2-검증-요령)에 있다.

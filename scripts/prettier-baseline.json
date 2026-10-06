@@ -176,7 +176,6 @@
   "apps/web/src/lib/api/community.ts": "e646edc814ef62de6cc04f8a53b52478a6755ed285492ed455d6b0ac8d48d917",
   "apps/web/src/lib/api/diaries.ts": "0ba0ec97a2c2807d10166ddd6379f006197062f9b57a0fe0f5011982cccf1cca",
   "apps/web/src/lib/api/friends.ts": "30fcb08fa45e25c2b3b9a18cab5877c52baf50badb9c2f10d6bfbc0571f8f578",
-  "apps/web/src/lib/api/media.ts": "2f8287fac08fc8740e6cf8abf6f93b1952651ee529a03c0c8c1126480f7a84fd",
   "apps/web/src/lib/api/reactions.ts": "5a5efb3d4dcac1b863646afabf250dff2e55c65585032649e4972f6c11f21b60",
   "apps/web/src/lib/api/recommendations-group.spec.ts": "9e105b4feb5131cf69fdee430316951dec6c05d386af85671e16e0a946ed4c47",
   "apps/web/src/lib/api/recommendations.ts": "c78fdf7374fc4fc3115d47f3c28af2e5e23b2f921c0ba7713d7b85bc20210e4f",

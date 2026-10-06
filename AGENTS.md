@@ -66,7 +66,7 @@
 - Web: `npm run test --workspace @davas/web`, `npm run lint --workspace @davas/web`, and `npm run build --workspace @davas/web` as relevant.
 - Shared: `npm run test --workspace @davas/shared` and `npm run build --workspace @davas/shared` as relevant.
 - For cross-workspace changes, use the root `npm run test`, `npm run lint`, and `npm run build` scripts as appropriate.
-- Before handoff of a cross-cutting change, run `npm run verify` (format, docs, deployment contracts, tests, lint, build, auth and upload HTTP contracts).
+- Before handoff of a cross-cutting change, run `npm run verify` (format, docs, deployment contracts, tests, lint, build, auth and upload HTTP contracts, and the web-to-API request contract). When adding a web API client function, add a call to `scripts/verify-client-contracts.mts`.
 - Report a check as passed only when it actually ran. Missing PostgreSQL, keys, browsers, or devices make a check BLOCKED, not PASS.
 - After editing, inspect the resulting git diff and report which checks were run, including any failures or checks intentionally skipped.
 
