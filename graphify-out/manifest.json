@@ -685,8 +685,8 @@
     "semantic_hash": "3feea0c6898c87bdd296fb1593e5cdd3"
   },
   "apps/web/src/app/home-design.spec.ts": {
-    "mtime": 1791286572.6247451,
-    "ast_hash": "59449f418f3c40b2f5ab9e8df0f59543",
+    "mtime": 1791291681.554204,
+    "ast_hash": "3e1f7d4afd1a8befdded0186c419087f",
     "semantic_hash": ""
   },
   "apps/web/src/app/layout.tsx": {
@@ -825,8 +825,8 @@
     "semantic_hash": "9d612e2fd8dfe86db0967c1d9efeb20f"
   },
   "apps/web/src/components/auth/AuthUi.tsx": {
-    "mtime": 1791273820.4378676,
-    "ast_hash": "555e6df5f2928a8342ce277d1a0d1ef6",
+    "mtime": 1791291857.701949,
+    "ast_hash": "a7ecfd48dd998814dc8723a154089b36",
     "semantic_hash": ""
   },
   "apps/web/src/components/auth/AuthenticatedLanding.tsx": {
@@ -895,18 +895,18 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/CoreUi.tsx": {
-    "mtime": 1791281316.8684814,
-    "ast_hash": "23a131716f2c552e268106fcbb5c1ae3",
+    "mtime": 1791291984.0877056,
+    "ast_hash": "854a8ff0bc2fddeefd3184eaec453933",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/RecordComposer.tsx": {
-    "mtime": 1791289594.3787162,
-    "ast_hash": "169e16cfecc5d31e227107f60ad72c41",
+    "mtime": 1791291996.4036438,
+    "ast_hash": "bdf59e50b014d1a984f8c90b3db7cd01",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/RecordScreens.tsx": {
-    "mtime": 1791276846.4701834,
-    "ast_hash": "96e67d8766c90ea0fd197665a95c3384",
+    "mtime": 1791291999.9409091,
+    "ast_hash": "9462c84844d59bd45865ec006b13af7c",
     "semantic_hash": ""
   },
   "apps/web/src/components/diary/DiaryComposeHeader.tsx": {
@@ -1275,8 +1275,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/settings/SettingsScreen.tsx": {
-    "mtime": 1791280136.8739035,
-    "ast_hash": "29ca7b565fa8eefbb5d9569b98611f99",
+    "mtime": 1791291984.0912242,
+    "ast_hash": "76e136e09c2c81b2c248c95299e8cded",
     "semantic_hash": ""
   },
   "apps/web/src/components/watchlist/WatchlistScreen.tsx": {
@@ -1590,13 +1590,13 @@
     "semantic_hash": ""
   },
   "apps/api/src/diaries/space-watch.controller.ts": {
-    "mtime": 1791280882.2478502,
-    "ast_hash": "396be0c63b5037ca59e56fe9beef5009",
+    "mtime": 1791291569.398622,
+    "ast_hash": "dc443ecc55e9fc7e1f7b617b9d3be24c",
     "semantic_hash": ""
   },
   "apps/api/src/diaries/watch-events-api.spec.ts": {
-    "mtime": 1791266026.1214116,
-    "ast_hash": "0f26c66d263f2c1333821f1f38696d5b",
+    "mtime": 1791291606.4355414,
+    "ast_hash": "c350f1ff8dbd5dd2855e3012775dbe72",
     "semantic_hash": ""
   },
   "apps/api/src/diaries/watch-events.controller.ts": {
@@ -1605,13 +1605,13 @@
     "semantic_hash": ""
   },
   "apps/api/src/diaries/watch-events.service.spec.ts": {
-    "mtime": 1791288753.6304362,
-    "ast_hash": "1c5169714684ffaec7e6a7ed2ac2a21d",
+    "mtime": 1791291597.4298275,
+    "ast_hash": "7c8fe788f452705a47d9269b4dd353d4",
     "semantic_hash": ""
   },
   "apps/api/src/diaries/watch-events.service.ts": {
-    "mtime": 1791288710.1212227,
-    "ast_hash": "083b2afc4b465d8ad152ad6da9941f8b",
+    "mtime": 1791291581.3493974,
+    "ast_hash": "2122ebce5c5aac223e5b8f07c44ac361",
     "semantic_hash": ""
   },
   "apps/api/src/database/entities/availability-observation.entity.ts": {
@@ -1835,8 +1835,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchEventDetailScreen.tsx": {
-    "mtime": 1791289514.2393193,
-    "ast_hash": "1777e278ad550a17ab2948efaee58932",
+    "mtime": 1791292000.0225482,
+    "ast_hash": "81e740aea9e94d5c2167376e4d60d994",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchRatingControl.tsx": {
@@ -1855,8 +1855,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/watch-events.ts": {
-    "mtime": 1791279188.997482,
-    "ast_hash": "97dfc8969f2222d06998cae4673bb816",
+    "mtime": 1791292000.2676363,
+    "ast_hash": "8ba843e0ec285196d0a759ee5b1cd0c1",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20260815_230050_trace_recordcomposer_diarycomposescreen_diarydetai.md": {
@@ -2260,8 +2260,8 @@
     "semantic_hash": ""
   },
   "docs/development.md": {
-    "mtime": 1791289684.4808512,
-    "ast_hash": "6ce4a10707c54fc21a0232459375688a",
+    "mtime": 1791292273.7052114,
+    "ast_hash": "6792a8c647e57b62f819a857720d4521",
     "semantic_hash": ""
   },
   "docs/operations.md": {
@@ -2285,8 +2285,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/SpaceHome.tsx": {
-    "mtime": 1791281361.00893,
-    "ast_hash": "223fd7bc0f9ea96598e210c461dc13eb",
+    "mtime": 1791291681.5532043,
+    "ast_hash": "d582ecc207491ff6a189aad0c5d24872",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceWatchCard.tsx": {
@@ -2365,8 +2365,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/ComposerFields.tsx": {
-    "mtime": 1791289559.5472414,
-    "ast_hash": "46549e06ca8eef05637c152493e828c5",
+    "mtime": 1791291947.9182267,
+    "ast_hash": "963979b80e48d0091c81027528a4bd4b",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/PhotoPicker.tsx": {
@@ -2380,8 +2380,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchPhotoGallery.tsx": {
-    "mtime": 1791278595.2102115,
-    "ast_hash": "ec7edb033ff868774385dc96e9756633",
+    "mtime": 1791291984.092225,
+    "ast_hash": "cb387500a4f70c5156a4a9d7468bd37f",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchReviews.tsx": {
@@ -2390,8 +2390,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/record-experience-design.spec.ts": {
-    "mtime": 1791289650.901273,
-    "ast_hash": "669394ac4d16ac0c1e6a0984744294c8",
+    "mtime": 1791292056.539153,
+    "ast_hash": "64a13fc3dbb59a66bb35e0cd9f996a64",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useWatchPhotoUploads.ts": {
@@ -2455,18 +2455,18 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/WishPickCard.tsx": {
-    "mtime": 1791289390.4991004,
-    "ast_hash": "eac1f58f7663f7ed2b97d3541115f310",
+    "mtime": 1791291711.6142213,
+    "ast_hash": "3fd0245d600469153d1817aeee927584",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/WishesScreen.tsx": {
-    "mtime": 1791280521.0740259,
-    "ast_hash": "fe52f3c0f75daaf3c5c89d66d3aa1b2c",
+    "mtime": 1791291984.090224,
+    "ast_hash": "00fd8ed1f928160409164df776d5b28c",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/wishes-design.spec.ts": {
-    "mtime": 1791289650.984361,
-    "ast_hash": "0afa9d11f51d53aadde3ab0edd307676",
+    "mtime": 1791291701.1021714,
+    "ast_hash": "e55ec17d8ea0399b2a94b2749fcad04e",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useActiveSpace.ts": {
@@ -2515,8 +2515,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/notifications/NotificationsScreen.tsx": {
-    "mtime": 1791289506.9055426,
-    "ast_hash": "886c35f3bcc8425a2a43aee7da3949cd",
+    "mtime": 1791291984.0892088,
+    "ast_hash": "0f926a763dad5f1999d9aedd6556c9dc",
     "semantic_hash": ""
   },
   "apps/web/src/components/notifications/notification-model.spec.ts": {
@@ -2530,8 +2530,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/MemoriesScreen.tsx": {
-    "mtime": 1791289506.9195642,
-    "ast_hash": "427ac63c39fa28b7e4617a509423f8c4",
+    "mtime": 1791291984.090224,
+    "ast_hash": "b4b03f74a9267ecc150209623b192203",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/memories-design.spec.ts": {

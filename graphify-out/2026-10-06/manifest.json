@@ -55,13 +55,13 @@
     "semantic_hash": ""
   },
   "apps/api/src/comments/comments.service.spec.ts": {
-    "mtime": 1791266531.2521856,
-    "ast_hash": "24e88af4ee24a2cd67b755837a60133f",
+    "mtime": 1791289650.8662102,
+    "ast_hash": "6e47e5a7450aba44d1fff88fe86bee52",
     "semantic_hash": ""
   },
   "apps/api/src/comments/comments.service.ts": {
-    "mtime": 1791281041.7915769,
-    "ast_hash": "430f064e9b5c2e2ee087dc94cf74e3a8",
+    "mtime": 1791288527.1616886,
+    "ast_hash": "159b2782fd2f0d315b9e296a85e226cc",
     "semantic_hash": ""
   },
   "apps/api/src/common/api-exception.filter.ts": {
@@ -365,8 +365,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/main.ts": {
-    "mtime": 1791278143.9673595,
-    "ast_hash": "a0972d7cb14ca6b9c2254bcdd5d9c15b",
+    "mtime": 1791288401.4220026,
+    "ast_hash": "1e75b5dcd6d0f559ef3e3ac0209f9fc7",
     "semantic_hash": ""
   },
   "apps/api/src/media/dto/media-search-query.dto.ts": {
@@ -430,13 +430,13 @@
     "semantic_hash": ""
   },
   "apps/api/src/media/tmdb.client.spec.ts": {
-    "mtime": 1791266531.2893026,
-    "ast_hash": "cde4efe22fd3bdbc7d2aa9440c0648d0",
+    "mtime": 1791288909.6112413,
+    "ast_hash": "8abcc7e10926ba8701c1b24ebc5e6dac",
     "semantic_hash": ""
   },
   "apps/api/src/media/tmdb.client.ts": {
-    "mtime": 1791266026.1456711,
-    "ast_hash": "7f9e9a8cf652ac539ae9d7b112c82355",
+    "mtime": 1791288912.043187,
+    "ast_hash": "61fde0d93ca10bf82022659975d44592",
     "semantic_hash": ""
   },
   "apps/api/src/media/tmdb.mapper.spec.ts": {
@@ -535,13 +535,13 @@
     "semantic_hash": ""
   },
   "apps/api/src/users/users.service.spec.ts": {
-    "mtime": 1791280064.2358136,
-    "ast_hash": "8cf4d517856745ae5fd1392d09f6a686",
+    "mtime": 1791288492.7604616,
+    "ast_hash": "5e17dd37ec753b5f177635d030db7188",
     "semantic_hash": ""
   },
   "apps/api/src/users/users.service.ts": {
-    "mtime": 1791279766.544823,
-    "ast_hash": "b2cec7d49775ab47e1db704203491316",
+    "mtime": 1791288492.7594607,
+    "ast_hash": "4b1c847a423b3f3d3824d93ed60a550d",
     "semantic_hash": ""
   },
   "apps/api/src/watchlist/watchlist.controller.ts": {
@@ -900,8 +900,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/RecordComposer.tsx": {
-    "mtime": 1791286451.8350506,
-    "ast_hash": "c845c4be662a185fcc2bf15c7a6ba3d1",
+    "mtime": 1791289594.3787162,
+    "ast_hash": "169e16cfecc5d31e227107f60ad72c41",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/RecordScreens.tsx": {
@@ -1160,8 +1160,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/media/MediaDetailModal.tsx": {
-    "mtime": 1791280414.3358934,
-    "ast_hash": "9fdebc38aa1596c9aaa507a6b32bb8dc",
+    "mtime": 1791289650.9668121,
+    "ast_hash": "048cdbbb320fcc6f9f80b8933f7aecdf",
     "semantic_hash": ""
   },
   "apps/web/src/components/media/MediaHeroCarousel.tsx": {
@@ -1300,9 +1300,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useFocusTrap.ts": {
-    "mtime": 1783779247.809138,
-    "ast_hash": "9faf05c9e83f2aed468033834bff4ae4",
-    "semantic_hash": "9faf05c9e83f2aed468033834bff4ae4"
+    "mtime": 1791289187.6161754,
+    "ast_hash": "0947b3451e08955fe428b6e89e9d8469",
+    "semantic_hash": ""
   },
   "apps/web/src/hooks/useMediaSearch.ts": {
     "mtime": 1791264715.521346,
@@ -1390,8 +1390,8 @@
     "semantic_hash": ""
   },
   "deploy/backup.sh": {
-    "mtime": 1791266531.3138363,
-    "ast_hash": "d0af58d821e7b7edc813a92da970c64f",
+    "mtime": 1791289113.7363932,
+    "ast_hash": "2fd78124b5dcbba83d6bea606b8e9a89",
     "semantic_hash": ""
   },
   "package.json": {
@@ -1605,13 +1605,13 @@
     "semantic_hash": ""
   },
   "apps/api/src/diaries/watch-events.service.spec.ts": {
-    "mtime": 1791287740.600477,
-    "ast_hash": "7ae834a2acf950ec703c29e28dd3d5da",
+    "mtime": 1791288753.6304362,
+    "ast_hash": "1c5169714684ffaec7e6a7ed2ac2a21d",
     "semantic_hash": ""
   },
   "apps/api/src/diaries/watch-events.service.ts": {
-    "mtime": 1791287288.8064756,
-    "ast_hash": "078afd488ae22494425366d98e21dc33",
+    "mtime": 1791288710.1212227,
+    "ast_hash": "083b2afc4b465d8ad152ad6da9941f8b",
     "semantic_hash": ""
   },
   "apps/api/src/database/entities/availability-observation.entity.ts": {
@@ -1645,13 +1645,13 @@
     "semantic_hash": ""
   },
   "apps/api/src/media/availability.service.spec.ts": {
-    "mtime": 1791266026.1234121,
-    "ast_hash": "4c62ef0345e4b8a1aeac8698b5ea96ce",
+    "mtime": 1791289005.8619845,
+    "ast_hash": "c0f67030b853658546f92049182ed5a7",
     "semantic_hash": ""
   },
   "apps/api/src/media/availability.service.ts": {
-    "mtime": 1791266026.124411,
-    "ast_hash": "d40f1a3b92b1bb0f6c3736687458f8d7",
+    "mtime": 1791289005.801644,
+    "ast_hash": "c5b4cfe7148d529a0a2341087d66b44e",
     "semantic_hash": ""
   },
   "apps/api/src/media/catalog-selection-ref.spec.ts": {
@@ -1795,12 +1795,12 @@
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendation.algorithm.spec.ts": {
-    "mtime": 1791266026.1634414,
+    "mtime": 1791289015.990415,
     "ast_hash": "3a2ae9346f2781a061ffc134722b023f",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendation.algorithm.ts": {
-    "mtime": 1791266026.1644661,
+    "mtime": 1791289015.9914155,
     "ast_hash": "167979e571be8ba5e7bfd67f9263f985",
     "semantic_hash": ""
   },
@@ -1810,22 +1810,22 @@
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendations.dto.ts": {
-    "mtime": 1791266026.165494,
+    "mtime": 1791289015.9937031,
     "ast_hash": "9758c8dd3d150f342070096b86ab006a",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendations.service.spec.ts": {
-    "mtime": 1791266026.1660056,
+    "mtime": 1791289015.9952066,
     "ast_hash": "165f04b9b89be922317b86693835ddef",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendations.service.ts": {
-    "mtime": 1791286221.4164546,
-    "ast_hash": "8ecfcdea6ed159bfb92b6e4284083f33",
+    "mtime": 1791288864.6524591,
+    "ast_hash": "71e3e2b17df7eb51f82739a7e6e6c58f",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendations.dto.spec.ts": {
-    "mtime": 1791266026.1649797,
+    "mtime": 1791289015.992703,
     "ast_hash": "db293c149f2cbaa396b4b873af8a724e",
     "semantic_hash": ""
   },
@@ -1835,8 +1835,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchEventDetailScreen.tsx": {
-    "mtime": 1791287902.4908936,
-    "ast_hash": "f43cdcbe926a76f29b59c55467146070",
+    "mtime": 1791289514.2393193,
+    "ast_hash": "1777e278ad550a17ab2948efaee58932",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchRatingControl.tsx": {
@@ -1845,8 +1845,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceTimeline.tsx": {
-    "mtime": 1791287563.0776396,
-    "ast_hash": "725a31e71ca25cd52c1911e51c3b0faa",
+    "mtime": 1791289374.724219,
+    "ast_hash": "2c67cdeb169bdb3c97795f14b779dc69",
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/watch-events.spec.ts": {
@@ -2095,8 +2095,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/diaries/query-performance-contract.spec.ts": {
-    "mtime": 1791266531.275233,
-    "ast_hash": "93c6bbddaf513addd882761ab79424e9",
+    "mtime": 1791288753.6304362,
+    "ast_hash": "401337eb519cd0954d7773f73bb5b182",
     "semantic_hash": ""
   },
   "apps/api/src/diaries/update-diary-http-contract.spec.ts": {
@@ -2195,8 +2195,8 @@
     "semantic_hash": ""
   },
   "scripts/prettier-baseline.json": {
-    "mtime": 1791286866.772547,
-    "ast_hash": "fc98db4a32ca194be0d14f5949a23bd3",
+    "mtime": 1791289188.8636258,
+    "ast_hash": "20faee1b752cc627167be1080951b721",
     "semantic_hash": ""
   },
   "scripts/run-tests.mjs": {
@@ -2250,8 +2250,8 @@
     "semantic_hash": ""
   },
   "scripts/verify-upload-http.mjs": {
-    "mtime": 1791266531.3350732,
-    "ast_hash": "f7cee0e1172dbe4ae0bdaf4e78d2cc0d",
+    "mtime": 1791288457.46998,
+    "ast_hash": "d666fe9189e37b24b0646d9bf71b5ff0",
     "semantic_hash": ""
   },
   "docs/appendix.md": {
@@ -2260,18 +2260,18 @@
     "semantic_hash": ""
   },
   "docs/development.md": {
-    "mtime": 1791287773.8605268,
-    "ast_hash": "020372c86440f6f7be96eb0188664a5e",
+    "mtime": 1791289684.4808512,
+    "ast_hash": "6ce4a10707c54fc21a0232459375688a",
     "semantic_hash": ""
   },
   "docs/operations.md": {
-    "mtime": 1791281071.5236852,
-    "ast_hash": "d2e94a6c0fad26c78131a9cd5e1a6f2a",
+    "mtime": 1791289146.606438,
+    "ast_hash": "668c115ffc2dd6dc8d8c608ea11b76f8",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/GroupRecommendationPanel.tsx": {
-    "mtime": 1791280414.4271424,
-    "ast_hash": "a6392b2b425d7dfdb31f8049fea14f6a",
+    "mtime": 1791289280.416705,
+    "ast_hash": "afc2833895404d38f2c5c13b9aec993c",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/group-recommendation-model.spec.ts": {
@@ -2305,8 +2305,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useSpaceTimeline.ts": {
-    "mtime": 1791276578.6399338,
-    "ast_hash": "d615c92bfdaaf930ed8e42a5b375f9fd",
+    "mtime": 1791289361.2996063,
+    "ast_hash": "15671e61c6a6a2565cb47a86e246cece",
     "semantic_hash": ""
   },
   "apps/api/src/database/entities/watch-photo.entity.ts": {
@@ -2365,8 +2365,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/ComposerFields.tsx": {
-    "mtime": 1791278475.357821,
-    "ast_hash": "5d65bb9676e9ab948c2d6fbf80d706eb",
+    "mtime": 1791289559.5472414,
+    "ast_hash": "46549e06ca8eef05637c152493e828c5",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/PhotoPicker.tsx": {
@@ -2385,13 +2385,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchReviews.tsx": {
-    "mtime": 1791287563.0766125,
-    "ast_hash": "f104125de3a1039a3dff12c59f1cc9d5",
+    "mtime": 1791289424.2493525,
+    "ast_hash": "263c3b494d3c6d76042843fefc540b36",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/record-experience-design.spec.ts": {
-    "mtime": 1791287665.0855217,
-    "ast_hash": "c219c1374b604d75dc71fee7f5d3befd",
+    "mtime": 1791289650.901273,
+    "ast_hash": "669394ac4d16ac0c1e6a0984744294c8",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useWatchPhotoUploads.ts": {
@@ -2425,8 +2425,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendations.warmup.spec.ts": {
-    "mtime": 1791279992.136011,
-    "ast_hash": "525e3e00ccbdde96e22eece15b280d9f",
+    "mtime": 1791288889.758943,
+    "ast_hash": "9d43e9ddbd382c412c58f0861913674d",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/space-wishes.controller.ts": {
@@ -2435,13 +2435,13 @@
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/space-wishes.service.spec.ts": {
-    "mtime": 1791287665.0845206,
-    "ast_hash": "f5819cd853baf0112c49fddb4a2e5a07",
+    "mtime": 1791289003.1917863,
+    "ast_hash": "091b8ab6002eb65a4caa761eb8a7dff3",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/space-wishes.service.ts": {
-    "mtime": 1791287288.8084767,
-    "ast_hash": "a576efaf4be5c2f1b80879436620cf58",
+    "mtime": 1791288986.4966497,
+    "ast_hash": "4e9491f17fb6ba5f9121193b76b41a53",
     "semantic_hash": ""
   },
   "apps/web/src/app/spaces/wishes/page.tsx": {
@@ -2455,8 +2455,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/WishPickCard.tsx": {
-    "mtime": 1791280520.9821913,
-    "ast_hash": "12fa94d77d8f7b74bb2cad04ede1d76e",
+    "mtime": 1791289390.4991004,
+    "ast_hash": "eac1f58f7663f7ed2b97d3541115f310",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/WishesScreen.tsx": {
@@ -2465,8 +2465,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/wishes-design.spec.ts": {
-    "mtime": 1791280409.644122,
-    "ast_hash": "1eab3713a17862f40bec4731d285c304",
+    "mtime": 1791289650.984361,
+    "ast_hash": "0afa9d11f51d53aadde3ab0edd307676",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useActiveSpace.ts": {
@@ -2475,8 +2475,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useSpaceWish.ts": {
-    "mtime": 1791280414.551975,
-    "ast_hash": "4cce6e9c082d2ccb834301550340f503",
+    "mtime": 1791289331.7672658,
+    "ast_hash": "c1c7337c73d468c06843659b38c223ba",
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/wishes.spec.ts": {
@@ -2515,23 +2515,23 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/notifications/NotificationsScreen.tsx": {
-    "mtime": 1791281418.619435,
-    "ast_hash": "a38f67e1ad08ede6b30b46ffca08ec8d",
+    "mtime": 1791289506.9055426,
+    "ast_hash": "886c35f3bcc8425a2a43aee7da3949cd",
     "semantic_hash": ""
   },
   "apps/web/src/components/notifications/notification-model.spec.ts": {
-    "mtime": 1791281411.958983,
-    "ast_hash": "94d99def3488be1b4f323227640b319d",
+    "mtime": 1791289506.9055426,
+    "ast_hash": "dd857eb5b101297a1bf0834efb860bd0",
     "semantic_hash": ""
   },
   "apps/web/src/components/notifications/notification-model.ts": {
-    "mtime": 1791281418.6370344,
-    "ast_hash": "4f70c92398bf149a249c818bfe8d8718",
+    "mtime": 1791289506.9045403,
+    "ast_hash": "c3d0b872fe2a72af603ff7667dc50e57",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/MemoriesScreen.tsx": {
-    "mtime": 1791287473.4691632,
-    "ast_hash": "4e4415f7d409304a718da51f4e4ee736",
+    "mtime": 1791289506.9195642,
+    "ast_hash": "427ac63c39fa28b7e4617a509423f8c4",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/memories-design.spec.ts": {
@@ -2567,6 +2567,11 @@
   "apps/web/src/hooks/useWatchPhotoUploads.spec.ts": {
     "mtime": 1791286527.0950465,
     "ast_hash": "31b7dc700412aaaf05dfca52b1ed0938",
+    "semantic_hash": ""
+  },
+  "apps/api/src/common/public-uploads.ts": {
+    "mtime": 1791288399.868451,
+    "ast_hash": "cd989fa2ba119bb437ba3fe7af0e526f",
     "semantic_hash": ""
   }
 }
