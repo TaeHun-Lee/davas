@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { WATCH_HEADLINE_MAX_LENGTH, WATCH_REVIEW_MAX_LENGTH } from '@davas/shared';
 import { getMe } from '../../lib/api/auth';
 import { CoreApiError } from '../../lib/api/core';
+import { safeCoreReturnTo } from '../../lib/core-routes';
 import {
   deleteWatchEvent,
   getWatchEvent,
@@ -39,18 +40,10 @@ const participantLabels: Record<WatchParticipantStatus, string> = {
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
-const safeReturn = (value: string | null, mine: boolean) => {
-  if (
-    value &&
-    (/^\/$/.test(value) ||
-      /^\/me$/.test(value) ||
-      /^\/spaces$/.test(value) ||
-      /^\/diary$/.test(value) ||
-      /^\/search\?scope=(friends|mine)/.test(value))
-  )
-    return value;
-  return mine ? '/me' : '/spaces';
-};
+// Back goes wherever the record was opened from, if it is a known screen (the same allow-list
+// login uses, so new screens such as memories and notifications are covered).
+const safeReturn = (value: string | null, mine: boolean) =>
+  safeCoreReturnTo(value, mine ? '/me' : '/spaces');
 
 function dayChip(date: string) {
   const [year, month, day] = date.split('-').map(Number);

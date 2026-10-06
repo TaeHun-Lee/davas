@@ -31,7 +31,15 @@ describe('record experience screens', () => {
     assert.match(source('components/core/composer-draft.ts'), /media\.numberOfEpisodes/);
     assert.match(composer, /label="한줄평 \(선택\)"/);
     assert.match(composer, /label="스포일러 포함"/);
-    assert.match(composer, /isBlind: shared && draft!\.isBlind/);
+    assert.match(
+      composer,
+      /isBlind: shared && draft!\.participantAccountIds\.length > 0 && draft!\.isBlind/,
+    );
+    // Without a companion nobody can unlock a blind review, so the switch is not offered.
+    assert.match(
+      composer,
+      /draft\.spaceIds\.length > 0 && draft\.participantAccountIds\.length > 0 \? \(/,
+    );
     assert.match(composer, /추억 메모/);
     assert.match(fields, /role="switch"/);
     assert.match(fields, /aria-checked=\{checked\}/);

@@ -546,6 +546,30 @@ describe('WatchEventsService', () => {
     assert.equal(await access.isAuthorVisibleTo(record, 'member'), true);
   });
 
+  it('counts comments for each record on a timeline page', async () => {
+    const { database, service } = setup();
+    database.addMember('space-1', 'owner');
+    const quiet = await service.create('owner', {
+      mediaId: 'media-1',
+      watchedDate: '2026-08-05',
+      spaceIds: ['space-1'],
+    });
+    const chatty = await service.create('owner', {
+      mediaId: 'media-1',
+      watchedDate: '2026-08-06',
+      spaceIds: ['space-1'],
+    });
+    for (const id of ['c1', 'c2']) {
+      database.comments.push(
+        Object.assign(new CommentEntity(), { id, diaryId: chatty.id, userId: 'owner' }),
+      );
+    }
+    const { items } = await service.timeline('space-1', 'owner', {});
+    const counts = new Map(items.map((item) => [item.id, item.commentCount]));
+    assert.equal(counts.get(chatty.id), 2);
+    assert.equal(counts.get(quiet.id), 0);
+  });
+
   it('removes the photos of a deleted record with it', async () => {
     const { database, removedPhotosOf, service } = setup();
     database.addMember('space-1', 'owner');
@@ -822,6 +846,27 @@ describe('WatchEventsService', () => {
       sourceKind: 'OTT',
       watchedDate: '2026-05-09',
     });
+  });
+
+  it('announces an opened blind review when the author writes theirs by editing the record', async () => {
+    const { database, notified, service } = setup();
+    database.addMember('space-1', 'jiwoo');
+    database.addMember('space-1', 'minho');
+    const created = await service.create('jiwoo', {
+      mediaId: 'media-1',
+      watchedDate: '2026-10-04',
+      spaceIds: ['space-1'],
+      participantAccountIds: ['minho'],
+    });
+    await service.respondToParticipation(created.id, 'minho', 'CONFIRMED');
+    await service.upsertReaction(created.id, 'minho', { rating: 4, isBlind: true });
+
+    notified.length = 0;
+    await service.update('jiwoo', created.id, { rating: 3.5 });
+    assert.deepEqual(
+      notified.map((item) => [item.method, item.recipientId, item.actorId]),
+      [['notifyReviewRevealed', 'minho', 'jiwoo']],
+    );
   });
 
   it('notifies the companion, the rest of the space, an opened blind review, and a like', async () => {

@@ -11,7 +11,7 @@ import {
 import { In, IsNull, Repository } from 'typeorm';
 import { mapWithConcurrency } from '../common/concurrency';
 import { MediaEntity, SpaceWishEntity, UserEntity, WatchShareEntity } from '../database/entities';
-import { AvailabilityService } from '../media/availability.service';
+import { AvailabilityService, type AvailabilityResponse } from '../media/availability.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SpaceAccessService } from '../spaces/space-access.service';
 
@@ -78,11 +78,14 @@ export class SpaceWishesService {
     const lastRecorded = await this.lastRecordedInSpace(spaceId, [...byMedia.keys()]);
 
     let refreshesLeft = AVAILABILITY_REFRESH_BUDGET;
+    const current = await this.availability
+      .getCurrentMany([...byMedia.keys()], REGION)
+      .catch(() => new Map<string, AvailabilityResponse>());
     const items = await mapWithConcurrency([...byMedia.values()], 4, async (group) => {
       const media = group[0].media!;
       const addedAt = new Date(Math.min(...group.map((wish) => wish.createdAt.getTime())));
       const recorded = lastRecorded.get(media.id);
-      const availability = await this.availabilityFor(media.id, spaceServices, () => {
+      const availability = await this.availabilityFor(media.id, current, spaceServices, () => {
         if (refreshesLeft <= 0) return false;
         refreshesLeft -= 1;
         return true;
@@ -243,11 +246,15 @@ export class SpaceWishesService {
 
   private async availabilityFor(
     mediaId: string,
+    known: ReadonlyMap<string, AvailabilityResponse>,
     spaceServices: ReadonlySet<string>,
     mayRefresh: () => boolean,
   ): Promise<SpaceWishItem['availability']> {
     try {
-      let current = await this.availability.getCurrent(mediaId, REGION);
+      let current: Pick<AvailabilityResponse, 'state' | 'offers'> = known.get(mediaId) ?? {
+        state: 'UNKNOWN',
+        offers: [],
+      };
       if ((current.state === 'UNKNOWN' || current.state === 'EXPIRED') && mayRefresh()) {
         current = await this.availability.refresh(mediaId, REGION);
       }

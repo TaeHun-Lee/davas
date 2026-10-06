@@ -15,7 +15,10 @@ const quoted = (title: string | undefined) => (title ? `‘${title}’` : '기�
 /** Korean copy and destination for each kind of notification. */
 export function describeNotification(item: NotificationItem): NotificationText {
   const actor = item.actor.nickname || '공간 멤버';
-  const record = item.diary ? `/records/${encodeURIComponent(item.diary.id)}` : '/';
+  // Back from the record returns to this list.
+  const record = item.diary
+    ? `/records/${encodeURIComponent(item.diary.id)}?returnTo=${encodeURIComponent('/notifications')}`
+    : '/';
   const title = item.diary?.title;
   switch (item.type) {
     case 'WATCH_SHARED':
@@ -62,7 +65,7 @@ export function describeNotification(item: NotificationItem): NotificationText {
       };
     case 'WISH_MATCHED':
       return {
-        title: `${quoted(item.media?.title)} 같이 보고 싶은 작품이 겹쳤어요`,
+        title: `${item.media?.title ? `‘${item.media.title}’` : '이 작품'}, 모두 같이 보고 싶어 해요`,
         about: '같이 보고 싶어요 목록',
         href: '/spaces/wishes',
         icon: 'match',

@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, type ReactNode } from 'react';
+import { OTT_SERVICES as SUBSCRIPTION_SERVICES } from '@davas/shared';
 import type { TheaterFormat } from '../../lib/api/watch-events';
 
 export const THEATER_FORMAT_LABELS: Record<TheaterFormat, string> = {
@@ -10,7 +11,8 @@ export const THEATER_FORMAT_LABELS: Record<TheaterFormat, string> = {
   DOLBY: '돌비',
 };
 
-export const OTT_SERVICES = ['넷플릭스', '티빙', '쿠팡플레이', '웨이브', '디즈니+', '왓챠'];
+// The same services as the subscription settings, so every OTT someone subscribes to is one tap.
+export const OTT_SERVICES: string[] = SUBSCRIPTION_SERVICES.map((service) => service.label);
 
 /** An on/off setting with a visible label and description, announced as a switch. */
 export function ToggleSwitch({
@@ -158,10 +160,11 @@ export function SeriesProgress({
     <fieldset className="series-progress">
       <legend className="field-label">어디까지 봤나요? (선택)</legend>
       <div className="series-progress-row">
+        {/* From 1화 the minus clears the episode, so a prefilled episode can be taken back. */}
         <button
           type="button"
-          aria-label="본 회차 하나 줄이기"
-          disabled={current <= 1}
+          aria-label={current === 1 ? '본 회차 지우기' : '본 회차 하나 줄이기'}
+          disabled={current < 1}
           onClick={() =>
             onChange({ watched: current > 1 ? clamp(current - 1) : null, total, completed: false })
           }

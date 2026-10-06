@@ -4,6 +4,25 @@ import { TmdbClient } from './tmdb.client';
 
 const jsonResponse = (body: unknown) => new Response(JSON.stringify(body), { status: 200 });
 
+describe('TmdbClient requests', () => {
+  it('gives up on a TMDB call that does not answer in time', async () => {
+    const client = new TmdbClient(undefined, {
+      apiKey: 'test-key',
+      timeoutMs: 20,
+      fetcher: (_url, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(init.signal!.reason));
+        }),
+    });
+    const started = Date.now();
+    await assert.rejects(
+      client.trending({ period: 'week', page: 1 }),
+      (error: Error) => error.message === 'TMDB trending did not answer (TimeoutError)',
+    );
+    assert.ok(Date.now() - started < 2_000);
+  });
+});
+
 describe('TmdbClient search', () => {
   it('searches people through TMDB person search and normalizes known works', async () => {
     let requestedUrl = '';

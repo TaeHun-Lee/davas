@@ -314,8 +314,9 @@ export class UsersService {
       `UPDATE "diaries" d SET "title" = '공동 감상 기록', "content" = '', "rating" = NULL, "watched_place" = NULL, "mood" = NULL, "memory_note" = NULL WHERE d."user_id" = $1 AND d."deleted_at" IS NULL AND (${sharedFact})`,
       [userId],
     );
+    // Where and in which seat someone sat says where they were; keep only the kind of viewing.
     await manager.query(
-      `UPDATE "watch_sources" ws SET "place_text" = NULL WHERE ws."diary_id" IN (SELECT d."id" FROM "diaries" d WHERE d."user_id" = $1)`,
+      `UPDATE "watch_sources" ws SET "place_text" = NULL, "seat_text" = NULL WHERE ws."diary_id" IN (SELECT d."id" FROM "diaries" d WHERE d."user_id" = $1)`,
       [userId],
     );
     await manager.query(

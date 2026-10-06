@@ -325,8 +325,8 @@ export function RecordComposer({ editId }: { editId?: string }) {
       headline: draft!.headline.trim() || null,
       review: draft!.content.trim() || null,
       hasSpoiler: draft!.hasSpoiler,
-      // Blind reveal only means something when someone else can see the review.
-      isBlind: shared && draft!.isBlind,
+      // Blind reveal only means something when someone watched along and can write a review.
+      isBlind: shared && draft!.participantAccountIds.length > 0 && draft!.isBlind,
       memoryNote: draft!.memoryNote.trim() || null,
       photoIds: photoItems.flatMap((item) => (item.photo ? [item.photo.id] : [])),
     };
@@ -703,7 +703,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
           >
             개인 기록 · 나만 보기
           </button>
-          {draft.spaceIds.length > 0 ? (
+          {draft.spaceIds.length > 0 && draft.participantAccountIds.length > 0 ? (
             <div className="mt-4">
               <ToggleSwitch
                 label="상대가 리뷰를 쓰면 공개(블라인드)"
@@ -713,11 +713,15 @@ export function RecordComposer({ editId }: { editId?: string }) {
               >
                 {draft.isBlind ? (
                   <p className="composer-switch-preview">
-                    상대에게는 &lsquo;리뷰가 잠겨 있어요 · 내 리뷰를 남기면 열려요&rsquo;로 보여요.
+                    상대에게는 &lsquo;리뷰 잠김 · 내 리뷰를 남기면 열려요&rsquo;로 보여요.
                   </p>
                 ) : null}
               </ToggleSwitch>
             </div>
+          ) : draft.spaceIds.length > 0 && !editId ? (
+            <p className="record-compose-helper mt-4">
+              아래에서 함께 본 사람을 고르면 블라인드 공개를 켤 수 있어요.
+            </p>
           ) : null}
         </section>
         {draft.spaceIds.length > 0 && !editId ? (

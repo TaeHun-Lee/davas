@@ -12,12 +12,14 @@ export function useSpaceTimeline(spaceId: string, limit = 20) {
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [moreBusy, setMoreBusy] = useState(false);
+  const [moreError, setMoreError] = useState(false);
   // Switching spaces while a page is in flight must not let the old space's answer win.
   const latestRequest = useRef(0);
 
   const load = useCallback(
     async (nextCursor?: string) => {
       const request = ++latestRequest.current;
+      setMoreError(false);
       if (nextCursor) setMoreBusy(true);
       else setStatus('loading');
       try {
@@ -29,7 +31,10 @@ export function useSpaceTimeline(spaceId: string, limit = 20) {
         setStatus(page.items.length || nextCursor ? 'ready' : 'empty');
       } catch (error) {
         if (request !== latestRequest.current) return;
-        setStatus(error instanceof CoreApiError && error.status === 404 ? 'forbidden' : 'error');
+        const forbidden = error instanceof CoreApiError && error.status === 404;
+        // A failed "load more" keeps the records already on screen and offers another try.
+        if (nextCursor && !forbidden) setMoreError(true);
+        else setStatus(forbidden ? 'forbidden' : 'error');
       } finally {
         if (request === latestRequest.current) setMoreBusy(false);
       }
@@ -54,6 +59,7 @@ export function useSpaceTimeline(spaceId: string, limit = 20) {
     cursor,
     hasMore,
     moreBusy,
+    moreError,
     reload: () => load(),
     loadMore: () => (cursor ? load(cursor) : undefined),
     updateItem,

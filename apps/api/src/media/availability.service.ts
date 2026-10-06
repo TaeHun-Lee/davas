@@ -1,11 +1,6 @@
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-  Optional,
-} from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, MoreThan, Repository } from 'typeorm';
 import {
   AvailabilityObservationEntity,
   AvailabilityObservationStatus,
@@ -27,12 +22,7 @@ export type AvailabilityCacheOptions = {
 };
 
 export type AvailabilityState =
-  | 'AVAILABLE'
-  | 'NO_OFFERS'
-  | 'PROVIDER_FAILURE'
-  | 'EXPIRED'
-  | 'UNMAPPED'
-  | 'UNKNOWN';
+  'AVAILABLE' | 'NO_OFFERS' | 'PROVIDER_FAILURE' | 'EXPIRED' | 'UNMAPPED' | 'UNKNOWN';
 
 export type AvailabilityResponse = {
   contentId: string;
@@ -62,10 +52,7 @@ export class AvailabilityService {
     private readonly options: AvailabilityCacheOptions = {},
   ) {}
 
-  async getCurrent(
-    contentId: string,
-    requestedRegion = 'KR',
-  ): Promise<AvailabilityResponse> {
+  async getCurrent(contentId: string, requestedRegion = 'KR'): Promise<AvailabilityResponse> {
     const region = this.normalizeRegion(requestedRegion);
     await this.requireContent(contentId);
     const contentRef = await this.findContentRef(contentId);
@@ -89,10 +76,49 @@ export class AvailabilityService {
     return this.toResponse(contentId, region, latest);
   }
 
-  async refresh(
-    contentId: string,
+  /**
+   * The current availability of several stored titles in two queries, for lists. Only
+   * observations that are still fresh are read, so a title whose last lookup expired comes
+   * back UNKNOWN rather than EXPIRED; both mean "look it up again".
+   */
+  async getCurrentMany(
+    contentIds: string[],
     requestedRegion = 'KR',
-  ): Promise<AvailabilityResponse> {
+  ): Promise<Map<string, AvailabilityResponse>> {
+    const region = this.normalizeRegion(requestedRegion);
+    const ids = [...new Set(contentIds)];
+    const result = new Map<string, AvailabilityResponse>();
+    if (!ids.length) return result;
+    const refs = await this.externalRefRepository.find({
+      where: { contentId: In(ids), provider: 'TMDB' },
+    });
+    const mapped = new Set(refs.map((ref) => ref.contentId));
+    const observations = mapped.size
+      ? await this.observationRepository.find({
+          where: { contentId: In([...mapped]), region, expiresAt: MoreThan(this.now()) },
+          order: { observedAt: 'DESC', provider: 'ASC', offerType: 'ASC' },
+        })
+      : [];
+    for (const contentId of ids) {
+      if (!mapped.has(contentId)) {
+        result.set(contentId, this.emptyResponse(contentId, region, 'UNMAPPED'));
+        continue;
+      }
+      const own = observations.filter((observation) => observation.contentId === contentId);
+      const latestObservedAt = own[0]?.observedAt.getTime();
+      result.set(
+        contentId,
+        this.toResponse(
+          contentId,
+          region,
+          own.filter((observation) => observation.observedAt.getTime() === latestObservedAt),
+        ),
+      );
+    }
+    return result;
+  }
+
+  async refresh(contentId: string, requestedRegion = 'KR'): Promise<AvailabilityResponse> {
     const region = this.normalizeRegion(requestedRegion);
     const content = await this.requireContent(contentId);
     const contentRef = await this.findContentRef(contentId);
@@ -121,13 +147,7 @@ export class AvailabilityService {
         region,
         observedAt,
       );
-      const observations = await this.saveLookup(
-        contentId,
-        region,
-        observedAt,
-        expiresAt,
-        lookup,
-      );
+      const observations = await this.saveLookup(contentId, region, observedAt, expiresAt, lookup);
       return this.toResponse(contentId, region, observations);
     } catch {
       const observation = await this.saveStatusObservation({
@@ -180,10 +200,7 @@ export class AvailabilityService {
     }
 
     const uniqueOffers = new Map(
-      lookup.offers.map((offer) => [
-        `${offer.provider}:${offer.offerType}`,
-        offer,
-      ]),
+      lookup.offers.map((offer) => [`${offer.provider}:${offer.offerType}`, offer]),
     );
     const entities = [...uniqueOffers.values()].map((offer) =>
       this.observationRepository.create({
@@ -248,9 +265,7 @@ export class AvailabilityService {
       observedAt: first.observedAt.toISOString(),
       expiresAt: first.expiresAt.toISOString(),
       sourceProvider: first.sourceProvider,
-      confidence: Math.max(
-        ...observations.map((item) => Number(item.confidence)),
-      ),
+      confidence: Math.max(...observations.map((item) => Number(item.confidence))),
       offers: available
         ? observations.map((item) => ({
             provider: item.provider,

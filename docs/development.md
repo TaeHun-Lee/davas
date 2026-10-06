@@ -146,8 +146,8 @@ API와 Web이 같은 의미로 쓰는 타입·상수는 `packages/shared/src/ind
 | 컨트롤러 규칙 | 호출자는 `request.user`(`AuthenticatedRequest`)로만 읽는다. 컨트롤러에서 쿠키를 직접 읽거나 `AuthService`를 부르지 않는다 | `auth/controller-auth-policy.spec.ts` |
 | 출처 검사 | POST·PATCH·DELETE 요청의 `Origin`이 `CORS_ORIGINS`와 다르면 403 | `common/app-security.ts` |
 | 요청 횟수 제한 | 클라이언트 IP별 분당 300회 기본, 로그인 5분 10회, 검색·TMDB 별도 한도. 운영은 Caddy 한 단계만 신뢰해 실제 IP로 계산 | `common/request-limits.ts`, `TRUST_PROXY_HOPS` |
-| 업로드 | 로그인 확인 후 파일 수신, 5MB 상한, 파일 내용으로 이미지 형식 확인, 동시 업로드 제한, 교체·삭제 시 이전 파일 정리 | `users/profile-image-upload.ts` |
-| 작품 저장 | 브라우저는 공급자 ID만 보내고 제목·이미지는 서버가 TMDB에서 받아 저장 | `media/media-selection.service.ts` |
+| 업로드 | 로그인 확인 후 파일 수신, 5MB 상한, 파일 내용으로 이미지 형식 확인, 동시 업로드 제한, 교체·삭제 시 이전 파일 정리. `/uploads` 정적 경로는 업로드 볼륨 전체가 아니라 `profile-images` 폴더만 그 폴더를 뿌리로 내보내서, 주소를 어떻게 바꿔 적어도(`watch%2Dphotos`, `..`) 기록 사진에 닿지 않는다 | `users/profile-image-upload.ts`, `common/public-uploads.ts`, `npm run verify:upload` |
+| 작품 저장 | 브라우저는 공급자 ID만 보내고 제목·이미지는 서버가 TMDB에서 받아 저장. TMDB 호출은 5초 안에 답이 없으면 포기한다 | `media/media-selection.service.ts`, `media/tmdb.client.ts` |
 | 응답·설정 | 보안 헤더(Helmet, 운영은 Caddy가 최종), `Cache-Control: private, no-store`, 운영에서 Swagger 끔, 필수 설정이 없으면 운영 API가 시작을 거부 | `main.ts`, `common/app-security.ts` |
 | 로그인 후 이동 | `returnTo`는 허용 목록 경로만 사용. 새 화면을 추가하면 목록도 갱신 | `apps/web/src/lib/core-routes.ts` |
 
@@ -178,17 +178,17 @@ npm run migration:show --workspace @davas/api
 - 날짜는 한국 날짜 기준이다. "오늘 이후는 저장할 수 없음" 같은 판단은 `common/seoul-date.ts`를 쓴다(UTC로 비교하면 밤 12시~오전 9시에 오늘이 내일로 판정된다).
 - 작성 화면은 탭에 저장하지 않은 기록 하나를 임시로 남기고, 같은 작품을 다시 열거나 작품 선택 전일 때만 되살린다. 다른 작품이면 새로 시작한다(`components/core/composer-draft.ts`).
 - 감상 사건(`/v1/watch-events`)의 별점은 미평가 또는 0.5~5.0(0.5 단위)이다. 예전 `/diaries` API는 1~5 정수 별점을 유지한다.
-- 개인 리뷰(`watch_reactions`)는 별점·한줄평(40자)·소감(2,000자)·스포일러·블라인드 여부를 가진다. 블라인드 공개 규칙은 `diaries/blind-review.ts` 한 곳에 있고, 감상 상세·타임라인·반응 비교·예전 `/diaries/:id`·`/community/diaries/:id`가 모두 이 규칙으로 가린다. 함께 보지 않은 사람에게는 함께 봤는지 아직 답하지 않은 사람(PENDING)까지 모두 써야 열려서, 누가 확인을 눌러도 열렸던 리뷰가 다시 잠기지 않는다. 가려진 리뷰는 내용·별점·좋아요 수·수정 시각을 보내지 않고, 화면은 보는 사람의 처지(함께 봄·확인 대기·함께 보지 않음)에 맞춰 무엇을 하면 열리는지 알려 준다(`space-watch-model.ts`의 `lockedReviewHint`).
+- 개인 리뷰(`watch_reactions`)는 별점·한줄평(40자)·소감(2,000자)·스포일러·블라인드 여부를 가진다. 블라인드 공개 규칙은 `diaries/blind-review.ts` 한 곳에 있고, 감상 상세·타임라인·반응 비교·예전 `/diaries/:id`·`/community/diaries/:id`가 모두 이 규칙으로 가린다. 함께 보지 않은 사람에게는 함께 봤는지 아직 답하지 않은 사람(PENDING)까지 모두 써야 열려서, 누가 확인을 눌러도 열렸던 리뷰가 다시 잠기지 않는다. 가려진 리뷰는 내용·별점·좋아요 수·수정 시각을 보내지 않고, 화면은 보는 사람의 처지(함께 봄·확인 대기·함께 보지 않음)에 맞춰 무엇을 하면 열리는지 알려 준다(`space-watch-model.ts`의 `lockedReviewHint`). 함께 본 사람이 없으면 열어 줄 사람이 없으므로 작성 화면은 블라인드 스위치를 보여 주지 않고 저장도 꺼진 채로 한다. 리뷰 화면에서 쓰든 기록 수정에서 별점·리뷰를 쓰든, 그 순간 열린 블라인드 리뷰의 주인에게 알림이 간다.
 - 구독 OTT: 사람마다 `users.ott_services`에 `OTT_SERVICES` 키(넷플릭스·티빙·쿠팡플레이·웨이브·디즈니+·왓챠·Apple TV+·프라임 비디오)를 저장한다(`PATCH /users/me`의 `ottServices`). 공유 타입의 `OTT_SERVICES`가 키, 한국어 이름, TMDB 제공자 이름을 함께 정의하고 서버·웹이 같이 쓴다.
-- 같이 보고 싶어요: `space_wishes`의 한 행이 "이 구성원이 이 작품을 보고 싶다"다. 목록은 작품별로 묶어 모두 담았는지, 담은 뒤 공간에 공유된 기록이 새로 만들어졌는지(봤어요, 예전 기록을 고쳐도 바뀌지 않는다), 구성원 누군가의 구독 OTT에서 정액제로 볼 수 있는지를 알려 준다. 목록을 열 때 볼 수 있는 곳 정보가 없거나 만료된 작품은 요청당 8편까지 TMDB에서 새로 받는다(결과는 6시간 보관). 빠른 추천(`/wishes/pick`)은 모두 담음 > 구독 OTT에서 볼 수 있음 > 기분 장르 순으로 점수를 매기고 `exclude`로 다음 후보를 고른다. 작품 상세 시트의 "보고 싶어요"는 공간이 있으면 이 목록을, 없으면 예전 개인 목록을 쓴다.
+- 같이 보고 싶어요: `space_wishes`의 한 행이 "이 구성원이 이 작품을 보고 싶다"다. 목록은 작품별로 묶어 모두 담았는지, 담은 뒤 공간에 공유된 기록이 새로 만들어졌는지(봤어요, 예전 기록을 고쳐도 바뀌지 않는다), 구성원 누군가의 구독 OTT에서 정액제로 볼 수 있는지를 알려 준다. 볼 수 있는 곳 정보는 목록 전체를 한 번에 읽고(`AvailabilityService.getCurrentMany`), 정보가 없거나 만료된 작품만 요청당 8편까지 TMDB에서 새로 받는다(결과는 6시간 보관). 빠른 추천(`/wishes/pick`)은 모두 담음 > 구독 OTT에서 볼 수 있음 > 기분 장르 순으로 점수를 매기고 `exclude`로 다음 후보를 고른다. 작품 상세 시트의 "보고 싶어요"는 공간이 있으면 이 목록을, 없으면 예전 개인 목록을 쓴다.
 - 우리 기록 모아보기(`GET /v1/spaces/:spaceId/memories?year=`)는 공간에 공유된 기록만 센다. 공간을 떠난 사람의 기록은 편수·장르에는 남지만 사진·시청 방식·회차는 빠지고, 극장 vs OTT 비율은 시청 방식을 아는 기록끼리 나눈다. 1년 전 오늘은 한국 날짜 기준이다. 드라마 진행은 작품마다 가장 최근 기록의 회차를 쓰고, `GET /v1/watch-events/progress/:mediaId`가 내 최신 진행을 돌려줘 새 기록이 다음 화부터 시작한다.
-- 알림은 앱 안의 `notifications` 행이다(푸시·메일 없음). 새 기록 공유(공간 사람들), 함께 본 사람 확인 요청, 내 블라인드 리뷰가 상대에게 열림, 리뷰 좋아요, 댓글(작성자와 함께 본 사람, 댓글마다 한 번), 같이 보고 싶어요가 모두 겹침(`media_id`)을 남긴다. 알림을 못 남겨도 원래 요청은 성공한다. `GET /notifications/unread-count`, `PATCH /notifications/read-all`.
-- 그룹 추천 후보: 저장된 작품이 60편보다 적으면 TMDB 주간 인기작을 20편까지 저장하고, 표가 많은 작품 60편 중 볼 수 있는 곳 정보가 없거나 만료된 24편까지 세션을 만들 때 새로 받는다. 실패해도 세션은 있는 정보로 계속 만든다.
+- 알림은 앱 안의 `notifications` 행이다(푸시·메일 없음). 새 기록 공유(공간 사람들), 함께 본 사람 확인 요청, 내 블라인드 리뷰가 상대에게 열림, 리뷰 좋아요, 댓글(작성자와 함께 본 사람 중 아직 기록을 볼 수 있는 사람, 댓글마다 한 번), 같이 보고 싶어요가 모두 겹침(`media_id`)을 남긴다. 알림을 못 남겨도 원래 요청은 성공한다(댓글도 저장된 뒤라 다시 보내 중복되지 않는다). `GET /notifications/unread-count`, `PATCH /notifications/read-all`.
+- 그룹 추천 후보: 저장된 작품이 60편보다 적으면 TMDB 주간 인기작 중 아직 저장하지 않은 작품을 20편까지 저장하고(앞 페이지가 이미 저장된 작품뿐이면 3페이지까지 본다), 표가 많은 작품 60편 중 볼 수 있는 곳 정보가 없거나 만료된 24편까지 세션을 만들 때 새로 받는다. 실패해도 세션은 있는 정보로 계속 만든다.
 - 볼 수 있는 곳 정보는 TMDB의 JustWatch 제공 데이터다. 이 정보를 보여 주는 화면에는 출처를 적는다.
 - 리뷰 좋아요: `PUT`/`DELETE /v1/watch-events/:id/reactions/:reactionId/like`. 내 리뷰와 잠긴 리뷰에는 누를 수 없다. 댓글은 기록 단위로 `/diaries/:id/comments`를 쓴다(500자).
 - 사진: 작성 화면에서 고르는 즉시 `POST /v1/watch-photos`로 올리고(한 장 15MB, JPEG·PNG·WebP), 서버가 한 사람의 업로드를 동시에 2개까지만 받으므로 화면은 2장씩 차례로 보내고 바쁘다는 응답(429)이나 연결 끊김은 잠시 뒤 다시 보낸다. 큰 사진이 느린 망에서도 들어오도록 요청 수신 제한은 5분이다. 기록을 저장할 때 `photoIds` 순서대로 붙인다(최대 10장, 첫 장이 대표). 서버는 sharp로 바로 세운 메타데이터 없는 WebP 썸네일(480px)·화면용(1600px)과 흐린 미리보기를 만들고 원본은 그대로 둔다. 파일은 `UPLOADS_DIR/watch-photos`에 있고 `/uploads` 정적 경로로는 나가지 않는다. `GET /v1/watch-photos/:id/thumb|display|original`이 기록을 볼 수 있는 사람에게만 주고, `original`은 올린 사람만 받는다. 공간을 떠난 사람의 사진은 기록 화면처럼 다른 구성원에게 더 이상 주지 않는다. 기록에 붙지 않은 사진은 한 시간마다 하루 지난 것을 지우고, 기록을 지우면 기록은 소프트 삭제로 숨기되 그 기록의 사진 행은 바로 지운다. 두 경우 모두 파일은 `file_cleanup_jobs`에 넣어 정리 작업이 지운다.
 - `clientRequestId`로 같은 생성 요청의 중복 저장을 막는다. 같은 키에 다른 내용이면 충돌로 거부한다.
-- 새 감상 기록은 공간 공유(`watch_event_shares`)로만 퍼지고 홈과 `/spaces`의 공간 타임라인에 보인다. 친구 기록 검색(`/search?scope=friends`)은 예전 `/diaries`의 친구 공개 기록(`sharedAt`이 있는 기록)만 보여 준다.
+- 새 감상 기록은 공간 공유(`watch_event_shares`)로만 퍼지고 홈과 `/spaces`의 공간 타임라인에 보인다. 타임라인 한 페이지는 관계마다 한 번씩 묶어 읽고(`relationLoadStrategy: 'query'`), 공간 구성원과 댓글 수도 페이지 전체를 한 번에 센다. 한 번의 JOIN으로 읽으면 기록마다 참여자×리뷰×좋아요×사진×공유 수만큼 행이 불어난다. 친구 기록 검색(`/search?scope=friends`)은 예전 `/diaries`의 친구 공개 기록(`sharedAt`이 있는 기록)만 보여 준다.
 
 ## 6. 검증
 

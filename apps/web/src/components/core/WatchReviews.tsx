@@ -179,7 +179,8 @@ export function CommentsSection({
   comments: WatchCommentView[];
   status: 'loading' | 'ready' | 'error';
   myAccountId: string;
-  onChange: (comments: WatchCommentView[]) => void;
+  /** Takes an update of the latest list, so two quick deletes or a post during a delete both stick. */
+  onChange: (update: (current: WatchCommentView[]) => WatchCommentView[]) => void;
   onRetry: () => void;
 }) {
   const [content, setContent] = useState('');
@@ -194,7 +195,7 @@ export function CommentsSection({
     setError('');
     try {
       const created = await createWatchComment(watchEventId, text);
-      onChange([...comments, created]);
+      onChange((current) => [...current, created]);
       setContent('');
     } catch (caught) {
       setError(errorMessage(caught, '댓글을 남기지 못했어요.'));
@@ -207,7 +208,7 @@ export function CommentsSection({
     setError('');
     try {
       await deleteWatchComment(commentId);
-      onChange(comments.filter((comment) => comment.id !== commentId));
+      onChange((current) => current.filter((comment) => comment.id !== commentId));
     } catch (caught) {
       setError(errorMessage(caught, '댓글을 지우지 못했어요.'));
     }

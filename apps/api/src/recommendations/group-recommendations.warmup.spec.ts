@@ -7,10 +7,23 @@ type Operator = { _type: string; _value: unknown };
 const values = (where: Record<string, unknown>, key: string) =>
   ((where[key] as Operator | undefined)?._value as unknown[] | undefined) ?? [];
 
-function setup(options: { storedTitles: number; freshIds?: string[] }) {
+type TrendingItem = { externalId: string; mediaType: 'MOVIE' | 'TV' };
+const PAGE_ONE: TrendingItem[] = [
+  { externalId: '1', mediaType: 'MOVIE' },
+  { externalId: '2', mediaType: 'TV' },
+  { externalId: '3', mediaType: 'MOVIE' },
+];
+
+function setup(options: {
+  storedTitles: number;
+  freshIds?: string[];
+  storedExternalIds?: string[];
+  pages?: TrendingItem[][];
+}) {
   const stored = Array.from({ length: options.storedTitles }, (_, index) =>
     Object.assign(new MediaEntity(), {
       id: `stored-${index}`,
+      externalId: options.storedExternalIds?.[index] ?? `stored-${index}`,
       mediaType: 'MOVIE' as const,
       releaseDate: index === 0 ? '2999-01-01' : '2024-01-01',
       tmdbVoteCount: 1000 - index,
@@ -18,10 +31,13 @@ function setup(options: { storedTitles: number; freshIds?: string[] }) {
   );
   const imported: string[] = [];
   const refreshed: string[] = [];
+  const trendingPages: number[] = [];
   const media = {
     count: async () => stored.length,
     find: async ({ where }: { where: Record<string, unknown> }) =>
-      stored.filter((item) => values(where, 'mediaType').includes(item.mediaType)),
+      where.externalId
+        ? stored.filter((item) => values(where, 'externalId').includes(item.externalId))
+        : stored.filter((item) => values(where, 'mediaType').includes(item.mediaType)),
   };
   const observations = {
     find: async ({ where }: { where: Record<string, unknown> }) =>
@@ -29,14 +45,12 @@ function setup(options: { storedTitles: number; freshIds?: string[] }) {
         .filter((id) => values(where, 'contentId').includes(id))
         .map((contentId) => ({ contentId })),
   };
+  const pages = options.pages ?? [PAGE_ONE];
   const tmdb = {
-    trending: async () => ({
-      items: [
-        { externalId: '1', mediaType: 'MOVIE' },
-        { externalId: '2', mediaType: 'TV' },
-        { externalId: '3', mediaType: 'MOVIE' },
-      ],
-    }),
+    trending: async ({ page }: { page: number }) => {
+      trendingPages.push(page);
+      return { items: pages[page - 1] ?? [], totalPages: pages.length };
+    },
   };
   const mediaSelection = {
     select: async (selection: { externalId: string }) => {
@@ -70,7 +84,7 @@ function setup(options: { storedTitles: number; freshIds?: string[] }) {
         warmCandidatePool: (request: { contentTypes: string[]; region: string }) => Promise<void>;
       }
     ).warmCandidatePool({ contentTypes, region: 'KR' });
-  return { imported, refreshed, warm };
+  return { imported, refreshed, trendingPages, warm };
 }
 
 describe('group recommendation candidate warm-up', () => {
@@ -79,6 +93,26 @@ describe('group recommendation candidate warm-up', () => {
     await warm();
     // The TV title is skipped and a failed import does not stop the rest.
     assert.deepEqual(imported, ['1']);
+  });
+
+  it('skips trending titles already stored and reads the next page for new ones', async () => {
+    const { imported, trendingPages, warm } = setup({
+      storedTitles: 2,
+      storedExternalIds: ['1', '4'],
+      pages: [
+        [
+          { externalId: '1', mediaType: 'MOVIE' },
+          { externalId: '4', mediaType: 'MOVIE' },
+        ],
+        [
+          { externalId: '5', mediaType: 'MOVIE' },
+          { externalId: '1', mediaType: 'MOVIE' },
+        ],
+      ],
+    });
+    await warm();
+    assert.deepEqual(imported, ['5']);
+    assert.deepEqual(trendingPages, [1, 2]);
   });
 
   it('leaves a large pool alone and refreshes only stale, released titles within budget', async () => {

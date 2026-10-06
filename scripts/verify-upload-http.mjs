@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const require = createRequire(import.meta.url);
 require('reflect-metadata');
@@ -18,6 +21,15 @@ const {
 } = require('../apps/api/dist/users/upload-concurrency.interceptor.js');
 const { UsersController } = require('../apps/api/dist/users/users.controller.js');
 const { UsersService } = require('../apps/api/dist/users/users.service.js');
+const { servePublicUploads } = require('../apps/api/dist/common/public-uploads.js');
+
+// A profile picture is public; a record photo next to it in the same volume must never be.
+const uploadsDir = mkdtempSync(join(tmpdir(), 'davas-uploads-'));
+mkdirSync(join(uploadsDir, 'profile-images'));
+mkdirSync(join(uploadsDir, 'watch-photos', 'ab'), { recursive: true });
+writeFileSync(join(uploadsDir, 'profile-images', 'avatar.jpg'), 'avatar');
+writeFileSync(join(uploadsDir, 'watch-photos', 'ab', 'secret.webp'), 'RECORD-PHOTO-BYTES');
+writeFileSync(join(uploadsDir, 'notes.txt'), 'VOLUME-ROOT-BYTES');
 
 let saveCalls = 0;
 const usersService = {
@@ -55,6 +67,7 @@ Module({
 
 const app = await NestFactory.create(ContractModule, { logger: false });
 app.setGlobalPrefix('api');
+servePublicUploads(app, uploadsDir);
 await app.listen(0, '127.0.0.1');
 
 try {
@@ -103,9 +116,30 @@ try {
   assert.equal(throttled.status, 429);
   assert.equal(saveCalls, 3);
 
+  const origin = `http://127.0.0.1:${address.port}`;
+  const avatar = await fetch(`${origin}/uploads/profile-images/avatar.jpg`);
+  assert.equal(avatar.status, 200);
+  assert.equal(await avatar.text(), 'avatar');
+  for (const path of [
+    '/uploads/watch-photos/ab/secret.webp',
+    '/uploads/watch%2Dphotos/ab/secret.webp',
+    '/uploads/WATCH-PHOTOS/ab/secret.webp',
+    '/uploads//watch-photos/ab/secret.webp',
+    '/uploads/./watch-photos/ab/secret.webp',
+    '/uploads/profile-images/..%2Fwatch-photos/ab/secret.webp',
+    '/uploads/profile-images/%2e%2e/watch-photos/ab/secret.webp',
+    '/uploads/notes.txt',
+  ]) {
+    const response = await fetch(`${origin}${path}`);
+    const body = await response.text();
+    assert.notEqual(response.status, 200, path);
+    assert.doesNotMatch(body, /RECORD-PHOTO-BYTES|VOLUME-ROOT-BYTES/, path);
+  }
+
   console.log(
-    'Upload HTTP contract passed: unauthenticated=401, oversized=413, spoofed=400, valid=201, throttled=429.',
+    'Upload HTTP contract passed: unauthenticated=401, oversized=413, spoofed=400, valid=201, throttled=429, public uploads=profile images only.',
   );
 } finally {
   await app.close();
+  rmSync(uploadsDir, { recursive: true, force: true });
 }

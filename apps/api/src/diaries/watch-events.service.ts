@@ -59,6 +59,8 @@ const hasReviewFields = (dto: SaveWatchReactionDto) =>
   REVIEW_FIELDS.some((field) => dto[field] !== undefined);
 
 // Relations every watch-record view needs; the timeline loads the same tree under `diary`.
+// Loaded with relationLoadStrategy 'query': one query per relation for the whole page. A
+// single JOIN would return participants x reactions x likes x photos x shares rows per record.
 const WATCH_VIEW_RELATIONS = {
   media: true,
   user: true,
@@ -291,6 +293,8 @@ export class WatchEventsService {
 
   async update(accountId: string, diaryId: string, dto: UpdateWatchEventDto) {
     if (dto.watchedDate) this.assertNotFuture(dto.watchedDate);
+    const hiddenBefore =
+      this.notifications && hasReviewFields(dto) ? await this.hiddenFrom(diaryId, accountId) : null;
     await this.dataSource.transaction(async (manager) => {
       const diaries = manager.getRepository(DiaryEntity);
       const diary = await diaries.findOne({
@@ -349,6 +353,8 @@ export class WatchEventsService {
       }
       await diaries.save(diary);
     });
+    // Writing the review while editing the record opens blind reviews just like the review form.
+    await this.notifyRevealed(diaryId, accountId, hiddenBefore);
     return this.detail(accountId, diaryId);
   }
 
@@ -423,21 +429,29 @@ export class WatchEventsService {
       this.syncLegacyReview(diary, dto);
       await this.diaries.save(diary);
     }
-    if (hiddenBefore?.size) {
-      const hiddenAfter = await this.hiddenFrom(diaryId, accountId);
-      await this.notifySafely(async () => {
-        for (const recipientId of hiddenBefore) {
-          if (hiddenAfter.has(recipientId)) continue;
-          await this.notifications!.notifyReviewRevealed({
-            recipientId,
-            actorId: accountId,
-            diaryId,
-            idempotencyKey: `REVIEW_REVEALED:${recipientId}:${accountId}:${diaryId}`,
-          });
-        }
-      });
-    }
+    await this.notifyRevealed(diaryId, accountId, hiddenBefore);
     return this.reactionView(reaction, accountId, false);
+  }
+
+  /** Tells each person whose blind review just opened to `accountId` that it did. */
+  private async notifyRevealed(
+    diaryId: string,
+    accountId: string,
+    hiddenBefore: Set<string> | null,
+  ) {
+    if (!hiddenBefore?.size) return;
+    await this.notifySafely(async () => {
+      const hiddenAfter = await this.hiddenFrom(diaryId, accountId);
+      for (const recipientId of hiddenBefore) {
+        if (hiddenAfter.has(recipientId)) continue;
+        await this.notifications!.notifyReviewRevealed({
+          recipientId,
+          actorId: accountId,
+          diaryId,
+          idempotencyKey: `REVIEW_REVEALED:${recipientId}:${accountId}:${diaryId}`,
+        });
+      }
+    });
   }
 
   /**
@@ -510,12 +524,16 @@ export class WatchEventsService {
     const rows = await this.spaceShares.find({
       where,
       relations: { diary: WATCH_VIEW_RELATIONS },
+      relationLoadStrategy: 'query',
       order: { sharedAt: 'DESC', id: 'DESC' },
       take: limit + 1,
     });
     const hasMore = rows.length > limit;
     const page = rows.slice(0, limit);
-    const items = await Promise.all(page.map((share) => this.toView(share.diary, accountId)));
+    const items = await this.toViews(
+      page.map((share) => share.diary),
+      accountId,
+    );
     const last = page.at(-1);
     return {
       items,
@@ -641,13 +659,53 @@ export class WatchEventsService {
     return this.diaries.findOne({
       where: { id: diaryId },
       relations: WATCH_VIEW_RELATIONS,
+      relationLoadStrategy: 'query',
     });
   }
 
   private async toView(diary: DiaryEntity, viewerId: string) {
-    const activeShares = (diary.spaceShares ?? []).filter((share) => !share.revokedAt);
-    const sharedSpaceIds = activeShares.map((share) => share.spaceId);
-    const memberships = await this.spaceAccess.activeMembersInSpaces(sharedSpaceIds);
+    const [view] = await this.toViews([diary], viewerId);
+    return view;
+  }
+
+  /** Builds several views with one membership query and one comment query for all of them. */
+  private async toViews(diaries: DiaryEntity[], viewerId: string) {
+    const sharedSpaceIds = diaries.flatMap((diary) => this.activeSpaceIds(diary));
+    const diaryIds = diaries.map((diary) => diary.id);
+    const [memberships, comments] = await Promise.all([
+      this.spaceAccess.activeMembersInSpaces(sharedSpaceIds),
+      diaryIds.length
+        ? this.comments.find({
+            where: { diaryId: In(diaryIds) },
+            select: { id: true, diaryId: true },
+          })
+        : Promise.resolve([] as CommentEntity[]),
+    ]);
+    const commentCounts = new Map<string, number>();
+    for (const comment of comments) {
+      commentCounts.set(comment.diaryId, (commentCounts.get(comment.diaryId) ?? 0) + 1);
+    }
+    return diaries.map((diary) =>
+      this.buildView(diary, viewerId, memberships, commentCounts.get(diary.id) ?? 0),
+    );
+  }
+
+  private activeSpaceIds(diary: DiaryEntity) {
+    return (diary.spaceShares ?? [])
+      .filter((share) => !share.revokedAt)
+      .map((share) => share.spaceId);
+  }
+
+  private buildView(
+    diary: DiaryEntity,
+    viewerId: string,
+    allMemberships: SpaceMembershipEntity[],
+    commentCount: number,
+  ) {
+    const sharedSpaceIds = this.activeSpaceIds(diary);
+    const memberships = allMemberships.filter((membership) =>
+      sharedSpaceIds.includes(membership.spaceId),
+    );
     const viewerSpaceIds = new Set(
       memberships
         .filter((membership) => membership.accountId === viewerId)
@@ -730,7 +788,7 @@ export class WatchEventsService {
             .sort((left, right) => left.position - right.position)
             .map((photo) => this.photos.view(photo, viewerId))
         : [],
-      commentCount: await this.comments.count({ where: { diaryId: diary.id } }),
+      commentCount,
       createdAt: diary.createdAt?.toISOString(),
       updatedAt: diary.updatedAt?.toISOString(),
       isMine: diary.userId === viewerId,

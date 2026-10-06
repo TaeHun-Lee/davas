@@ -404,7 +404,7 @@ describe('UsersService', () => {
     assert.match(sql, /DELETE FROM "watch_review_likes"/);
     assert.match(sql, /DELETE FROM "space_wishes"/);
     assert.match(sql, /DELETE FROM "watch_photos" WHERE "uploader_id" = \$1 RETURNING/);
-    assert.match(sql, /UPDATE "watch_sources" ws SET "place_text" = NULL/);
+    assert.match(sql, /UPDATE "watch_sources" ws SET "place_text" = NULL, "seat_text" = NULL/);
     assert.equal(users.users[0].status, 'DELETED');
     assert.equal(users.users[0].email, 'deleted-user-1@deleted.invalid');
     assert.equal(outbox.calls.at(-1)?.kind, 'event');

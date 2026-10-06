@@ -71,7 +71,7 @@ export function SpaceTimeline({
   myAccountId: string;
 }) {
   const timeline = useSpaceTimeline(spaceId);
-  const { items, status, cursor, hasMore, moreBusy } = timeline;
+  const { items, status, cursor, hasMore, moreBusy, moreError } = timeline;
   const [comparison, setComparison] = useState<SpaceReactionComparison | null>(null);
   const [comparisonBusy, setComparisonBusy] = useState(false);
   const [comparisonError, setComparisonError] = useState('');
@@ -178,6 +178,11 @@ export function SpaceTimeline({
             >
               {moreBusy ? '불러오는 중…' : '이전 감상 더 보기'}
             </button>
+          ) : null}
+          {moreError ? (
+            <p role="alert" className="text-center text-[12px] font-bold text-[#a93530]">
+              이전 감상을 더 불러오지 못했어요. 다시 눌러 주세요.
+            </p>
           ) : null}
         </div>
       ) : null}

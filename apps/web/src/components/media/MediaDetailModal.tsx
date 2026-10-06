@@ -156,11 +156,17 @@ export function MediaDetailModal({
   const closeDialog = useCallback(() => onClose(), [onClose]);
   useFocusTrap(isOpen, dialogRef, closeDialog);
   // With a space, "보고 싶어요" goes on the space's shared list; without one it stays personal.
+  // Until the space lookup answers, the button waits instead of using the personal list.
   const spaceWish = useSpaceWish(media.id, isOpen);
-  const wanted = spaceWish.wish ? spaceWish.wish.wanted : Boolean(watchlistItemId);
-  const wishPending = spaceWish.wish ? spaceWish.pending : isFavoritePending;
+  const wanted = spaceWish.wish
+    ? spaceWish.wish.wanted
+    : !spaceWish.loading && Boolean(watchlistItemId);
+  const wishPending = spaceWish.loading || (spaceWish.wish ? spaceWish.pending : isFavoritePending);
   const wishLabel = spaceWish.wish ? '같이 보고 싶어요' : '보고 싶어요';
-  const toggleWish = () => (spaceWish.wish ? spaceWish.toggle() : handleFavoriteToggle());
+  const toggleWish = () => {
+    if (spaceWish.loading) return;
+    return spaceWish.wish ? spaceWish.toggle() : handleFavoriteToggle();
+  };
 
   useEffect(() => {
     if (!isOpen) return;

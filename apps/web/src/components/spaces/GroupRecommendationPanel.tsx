@@ -671,6 +671,10 @@ export function GroupRecommendationPanel({
                   </article>
                 );
               })}
+              {/* TMDB's watch-provider data comes from JustWatch, which asks to be credited. */}
+              <p className="text-[11px] font-semibold text-[#8b96a8]">
+                볼 수 있는 곳 정보: TMDB(JustWatch 제공). 서비스 사정에 따라 실제와 다를 수 있어요.
+              </p>
             </div>
           )}
           {group.feedbackError ? (

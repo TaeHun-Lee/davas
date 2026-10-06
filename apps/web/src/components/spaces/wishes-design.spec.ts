@@ -30,6 +30,10 @@ describe('choosing together screens', () => {
     assert.match(screen, /aria-pressed=\{item\.wantedByMe\}/);
     // TMDB's watch-provider data comes from JustWatch, which asks to be credited.
     assert.match(screen, /TMDB\(JustWatch 제공\)/);
+    assert.match(
+      source('components/spaces/GroupRecommendationPanel.tsx'),
+      /TMDB\(JustWatch 제공\)/,
+    );
   });
 
   it('lets the quick pick move on, follow a mood, and stay quiet on home when empty', () => {
@@ -47,6 +51,10 @@ describe('choosing together screens', () => {
     assert.match(modal, /useSpaceWish\(media\.id, isOpen\)/);
     assert.match(modal, /spaceWish\.wish \? spaceWish\.toggle\(\) : handleFavoriteToggle\(\)/);
     assert.match(hook, /chooseActiveSpace\(items, readActiveSpaceId\(\)\)/);
+    // While the space lookup is out, a tap must not land on the personal list instead.
+    assert.match(hook, /const loading = enabled && result\?\.mediaId !== mediaId/);
+    assert.match(modal, /if \(spaceWish\.loading\) return;/);
+    assert.match(modal, /spaceWish\.loading \|\|/);
   });
 
   it('stores OTT subscriptions in settings and starts group choosing from them', () => {

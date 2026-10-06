@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useActiveSpace } from '../../hooks/useActiveSpace';
 import { getSpaceMemories, type SpaceMemories } from '../../lib/api/memories';
 import { AsyncState, EmptyState, Poster, TaskShell } from '../core/CoreUi';
@@ -16,15 +16,20 @@ export function MemoriesScreen() {
   const [year, setYear] = useState(thisYear);
   const [data, setData] = useState<SpaceMemories | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  // Stepping through years quickly must not let an older year's answer land last.
+  const latestRequest = useRef(0);
 
   const load = useCallback(async () => {
     if (!space) return;
+    const request = ++latestRequest.current;
     setStatus('loading');
     try {
-      setData(await getSpaceMemories(space.id, year));
+      const memories = await getSpaceMemories(space.id, year);
+      if (request !== latestRequest.current) return;
+      setData(memories);
       setStatus('ready');
     } catch {
-      setStatus('error');
+      if (request === latestRequest.current) setStatus('error');
     }
   }, [space, year]);
 
@@ -148,7 +153,7 @@ function MemoriesBody({ data }: { data: SpaceMemories }) {
       {data.onThisDay.map((item) => (
         <Link
           key={item.watchEventId}
-          href={`/records/${encodeURIComponent(item.watchEventId)}?returnTo=${encodeURIComponent('/spaces')}`}
+          href={`/records/${encodeURIComponent(item.watchEventId)}?returnTo=${encodeURIComponent('/spaces/memories')}`}
           className="memories-on-this-day"
         >
           {item.coverPhoto ? (

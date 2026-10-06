@@ -19,7 +19,7 @@ describe('notification copy', () => {
     assert.deepEqual(describeNotification(item({})), {
       title: '민호님이 ‘서울의 봄’ 기록을 남겼어요',
       about: null,
-      href: '/records/record-1',
+      href: '/records/record-1?returnTo=%2Fnotifications',
       icon: 'record',
     });
     assert.equal(
@@ -37,7 +37,7 @@ describe('notification copy', () => {
     const match = describeNotification(
       item({ type: 'WISH_MATCHED', diary: null, media: { id: 'm-1', title: '파묘' } }),
     );
-    assert.equal(match.title, '‘파묘’ 같이 보고 싶은 작품이 겹쳤어요');
+    assert.equal(match.title, '‘파묘’, 모두 같이 보고 싶어 해요');
     assert.equal(match.href, '/spaces/wishes');
     assert.equal(describeNotification(item({ type: 'SPACE_INVITE', diary: null })).href, '/spaces');
     assert.equal(

@@ -30,16 +30,21 @@ export function WishPickCard({
   const [pick, setPick] = useState<SpaceWishPick | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const shown = useRef<string[]>([]);
+  // Changing the mood twice quickly must not let the slower, older answer win.
+  const latestRequest = useRef(0);
 
   const load = useCallback(
     async (options: { mood?: WishMood; next?: boolean } = {}) => {
+      const request = ++latestRequest.current;
       setStatus('loading');
       try {
         const exclude = options.next ? shown.current : [];
         let result = await pickWish(spaceId, { mood: options.mood, exclude });
+        if (request !== latestRequest.current) return;
         if (!result.item && exclude.length) {
           // Every title has been shown once: start the round over instead of showing nothing.
           result = await pickWish(spaceId, { mood: options.mood });
+          if (request !== latestRequest.current) return;
           shown.current = [];
         } else if (!options.next) {
           shown.current = [];
@@ -48,7 +53,7 @@ export function WishPickCard({
         setPick(result);
         setStatus('ready');
       } catch {
-        setStatus('error');
+        if (request === latestRequest.current) setStatus('error');
       }
     },
     [spaceId],

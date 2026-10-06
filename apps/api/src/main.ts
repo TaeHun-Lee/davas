@@ -1,5 +1,4 @@
 import 'reflect-metadata';
-import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
@@ -10,6 +9,7 @@ import { AppModule } from './app.module';
 import { ApiExceptionFilter } from './common/api-exception.filter';
 import { configureHttpSecurity, validateProductionConfiguration } from './common/app-security';
 import { configureHttpServerTimeouts } from './common/http-server-timeouts';
+import { servePublicUploads } from './common/public-uploads';
 import { shouldEnableSwagger } from './common/swagger-config';
 
 async function bootstrap() {
@@ -32,14 +32,7 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new ApiExceptionFilter());
 
-  const uploadsDir = process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads');
-  mkdirSync(uploadsDir, { recursive: true });
-  // Record photos share the uploads volume but must only leave through the access-checked
-  // /api/v1/watch-photos route, never as public static files.
-  app.use('/uploads/watch-photos', (_request: Request, response: Response) => {
-    response.status(404).end();
-  });
-  app.useStaticAssets(uploadsDir, { prefix: '/uploads/' });
+  servePublicUploads(app, process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads'));
 
   if (shouldEnableSwagger()) {
     const swaggerConfig = new DocumentBuilder()

@@ -53,6 +53,8 @@ const normalized = (value: string) => value.trim().toLocaleLowerCase('en-US');
 // Below this many stored titles of the requested types, trending titles are imported first.
 const MIN_CANDIDATE_POOL = 60;
 const POOL_IMPORT_LIMIT = 20;
+// Later trending pages are read only while the earlier ones hold titles already stored.
+const POOL_IMPORT_PAGES = 3;
 // Availability is refreshed for at most this many of the most-voted stale titles per session.
 const AVAILABILITY_WARM_POOL = 60;
 const AVAILABILITY_REFRESH_LIMIT = 24;
@@ -112,10 +114,7 @@ export class GroupRecommendationsService {
           where: { mediaType: In(request.contentTypes) },
         });
         if (poolSize < MIN_CANDIDATE_POOL) {
-          const trending = await this.tmdb.trending({ period: 'week', page: 1, language: 'ko-KR' });
-          const imports = trending.items
-            .filter((item) => request.contentTypes.includes(item.mediaType))
-            .slice(0, POOL_IMPORT_LIMIT);
+          const imports = await this.unstoredTrendingTitles(request.contentTypes);
           await mapWithConcurrency(imports, 3, async (item) => {
             try {
               await this.mediaSelection!.select({
@@ -159,6 +158,33 @@ export class GroupRecommendationsService {
     } catch {
       // Recommendations still run on whatever the pool already has.
     }
+  }
+
+  /**
+   * Trending titles that are not stored yet. Importing a stored title again would only ask
+   * TMDB for its details once more, every time a session starts, without growing the pool.
+   */
+  private async unstoredTrendingTitles(contentTypes: SessionRequest['contentTypes']) {
+    const picked: Array<{ externalId: string; mediaType: 'MOVIE' | 'TV' }> = [];
+    for (let page = 1; page <= POOL_IMPORT_PAGES && picked.length < POOL_IMPORT_LIMIT; page += 1) {
+      const trending = await this.tmdb!.trending({ period: 'week', page, language: 'ko-KR' });
+      const wanted = trending.items.filter((item) => contentTypes.includes(item.mediaType));
+      const stored = wanted.length
+        ? await this.media.find({
+            where: {
+              externalProvider: 'TMDB',
+              externalId: In(wanted.map((item) => item.externalId)),
+            },
+            select: { id: true, externalId: true, mediaType: true },
+          })
+        : [];
+      const storedKeys = new Set(stored.map((item) => `${item.mediaType}:${item.externalId}`));
+      picked.push(
+        ...wanted.filter((item) => !storedKeys.has(`${item.mediaType}:${item.externalId}`)),
+      );
+      if (page >= (trending.totalPages ?? 1)) break;
+    }
+    return picked.slice(0, POOL_IMPORT_LIMIT);
   }
 
   async create(

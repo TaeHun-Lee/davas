@@ -78,13 +78,16 @@ function fakeDiariesRepository(row: DiaryEntity | null) {
   };
 }
 
-function fakeAccess(allowed = true) {
+function fakeAccess(allowed = true, cannotView: string[] = []) {
   return {
     calls: [] as Array<{ diary: DiaryEntity | null; userId: string }>,
     async assertCanView(diary: DiaryEntity | null, userId: string) {
       this.calls.push({ diary, userId });
       if (!diary) throw new NotFoundException('기록을 찾을 수 없습니다.');
       if (!allowed) throw new ForbiddenException('기록을 볼 권한이 없습니다.');
+    },
+    async canView(_diary: DiaryEntity, userId: string) {
+      return !cannotView.includes(userId);
     },
   };
 }
@@ -145,6 +148,47 @@ describe('CommentsService', () => {
     assert.equal((comments.calls[0].input as Partial<CommentEntity>).content, '새 댓글');
     assert.equal(result.content, '새 댓글');
     assert.equal(result.isMine, true);
+  });
+
+  it('notifies the author and watchers who can still see the record, once per comment', async () => {
+    const diary = {
+      id: 'diary-1',
+      userId: 'author',
+      visibility: 'SPACES',
+    } as unknown as DiaryEntity;
+    const sent: Array<{ recipientId: string; idempotencyKey?: string }> = [];
+    const notifications = {
+      notifyDiaryCommented: async (input: { recipientId: string; idempotencyKey?: string }) =>
+        void sent.push(input),
+    };
+    const participants = {
+      find: async () => [{ accountId: 'partner' }, { accountId: 'departed' }, { accountId: 'me' }],
+    };
+    await new CommentsService(
+      fakeCommentsRepository() as never,
+      fakeDiariesRepository(diary) as never,
+      fakeAccess(true, ['departed']) as never,
+      notifications as never,
+      participants as never,
+    ).create('diary-1', 'me', '같이 또 보자');
+    assert.deepEqual(sent.map((input) => input.recipientId).sort(), ['author', 'partner']);
+    assert.equal(sent[0].idempotencyKey, `DIARY_COMMENTED:${sent[0].recipientId}:comment-1`);
+  });
+
+  it('keeps the saved comment when a notification fails, so a retry does not post it twice', async () => {
+    const comments = fakeCommentsRepository();
+    const result = await new CommentsService(
+      comments as never,
+      fakeDiariesRepository({ id: 'diary-1', userId: 'author' } as unknown as DiaryEntity) as never,
+      fakeAccess() as never,
+      {
+        notifyDiaryCommented: async () => {
+          throw new Error('notifications table is unavailable');
+        },
+      } as never,
+    ).create('diary-1', 'me', '저장은 돼야 해요');
+    assert.equal(result.content, '저장은 돼야 해요');
+    assert.equal(comments.calls.filter((call) => call.method === 'save').length, 1);
   });
 
   it('reloads a created comment with the persisted user relation before returning author data', async () => {

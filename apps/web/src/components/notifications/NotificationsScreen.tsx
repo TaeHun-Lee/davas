@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   listNotifications,
   markAllNotificationsRead,
@@ -27,6 +27,8 @@ export function NotificationsScreen() {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState('');
+  // A second tap while the first one is still marking it read would navigate twice.
+  const opening = useRef(false);
 
   const load = useCallback(async () => {
     setStatus('loading');
@@ -43,6 +45,8 @@ export function NotificationsScreen() {
   }, [load]);
 
   async function open(item: NotificationItem) {
+    if (opening.current) return;
+    opening.current = true;
     const target = describeNotification(item).href;
     if (!item.readAt) {
       // Opening still works if marking read fails; it just stays unread.

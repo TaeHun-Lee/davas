@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { WATCH_COMMENT_MAX_LENGTH } from '@davas/shared';
 import { Repository } from 'typeorm';
@@ -35,6 +41,8 @@ function normalizeContent(content: string) {
 
 @Injectable()
 export class CommentsService {
+  private readonly logger = new Logger(CommentsService.name);
+
   constructor(
     @InjectRepository(CommentEntity)
     private readonly comments: Repository<CommentEntity>,
@@ -62,19 +70,7 @@ export class CommentsService {
     const diary = await this.ensureAccessibleDiary(diaryId, userId);
     const comment = this.comments.create({ diaryId, userId, content: normalizeContent(content) });
     const saved = await this.comments.save(comment);
-    // The author and everyone who confirmed watching hear about it, once per comment.
-    const watchers =
-      (await this.participants?.find({ where: { diaryId, status: 'CONFIRMED' } })) ?? [];
-    const recipients = new Set([diary.userId, ...watchers.map((row) => row.accountId)]);
-    recipients.delete(userId);
-    for (const recipientId of recipients) {
-      await this.notifications?.notifyDiaryCommented({
-        diaryId,
-        recipientId,
-        actorId: userId,
-        idempotencyKey: `DIARY_COMMENTED:${recipientId}:${saved.id}`,
-      });
-    }
+    await this.notifyCommented(diary, saved.id, userId);
     const savedWithUser = await this.comments.findOne({
       where: { id: saved.id, userId },
       relations: { user: true },
@@ -92,6 +88,34 @@ export class CommentsService {
     await this.findOwnedAccessibleComment(commentId, userId);
     await this.comments.softDelete({ id: commentId, userId });
     return { id: commentId, deleted: true };
+  }
+
+  /**
+   * The author and everyone who confirmed watching hear about it, once per comment, as long as
+   * they can still see the record (someone who left the space does not). The comment is
+   * already saved, so a failed notification is logged, never turned into a failed request
+   * that the person would retry into a duplicate comment.
+   */
+  private async notifyCommented(diary: DiaryEntity, commentId: string, actorId: string) {
+    if (!this.notifications) return;
+    try {
+      const watchers =
+        (await this.participants?.find({ where: { diaryId: diary.id, status: 'CONFIRMED' } })) ??
+        [];
+      const recipients = new Set([diary.userId, ...watchers.map((row) => row.accountId)]);
+      recipients.delete(actorId);
+      for (const recipientId of recipients) {
+        if (!(await this.access.canView(diary, recipientId))) continue;
+        await this.notifications.notifyDiaryCommented({
+          diaryId: diary.id,
+          recipientId,
+          actorId,
+          idempotencyKey: `DIARY_COMMENTED:${recipientId}:${commentId}`,
+        });
+      }
+    } catch (error) {
+      this.logger.warn(`comment notification skipped: ${String(error)}`);
+    }
   }
 
   private async ensureAccessibleDiary(diaryId: string, userId: string) {

@@ -29,7 +29,7 @@ cp .env.production.example .env.production
 | `POSTGRES_PASSWORD` | 예시 값 금지 |
 | `JWT_ACCESS_SECRET` | 32자 이상 무작위 값 |
 | `DAVAS_BOOTSTRAP_INVITE_CODE` | 첫 계정 가입에만 사용. `openssl rand -hex 16`으로 만들고 첫 초대 사용 후 비운다 |
-| `TMDB_API_KEY` | 작품 검색에 필요 |
+| `TMDB_API_KEY` | 작품 검색, 기록할 작품 고르기, 볼 수 있는 곳(OTT) 확인, 추천에 필요. 없으면 새 작품을 고를 수 없다 |
 | `TRUST_PROXY_HOPS` | 비워 둔다(기본: Caddy 1단계 신뢰). Caddy 앞에 프록시를 더 둘 때만 설정 |
 
 `TYPEORM_SYNC=false`, `COOKIE_SECURE=true`는 Compose 파일에 고정돼 있다. 운영 API는 `CORS_ORIGINS`가 없거나, `JWT_ACCESS_SECRET`이 짧거나 예시 값이거나, `COOKIE_SECURE`가 `true`가 아니면 시작을 거부한다.
@@ -68,15 +68,19 @@ cp .env.production.example .env.production
 ### 4.1 백업
 
 ```bash
+df -h . /var/lib/docker                                        # 남은 공간이 업로드 볼륨 크기보다 넉넉한지 확인
+$DC run --rm -T --no-deps api du -sh /app/uploads </dev/null   # 업로드 볼륨 크기
 umask 077
 stamp="$(date +%Y%m%d-%H%M%S)"
 dir="backups/pre-<commit>-$stamp"
 mkdir -p "$dir"
 $DC exec -T db sh -c 'pg_dump --format=custom --no-owner -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$dir/davas.dump"
-$DC run --rm -T --no-deps -v "$PWD/$dir:/backup" api sh -c 'tar -czf /backup/uploads.tar.gz -C /app/uploads .' </dev/null
-(cd "$dir" && sha256sum davas.dump uploads.tar.gz > SHA256SUMS)
+$DC run --rm -T --no-deps -v "$PWD/$dir:/backup" api sh -c 'tar -cf /backup/uploads.tar -C /app/uploads .' </dev/null
+(cd "$dir" && sha256sum davas.dump uploads.tar > SHA256SUMS)
 $DC exec -T db pg_restore --list < "$dir/davas.dump" | head    # 덤프가 읽히는지 확인
 ```
+
+- 업로드는 압축하지 않고 묶기만 한다(`tar -cf`). 사진은 이미 압축된 JPEG·WebP라 gzip으로 거의 줄지 않고 Raspberry Pi CPU만 오래 쓴다. DB 덤프(`--format=custom`)는 자체 압축된다.
 
 - 되돌리기용으로 지금 실행 중인 이미지에 태그를 남긴다: `docker tag davas-api:latest davas-api:pre-<commit>-$stamp` (web도 같게).
 - 백업 폴더를 Raspberry Pi 밖(PC·클라우드)에도 복사한다.
@@ -133,9 +137,16 @@ curl -sI https://<domain>/login | grep -iE "strict-transport|x-frame|x-powered-b
 curl -s -o /dev/null -w '%{http_code}\n' https://<domain>/api/docs                 # 404 (Swagger 꺼짐)
 curl -s -w ' %{http_code}\n' https://<domain>/api/auth/me                         # 401
 curl -sI -H 'Origin: https://evil.example' https://<domain>/api/health | grep -i access-control-allow-origin   # 출력 없음
+curl -s -o /dev/null -w '%{http_code}\n' https://<domain>/uploads/watch%2Dphotos/x   # 404 (기록 사진은 정적 경로로 나가지 않음)
 ```
 
-읽기 전용 화면을 먼저 확인한다: `/login`, `/`, `/records/new`, `/me`, `/friends`, `/spaces`, `/settings`, `/manifest.webmanifest`, `/sw.js`, `/offline`.
+서버에서 사진 처리 모듈(sharp, ARM64용 바이너리)이 이미지 안에서 읽히는지 확인한다. 실패하면 사진 업로드가 모두 500이 된다.
+
+```bash
+docker exec davas-api node -e "const sharp = require('sharp'); console.log('sharp', sharp.versions.sharp, 'libvips', sharp.versions.vips)"
+```
+
+읽기 전용 화면을 먼저 확인한다: `/login`, `/`, `/records/new`, `/me`, `/friends`, `/spaces`, `/spaces/wishes`, `/spaces/memories`, `/notifications`, `/settings`, `/manifest.webmanifest`, `/sw.js`, `/offline`.
 
 로그인은 되는데 여러 화면이 동시에 불러오기 실패하고 API 로그에 `column ... does not exist` 또는 `relation ... does not exist`가 보이면, 새 코드가 migration 전 스키마를 보고 있다는 뜻이다. 백업을 확인하고 4.3을 실행한 뒤 API를 다시 시작한다.
 
@@ -159,7 +170,7 @@ createdb davas_restore_test
 pg_restore --clean --if-exists --no-owner --dbname=davas_restore_test <backup>/davas.dump
 ```
 
-`uploads.tar.gz`도 임시 폴더에 풀어 대표 파일을 확인한다.
+`uploads.tar`도 임시 폴더에 풀어(`tar -xf uploads.tar -C <임시 폴더>`) 대표 파일을 확인한다. 예전 백업(`uploads.tar.gz`)은 `tar -xzf`로 푼다.
 
 되돌리기 방식은 배포 전에 정한다.
 

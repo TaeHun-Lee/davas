@@ -97,8 +97,12 @@ function setup(offers: Record<string, string[]> = {}) {
         confidence: 0.8,
       })),
     }) satisfies AvailabilityResponse;
+  const lookups: string[][] = [];
   const availability = {
-    getCurrent: async (contentId: string) => response(contentId, 'UNKNOWN'),
+    getCurrentMany: async (contentIds: string[]) => {
+      lookups.push(contentIds);
+      return new Map(contentIds.map((contentId) => [contentId, response(contentId, 'UNKNOWN')]));
+    },
     refresh: async (contentId: string) => {
       refreshed.push(contentId);
       return response(contentId, offers[contentId]?.length ? 'AVAILABLE' : 'NO_OFFERS');
@@ -122,7 +126,7 @@ function setup(offers: Record<string, string[]> = {}) {
     spaceAccess,
     availability,
   );
-  return { members, refreshed, service, shares, wishes };
+  return { lookups, members, refreshed, service, shares, wishes };
 }
 
 describe('SpaceWishesService', () => {
@@ -152,6 +156,15 @@ describe('SpaceWishesService', () => {
       services: ['netflix'],
       onSpaceServices: true,
     });
+  });
+
+  it('looks up availability for the whole list at once', async () => {
+    const { lookups, service } = setup();
+    await service.add('space-1', 'jiwoo', 'm-pamyo');
+    await service.add('space-1', 'jiwoo', 'm-dune');
+    await service.list('space-1', 'jiwoo');
+    assert.equal(lookups.length, 1);
+    assert.deepEqual([...lookups[0]].sort(), ['m-dune', 'm-pamyo']);
   });
 
   it('only counts subscription streaming, and maps TMDB provider names to services', async () => {

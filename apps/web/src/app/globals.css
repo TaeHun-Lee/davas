@@ -1910,16 +1910,17 @@ a {
   font-size: 11px;
   font-weight: 850;
 }
+/* The message and retry sit at the bottom so the delete button keeps the top corner. */
 .photo-tile-overlay[data-tone='error'] {
   inset: 0;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   background: rgba(120, 24, 20, 0.72);
   padding: 8px;
   text-align: center;
 }
 .photo-tile-overlay button {
-  min-height: 34px;
+  min-height: 44px;
   border: 0;
   border-radius: 10px;
   background: white;
@@ -1942,45 +1943,56 @@ a {
   background: white;
   transition: width 0.2s linear;
 }
+/* Every tile control is a 44px touch target with a smaller visible chip inside, so on a
+   3-column phone grid (about 90-130px tiles) the controls neither overlap nor hide the photo. */
 .photo-tile-remove {
   position: absolute;
-  top: 2px;
-  right: 2px;
+  top: 0;
+  right: 0;
   display: inline-flex;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 12px;
-  background: rgba(10, 20, 38, 0.6);
+  background: transparent;
   color: white;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
+}
+.photo-tile-remove span,
+.photo-tile-order button span {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(10, 20, 38, 0.6);
 }
 .photo-tile-order {
   position: absolute;
-  right: 2px;
-  bottom: 2px;
-  left: 2px;
+  right: 0;
+  bottom: 0;
+  left: 0;
   display: flex;
   justify-content: space-between;
 }
 .photo-tile[data-status='queued'] .photo-tile-order,
-.photo-tile[data-status='uploading'] .photo-tile-order {
+.photo-tile[data-status='uploading'] .photo-tile-order,
+.photo-tile[data-status='error'] .photo-tile-order {
   display: none;
 }
 .photo-tile-order button {
   display: inline-flex;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 10px;
-  background: rgba(10, 20, 38, 0.55);
+  background: transparent;
   color: white;
-  font-size: 20px;
+  font-size: 18px;
 }
 .photo-tile-order button:disabled {
   visibility: hidden;

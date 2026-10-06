@@ -53,6 +53,16 @@ describe('measured core query performance contract', () => {
     assert.match(FEED_FRIENDS_ACCESS_PREDICATE, /OR EXISTS \(SELECT 1 FROM friendships/);
   });
 
+  it('loads a timeline page with one query per relation, not one JOIN or count per record', () => {
+    const code = source('diaries/watch-events.service.ts');
+    const timeline = code.slice(code.indexOf('async timeline('), code.indexOf('async progress('));
+    assert.match(timeline, /relationLoadStrategy: 'query'/);
+    assert.match(timeline, /this\.toViews\(/);
+    const loadDiary = code.slice(code.indexOf('private async loadDiary('));
+    assert.match(loadDiary.slice(0, 300), /relationLoadStrategy: 'query'/);
+    assert.doesNotMatch(code, /this\.comments\.count\(/);
+  });
+
   it('keeps TypeORM joined pagination SQL valid while excluding unshared rows', () => {
     const code = source('diaries/diaries.service.ts');
     assert.match(code, /andWhere\('diary\.sharedAt IS NOT NULL'\)/);
