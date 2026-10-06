@@ -1,7 +1,7 @@
 # Technology stack
 - Package manager/build orchestration: npm workspaces; root package is private.
-- Language: TypeScript 5.7, strict mode, ES2022, NodeNext resolution.
-- API: NestJS 10, TypeORM 0.3, PostgreSQL; JWT/Passport auth; class-validator/transformer; Swagger.
+- Language: TypeScript 5.9, strict mode, ES2022, NodeNext resolution. Runtime Node.js 24 (Docker images and `engines`).
+- API: NestJS 11, TypeORM 0.3, PostgreSQL; JWT cookie auth via a global guard; @nestjs/throttler, Helmet; class-validator/transformer; Swagger (dev only).
 - Web: Next.js 15 App Router, React 19, TanStack React Query 5, Zod, Tailwind CSS 3.
 - Shared workspace: `@davas/shared`, ESM TypeScript package.
 - Tests: Node built-in test runner with `tsx`; tests are colocated as `*.spec.ts` or `*.test.ts`.

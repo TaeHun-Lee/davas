@@ -1,0 +1,112 @@
+# Davas 부록: 레거시·알려진 문제·작업 요령
+
+규칙 문서(제품 기준, 개발 가이드, 운영 가이드)에 넣기에는 과거 사정이거나, 상황에 따라 판단하면 되는 내용을 모았다. 여기 적힌 내용이 코드와 다르면 코드가 맞다.
+
+## 1. 레거시 호환과 알려진 문제
+
+### 예전 경로 전환
+
+| 예전 경로 | 지금 이동하는 곳 | 처리 위치 |
+|---|---|---|
+| `/diary/:id...` | `/records/:id...` | `middleware.ts` |
+| `/diary` | `/me` | `app/diary/page.tsx` |
+| `/profile...` | `/settings` | `middleware.ts` |
+| `/community/authors/...`, `/community`, `/feed` | `/` | `middleware.ts`, 각 `page.tsx` |
+| `/watchlist` | `/me` | `middleware.ts` |
+| `/explore` | `/records/new` | `middleware.ts` |
+
+`home`, `diary`, `community`, `watchlist`, `profile` 아래 예전 컴포넌트와 API(`watchlist`, `reactions`, `comments`, `community`)는 데이터 호환을 위해 남아 있다. 새 기능의 근거로 쓰지 말고, 지울 때는 데이터 보존 정책을 먼저 정한다.
+
+### 알려진 문제
+
+- **그룹 추천 화면에 들어갈 길이 없다.** 홈의 "추천 둘러보기"와 "더 보기"는 `/explore`로 연결되지만, `middleware.ts`가 `/explore`를 `/records/new`로 돌려보낸다. 그래서 `ExploreDashboard`의 `GroupRecommendationPanel`이 보이지 않는다.
+- **API만 있고 Web 화면이 없는 기능:** 데이터 내보내기(`GET /api/users/me/export`), 알림 설정(`/api/notifications/preferences`), 공간 초대 화면에서 비로그인 사용자를 로그인으로 안내하는 흐름.
+- **탈퇴 30일 유예 후 실제 삭제가 실행되지 않는다.** `UsersService.purgeExpiredDeletions`를 주기적으로 부르는 작업이 없어서, 탈퇴 신청 계정은 "삭제 대기" 상태로 남는다.
+- **아웃박스 소비 워커가 없다.** 알림·도메인 이벤트는 `transaction_outbox`에 쌓이기만 한다.
+- **외부 작품 ID 연결표가 영화·드라마를 구분하지 않는다.** `external_content_refs`의 고유 조건은 `(provider, external_id)`라서, TMDB 번호가 같은 영화와 드라마가 서로 겹칠 수 있다. 반면 `media`는 `media_type`까지 포함해 구분한다.
+- **운영 의존성에 남은 취약점:** Next.js 안에 포함된 postcss(High), `@nestjs/swagger`·`js-yaml`(Moderate)은 Next.js 16, Swagger 12 메이저 업그레이드가 필요하다.
+
+### 데이터 모델 사정
+
+- 감상 사건(`WatchEvent`)은 기존 `/diaries` API 호환을 위해 `diaries` 테이블(`DiaryEntity`)에 저장한다. 개인 별점·리뷰는 `watch_reactions`에 따로 두고, 예전 `rating`·`content`는 호환용 복사본이다.
+- 예전 공개 범위 `SELECTED`(일부 친구 공개)는 읽기·수정만 호환한다. 새 공유는 공간 단위(`watch_event_shares`)로 한다.
+- 예전 `/diaries` 별점은 1~5 정수, 감상 사건 별점은 0.5 단위다.
+
+### 2026-10 보안 보강 병합 기록
+
+- 7월 보안 보강 브랜치(remediation)와 8월 TO-BE 기능 브랜치가 따로 진행된 뒤 2026-10-06에 main으로 합쳐졌다(merge `a5e400d`).
+- 두 줄기는 migration timestamp `1720670700000`~`1720671100000`을 서로 다른 migration에 썼다. 운영 DB에는 둘 다 적용돼 있어서 이름을 바꾸지 않고 함께 등록했다.
+- 보안 보강 쪽의 "핵심 4화면만 남기기" 범위 축소는 적용하지 않았다. 인물 검색, 댓글·커뮤니티, 알림, 추천, 보고싶어요 비활성화와 화면 구조 분리가 여기에 해당한다. 이미 쓰는 기능을 끄지 않기 위해서였다.
+- Docker 이미지는 Node 24를 쓴다. Node 20은 2026-04에 지원이 끝났다.
+
+## 2. 검증 요령
+
+### 판정 기준
+
+| 판정 | 뜻 |
+|---|---|
+| PASS | 명령이 종료 코드 0으로 끝났고 기대한 검사가 실제로 실행됐다 |
+| FAIL | 구현이나 검사 도구의 결함이 재현됐다 |
+| BLOCKED | DB, 의존성, 인증 정보, 브라우저·기기 같은 실행 조건이 없다 |
+
+- 실행하지 못한 검사를 코드 읽기만으로 PASS 처리하지 않는다. 정적 검토는 더 좁은 증거로 따로 적는다.
+- 예전 실행 결과는 지금의 증거가 아니다. 현재 코드에서 다시 실행한다.
+
+### 결과 기록 형식
+
+```markdown
+- Gate: npm test
+- Result: PASS / FAIL / BLOCKED
+- Timestamp: ISO-8601
+- Output summary: tests, failures, skips
+- Product impact: 무엇이 증명됐고 무엇이 증명되지 않았는지
+```
+
+### 계약 회귀 점검 목록
+
+제품·API를 바꿀 때 관련 항목을 골라 확인한다.
+
+- 시청 방식이 DB → DTO → 서비스 → Web까지 그대로 왕복하는지
+- 별점 규칙(감상 사건 0.5 단위, 예전 기록 1~5)과 미평가 허용
+- 피드·내 기록의 검색어·작품 유형·시청 방식 필터 조합
+- `clientRequestId` 재전송이 중복 저장 없이 같은 결과를 주는지, 같은 키에 다른 내용이면 충돌인지
+- 재감상(`POSSIBLE_REWATCH`) 확인 흐름
+- 친구가 아니거나 공간 구성원이 아닌 사람의 직접 URL 접근이 404인지
+- 친구·공간 초대의 만료, 본인 사용, 일회성, 동시 수락, 정원 5명 경계
+- 오래된 쿠키 → 401 → 로그아웃 → 안전한 로그인 후 복귀
+- 약관 동의 버전 검증
+
+### 수동 Web QA
+
+- 화면 폭: 360px, 390px, 430px
+- 경로: `/login`, `/signup`, `/`, `/records/new`(찾기·작성), `/records/:id`, `/search?scope=friends`, `/search?scope=mine`, `/me`, `/friends`, `/spaces`, `/settings`, `/offline`
+- 확인할 것:
+  - 가로 넘침이 없다.
+  - 터치 영역은 44×44px 이상이다.
+  - `focus-visible`이 보인다.
+  - 검색·필터·작품 선택·별점·저장·초대 수락이 키보드만으로 된다.
+  - 움직임 줄이기 설정을 지킨다.
+  - 로딩·빈 상태·오류 상태가 겹치지 않는다.
+  - 저장에 실패하면 임시저장이 남고 성공으로 표시되지 않는다.
+  - 목록에서 스포일러 리뷰가 보이지 않는다.
+  - 하단 탭·고정 버튼이 키보드나 안전 영역과 겹치지 않는다.
+- PWA: Android에서 설치·업데이트 안내·오프라인 화면. 개인 기록을 오프라인 캐시에 저장한다고 가정하지 않고, 오프라인 저장은 성공처럼 보이지 않게 입력만 유지한다.
+
+## 3. 작업 요령
+
+### 기본 흐름
+
+1. **시작 상태 확인:** `git status --short --branch`로 겹치는 변경을 찾고, 남의 변경을 덮어쓰지 않는다.
+2. **설계:** 근거가 되는 제품 문서 항목, 관찰 가능한 완료 조건, 범위 밖 항목, 영향을 받는 층(shared 타입 → migration·entity → DTO·컨트롤러·서비스·권한 → Web API 호출·화면 → 테스트·문서)을 정한다.
+3. **작업:** 설계가 요구한 최소 변경만 한다. 스키마는 새 migration으로 바꾸고, 같은 계약을 문서 여러 곳에 복사하지 않는다.
+4. **검증:** 좁은 검사부터 실행하고 마지막에 `npm run verify`를 실행한다. 바꾼 파일과 되돌리는 방법을 보고한다.
+
+### 자주 하는 실수
+
+- 예전 화면 컴포넌트를 현재 제품의 근거로 삼는다. 현재 경로와 `components/core`를 기준으로 본다.
+- 감상 장소를 시청 방식으로 재사용한다. 시청 방식은 별도 필드다.
+- 화면 정리 중에 예전 테이블을 지운다. 데이터 정책 없이 지우지 않는다.
+- 운영에서 `up -d --build`로 migration 확인을 건너뛴다.
+- 따옴표 친 Node 테스트 glob을 쓴다. `scripts/run-tests.mjs`를 쓴다.
+- 브라우저·DB 검증을 정적 테스트로 대신하고 완료라고 보고한다.
+- 작업 상태·TODO·프롬프트를 문서로 남긴다. 이력은 Git과 PR에 남긴다.

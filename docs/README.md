@@ -1,25 +1,23 @@
 # Davas 문서
 
-문서는 목적별로 아래 영역만 유지한다.
+| 문서 | 내용 |
+|---|---|
+| [제품 기준](product/README.md) | 제품 목표, MVP 범위, 도메인 모델, 권한, 추천 원칙. 제품 방향의 단일 기준 |
+| └ [제품 요구사항](product/planning/product-requirements-analysis.md) · [기술 아키텍처](product/planning/technical-architecture-analysis.md) · [추천 전략](product/planning/recommendation-strategy-analysis.md) | 제품 기준을 구현 수준으로 풀어 쓴 TO-BE 상세 설계 |
+| └ [구현 추적표](product/implementation-coverage.md) | MVP 요구사항과 실제 코드의 연결, 남은 경계 |
+| [개발 가이드](development.md) | 로컬 실행, 코드 지도, API 보안 경계, DB·migration, 검증 명령 |
+| [운영 가이드](operations.md) | Raspberry Pi 설정, 운영 DB 원칙, 배포·백업·되돌리기 절차 |
+| [부록](appendix.md) | 레거시 호환, 알려진 문제, 검증·작업 요령 |
 
-| 영역 | 문서 | 역할 |
-|---|---|---|
-| 제품 | [제품 기준 문서](product/README.md) | 합의된 제품 방향과 MVP 범위의 단일 기준 |
-| 제품 상세 설계 | [planning](product/planning/) | 제품 요구사항, 기술 아키텍처, 추천 전략의 TO-BE 상세 설계 |
-| 개발 | [Docker 실행](development/docker.md) | 로컬 개발 환경 실행 |
-| 개발 상세 | [로컬 개발](development/local-development.md) | Docker 없이 실행, 데이터 삭제 주의사항 |
-| 배포 | [Raspberry Pi 배포](deployment/raspberry-pi-duckdns.md) | 운영 배포 개요와 접속 정보 |
-| 운영 런북 | [Raspberry Pi 운영 절차](operations/raspberry-pi-deployment.md) | 백업 → 빌드 → 마이그레이션 → 트래픽 개방, 롤백 |
-| 운영 DB 주의 | [PRODUCTION_DATABASE_CAUTION](../PRODUCTION_DATABASE_CAUTION.md) | 운영 DB를 다룰 때 금지·필수 사항 |
-| 검증 | [Quality gates](verification/quality-gates.md) | 완료 판정에 필요한 명령과 증명 범위 |
-| 구조 | [System overview](architecture/system-overview.md) | 코드 지도 (2026-07 기준, TO-BE 모듈은 planning 문서 참고) |
-| 에이전트 | [Agent harness](harness/agent-harness.md) | 에이전트 작업 절차 |
+에이전트 작업 규칙은 루트의 [`AGENTS.md`](../AGENTS.md)에 있다.
 
 ## 관리 원칙
 
-- 합의된 제품 방향과 범위는 `product/README.md`에서 관리한다.
-- `product/planning/`은 기준 문서를 구현 가능한 수준으로 구체화하며, 충돌하면 기준 문서를 우선한다.
-- 같은 내용을 상태 보고서, TODO, 실행 프롬프트로 중복 작성하지 않는다.
-- 구현 상태는 문서에 복제하지 않고 코드, 테스트, 이슈와 Git 이력을 기준으로 확인한다.
-- 장기 보존이 필요한 기술 결정이 생기면 `docs/decisions/`에 ADR로 추가한다.
-- 개발·배포 명령은 실제 스크립트와 함께 변경한다.
+- 내용마다 들어갈 곳을 하나로 정한다.
+  - 제품 방향과 범위는 `product/README.md`에 둔다. 상세 설계(`product/planning/`)와 충돌하면 제품 기준이 우선한다.
+  - 실행·검증 명령은 `development.md`, 운영 서버 절차는 `operations.md`에 둔다.
+  - 과거 사정, 알려진 문제, 상황 판단 요령은 `appendix.md`에 둔다.
+- 작업 상태 보고서, 끝난 TODO, 실행 프롬프트는 문서로 남기지 않는다. 이력은 Git 커밋과 PR에 남긴다.
+- 명령이나 계약을 바꾸면 관련 문서를 같은 변경에서 고친다.
+- 오래 보존해야 하는 기술 결정이 생기면 `docs/decisions/`에 ADR로 추가한다.
+- `npm run docs:check`가 필수 문서, 링크, UTF-8, 지운 문서의 재등장을 검사한다.

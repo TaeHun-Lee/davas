@@ -9,5 +9,5 @@
 - Commands developers actually run: `mem:suggested_commands`.
 - Formatting and code patterns: `mem:conventions`.
 - Required validation before handoff: `mem:task_completion`.
-- Documentation map: `docs/README.md`; local Docker guide under `docs/development/`, production Raspberry Pi guide under `docs/deployment/`.
+- Documentation map: `docs/README.md` → `docs/development.md` (local run, code map, security boundaries, DB, checks), `docs/operations.md` (Raspberry Pi release/backup/rollback), `docs/appendix.md` (legacy, known gaps, heuristics).
 - Code intelligence routing: Graphify for repository-wide relationships/docs; Serena for exact symbols, references, refactors, and edits.

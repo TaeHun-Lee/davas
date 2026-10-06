@@ -1,96 +1,59 @@
 # Davas
 
-Davas는 친한 사람들끼리 영화·드라마 감상 기록과 짧은 리뷰를 나누는 모바일 우선 PWA다. 작품 검색부터 기록 작성, 친구 기록 열람, 내 기록 검색, 친구 초대·관리까지를 작은 비공개 네트워크 안에서 제공한다.
+Davas는 가까운 사람 2~5명이 비공개 공간에서 영화·드라마 감상을 기록하고, 같은 작품에 대한 서로의 별점과 리뷰를 함께 보며, 다음에 함께 볼 작품을 고르는 모바일 우선 PWA다.
 
-## Current stack
+## 기술 스택
 
 | 영역 | 기술 |
-| --- | --- |
-| Web | Next.js 15, React 19, TypeScript, Tailwind CSS |
-| API | NestJS 10, TypeScript, TypeORM |
+|---|---|
+| Web | Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS 3 |
+| API | NestJS 11, TypeORM 0.3 |
 | Data | PostgreSQL 16 |
-| Auth | JWT HttpOnly cookie, 가입 초대 코드, 친구 초대 token |
-| Media | TMDB server-side API integration |
-| Runtime | Docker Compose, Caddy, Raspberry Pi self-hosting |
+| Auth | HttpOnly 쿠키 JWT, 가입 초대 코드, 친구·공간 초대 토큰 |
+| Media | TMDB (서버에서만 호출) |
+| Runtime | Node.js 24, Docker Compose, Caddy, Raspberry Pi self-hosting |
 
-## Quick start
-
-### Docker Compose
-
-```bash
-npm run docker:up
-```
-
-- Web: <http://localhost:3000>
-- API: <http://localhost:4000/api>
-- Swagger: <http://localhost:4000/api/docs>
-- PostgreSQL: `localhost:5432`
-
-종료:
-
-```bash
-npm run docker:down
-```
-
-자세한 로컬 실행과 데이터 삭제 주의사항은 [`docs/development/local-development.md`](docs/development/local-development.md)를 따른다.
-
-### Native development
+## 빠른 시작
 
 ```bash
 npm ci
+npm run docker:up        # Web http://localhost:3000, API http://localhost:4000/api
+npm run docker:down
+```
+
+Web·API를 직접 실행하려면:
+
+```bash
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 docker compose up -d db
 npm run dev
 ```
 
-## Quality gates
+## 자주 쓰는 명령
 
 ```bash
-npm run docs:check
-npm test
-npm run lint
-npm run build
+npm test                 # 전체 테스트 (test:shared / test:api / test:web)
+npm run lint             # 타입 검사와 ESLint
+npm run build            # 운영 빌드
+npm run verify           # 포맷·문서·배포 계약·테스트·린트·빌드·HTTP 계약 전체 점검
+npm run verify:release   # verify + Caddy 헤더 검사 + 운영 의존성 감사
 ```
 
-모든 gate를 한 번에 실행하려면:
+## 문서
 
-```bash
-npm run verify
-```
+| 문서 | 내용 |
+|---|---|
+| [docs/README.md](docs/README.md) | 문서 목록과 관리 원칙 |
+| [제품 기준](docs/product/README.md) | 제품 방향과 범위의 단일 기준 |
+| [개발 가이드](docs/development.md) | 로컬 실행, 코드 지도, 보안 경계, DB, 검증 |
+| [운영 가이드](docs/operations.md) | Raspberry Pi 배포·백업·되돌리기 |
+| [부록](docs/appendix.md) | 레거시, 알려진 문제, 작업 요령 |
+| [AGENTS.md](AGENTS.md) | 에이전트 작업 규칙 |
 
-Production dependency audit까지 포함한 release gate:
+운영 배포는 반드시 [운영 가이드](docs/operations.md)의 순서(백업 → 빌드 → migration 확인 → 전환)를 따르고, 운영에서는 `TYPEORM_SYNC=false`를 유지한다.
 
-```bash
-npm run verify:release
-```
-
-실행 조건과 각 명령이 증명하는 범위는 [`docs/verification/quality-gates.md`](docs/verification/quality-gates.md)에 있다.
-
-## Documentation map
-
-| 목적 | 문서 |
-| --- | --- |
-| 문서 진입점 | [`docs/README.md`](docs/README.md) |
-| 제품·IA·데이터/API 단일 기준 | [`docs/product/README.md`](docs/product/README.md) |
-| 현재 시스템 구조와 코드 지도 | [`docs/architecture/system-overview.md`](docs/architecture/system-overview.md) |
-| 로컬 개발 | [`docs/development/local-development.md`](docs/development/local-development.md) |
-| Raspberry Pi 운영 배포 | [`docs/operations/raspberry-pi-deployment.md`](docs/operations/raspberry-pi-deployment.md) |
-| 검증 기준 | [`docs/verification/quality-gates.md`](docs/verification/quality-gates.md) |
-| Agent harness | [`docs/harness/agent-harness.md`](docs/harness/agent-harness.md) |
-
-## Agent workflow
-
-- Portable project rules: [`AGENTS.md`](AGENTS.md)
-- Project Skill: [`.agents/skills/davas-core-development/SKILL.md`](.agents/skills/davas-core-development/SKILL.md)
-- 제품 변경은 **Design → Work → Verify** 순서로 수행한다.
-- 설계에 없는 기능은 추가하지 않는다. 최신 범위에서 공개 커뮤니티, 추천, 통계, watchlist, 댓글·반응은 core IA에 노출하지 않는다.
-
-## Production
-
-운영 배포에서는 `TYPEORM_SYNC=false`를 유지하고, application traffic을 열기 전에 migration을 실행한다. 전체 절차와 backup/rollback 규칙은 [`docs/operations/raspberry-pi-deployment.md`](docs/operations/raspberry-pi-deployment.md)를 따른다.
-
-## TMDB attribution
+## TMDB 출처 표기
 
 이 서비스는 TMDB API를 사용하지만 TMDB가 보증하거나 인증한 서비스는 아니다.
 

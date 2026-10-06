@@ -8,19 +8,28 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const required = [
   'README.md',
   'AGENTS.md',
-  'PRODUCTION_DATABASE_CAUTION.md',
   'docs/README.md',
   'docs/product/README.md',
+  'docs/product/implementation-coverage.md',
+  'docs/product/planning/product-requirements-analysis.md',
+  'docs/product/planning/technical-architecture-analysis.md',
+  'docs/product/planning/recommendation-strategy-analysis.md',
+  'docs/development.md',
+  'docs/operations.md',
+  'docs/appendix.md',
+];
+// Retired documents whose content now lives in the files above.
+const forbidden = [
+  'PRODUCTION_DATABASE_CAUTION.md',
+  '.agents/skills/davas-core-development/SKILL.md',
   'docs/architecture/system-overview.md',
+  'docs/deployment/raspberry-pi-duckdns.md',
   'docs/development/docker.md',
   'docs/development/local-development.md',
-  'docs/deployment/raspberry-pi-duckdns.md',
+  'docs/harness/agent-harness.md',
   'docs/operations/raspberry-pi-deployment.md',
   'docs/verification/quality-gates.md',
-  'docs/harness/agent-harness.md',
-  '.agents/skills/davas-core-development/SKILL.md',
-];
-const forbidden = [
+  'docs/product/planning/README.md',
   'docs/product/core-experience.md',
   'docs/product/davas-app-draft.md',
   'docs/product/davas-pwa-self-hosted-design.md',
@@ -66,9 +75,7 @@ for (const relative of forbidden) {
 const files = [
   path.join(root, 'README.md'),
   path.join(root, 'AGENTS.md'),
-  path.join(root, 'PRODUCTION_DATABASE_CAUTION.md'),
   ...(await markdownFiles(path.join(root, 'docs'))),
-  path.join(root, '.agents/skills/davas-core-development/SKILL.md'),
 ];
 const decoder = new TextDecoder('utf-8', { fatal: true });
 
@@ -99,23 +106,7 @@ for (const file of files) {
 
 const agents = await readFile(path.join(root, 'AGENTS.md'), 'utf8');
 if (agents.length > 20_000)
-  errors.push(`AGENTS.md exceeds Hermes 20,000 character context limit: ${agents.length}`);
-
-const skill = await readFile(
-  path.join(root, '.agents/skills/davas-core-development/SKILL.md'),
-  'utf8',
-);
-if (!skill.startsWith('---\n')) errors.push('SKILL.md frontmatter must start at byte 0');
-const closing = skill.indexOf('\n---\n', 4);
-if (closing < 0) errors.push('SKILL.md frontmatter closing delimiter is missing');
-const frontmatter = closing < 0 ? '' : skill.slice(4, closing);
-if (!/^name:\s*davas-core-development\s*$/m.test(frontmatter))
-  errors.push('SKILL.md name is missing or invalid');
-const description = frontmatter.match(/^description:\s*(.+)$/m)?.[1]?.trim() ?? '';
-if (!description) errors.push('SKILL.md description is missing');
-if (description.length > 1024)
-  errors.push(`SKILL.md description exceeds 1024 chars: ${description.length}`);
-if (closing >= 0 && !skill.slice(closing + 5).trim()) errors.push('SKILL.md body is empty');
+  errors.push(`AGENTS.md exceeds 20,000 character agent context limit: ${agents.length}`);
 
 if (errors.length > 0) {
   console.error(`Documentation harness failed with ${errors.length} error(s):`);

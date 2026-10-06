@@ -196,26 +196,16 @@ for (const [name, dockerfile] of [
   );
 }
 
-const productionDatabaseCaution = read('PRODUCTION_DATABASE_CAUTION.md');
 const backupScript = read('deploy/backup.sh');
 check(
   /^umask 077$/m.test(backupScript),
   'production backup script must create database and upload backups with owner-only permissions',
 );
-check(
-  productionDatabaseCaution.includes('npm run db:show:prod') &&
-    productionDatabaseCaution.includes('npm run db:migrate:prod'),
-  'production database caution must use compiled production migration commands',
-);
-check(
-  !/^npm run db:(?:show|migrate)$/m.test(productionDatabaseCaution),
-  'production database caution must not recommend source-mode migration commands',
-);
 
 const typeormConfig = read('apps/api/src/database/typeorm.config.ts');
 const migrationArray = typeormConfig.match(/migrations:\s*\[([\s\S]*?)\]/)?.[1] ?? '';
 const registeredMigrations = migrationArray.match(/\b[A-Z][A-Za-z0-9]*\d{10,}\b/g) ?? [];
-const operations = read('docs/operations/raspberry-pi-deployment.md');
+const operations = read('docs/operations.md');
 check(registeredMigrations.length > 0, 'TypeORM config must register at least one migration');
 check(
   new Set(registeredMigrations).size === registeredMigrations.length,
@@ -228,10 +218,17 @@ for (const migration of registeredMigrations) {
   );
 }
 check(
-  operations.includes(
-    `Current registered chain (${registeredMigrations.length} migrations in this revision)`,
-  ),
+  operations.includes(`현재 등록된 migration (${registeredMigrations.length}개)`),
   'operations runbook migration count must match the registered chain',
+);
+check(
+  !/migration:(?:run|revert):src|npm run db:(?:migrate|revert|show)\b(?!:prod)/.test(operations),
+  'operations runbook must not recommend source-mode migration commands',
+);
+check(
+  operations.includes('TYPEORM_SYNC=false') &&
+    /TYPEORM_SYNC=true`를 운영에서 켜지 않는다/.test(operations),
+  'operations runbook must keep the production schema-sync prohibition',
 );
 check(
   operations.includes('npm run migration:show --workspace @davas/api'),
@@ -248,10 +245,10 @@ check(
   'operations runbook must not add coordinated backup/read-only enforcement',
 );
 
-const architecture = read('docs/architecture/system-overview.md');
+const development = read('docs/development.md');
 check(
-  architecture.includes('`/search?scope=friends` or `/search?scope=mine`'),
-  'architecture route table must not contain an unescaped scope pipe',
+  development.includes('`/search?scope=friends` 또는 `/search?scope=mine`'),
+  'development route table must not contain an unescaped scope pipe',
 );
 const product = read('docs/product/README.md');
 check(!product.includes('~~'), 'product ranges must not render as Markdown strikethrough');
@@ -261,10 +258,10 @@ check(
   'product docs must preserve unofficial self-host legal behavior without a release check',
 );
 
-const qualityGates = read('docs/verification/quality-gates.md');
 check(
-  qualityGates.includes('`verify` → `verify:caddy` → `audit:prod`'),
-  'quality-gate docs must state the release chain without a legal gate',
+  development.includes('npm run verify:release  # verify + Caddy 헤더 검사 + 운영 의존성 감사') &&
+    !/legal 원문을 검사한다|legal gate/i.test(development),
+  'development guide must state the release chain without a legal gate',
 );
 
 if (errors.length > 0) {

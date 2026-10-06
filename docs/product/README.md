@@ -8,12 +8,16 @@
 
 이 문서는 Davas의 제품 요구사항, 핵심 데이터 구조, 추천 원칙과 구현 순서를 정의하는 단일 기준 문서다. 현재 구현과 차이가 생기면 코드와 테스트를 확인해 작업 범위를 정하고, 합의된 제품 방향이 바뀌면 이 문서를 먼저 갱신한다.
 
-상세한 TO-BE 설계는 다음 문서로 나눈다. 상세 문서가 이 문서와 충돌하면 이 문서를 우선한다.
+상세한 TO-BE 설계는 `planning/`에 나눈다. 상세 문서에는 세부 규칙과 판단 근거만 두고, 이 문서와 충돌하면 이 문서를 우선한다. 구현 현황과 일회성 TODO는 상세 설계 문서에 쓰지 않는다.
 
-- [제품 요구사항](planning/product-requirements-analysis.md)
-- [기술 아키텍처](planning/technical-architecture-analysis.md)
-- [추천 전략](planning/recommendation-strategy-analysis.md)
-- [구현 추적표](implementation-coverage.md)
+| 문서 | 다루는 범위 |
+|---|---|
+| [제품 요구사항](planning/product-requirements-analysis.md) | 사용자 흐름, 기능·비기능 요구사항, 정책, 성공 지표 |
+| [기술 아키텍처](planning/technical-architecture-analysis.md) | 시스템 경계, 도메인 모델, 데이터·권한·연동 설계 |
+| [추천 전략](planning/recommendation-strategy-analysis.md) | 후보 생성, 개인·그룹 점수, 콜드 스타트, 평가 |
+| [구현 추적표](implementation-coverage.md) | MVP 요구사항과 실제 코드의 연결, 남은 경계 |
+
+현재 코드 구조는 [개발 가이드](../development.md#3-코드-지도)에, 알려진 구현 공백은 [부록](../appendix.md#알려진-문제)에 있다.
 
 ## 1. 제품 목표
 

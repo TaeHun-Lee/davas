@@ -13,6 +13,7 @@
 - `apps/web`: Next.js and React web/PWA application.
 - `packages/shared`: TypeScript contracts shared by API and web.
 - `deploy` and the Compose files: production and self-hosting configuration.
+- Documentation: `docs/README.md` indexes everything. Product direction lives only in `docs/product/README.md` (detailed TO-BE design in `docs/product/planning/`), commands and the code map in `docs/development.md`, production procedures in `docs/operations.md`, and legacy notes, known issues, and working heuristics in `docs/appendix.md`.
 
 ## Graphify
 
@@ -47,13 +48,15 @@
 - Unsafe methods are checked against `CORS_ORIGINS` (`OriginGuard`), and requests are rate limited per client IP (`ThrottlerGuard`, limits in `common/request-limits.ts`). Production trusts exactly one proxy hop (Caddy) unless `TRUST_PROXY_HOPS` says otherwise.
 - The media selection API accepts only provider identity fields; stored titles and images come from TMDB, never from the browser.
 - Web `returnTo` targets must pass `apps/web/src/lib/core-routes.ts`; extend its allow-list when adding a route that login should return to.
+- Opening a route to anonymous callers means updating the explicit list in `apps/api/src/common/core-runtime-surface.spec.ts`. `docs/development.md` §4 explains every boundary.
 
 ## Database and Deployment Safety
 
-- Represent TypeORM schema changes with a migration and add or update focused migration tests.
+- Represent TypeORM schema changes with a new migration (timestamp greater than `1720671100000`) and add or update focused migration tests. Never edit an applied migration, and never rename the migration classes in the `1720670700000`–`1720671100000` range: two release lines share those timestamps and production matches them by class name.
 - Never enable `TYPEORM_SYNC` in production or use schema synchronization as a recovery shortcut.
 - Do not run production deployment, migration, rollback, volume-removal, or database-mutating commands merely to validate a code change.
-- Read `PRODUCTION_DATABASE_CAUTION.md` before touching production data. Before an explicitly requested production migration or rollback, follow `docs/operations/raspberry-pi-deployment.md`: back up the database and uploads, inspect migration state, and use the documented restore procedure for exact rollback.
+- Before an explicitly requested production deployment, migration, or rollback, follow `docs/operations.md`: back up the database and uploads, inspect migration state, and use the documented restore procedure for exact rollback.
+- When a new migration is registered, update the chain list in `docs/operations.md` §3 in the same change (`npm run verify:deployment` checks it).
 - Do not expose PostgreSQL or internal app ports publicly.
 
 ## Validation
@@ -63,4 +66,11 @@
 - Web: `npm run test --workspace @davas/web`, `npm run lint --workspace @davas/web`, and `npm run build --workspace @davas/web` as relevant.
 - Shared: `npm run test --workspace @davas/shared` and `npm run build --workspace @davas/shared` as relevant.
 - For cross-workspace changes, use the root `npm run test`, `npm run lint`, and `npm run build` scripts as appropriate.
+- Before handoff of a cross-cutting change, run `npm run verify` (format, docs, deployment contracts, tests, lint, build, auth and upload HTTP contracts).
+- Report a check as passed only when it actually ran. Missing PostgreSQL, keys, browsers, or devices make a check BLOCKED, not PASS.
 - After editing, inspect the resulting git diff and report which checks were run, including any failures or checks intentionally skipped.
+
+## Documentation Hygiene
+
+- Update the owning document in the same change as the code or command it describes; do not copy the same contract into several documents.
+- Do not add status reports, completed TODO lists, execution prompts, or session checkpoints to the repository. Git history and PRs hold that record.
