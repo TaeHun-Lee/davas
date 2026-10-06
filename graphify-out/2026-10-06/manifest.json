@@ -2240,8 +2240,8 @@
     "semantic_hash": ""
   },
   "scripts/verify-caddy-headers.mjs": {
-    "mtime": 1791266531.3303735,
-    "ast_hash": "be60797b25ed206829432736c8614984",
+    "mtime": 1791268927.5662148,
+    "ast_hash": "e032dcdae8be736f01bdd876de1df73c",
     "semantic_hash": ""
   },
   "scripts/verify-deployment-contracts.mjs": {

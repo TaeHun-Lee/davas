@@ -1,7 +1,7 @@
 # Graph Report - davas  (2026-10-06)
 
 ## Corpus Check
-- 458 files · ~143,156 words
+- 458 files · ~143,174 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `515c0efd`
+- Built from commit: `485b403c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -876,34 +876,34 @@ Cohesion: 0.50
 Nodes (3): name, private, version
 
 ## Knowledge Gaps
-- **847 isolated node(s):** `sourceRoot`, `PUBLIC_ROUTES`, `$schema`, `collection`, `sourceRoot` (+842 more)
+- **847 isolated node(s):** `projectRoot`, `sourceCaddyfile`, `tempDirectory`, `testCaddyfile`, `conflictingHeaders` (+842 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **33 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Work-memory lessons
 
 **Preferred sources** — corroborated by past sessions; start here.
-- `RecordComposer()` (3× useful, score=0.939582186)
-- `RecordScreens.tsx` (3× useful, score=0.924286636)
-- `WatchEventsService` (3× useful, score=0.919507775)
-- `layout.tsx` (2× useful, score=0.618184596)
-- `PwaStatus.tsx` (2× useful, score=0.618184596)
-- `PwaStatus()` (2× useful, score=0.618184596)
-- `SpaceMembershipEntity` (2× useful, score=0.615606064)
-- `typeorm.config.ts` (2× useful, score=0.613798219)
-- `GroupRecommendationSessionRequest` (2× useful, score=0.613711703)
-- `api/package.json` (2× useful, score=0.552938799)
+- `RecordComposer()` (3× useful, score=0.938996507)
+- `RecordScreens.tsx` (3× useful, score=0.923710491)
+- `WatchEventsService` (3× useful, score=0.918934609)
+- `layout.tsx` (2× useful, score=0.617799256)
+- `PwaStatus.tsx` (2× useful, score=0.617799256)
+- `PwaStatus()` (2× useful, score=0.617799256)
+- `SpaceMembershipEntity` (2× useful, score=0.615222332)
+- `typeorm.config.ts` (2× useful, score=0.613415614)
+- `GroupRecommendationSessionRequest` (2× useful, score=0.613329152)
+- `api/package.json` (2× useful, score=0.55259413)
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `REACTION_EMOJIS` connect `ReactionsController` to `src/index.ts`?**
-  _High betweenness centrality (0.234) - this node is a cross-community bridge._
+  _High betweenness centrality (0.247) - this node is a cross-community bridge._
 - **Why does `ReactionsController` connect `ReactionsController` to `jwt-cookie-auth.guard.ts`, `app.module.ts`, `reactions.service.ts`?**
-  _High betweenness centrality (0.147) - this node is a cross-community bridge._
+  _High betweenness centrality (0.162) - this node is a cross-community bridge._
 - **Why does `AuthenticatedRequest` connect `AuthenticatedRequest` to `CommentsService`, `UsersController`, `WatchlistService`, `community.service.ts`, `FriendsService`, `group-recommendations.controller.ts`, `DiariesController`, `spaces.service.ts`, `media.controller.ts`, `invites.controller.ts`, `WatchEventsService`, `reactions.service.ts`, `ReactionsController`, `diaries.controller.ts`, `MediaController`, `jwt-cookie-auth.guard.ts`, `auth.service.ts`, `FriendshipEntity`, `users.controller.ts`, `notifications.service.ts`, `NotificationsController`?**
-  _High betweenness centrality (0.134) - this node is a cross-community bridge._
-- **What connects `sourceRoot`, `PUBLIC_ROUTES`, `$schema` to the rest of the system?**
+  _High betweenness centrality (0.128) - this node is a cross-community bridge._
+- **What connects `projectRoot`, `sourceCaddyfile`, `tempDirectory` to the rest of the system?**
   _847 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `CommentsService` be split into smaller, more focused modules?**
   _Cohesion score 0.14666666666666667 - nodes in this community are weakly interconnected._

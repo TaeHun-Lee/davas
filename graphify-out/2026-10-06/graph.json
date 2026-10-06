@@ -4,15 +4,158 @@
   "graph": {},
   "nodes": [
     {
+      "label": "verify-caddy-headers.mjs",
+      "file_type": "code",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "scripts_verify_caddy_headers",
+      "community": 98,
+      "community_name": "verify-caddy-headers.mjs",
+      "norm_label": "verify-caddy-headers.mjs"
+    },
+    {
+      "label": "projectRoot",
+      "file_type": "code",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L8",
+      "_origin": "ast",
+      "id": "scripts_verify_caddy_headers_projectroot",
+      "community": 98,
+      "community_name": "verify-caddy-headers.mjs",
+      "norm_label": "projectroot"
+    },
+    {
+      "label": "sourceCaddyfile",
+      "file_type": "code",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "scripts_verify_caddy_headers_sourcecaddyfile",
+      "community": 98,
+      "community_name": "verify-caddy-headers.mjs",
+      "norm_label": "sourcecaddyfile"
+    },
+    {
+      "label": "tempDirectory",
+      "file_type": "code",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L11",
+      "_origin": "ast",
+      "id": "scripts_verify_caddy_headers_tempdirectory",
+      "community": 98,
+      "community_name": "verify-caddy-headers.mjs",
+      "norm_label": "tempdirectory"
+    },
+    {
+      "label": "testCaddyfile",
+      "file_type": "code",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "scripts_verify_caddy_headers_testcaddyfile",
+      "community": 98,
+      "community_name": "verify-caddy-headers.mjs",
+      "norm_label": "testcaddyfile"
+    },
+    {
+      "label": "runDocker()",
+      "file_type": "code",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L14",
+      "_origin": "ast",
+      "id": "scripts_verify_caddy_headers_rundocker",
+      "community": 98,
+      "community_name": "verify-caddy-headers.mjs",
+      "norm_label": "rundocker()"
+    },
+    {
+      "label": "listen()",
+      "file_type": "code",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L28",
+      "_origin": "ast",
+      "id": "scripts_verify_caddy_headers_listen",
+      "community": 98,
+      "community_name": "verify-caddy-headers.mjs",
+      "norm_label": "listen()"
+    },
+    {
+      "label": "close()",
+      "file_type": "code",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L42",
+      "_origin": "ast",
+      "id": "scripts_verify_caddy_headers_close",
+      "community": 98,
+      "community_name": "verify-caddy-headers.mjs",
+      "norm_label": "close()"
+    },
+    {
+      "label": "conflictingHeaders",
+      "file_type": "code",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L47",
+      "_origin": "ast",
+      "id": "scripts_verify_caddy_headers_conflictingheaders",
+      "community": 98,
+      "community_name": "verify-caddy-headers.mjs",
+      "norm_label": "conflictingheaders"
+    },
+    {
+      "label": "apiOrigin",
+      "file_type": "code",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L55",
+      "_origin": "ast",
+      "id": "scripts_verify_caddy_headers_apiorigin",
+      "community": 98,
+      "community_name": "verify-caddy-headers.mjs",
+      "norm_label": "apiorigin"
+    },
+    {
+      "label": "webOrigin",
+      "file_type": "code",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L62",
+      "_origin": "ast",
+      "id": "scripts_verify_caddy_headers_weborigin",
+      "community": 98,
+      "community_name": "verify-caddy-headers.mjs",
+      "norm_label": "weborigin"
+    },
+    {
+      "label": "expectedHeaders",
+      "file_type": "code",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L68",
+      "_origin": "ast",
+      "id": "scripts_verify_caddy_headers_expectedheaders",
+      "community": 98,
+      "community_name": "verify-caddy-headers.mjs",
+      "norm_label": "expectedheaders"
+    },
+    {
+      "label": "assertHeaders()",
+      "file_type": "code",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L76",
+      "_origin": "ast",
+      "id": "scripts_verify_caddy_headers_assertheaders",
+      "community": 98,
+      "community_name": "verify-caddy-headers.mjs",
+      "norm_label": "assertheaders()"
+    },
+    {
       "label": "core-runtime-surface.spec.ts",
       "file_type": "code",
       "source_file": "apps/api/src/common/core-runtime-surface.spec.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "apps_api_src_common_core_runtime_surface_spec",
       "community": 211,
       "community_name": "core-runtime-surface.spec.ts",
-      "norm_label": "core-runtime-surface.spec.ts"
+      "norm_label": "core-runtime-surface.spec.ts",
+      "id": "apps_api_src_common_core_runtime_surface_spec"
     },
     {
       "label": "sourceRoot",
@@ -20,10 +163,10 @@
       "source_file": "apps/api/src/common/core-runtime-surface.spec.ts",
       "source_location": "L6",
       "_origin": "ast",
-      "id": "apps_api_src_common_core_runtime_surface_spec_sourceroot",
       "community": 211,
       "community_name": "core-runtime-surface.spec.ts",
-      "norm_label": "sourceroot"
+      "norm_label": "sourceroot",
+      "id": "apps_api_src_common_core_runtime_surface_spec_sourceroot"
     },
     {
       "label": "source()",
@@ -31,10 +174,10 @@
       "source_file": "apps/api/src/common/core-runtime-surface.spec.ts",
       "source_location": "L8",
       "_origin": "ast",
-      "id": "apps_api_src_common_core_runtime_surface_spec_source",
       "community": 211,
       "community_name": "core-runtime-surface.spec.ts",
-      "norm_label": "source()"
+      "norm_label": "source()",
+      "id": "apps_api_src_common_core_runtime_surface_spec_source"
     },
     {
       "label": "controllerFiles()",
@@ -42,10 +185,10 @@
       "source_file": "apps/api/src/common/core-runtime-surface.spec.ts",
       "source_location": "L12",
       "_origin": "ast",
-      "id": "apps_api_src_common_core_runtime_surface_spec_controllerfiles",
       "community": 211,
       "community_name": "core-runtime-surface.spec.ts",
-      "norm_label": "controllerfiles()"
+      "norm_label": "controllerfiles()",
+      "id": "apps_api_src_common_core_runtime_surface_spec_controllerfiles"
     },
     {
       "label": "PUBLIC_ROUTES",
@@ -53,10 +196,10 @@
       "source_file": "apps/api/src/common/core-runtime-surface.spec.ts",
       "source_location": "L22",
       "_origin": "ast",
-      "id": "apps_api_src_common_core_runtime_surface_spec_public_routes",
       "community": 211,
       "community_name": "core-runtime-surface.spec.ts",
-      "norm_label": "public_routes"
+      "norm_label": "public_routes",
+      "id": "apps_api_src_common_core_runtime_surface_spec_public_routes"
     },
     {
       "label": "publicRoutes()",
@@ -64,10 +207,10 @@
       "source_file": "apps/api/src/common/core-runtime-surface.spec.ts",
       "source_location": "L33",
       "_origin": "ast",
-      "id": "apps_api_src_common_core_runtime_surface_spec_publicroutes",
       "community": 211,
       "community_name": "core-runtime-surface.spec.ts",
-      "norm_label": "publicroutes()"
+      "norm_label": "publicroutes()",
+      "id": "apps_api_src_common_core_runtime_surface_spec_publicroutes"
     },
     {
       "label": "main.ts",
@@ -75,10 +218,10 @@
       "source_file": "apps/api/src/main.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "apps_api_src_main",
       "community": 37,
       "community_name": "app-security.ts",
-      "norm_label": "main.ts"
+      "norm_label": "main.ts",
+      "id": "apps_api_src_main"
     },
     {
       "label": "bootstrap()",
@@ -86,10 +229,10 @@
       "source_file": "apps/api/src/main.ts",
       "source_location": "L15",
       "_origin": "ast",
-      "id": "apps_api_src_main_bootstrap",
       "community": 37,
       "community_name": "app-security.ts",
-      "norm_label": "bootstrap()"
+      "norm_label": "bootstrap()",
+      "id": "apps_api_src_main_bootstrap"
     },
     {
       "label": "nest-cli.json",
@@ -31175,149 +31318,6 @@
       "id": "scripts_verify_auth_http_contractmodule"
     },
     {
-      "label": "verify-caddy-headers.mjs",
-      "file_type": "code",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "verify-caddy-headers.mjs",
-      "norm_label": "verify-caddy-headers.mjs",
-      "id": "scripts_verify_caddy_headers"
-    },
-    {
-      "label": "projectRoot",
-      "file_type": "code",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L8",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "verify-caddy-headers.mjs",
-      "norm_label": "projectroot",
-      "id": "scripts_verify_caddy_headers_projectroot"
-    },
-    {
-      "label": "sourceCaddyfile",
-      "file_type": "code",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L9",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "verify-caddy-headers.mjs",
-      "norm_label": "sourcecaddyfile",
-      "id": "scripts_verify_caddy_headers_sourcecaddyfile"
-    },
-    {
-      "label": "tempDirectory",
-      "file_type": "code",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L11",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "verify-caddy-headers.mjs",
-      "norm_label": "tempdirectory",
-      "id": "scripts_verify_caddy_headers_tempdirectory"
-    },
-    {
-      "label": "testCaddyfile",
-      "file_type": "code",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L12",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "verify-caddy-headers.mjs",
-      "norm_label": "testcaddyfile",
-      "id": "scripts_verify_caddy_headers_testcaddyfile"
-    },
-    {
-      "label": "runDocker()",
-      "file_type": "code",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L14",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "verify-caddy-headers.mjs",
-      "norm_label": "rundocker()",
-      "id": "scripts_verify_caddy_headers_rundocker"
-    },
-    {
-      "label": "listen()",
-      "file_type": "code",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L28",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "verify-caddy-headers.mjs",
-      "norm_label": "listen()",
-      "id": "scripts_verify_caddy_headers_listen"
-    },
-    {
-      "label": "close()",
-      "file_type": "code",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L42",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "verify-caddy-headers.mjs",
-      "norm_label": "close()",
-      "id": "scripts_verify_caddy_headers_close"
-    },
-    {
-      "label": "conflictingHeaders",
-      "file_type": "code",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L47",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "verify-caddy-headers.mjs",
-      "norm_label": "conflictingheaders",
-      "id": "scripts_verify_caddy_headers_conflictingheaders"
-    },
-    {
-      "label": "apiOrigin",
-      "file_type": "code",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L55",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "verify-caddy-headers.mjs",
-      "norm_label": "apiorigin",
-      "id": "scripts_verify_caddy_headers_apiorigin"
-    },
-    {
-      "label": "webOrigin",
-      "file_type": "code",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L62",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "verify-caddy-headers.mjs",
-      "norm_label": "weborigin",
-      "id": "scripts_verify_caddy_headers_weborigin"
-    },
-    {
-      "label": "expectedHeaders",
-      "file_type": "code",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L67",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "verify-caddy-headers.mjs",
-      "norm_label": "expectedheaders",
-      "id": "scripts_verify_caddy_headers_expectedheaders"
-    },
-    {
-      "label": "assertHeaders()",
-      "file_type": "code",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L75",
-      "_origin": "ast",
-      "community": 98,
-      "community_name": "verify-caddy-headers.mjs",
-      "norm_label": "assertheaders()",
-      "id": "scripts_verify_caddy_headers_assertheaders"
-    },
-    {
       "label": "verify-deployment-contracts.mjs",
       "file_type": "code",
       "source_file": "scripts/verify-deployment-contracts.mjs",
@@ -36259,15 +36259,171 @@
   ],
   "links": [
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_verify_caddy_headers",
+      "target": "scripts_fetch_when_ready",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_verify_caddy_headers",
+      "target": "scripts_fetch_when_ready_fetchwhenready",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L55",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_verify_caddy_headers",
+      "target": "scripts_verify_caddy_headers_apiorigin",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L76",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_verify_caddy_headers",
+      "target": "scripts_verify_caddy_headers_assertheaders",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L42",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_verify_caddy_headers",
+      "target": "scripts_verify_caddy_headers_close",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L47",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_verify_caddy_headers",
+      "target": "scripts_verify_caddy_headers_conflictingheaders",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L68",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_verify_caddy_headers",
+      "target": "scripts_verify_caddy_headers_expectedheaders",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L28",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_verify_caddy_headers",
+      "target": "scripts_verify_caddy_headers_listen",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_verify_caddy_headers",
+      "target": "scripts_verify_caddy_headers_projectroot",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_verify_caddy_headers",
+      "target": "scripts_verify_caddy_headers_rundocker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_verify_caddy_headers",
+      "target": "scripts_verify_caddy_headers_sourcecaddyfile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_verify_caddy_headers",
+      "target": "scripts_verify_caddy_headers_tempdirectory",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_verify_caddy_headers",
+      "target": "scripts_verify_caddy_headers_testcaddyfile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/verify-caddy-headers.mjs",
+      "source_location": "L62",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "scripts_verify_caddy_headers",
+      "target": "scripts_verify_caddy_headers_weborigin",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "apps/api/src/common/core-runtime-surface.spec.ts",
       "source_location": "L12",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_common_core_runtime_surface_spec",
-      "target": "apps_api_src_common_core_runtime_surface_spec_controllerfiles",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_core_runtime_surface_spec_controllerfiles"
     },
     {
       "relation": "contains",
@@ -36276,9 +36432,9 @@
       "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_common_core_runtime_surface_spec",
-      "target": "apps_api_src_common_core_runtime_surface_spec_public_routes",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_core_runtime_surface_spec_public_routes"
     },
     {
       "relation": "contains",
@@ -36287,9 +36443,9 @@
       "source_location": "L33",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_common_core_runtime_surface_spec",
-      "target": "apps_api_src_common_core_runtime_surface_spec_publicroutes",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_core_runtime_surface_spec_publicroutes"
     },
     {
       "relation": "contains",
@@ -36298,9 +36454,9 @@
       "source_location": "L8",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_common_core_runtime_surface_spec",
-      "target": "apps_api_src_common_core_runtime_surface_spec_source",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_core_runtime_surface_spec_source"
     },
     {
       "relation": "contains",
@@ -36309,9 +36465,9 @@
       "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_common_core_runtime_surface_spec",
-      "target": "apps_api_src_common_core_runtime_surface_spec_sourceroot",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_core_runtime_surface_spec_sourceroot"
     },
     {
       "relation": "calls",
@@ -36321,9 +36477,9 @@
       "source_location": "L34",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_common_core_runtime_surface_spec_publicroutes",
-      "target": "apps_api_src_common_core_runtime_surface_spec_controllerfiles",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_core_runtime_surface_spec_controllerfiles"
     },
     {
       "relation": "imports_from",
@@ -36333,9 +36489,9 @@
       "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_main",
-      "target": "apps_api_src_app_module",
-      "confidence_score": 1.0
+      "target": "apps_api_src_app_module"
     },
     {
       "relation": "imports",
@@ -36345,9 +36501,9 @@
       "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_main",
-      "target": "apps_api_src_app_module_appmodule",
-      "confidence_score": 1.0
+      "target": "apps_api_src_app_module_appmodule"
     },
     {
       "relation": "imports_from",
@@ -36357,9 +36513,9 @@
       "source_location": "L10",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_main",
-      "target": "apps_api_src_common_api_exception_filter",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_api_exception_filter"
     },
     {
       "relation": "imports",
@@ -36369,9 +36525,9 @@
       "source_location": "L10",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_main",
-      "target": "apps_api_src_common_api_exception_filter_apiexceptionfilter",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_api_exception_filter_apiexceptionfilter"
     },
     {
       "relation": "imports_from",
@@ -36381,9 +36537,9 @@
       "source_location": "L11",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_main",
-      "target": "apps_api_src_common_app_security",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_app_security"
     },
     {
       "relation": "imports",
@@ -36393,9 +36549,9 @@
       "source_location": "L11",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_main",
-      "target": "apps_api_src_common_app_security_configurehttpsecurity",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_app_security_configurehttpsecurity"
     },
     {
       "relation": "imports",
@@ -36405,9 +36561,9 @@
       "source_location": "L11",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_main",
-      "target": "apps_api_src_common_app_security_validateproductionconfiguration",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_app_security_validateproductionconfiguration"
     },
     {
       "relation": "imports_from",
@@ -36417,9 +36573,9 @@
       "source_location": "L12",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_main",
-      "target": "apps_api_src_common_http_server_timeouts",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_http_server_timeouts"
     },
     {
       "relation": "imports",
@@ -36429,9 +36585,9 @@
       "source_location": "L12",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_main",
-      "target": "apps_api_src_common_http_server_timeouts_configurehttpservertimeouts",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_http_server_timeouts_configurehttpservertimeouts"
     },
     {
       "relation": "imports_from",
@@ -36441,9 +36597,9 @@
       "source_location": "L13",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_main",
-      "target": "apps_api_src_common_swagger_config",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_swagger_config"
     },
     {
       "relation": "imports",
@@ -36453,9 +36609,9 @@
       "source_location": "L13",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_main",
-      "target": "apps_api_src_common_swagger_config_shouldenableswagger",
-      "confidence_score": 1.0
+      "target": "apps_api_src_common_swagger_config_shouldenableswagger"
     },
     {
       "relation": "contains",
@@ -36464,9 +36620,9 @@
       "source_location": "L15",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "apps_api_src_main",
-      "target": "apps_api_src_main_bootstrap",
-      "confidence_score": 1.0
+      "target": "apps_api_src_main_bootstrap"
     },
     {
       "relation": "contains",
@@ -103271,18 +103427,6 @@
       "target": "scripts_fetch_when_ready"
     },
     {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "scripts_verify_caddy_headers",
-      "target": "scripts_fetch_when_ready"
-    },
-    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -103292,18 +103436,6 @@
       "_origin": "ast",
       "confidence_score": 1.0,
       "source": "scripts_fetch_when_ready_spec",
-      "target": "scripts_fetch_when_ready_fetchwhenready"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "scripts_verify_caddy_headers",
       "target": "scripts_fetch_when_ready_fetchwhenready"
     },
     {
@@ -103558,138 +103690,6 @@
       "confidence_score": 1.0,
       "source": "scripts_verify_auth_http_boundarycontroller",
       "target": "scripts_verify_auth_http_boundarycontroller_publicroute"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L55",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "scripts_verify_caddy_headers",
-      "target": "scripts_verify_caddy_headers_apiorigin"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L75",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "scripts_verify_caddy_headers",
-      "target": "scripts_verify_caddy_headers_assertheaders"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L42",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "scripts_verify_caddy_headers",
-      "target": "scripts_verify_caddy_headers_close"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L47",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "scripts_verify_caddy_headers",
-      "target": "scripts_verify_caddy_headers_conflictingheaders"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L67",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "scripts_verify_caddy_headers",
-      "target": "scripts_verify_caddy_headers_expectedheaders"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L28",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "scripts_verify_caddy_headers",
-      "target": "scripts_verify_caddy_headers_listen"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L8",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "scripts_verify_caddy_headers",
-      "target": "scripts_verify_caddy_headers_projectroot"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L14",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "scripts_verify_caddy_headers",
-      "target": "scripts_verify_caddy_headers_rundocker"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L9",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "scripts_verify_caddy_headers",
-      "target": "scripts_verify_caddy_headers_sourcecaddyfile"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "scripts_verify_caddy_headers",
-      "target": "scripts_verify_caddy_headers_tempdirectory"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L12",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "scripts_verify_caddy_headers",
-      "target": "scripts_verify_caddy_headers_testcaddyfile"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/verify-caddy-headers.mjs",
-      "source_location": "L62",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "scripts_verify_caddy_headers",
-      "target": "scripts_verify_caddy_headers_weborigin"
     },
     {
       "relation": "contains",
@@ -108567,5 +108567,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "515c0efdaa802d3962831019247dea0113b610fd"
+  "built_at_commit": "485b403c2532e233e1b97b13065c479c66659cba"
 }

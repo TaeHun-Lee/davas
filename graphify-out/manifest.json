@@ -1420,13 +1420,13 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1791266531.240861,
-    "ast_hash": "bcc3bca86475e36ff491a774c4a86ca9",
+    "mtime": 1791270343.5906723,
+    "ast_hash": "e262329292c81a3b6327cc4f21d046b1",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1791266531.2418897,
-    "ast_hash": "f70a04621de39451765441d09a1ac247",
+    "mtime": 1791270303.6912334,
+    "ast_hash": "19ea40ffd910d83e9f01f89e21bbebf5",
     "semantic_hash": ""
   },
   "docker-compose.prod.yml": {
@@ -1437,16 +1437,6 @@
   "docker-compose.yml": {
     "mtime": 1791266531.3148558,
     "ast_hash": "761df0e1b543901fb8286742d892afbc",
-    "semantic_hash": ""
-  },
-  "docs/deployment/raspberry-pi-duckdns.md": {
-    "mtime": 1791266531.3174963,
-    "ast_hash": "00577ed8e0080416325e0cff9617709b",
-    "semantic_hash": ""
-  },
-  "docs/development/docker.md": {
-    "mtime": 1791265040.6481676,
-    "ast_hash": "3e7d3b1d444804fd89413b1db4efefc3",
     "semantic_hash": ""
   },
   "apps/web/public/images/davas-logo-horizontal.png": {
@@ -1470,13 +1460,13 @@
     "semantic_hash": ""
   },
   "docs/README.md": {
-    "mtime": 1791266531.3158746,
-    "ast_hash": "42db6da45f2682adccd7ca0c47f95f39",
+    "mtime": 1791270302.7303486,
+    "ast_hash": "9541a23af3c1e480e762547d0b36b73c",
     "semantic_hash": ""
   },
   "docs/product/README.md": {
-    "mtime": 1791266531.3200321,
-    "ast_hash": "7ee0f988cf8dc80f88f3e68b055f9880",
+    "mtime": 1791270354.9861412,
+    "ast_hash": "366f9a74e312b29474ccbd1e1f0bdd7b",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20260811_143223_agents_md\uc5d0_graphify\ub791_serena_\uc0ac\uc6a9_\uc9c0\uce68_\uc801\ub2f9\ud55c\uc9c0_\ud655\uc778\ud574\uc918__\uadf8\ub9ac\uace0_\ub2e4.md": {
@@ -1487,11 +1477,6 @@
   "graphify-out/memory/query_20260811_143741_\uc801\ub2f9\ud558\uac8c_agnets_md_\uc791\uc131\ud574.md": {
     "mtime": 1791262013.3567011,
     "ast_hash": "00ebffb26b4cf45046bb57ff0c318c7f",
-    "semantic_hash": ""
-  },
-  "docs/product/planning/README.md": {
-    "mtime": 1791266026.1936264,
-    "ast_hash": "e1dd4fca2a17b92a9b87ba39484121a4",
     "semantic_hash": ""
   },
   "docs/product/planning/product-requirements-analysis.md": {
@@ -1920,8 +1905,8 @@
     "semantic_hash": ""
   },
   "docs/product/implementation-coverage.md": {
-    "mtime": 1791266026.193124,
-    "ast_hash": "52938e1bfdd907c6f1a0cf8aa25d8327",
+    "mtime": 1791270354.9872053,
+    "ast_hash": "5c14d3e7d7805083418bb75b34af2364",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20260815_233610_audit_to_be_integration__composition_roots__entiti.md": {
@@ -2245,13 +2230,13 @@
     "semantic_hash": ""
   },
   "scripts/verify-deployment-contracts.mjs": {
-    "mtime": 1791266531.330888,
-    "ast_hash": "716df05ab409afb2010bb321de8e5392",
+    "mtime": 1791270603.8672135,
+    "ast_hash": "6ca35dfccab4a9fb5dbda229a5bcd555",
     "semantic_hash": ""
   },
   "scripts/verify-docs.mjs": {
-    "mtime": 1791266531.331402,
-    "ast_hash": "9085d318b246c18b186a3f9b8cf8e18f",
+    "mtime": 1791270418.4285738,
+    "ast_hash": "720d0b0d983458188de2169815f527d5",
     "semantic_hash": ""
   },
   "scripts/verify-edit-http.mjs": {
@@ -2284,39 +2269,19 @@
     "ast_hash": "f7cee0e1172dbe4ae0bdaf4e78d2cc0d",
     "semantic_hash": ""
   },
-  ".agents/skills/davas-core-development/SKILL.md": {
-    "mtime": 1791266531.23455,
-    "ast_hash": "98dca1b3d9da8b4b6f41d1d82b9b01fd",
+  "docs/appendix.md": {
+    "mtime": 1791270251.1441748,
+    "ast_hash": "537ca5bac1cf0d647836d8386781cf9e",
     "semantic_hash": ""
   },
-  "PRODUCTION_DATABASE_CAUTION.md": {
-    "mtime": 1791266531.240861,
-    "ast_hash": "03a81670d78a49f8e8d3df972d7a288e",
+  "docs/development.md": {
+    "mtime": 1791270167.4908082,
+    "ast_hash": "9461437091eebbee20ad46238d24c040",
     "semantic_hash": ""
   },
-  "docs/architecture/system-overview.md": {
-    "mtime": 1791266531.3169026,
-    "ast_hash": "545152acd3febd520ec9a93c764be2f7",
-    "semantic_hash": ""
-  },
-  "docs/development/local-development.md": {
-    "mtime": 1791266531.3179991,
-    "ast_hash": "1bc3072a104e4ee435cd777681a3af5e",
-    "semantic_hash": ""
-  },
-  "docs/harness/agent-harness.md": {
-    "mtime": 1791266531.3190277,
-    "ast_hash": "73002137a2552e3b09552ebb80b7b7db",
-    "semantic_hash": ""
-  },
-  "docs/operations/raspberry-pi-deployment.md": {
-    "mtime": 1791266531.3190277,
-    "ast_hash": "a2bef86ea6ceba6be381452a994a4e05",
-    "semantic_hash": ""
-  },
-  "docs/verification/quality-gates.md": {
-    "mtime": 1791266531.3210332,
-    "ast_hash": "01af5676d050fb8050beb9841236fe1a",
+  "docs/operations.md": {
+    "mtime": 1791270212.4701948,
+    "ast_hash": "244c3d37befaff43e43602919530d747",
     "semantic_hash": ""
   }
 }
