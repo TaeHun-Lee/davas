@@ -900,8 +900,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/RecordComposer.tsx": {
-    "mtime": 1791297525.7000108,
-    "ast_hash": "b66d8d8c5e4ea86807216d2a2b13d454",
+    "mtime": 1791298077.9622157,
+    "ast_hash": "4b8e4f55ea041b2139a9407880371fab",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/RecordScreens.tsx": {
@@ -2370,8 +2370,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/PhotoPicker.tsx": {
-    "mtime": 1791297525.699011,
-    "ast_hash": "0370ac722570b761feaed76da3d3f0cf",
+    "mtime": 1791298077.9612143,
+    "ast_hash": "a89472813c050ef2706b9af213306d86",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchPhoto.tsx": {
@@ -2390,8 +2390,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/record-experience-design.spec.ts": {
-    "mtime": 1791297571.8017883,
-    "ast_hash": "4b5721b44d573d29fecddee5a33804cc",
+    "mtime": 1791298077.9622157,
+    "ast_hash": "d4e4f620caea12caa727408c278555b2",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useWatchPhotoUploads.ts": {
