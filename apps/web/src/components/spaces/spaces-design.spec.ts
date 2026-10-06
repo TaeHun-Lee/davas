@@ -6,13 +6,16 @@ import { describe, it } from 'node:test';
 const source = (path: string) => readFileSync(join(process.cwd(), 'src', path), 'utf8');
 
 describe('spaces onboarding and member management UI', () => {
-  it('keeps spaces and legacy friends as separate navigation boundaries', () => {
-    const header = source('components/layout/DavasHeader.tsx');
+  it('keeps spaces and friends as separate, cross-linked boundaries in the core shell', () => {
     const screen = source('components/spaces/SpacesScreen.tsx');
-    assert.match(header, /href: '\/spaces'.*공유 공간/);
-    assert.match(header, /href: '\/friends'.*친구 관리/);
-    assert.match(screen, /친구 관계와는 별도로 관리돼요/);
+    const invite = source('components/spaces/SpaceInviteScreen.tsx');
+    const friends = source('components/friends/FriendsScreen.tsx');
+    assert.match(screen, /<CoreAppShell>/);
+    assert.match(invite, /<TaskShell title="공간 초대" fallback="\/spaces">/);
+    assert.doesNotMatch(screen + invite, /layout\/AppShell/);
+    assert.match(screen, /친구 관계와는\s+별도로 관리돼요/);
     assert.match(screen, /href="\/friends"/);
+    assert.match(friends, /href="\/spaces"/);
   });
 
   it('provides labelled mobile controls and loading, empty, status, and error states', () => {

@@ -10,22 +10,15 @@ import {
   type WatchEvent,
 } from '../../lib/api/watch-events';
 
-export function SpaceTimeline({
-  spaceId,
-  spaceName,
-}: {
-  spaceId: string;
-  spaceName: string;
-}) {
+export function SpaceTimeline({ spaceId, spaceName }: { spaceId: string; spaceName: string }) {
   const [items, setItems] = useState<WatchEvent[]>([]);
-  const [status, setStatus] = useState<
-    'loading' | 'ready' | 'empty' | 'forbidden' | 'error'
-  >('loading');
+  const [status, setStatus] = useState<'loading' | 'ready' | 'empty' | 'forbidden' | 'error'>(
+    'loading',
+  );
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [moreBusy, setMoreBusy] = useState(false);
-  const [comparison, setComparison] =
-    useState<SpaceReactionComparison | null>(null);
+  const [comparison, setComparison] = useState<SpaceReactionComparison | null>(null);
   const [comparisonBusy, setComparisonBusy] = useState(false);
   const [comparisonError, setComparisonError] = useState('');
 
@@ -38,20 +31,12 @@ export function SpaceTimeline({
           cursor: nextCursor,
           limit: 20,
         });
-        setItems((current) =>
-          nextCursor ? [...current, ...page.items] : page.items,
-        );
+        setItems((current) => (nextCursor ? [...current, ...page.items] : page.items));
         setCursor(page.nextCursor);
         setHasMore(page.hasMore);
-        setStatus(
-          page.items.length || nextCursor ? 'ready' : 'empty',
-        );
+        setStatus(page.items.length || nextCursor ? 'ready' : 'empty');
       } catch (error) {
-        setStatus(
-          error instanceof CoreApiError && error.status === 404
-            ? 'forbidden'
-            : 'error',
-        );
+        setStatus(error instanceof CoreApiError && error.status === 404 ? 'forbidden' : 'error');
       } finally {
         setMoreBusy(false);
       }
@@ -85,10 +70,7 @@ export function SpaceTimeline({
   }
 
   return (
-    <section
-      className="mt-4 rounded-[24px] bg-white p-5 shadow-[0_12px_28px_rgba(31,65,114,0.08)]"
-      aria-labelledby="active-space-timeline-title"
-    >
+    <section className="mt-4 core-card p-5" aria-labelledby="active-space-timeline-title">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="active-space-timeline-title" className="text-[17px] font-black text-[#284778]">
@@ -109,7 +91,10 @@ export function SpaceTimeline({
       {status === 'loading' ? (
         <div data-state="loading" className="mt-4 space-y-3" aria-label="공간 타임라인 불러오는 중">
           {[0, 1].map((item) => (
-            <div key={item} className="h-28 animate-pulse rounded-2xl bg-[#f2f5fa] motion-reduce:animate-none" />
+            <div
+              key={item}
+              className="h-28 animate-pulse rounded-2xl bg-[#f2f5fa] motion-reduce:animate-none"
+            />
           ))}
         </div>
       ) : null}
@@ -158,7 +143,12 @@ export function SpaceTimeline({
                 </span>
               </div>
               <p className="mt-2 text-[12px] font-bold text-[#738096]">
-                참여 확인 {item.participants.filter((participant) => participant.status === 'CONFIRMED').length}명
+                참여 확인{' '}
+                {
+                  item.participants.filter((participant) => participant.status === 'CONFIRMED')
+                    .length
+                }
+                명
                 {item.participants.some((participant) => participant.status === 'PENDING')
                   ? ' · 응답 대기 있음'
                   : ''}
@@ -195,15 +185,25 @@ export function SpaceTimeline({
       ) : null}
 
       {comparisonError ? (
-        <p role="alert" className="mt-4 rounded-2xl bg-[#fff1f0] p-3 text-[12px] font-bold text-[#a93530]">
+        <p
+          role="alert"
+          className="mt-4 rounded-2xl bg-[#fff1f0] p-3 text-[12px] font-bold text-[#a93530]"
+        >
           {comparisonError}
         </p>
       ) : null}
       {comparison ? (
-        <section className="mt-4 rounded-2xl border border-[#dce4ef] bg-white p-4" aria-label="작품별 구성원 반응 비교">
+        <section
+          className="mt-4 rounded-2xl border border-[#dce4ef] bg-white p-4"
+          aria-label="작품별 구성원 반응 비교"
+        >
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-[14px] font-black text-[#284778]">작품별 구성원 반응</h3>
-            <button type="button" className="text-[12px] font-black text-[#607eae]" onClick={() => setComparison(null)}>
+            <button
+              type="button"
+              className="text-[12px] font-black text-[#607eae]"
+              onClick={() => setComparison(null)}
+            >
               닫기
             </button>
           </div>
@@ -215,10 +215,15 @@ export function SpaceTimeline({
                   {event.reactions.length ? (
                     <ul className="mt-2 space-y-2">
                       {event.reactions.map((reaction) => (
-                        <li key={reaction.accountId} className="rounded-xl bg-white p-3 text-[12px] text-[#52677e]">
+                        <li
+                          key={reaction.accountId}
+                          className="rounded-xl bg-white p-3 text-[12px] text-[#52677e]"
+                        >
                           <strong>{reaction.nickname || '공간 멤버'}</strong>
                           <span className="ml-2 font-black text-[#2f6fb4]">
-                            {reaction.rating === null ? '별점 없음' : `${reaction.rating.toFixed(1)}점`}
+                            {reaction.rating === null
+                              ? '별점 없음'
+                              : `${reaction.rating.toFixed(1)}점`}
                           </span>
                           <p className="mt-1 whitespace-pre-wrap font-semibold">
                             {reaction.review || '리뷰 없음'}
@@ -227,7 +232,9 @@ export function SpaceTimeline({
                       ))}
                     </ul>
                   ) : (
-                    <p className="mt-2 text-[12px] font-bold text-[#8190a5]">확인된 참여자의 반응이 아직 없어요.</p>
+                    <p className="mt-2 text-[12px] font-bold text-[#8190a5]">
+                      확인된 참여자의 반응이 아직 없어요.
+                    </p>
                   )}
                 </article>
               ))}

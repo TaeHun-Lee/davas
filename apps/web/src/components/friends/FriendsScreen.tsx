@@ -15,20 +15,13 @@ import {
   type FriendsResponse,
   type FriendUser,
 } from '../../lib/api/friends';
-import {
-  CoreAppShell,
-  EmptyState,
-  SearchField,
-  SearchIcon,
-} from '../core/CoreUi';
+import { CoreAppShell, EmptyState, SearchField, SearchIcon } from '../core/CoreUi';
 
 const empty: FriendsResponse = { friends: [], received: [], sent: [] };
 
 export function FriendsScreen() {
   const [data, setData] = useState(empty);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(
-    'loading',
-  );
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [q, setQ] = useState('');
   const [results, setResults] = useState<FriendUser[]>([]);
   const [busy, setBusy] = useState('');
@@ -98,9 +91,7 @@ export function FriendsScreen() {
       } else {
         await navigator.clipboard.writeText(url);
       }
-      setMessage(
-        canShare ? '초대 링크를 공유했어요.' : '초대 링크를 복사했어요.',
-      );
+      setMessage(canShare ? '초대 링크를 공유했어요.' : '초대 링크를 복사했어요.');
     } catch {
       setMessage('초대 링크를 만들지 못했어요.');
     } finally {
@@ -109,10 +100,7 @@ export function FriendsScreen() {
   };
 
   const person = (user: FriendUser, action: ReactNode) => (
-    <li
-      key={user.id}
-      className="core-card flex min-h-16 items-center gap-3 px-4 py-3"
-    >
+    <li key={user.id} className="core-card flex min-h-16 items-center gap-3 px-4 py-3">
       <span className="avatar-small">{user.nickname.slice(0, 1)}</span>
       <strong className="min-w-0 flex-1 truncate text-sm text-[var(--heading)]">
         {user.nickname}
@@ -124,9 +112,7 @@ export function FriendsScreen() {
   return (
     <CoreAppShell>
       <h1 className="page-title">친구</h1>
-      <p className="page-description">
-        친구가 공유한 기록을 찾고, 초대와 요청을 관리해요.
-      </p>
+      <p className="page-description">친구가 공유한 기록을 찾고, 초대와 요청을 관리해요.</p>
 
       <Link
         href="/search?scope=friends"
@@ -145,12 +131,33 @@ export function FriendsScreen() {
         </span>
       </Link>
 
-      <button
-        type="button"
-        className="wide-cta mt-4"
-        disabled={busy === 'invite'}
-        onClick={invite}
-      >
+      <Link href="/spaces" className="friend-record-search" aria-label="공유 공간 열기">
+        <span className="friend-record-search-icon">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 10.5 12 4l8 6.5V20H4z" />
+            <circle cx="9.5" cy="13.5" r="1.8" />
+            <circle cx="14.5" cy="13.5" r="1.8" />
+            <path d="M7 18c.5-1.5 1.4-2.3 2.5-2.3S11.5 16.5 12 18M12 18c.5-1.5 1.4-2.3 2.5-2.3s2 .8 2.5 2.3" />
+          </svg>
+        </span>
+        <span className="friend-record-search-copy">
+          <strong>공유 공간</strong>
+          <small>2~5명이 함께 기록을 나누고, 같이 볼 작품을 골라요.</small>
+        </span>
+        <span className="friend-record-search-arrow" aria-hidden="true">
+          ›
+        </span>
+      </Link>
+
+      <button type="button" className="wide-cta mt-4" disabled={busy === 'invite'} onClick={invite}>
         <span>＋ 친구 초대하기</span>
         <span aria-hidden="true">›</span>
       </button>
@@ -188,18 +195,14 @@ export function FriendsScreen() {
                       <button
                         className="primary-button !min-h-11 !px-3"
                         disabled={busy === row.id}
-                        onClick={() =>
-                          act(row.id, () => acceptFriend(row.id))
-                        }
+                        onClick={() => act(row.id, () => acceptFriend(row.id))}
                       >
                         수락
                       </button>
                       <button
                         className="secondary-button !min-h-11 !px-3"
                         disabled={busy === row.id}
-                        onClick={() =>
-                          act(row.id, () => rejectFriend(row.id))
-                        }
+                        onClick={() => act(row.id, () => rejectFriend(row.id))}
                       >
                         거절
                       </button>
@@ -225,13 +228,9 @@ export function FriendsScreen() {
                   person(
                     user,
                     user.relationship === 'FRIEND' ? (
-                      <span className="text-xs font-bold text-[var(--muted)]">
-                        이미 친구
-                      </span>
+                      <span className="text-xs font-bold text-[var(--muted)]">이미 친구</span>
                     ) : user.relationship === 'SENT' ? (
-                      <span className="text-xs font-bold text-[var(--muted)]">
-                        요청 보냄
-                      </span>
+                      <span className="text-xs font-bold text-[var(--muted)]">요청 보냄</span>
                     ) : user.relationship === 'RECEIVED' ? (
                       <button
                         className="secondary-button !min-h-11 !px-3"
@@ -248,9 +247,7 @@ export function FriendsScreen() {
                       <button
                         className="secondary-button !min-h-11 !px-3"
                         disabled={busy === user.id}
-                        onClick={() =>
-                          act(user.id, () => requestFriend(user.id))
-                        }
+                        onClick={() => act(user.id, () => requestFriend(user.id))}
                       >
                         친구 요청 보내기
                       </button>
@@ -300,9 +297,7 @@ export function FriendsScreen() {
                     <button
                       className="secondary-button !min-h-11 !px-3"
                       disabled={busy === row.id}
-                      onClick={() =>
-                        act(row.id, () => cancelFriend(row.id))
-                      }
+                      onClick={() => act(row.id, () => cancelFriend(row.id))}
                     >
                       취소
                     </button>,
@@ -316,25 +311,17 @@ export function FriendsScreen() {
 
       {removeTarget ? (
         <section role="dialog" aria-modal="true" className="core-card mt-4 p-5">
-          <h2 className="section-title">
-            {removeTarget.user.nickname}님을 친구에서 삭제할까요?
-          </h2>
-          <p className="page-description">
-            서로의 친구 공개 기록을 더 이상 볼 수 없어요.
-          </p>
+          <h2 className="section-title">{removeTarget.user.nickname}님을 친구에서 삭제할까요?</h2>
+          <p className="page-description">서로의 친구 공개 기록을 더 이상 볼 수 없어요.</p>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <button
-              autoFocus
-              className="secondary-button"
-              onClick={() => setRemoveTarget(null)}
-            >
+            <button autoFocus className="secondary-button" onClick={() => setRemoveTarget(null)}>
               취소
             </button>
             <button
               className="danger-button"
               onClick={() =>
-                act(removeTarget.id, () => removeFriend(removeTarget.id)).then(
-                  () => setRemoveTarget(null),
+                act(removeTarget.id, () => removeFriend(removeTarget.id)).then(() =>
+                  setRemoveTarget(null),
                 )
               }
             >

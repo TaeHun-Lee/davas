@@ -7,15 +7,13 @@ import {
   inspectSpaceInvite,
   type SpaceInviteInspection,
 } from '../../lib/api/spaces';
-import { AppShell } from '../layout/AppShell';
+import { TaskShell } from '../core/CoreUi';
 import { inviteStatusMessage, spaceErrorMessage } from './space-ui';
 
 const ACTIVE_SPACE_KEY = 'davas:active-space-id';
 
 export function SpaceInviteScreen({ token }: { token: string }) {
-  const [inspection, setInspection] = useState<SpaceInviteInspection | null>(
-    null,
-  );
+  const [inspection, setInspection] = useState<SpaceInviteInspection | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -54,26 +52,16 @@ export function SpaceInviteScreen({ token }: { token: string }) {
   }
 
   return (
-    <AppShell>
-      <div className="pb-8 pt-6" aria-busy={loading || busy}>
-        <p className="text-[12px] font-black text-[#607eae]">공유 공간 초대</p>
-        <h1 className="mt-1 text-[27px] font-black tracking-[-0.04em] text-[#1f2a44]">
-          함께 기록할까요?
-        </h1>
+    <TaskShell title="공간 초대" fallback="/spaces">
+      <div aria-busy={loading || busy}>
+        <h1 className="page-title">함께 기록할까요?</h1>
 
         {loading ? (
-          <section
-            data-state="loading"
-            className="mt-5 rounded-[24px] bg-white p-6 text-center shadow-[0_12px_28px_rgba(31,65,114,0.08)]"
-          >
+          <section data-state="loading" className="mt-5 core-card p-6 text-center">
             <p className="text-[14px] font-bold text-[#738096]">초대 상태를 확인하는 중이에요…</p>
           </section>
         ) : joinedSpaceId ? (
-          <section
-            role="status"
-            data-state="accepted"
-            className="mt-5 rounded-[24px] bg-white p-6 text-center shadow-[0_12px_28px_rgba(31,65,114,0.08)]"
-          >
+          <section role="status" data-state="accepted" className="mt-5 core-card p-6 text-center">
             <h2 className="text-[20px] font-black text-[#284778]">공간에 참여했어요.</h2>
             <p className="mt-2 text-[13px] font-semibold leading-5 text-[#738096]">
               이제 이 공간에 명시적으로 공유된 감상 기록을 볼 수 있어요.
@@ -86,13 +74,11 @@ export function SpaceInviteScreen({ token }: { token: string }) {
             </Link>
           </section>
         ) : inspection?.status === 'VALID' ? (
-          <section className="mt-5 rounded-[24px] bg-white p-6 text-center shadow-[0_12px_28px_rgba(31,65,114,0.08)]">
+          <section className="mt-5 core-card p-6 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#edf3fb] text-[24px] font-black text-[#5575a6]">
               {inspection.space.name.slice(0, 1)}
             </div>
-            <h2 className="mt-4 text-[20px] font-black text-[#284778]">
-              {inspection.space.name}
-            </h2>
+            <h2 className="mt-4 text-[20px] font-black text-[#284778]">{inspection.space.name}</h2>
             <p className="mt-2 text-[13px] font-semibold leading-5 text-[#738096]">
               {inspection.inviter.nickname}님이 공유 공간으로 초대했어요.
             </p>
@@ -100,7 +86,10 @@ export function SpaceInviteScreen({ token }: { token: string }) {
               {new Date(inspection.expiresAt).toLocaleString('ko-KR')}까지 수락 가능
             </p>
             {error ? (
-              <p role="alert" className="mt-4 rounded-2xl bg-[#fff1f0] px-4 py-3 text-[13px] font-bold text-[#c4453c]">
+              <p
+                role="alert"
+                className="mt-4 rounded-2xl bg-[#fff1f0] px-4 py-3 text-[13px] font-bold text-[#c4453c]"
+              >
                 {error}
               </p>
             ) : null}
@@ -121,14 +110,9 @@ export function SpaceInviteScreen({ token }: { token: string }) {
             </Link>
           </section>
         ) : (
-          <section
-            data-state="unavailable"
-            className="mt-5 rounded-[24px] bg-white p-6 text-center shadow-[0_12px_28px_rgba(31,65,114,0.08)]"
-          >
+          <section data-state="unavailable" className="mt-5 core-card p-6 text-center">
             <h2 className="text-[19px] font-black text-[#284778]">
-              {inspection
-                ? inviteStatusMessage(inspection.status)
-                : '초대를 확인할 수 없어요.'}
+              {inspection ? inviteStatusMessage(inspection.status) : '초대를 확인할 수 없어요.'}
             </h2>
             <p className="mt-2 text-[13px] font-semibold leading-5 text-[#738096]">
               공간 소유자에게 새 초대 링크를 요청하거나 내 공간 목록을 확인해 주세요.
@@ -147,6 +131,6 @@ export function SpaceInviteScreen({ token }: { token: string }) {
           </section>
         )}
       </div>
-    </AppShell>
+    </TaskShell>
   );
 }

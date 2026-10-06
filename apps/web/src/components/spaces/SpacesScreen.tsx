@@ -14,7 +14,7 @@ import {
   type SpaceInvite,
   type SpaceView,
 } from '../../lib/api/spaces';
-import { AppShell } from '../layout/AppShell';
+import { CoreAppShell } from '../core/CoreUi';
 import { GroupRecommendationPanel } from './GroupRecommendationPanel';
 import { chooseActiveSpace, spaceErrorMessage } from './space-ui';
 import { SpaceTimeline } from './SpaceTimeline';
@@ -195,15 +195,13 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
   }
 
   return (
-    <AppShell>
-      <div className="pb-8 pt-6" aria-busy={loading || busy}>
+    <CoreAppShell>
+      <div aria-busy={loading || busy}>
         <header>
-          <p className="text-[12px] font-black text-[#607eae]">함께 보는 사람들</p>
-          <h1 className="mt-1 text-[27px] font-black tracking-[-0.04em] text-[#1f2a44]">
-            공유 공간
-          </h1>
-          <p className="mt-2 text-[14px] font-semibold leading-6 text-[#738096]">
-            한 공간을 먼저 골라 멤버와 감상 기록을 나눠요. 친구 관계와는 별도로 관리돼요.
+          <h1 className="page-title">공유 공간</h1>
+          <p className="page-description">
+            한 공간을 먼저 골라 멤버와 감상 기록을 나누고, 함께 볼 작품을 골라요. 친구 관계와는
+            별도로 관리돼요.
           </p>
           <Link
             href="/friends"
@@ -231,15 +229,12 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
         ) : null}
 
         {loading ? (
-          <section
-            data-state="loading"
-            className="mt-5 rounded-[24px] bg-white p-6 text-center shadow-[0_12px_28px_rgba(31,65,114,0.08)]"
-          >
+          <section data-state="loading" className="mt-5 core-card p-6 text-center">
             <p className="text-[14px] font-bold text-[#738096]">공간을 불러오는 중이에요…</p>
           </section>
         ) : (
           <>
-            <section className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_12px_28px_rgba(31,65,114,0.08)]">
+            <section className="mt-5 core-card p-5">
               <h2 className="text-[17px] font-black text-[#284778]">내 공간</h2>
               {spaces.length > 0 ? (
                 <label className="mt-4 block text-[13px] font-black text-[#53637b]">
@@ -274,10 +269,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
               )}
             </section>
 
-            <form
-              onSubmit={handleCreate}
-              className="mt-4 rounded-[24px] bg-white p-5 shadow-[0_12px_28px_rgba(31,65,114,0.08)]"
-            >
+            <form onSubmit={handleCreate} className="mt-4 core-card p-5">
               <h2 className="text-[17px] font-black text-[#284778]">새 공간 만들기</h2>
               <label className="mt-4 block text-[13px] font-black text-[#53637b]">
                 공간 이름
@@ -346,7 +338,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                 <div hidden={view !== 'recommend'} className="mt-4">
                   <GroupRecommendationPanel space={activeSpace} myAccountId={myAccountId ?? ''} />
                 </div>
-                <section className="mt-4 rounded-[24px] bg-white p-5 shadow-[0_12px_28px_rgba(31,65,114,0.08)]">
+                <section className="mt-4 core-card p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h2 className="text-[18px] font-black text-[#284778]">{activeSpace.name}</h2>
@@ -378,7 +370,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                 </section>
 
                 {isOwner ? (
-                  <section className="mt-4 rounded-[24px] bg-white p-5 shadow-[0_12px_28px_rgba(31,65,114,0.08)]">
+                  <section className="mt-4 core-card p-5">
                     <h2 className="text-[17px] font-black text-[#284778]">초대 관리</h2>
                     <p className="mt-2 text-[13px] font-semibold leading-5 text-[#7b8799]">
                       링크 하나는 한 명만 수락할 수 있어요. 정원은 최대 5명이에요.
@@ -447,7 +439,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                   </section>
                 ) : null}
 
-                <section className="mt-4 rounded-[24px] bg-white p-5 shadow-[0_12px_28px_rgba(31,65,114,0.08)]">
+                <section className="mt-4 core-card p-5">
                   <h2 className="text-[17px] font-black text-[#284778]">멤버십 관리</h2>
                   {isOwner && ownershipCandidates.length > 0 ? (
                     <div className="mt-4">
@@ -523,6 +515,6 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
           </>
         )}
       </div>
-    </AppShell>
+    </CoreAppShell>
   );
 }
