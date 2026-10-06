@@ -61,7 +61,8 @@ describe('spaces onboarding and member management UI', () => {
     const middleware = source('middleware.ts');
     const routes = source('lib/core-routes.ts');
 
-    assert.match(screen, /<GroupRecommendationPanel space=\{activeSpace\} myAccountId=/);
+    assert.match(screen, /<GroupRecommendationPanel\s+space=\{activeSpace\}\s+myAccountId=/);
+    assert.match(screen, /defaultServices=\{myOttServices\}/);
     assert.match(screen, /aria-label="공간 화면 전환"/);
     assert.match(screen, /aria-pressed=\{view === option\.value\}/);
     assert.match(page, /view === 'recommend' \? 'recommend' : 'timeline'/);

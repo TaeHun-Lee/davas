@@ -26,6 +26,19 @@ const ORIGINAL_EXTENSIONS: Record<string, string> = {
   'image/webp': 'webp',
 };
 
+/** Where a photo's original and resized copies live on disk. */
+export function watchPhotoPaths(storageKey: string, originalMimeType: string) {
+  const root = join(process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads'), 'watch-photos');
+  return {
+    original: join(
+      root,
+      `${storageKey}-original.${ORIGINAL_EXTENSIONS[originalMimeType] ?? 'bin'}`,
+    ),
+    display: join(root, `${storageKey}-display.webp`),
+    thumb: join(root, `${storageKey}-thumb.webp`),
+  };
+}
+
 const apiError = (status: 400 | 404, code: string, message: string) =>
   status === 404
     ? new NotFoundException({ statusCode: status, code, message })
@@ -201,14 +214,6 @@ export class WatchPhotosService {
   }
 
   private paths(storageKey: string, originalMimeType: string) {
-    const root = this.root();
-    return {
-      original: join(
-        root,
-        `${storageKey}-original.${ORIGINAL_EXTENSIONS[originalMimeType] ?? 'bin'}`,
-      ),
-      display: join(root, `${storageKey}-display.webp`),
-      thumb: join(root, `${storageKey}-thumb.webp`),
-    };
+    return watchPhotoPaths(storageKey, originalMimeType);
   }
 }

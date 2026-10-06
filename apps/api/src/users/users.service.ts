@@ -4,8 +4,10 @@ import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
+import { OTT_SERVICE_KEYS } from '@davas/shared';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { FileCleanupJobEntity, UserEntity } from '../database/entities';
+import { watchPhotoPaths } from '../diaries/watch-photos.service';
 import { TransactionOutboxService } from '../outbox/transaction-outbox.service';
 import { validateProfileImageContent } from './profile-image-upload';
 
@@ -16,12 +18,14 @@ export type UserProfileResponse = {
   profileImageUrl: string | null;
   bio: string | null;
   preferredGenres: string[];
+  ottServices: string[];
 };
 
 export type UpdateMeDto = {
   nickname?: string;
   bio?: string | null;
   preferredGenres?: string[];
+  ottServices?: string[];
 };
 
 export type ProfileImageFile = {
@@ -64,6 +68,14 @@ export class UsersService {
         .map((genre) => genre.trim())
         .filter(Boolean)
         .slice(0, 10);
+    }
+
+    if (dto.ottServices !== undefined) {
+      // UpdateMeDto is a plain type, so unknown or repeated keys are dropped here.
+      const keys = new Set<string>(OTT_SERVICE_KEYS);
+      user.ottServices = Array.isArray(dto.ottServices)
+        ? [...new Set(dto.ottServices.filter((key) => typeof key === 'string' && keys.has(key)))]
+        : [];
     }
 
     return this.toUserResponse(await this.users.save(user));
@@ -128,6 +140,8 @@ export class UsersService {
       reactions,
       watchSources,
       preferences,
+      photos,
+      wishes,
     ] = await Promise.all([
       query(
         `SELECT "terms_version" AS "termsVersion", "privacy_version" AS "privacyVersion", "accepted_at" AS "acceptedAt" FROM "user_consents" WHERE "user_id" = $1 ORDER BY "accepted_at"`,
@@ -136,19 +150,26 @@ export class UsersService {
         `SELECT "space_id" AS "spaceId", "role", "status", "joined_at" AS "joinedAt", "left_at" AS "leftAt" FROM "space_memberships" WHERE "account_id" = $1 ORDER BY "joined_at"`,
       ),
       query(
-        `SELECT "id", "media_id" AS "contentId", "title", "watched_date" AS "watchedOn", "visibility", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "diaries" WHERE "user_id" = $1 ORDER BY "created_at"`,
+        `SELECT "id", "media_id" AS "contentId", "title", "watched_date" AS "watchedOn", "visibility", "memory_note" AS "memoryNote", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "diaries" WHERE "user_id" = $1 ORDER BY "created_at"`,
       ),
       query(
         `SELECT "diary_id" AS "watchEventId", "status", "requested_at" AS "requestedAt", "responded_at" AS "respondedAt" FROM "watch_participants" WHERE "account_id" = $1 ORDER BY "requested_at"`,
       ),
       query(
-        `SELECT "diary_id" AS "watchEventId", "rating_scale" AS "ratingScale", "review_text" AS "reviewText", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "watch_reactions" WHERE "account_id" = $1 ORDER BY "created_at"`,
+        `SELECT "diary_id" AS "watchEventId", "rating_scale" AS "ratingScale", "headline", "review_text" AS "reviewText", "has_spoiler" AS "hasSpoiler", "is_blind" AS "isBlind", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "watch_reactions" WHERE "account_id" = $1 ORDER BY "created_at"`,
       ),
       query(
-        `SELECT s."diary_id" AS "watchEventId", s."kind", s."provider_name" AS "providerName", s."place_text" AS "placeText" FROM "watch_sources" s INNER JOIN "diaries" d ON d."id" = s."diary_id" WHERE d."user_id" = $1 ORDER BY s."diary_id"`,
+        `SELECT s."diary_id" AS "watchEventId", s."kind", s."provider_name" AS "providerName", s."place_text" AS "placeText", s."theater_format" AS "theaterFormat", s."seat_text" AS "seatText", s."episode_watched" AS "episodeWatched", s."episode_total" AS "episodeTotal", s."completed" FROM "watch_sources" s INNER JOIN "diaries" d ON d."id" = s."diary_id" WHERE d."user_id" = $1 ORDER BY s."diary_id"`,
       ),
       query(
         `SELECT "category", "enabled", "updated_at" AS "updatedAt" FROM "notification_preferences" WHERE "user_id" = $1 ORDER BY "category"`,
+      ),
+      // Photo files themselves are not inlined; the list says which photos exist.
+      query(
+        `SELECT "id", "diary_id" AS "watchEventId", "position", "original_mime_type" AS "mimeType", "original_bytes" AS "bytes", "created_at" AS "createdAt" FROM "watch_photos" WHERE "uploader_id" = $1 ORDER BY "created_at"`,
+      ),
+      query(
+        `SELECT "space_id" AS "spaceId", "media_id" AS "contentId", "created_at" AS "createdAt" FROM "space_wishes" WHERE "account_id" = $1 ORDER BY "created_at"`,
       ),
     ]);
     return {
@@ -161,6 +182,7 @@ export class UsersService {
         profileImageUrl: user.profileImageUrl ?? null,
         bio: user.bio ?? null,
         preferredGenres: user.preferredGenres ?? [],
+        ottServices: user.ottServices ?? [],
         status: user.status ?? 'ACTIVE',
         createdAt: user.createdAt?.toISOString?.() ?? null,
       },
@@ -171,6 +193,8 @@ export class UsersService {
       reactions,
       watchSources,
       notificationPreferences: preferences,
+      photos,
+      wishes,
     };
   }
 
@@ -312,6 +336,8 @@ export class UsersService {
       ['diary_reactions', '"user_id" = $1'],
       ['diary_likes', '"user_id" = $1'],
       ['watch_reactions', '"account_id" = $1'],
+      ['watch_review_likes', '"account_id" = $1'],
+      ['space_wishes', '"account_id" = $1'],
       ['notifications', '"user_id" = $1 OR "actor_id" = $1'],
       ['notification_preferences', '"user_id" = $1'],
       ['user_follows', '"follower_id" = $1 OR "following_id" = $1'],
@@ -320,6 +346,25 @@ export class UsersService {
       ['user_consents', '"user_id" = $1'],
     ] as const) {
       await manager.query(`DELETE FROM "${table}" WHERE ${clause}`, [userId]);
+    }
+    // Photos are personal data even on records shared with others; files go after commit.
+    const purged: unknown = await manager.query(
+      `DELETE FROM "watch_photos" WHERE "uploader_id" = $1 RETURNING "storage_key" AS "storageKey", "original_mime_type" AS "mimeType"`,
+      [userId],
+    );
+    // The Postgres driver answers DELETE ... RETURNING with [rows, affectedCount].
+    const deletedPhotos = (
+      Array.isArray(purged) && Array.isArray(purged[0]) ? purged[0] : (purged ?? [])
+    ) as Array<{ storageKey: string; mimeType: string }>;
+    if (deletedPhotos.length) {
+      const jobs = manager.getRepository(FileCleanupJobEntity);
+      await jobs.save(
+        deletedPhotos.flatMap((photo) =>
+          Object.values(watchPhotoPaths(photo.storageKey, photo.mimeType)).map((path) =>
+            jobs.create({ userId, kind: 'WATCH_PHOTO', path }),
+          ),
+        ),
+      );
     }
     await manager.query(
       `UPDATE "spaces" SET "status" = 'CLOSED', "closed_at" = $2 WHERE "owner_account_id" = $1 AND "status" = 'ACTIVE'`,
@@ -346,6 +391,7 @@ export class UsersService {
         profileImageUrl: null,
         bio: null,
         preferredGenres: [],
+        ottServices: [],
         status: 'DELETED',
         deletionScheduledFor: null,
         anonymizedAt: now,
@@ -403,6 +449,7 @@ export class UsersService {
       profileImageUrl: user.profileImageUrl ?? null,
       bio: user.bio ?? null,
       preferredGenres: user.preferredGenres ?? [],
+      ottServices: user.ottServices ?? [],
     };
   }
 }

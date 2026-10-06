@@ -280,3 +280,71 @@ export type GroupRecommendationFeedbackResponse = {
   consensus: GroupRecommendationConsensus;
 };
 export * from './contracts.js';
+
+/**
+ * Korean OTT services people can say they subscribe to, with the provider names TMDB uses
+ * for them in its KR watch-provider data.
+ */
+export const OTT_SERVICES = [
+  { key: 'netflix', label: '넷플릭스', providers: ['Netflix', 'Netflix basic with Ads'] },
+  { key: 'tving', label: '티빙', providers: ['TVING'] },
+  { key: 'coupang', label: '쿠팡플레이', providers: ['Coupang Play'] },
+  { key: 'wavve', label: '웨이브', providers: ['wavve', 'Wavve'] },
+  { key: 'disney', label: '디즈니+', providers: ['Disney Plus'] },
+  { key: 'watcha', label: '왓챠', providers: ['Watcha'] },
+  { key: 'apple', label: 'Apple TV+', providers: ['Apple TV Plus', 'Apple TV+'] },
+  { key: 'prime', label: '프라임 비디오', providers: ['Amazon Prime Video'] },
+] as const;
+export type OttServiceKey = (typeof OTT_SERVICES)[number]['key'];
+export const OTT_SERVICE_KEYS = OTT_SERVICES.map((service) => service.key) as OttServiceKey[];
+
+export function ottServiceForProvider(providerName: string): OttServiceKey | null {
+  const normalized = providerName.trim().toLowerCase();
+  const match = OTT_SERVICES.find((service) =>
+    service.providers.some((provider) => provider.toLowerCase() === normalized),
+  );
+  return match?.key ?? null;
+}
+
+export function ottProviderNames(keys: readonly string[]): string[] {
+  return OTT_SERVICES.filter((service) => keys.includes(service.key)).flatMap((service) => [
+    ...service.providers,
+  ]);
+}
+
+export const WISH_MOODS = ['LIGHT', 'IMMERSIVE', 'TEARS', 'CHILLS'] as const;
+export type WishMood = (typeof WISH_MOODS)[number];
+
+export type SpaceWishItem = {
+  media: {
+    id: string;
+    title: string;
+    mediaType: MediaType;
+    posterUrl: string | null;
+    releaseYear: string | null;
+    genres: string[];
+  };
+  wantedBy: Array<{ accountId: string; nickname?: string }>;
+  /** Every active member of the space added it. */
+  wantedByAll: boolean;
+  wantedByMe: boolean;
+  /** Someone in the space shared a record of it after it was added. */
+  watched: boolean;
+  availability: {
+    state: 'AVAILABLE' | 'NO_OFFERS' | 'UNKNOWN';
+    /** Subscription services it streams on, as OTT_SERVICES keys. */
+    services: OttServiceKey[];
+    /** Streams on a service someone in the space subscribes to. */
+    onSpaceServices: boolean;
+  };
+  addedAt: string;
+};
+
+export type SpaceWishList = { items: SpaceWishItem[] };
+
+export type SpaceWishPick = {
+  item: SpaceWishItem | null;
+  /** Why it was picked, as short Korean phrases for the card. */
+  reasons: string[];
+  remaining: number;
+};

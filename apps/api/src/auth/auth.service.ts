@@ -200,6 +200,7 @@ export class AuthService {
         profileImageUrl: null,
         bio: null,
         preferredGenres: [],
+        ottServices: [],
       }),
     );
 
@@ -289,6 +290,7 @@ export class AuthService {
       profileImageUrl: user.profileImageUrl ?? null,
       bio: user.bio ?? null,
       preferredGenres: user.preferredGenres ?? [],
+      ottServices: user.ottServices ?? [],
     };
   }
 

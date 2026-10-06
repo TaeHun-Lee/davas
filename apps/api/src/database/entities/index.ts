@@ -22,6 +22,7 @@ export * from './recommendation-session.entity';
 export * from './space.entity';
 export * from './space-invite.entity';
 export * from './space-membership.entity';
+export * from './space-wish.entity';
 export * from './user-follow.entity';
 export * from './user.entity';
 export * from './user-consent.entity';

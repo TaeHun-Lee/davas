@@ -24,6 +24,7 @@ import {
   SpaceEntity,
   SpaceInviteEntity,
   SpaceMembershipEntity,
+  SpaceWishEntity,
   UserConsentEntity,
   UserEntity,
   UserFollowEntity,
@@ -51,6 +52,7 @@ import { FeedIndexSharedAtPredicate1720670900000 } from './migrations/1720670900
 import { LegacyTmdbImageSafety1720671000000 } from './migrations/1720671000000-LegacyTmdbImageSafety';
 import { DropLegacyMediaIdentityIndex1720671100000 } from './migrations/1720671100000-DropLegacyMediaIdentityIndex';
 import { RecordExperience1720671200000 } from './migrations/1720671200000-RecordExperience';
+import { SpaceWishesAndSubscriptions1720671300000 } from './migrations/1720671300000-SpaceWishesAndSubscriptions';
 
 export function createTypeOrmOptions(): TypeOrmModuleOptions {
   return {
@@ -90,6 +92,7 @@ export function createTypeOrmOptions(): TypeOrmModuleOptions {
       SpaceEntity,
       SpaceMembershipEntity,
       SpaceInviteEntity,
+      SpaceWishEntity,
       WatchParticipantEntity,
       WatchReactionEntity,
       WatchSourceEntity,
@@ -118,6 +121,7 @@ export function createTypeOrmOptions(): TypeOrmModuleOptions {
       DropLegacyMediaIdentityIndex1720671100000,
       GroupRecommendationSessions1720671100000,
       RecordExperience1720671200000,
+      SpaceWishesAndSubscriptions1720671300000,
     ],
     synchronize: process.env.TYPEORM_SYNC === 'true',
     logging: process.env.TYPEORM_LOGGING === 'true',

@@ -1,6 +1,6 @@
 'use client';
 
-import type { SpaceView } from '@davas/shared';
+import { OTT_SERVICES, ottProviderNames, type SpaceView } from '@davas/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { useGroupRecommendations } from '../../hooks/useGroupRecommendations';
 import {
@@ -11,7 +11,7 @@ import {
   recommendationReasonText,
 } from './group-recommendation-model';
 
-const PROVIDERS = ['Netflix', 'Disney Plus', 'TVING', 'Wavve', 'Watcha'];
+const ottLabel = (key: string) => OTT_SERVICES.find((service) => service.key === key)?.label ?? key;
 const MOODS = ['가벼운', '따뜻한', '긴장감', '웃긴', '몰입감', '잔잔한'];
 
 function toggleValue(values: string[], value: string, checked: boolean) {
@@ -21,13 +21,26 @@ function toggleValue(values: string[], value: string, checked: boolean) {
 type GroupRecommendationPanelProps = {
   space: SpaceView;
   myAccountId: string;
+  /** OTT_SERVICES keys to start from, usually the viewer's own subscriptions. */
+  defaultServices?: string[];
 };
 
-export function GroupRecommendationPanel({ space, myAccountId }: GroupRecommendationPanelProps) {
+export function GroupRecommendationPanel({
+  space,
+  myAccountId,
+  defaultServices = [],
+}: GroupRecommendationPanelProps) {
   const group = useGroupRecommendations(space);
   const [participants, setParticipants] = useState<string[]>([]);
   const [region, setRegion] = useState('KR');
-  const [services, setServices] = useState<string[]>(['Netflix']);
+  // Selected OTT_SERVICES keys; the request sends the TMDB provider names behind them.
+  const [services, setServices] = useState<string[]>(
+    defaultServices.length ? defaultServices : ['netflix'],
+  );
+  const defaultServicesKey = defaultServices.join(',');
+  useEffect(() => {
+    if (defaultServicesKey) setServices(defaultServicesKey.split(','));
+  }, [defaultServicesKey]);
   const [contentTypes, setContentTypes] = useState<Array<'MOVIE' | 'TV'>>(['MOVIE', 'TV']);
   const [runtimeMin, setRuntimeMin] = useState('');
   const [runtimeMax, setRuntimeMax] = useState('');
@@ -75,7 +88,7 @@ export function GroupRecommendationPanel({ space, myAccountId }: GroupRecommenda
         spaceId: space.id,
         participantAccountIds: participants,
         region,
-        services,
+        services: ottProviderNames(services),
         contentTypes,
         runtimeMin,
         runtimeMax,
@@ -189,20 +202,22 @@ export function GroupRecommendationPanel({ space, myAccountId }: GroupRecommenda
               시청 경로 · 하나 이상
             </legend>
             <div className="mt-2 flex flex-wrap gap-2">
-              {PROVIDERS.map((provider) => (
+              {OTT_SERVICES.map((service) => (
                 <label
-                  key={provider}
+                  key={service.key}
                   className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-[#d8e4f2] bg-white px-3 text-[12px] font-bold text-[#263b59]"
                 >
                   <input
                     type="checkbox"
-                    checked={services.includes(provider)}
+                    checked={services.includes(service.key)}
                     onChange={(event) =>
-                      setServices((current) => toggleValue(current, provider, event.target.checked))
+                      setServices((current) =>
+                        toggleValue(current, service.key, event.target.checked),
+                      )
                     }
                     className="h-4 w-4 accent-[#2f7eea]"
                   />
-                  {provider}
+                  {service.label}
                 </label>
               ))}
             </div>
@@ -388,7 +403,7 @@ export function GroupRecommendationPanel({ space, myAccountId }: GroupRecommenda
           <p className="text-[12px] font-extrabold text-[#172947]">요청 전 확인</p>
           <p className="mt-1 text-[12px] font-semibold leading-5 text-[#65758a]">
             {participantNames.join(', ') || '참여자 미선택'} · {region} ·{' '}
-            {services.join(', ') || '시청 경로 미선택'} ·{' '}
+            {services.map(ottLabel).join(', ') || '시청 경로 미선택'} ·{' '}
             {decisionRule === 'ALL' ? '전원 동의' : `${minimumApprovals}명 이상 동의`}
           </p>
           <p className="mt-1 text-[11px] font-semibold text-[#8b96a8]">

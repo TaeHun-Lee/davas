@@ -31,10 +31,11 @@ describe('createTypeOrmOptions', () => {
       'AccountLifecycleNotificationOutbox1720671000000',
       'GroupRecommendationSessions1720671100000',
       'RecordExperience1720671200000',
+      'SpaceWishesAndSubscriptions1720671300000',
     ]) {
       assert.ok(names.includes(name), name);
     }
-    assert.equal(names.length, 15);
+    assert.equal(names.length, 16);
   });
 
   it('keeps registration order non-decreasing by timestamp', () => {

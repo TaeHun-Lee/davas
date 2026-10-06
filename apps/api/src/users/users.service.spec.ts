@@ -131,6 +131,7 @@ describe('UsersService', () => {
       profileImageUrl: null,
       bio: null,
       preferredGenres: [],
+      ottServices: [],
       status: 'ACTIVE',
       deletionRequestedAt: null,
       deletionScheduledFor: null,
@@ -350,7 +351,11 @@ describe('UsersService', () => {
     assert.equal(result.account.email, 'me@example.com');
     assert.equal('passwordHash' in result.account, false);
     assert.equal(result.reactions[0].reviewText, 'mine');
-    assert.equal(dataSource.statements.length, 7);
+    // Photos and wishes are personal data too.
+    assert.deepEqual(result.photos, []);
+    assert.deepEqual(result.wishes, []);
+    assert.ok(dataSource.statements.some((statement) => statement.sql.includes('"is_blind"')));
+    assert.equal(dataSource.statements.length, 9);
     assert.ok(dataSource.statements.every((statement) => statement.params[0] === 'user-1'));
     await assert.rejects(() => lifecycle.exportMe('missing-user'), UnauthorizedException);
   });
@@ -396,6 +401,9 @@ describe('UsersService', () => {
     assert.match(sql, /watch_event_shares/);
     assert.match(sql, /watch_participants/);
     assert.match(sql, /DELETE FROM "watch_reactions"/);
+    assert.match(sql, /DELETE FROM "watch_review_likes"/);
+    assert.match(sql, /DELETE FROM "space_wishes"/);
+    assert.match(sql, /DELETE FROM "watch_photos" WHERE "uploader_id" = \$1 RETURNING/);
     assert.match(sql, /UPDATE "watch_sources" ws SET "place_text" = NULL/);
     assert.equal(users.users[0].status, 'DELETED');
     assert.equal(users.users[0].email, 'deleted-user-1@deleted.invalid');

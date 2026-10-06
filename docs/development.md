@@ -90,14 +90,15 @@ graphify-out/      Graphify 코드 그래프 (도구가 생성, 손으로 수정
 
 | 경로 | 역할 |
 |---|---|
-| `/` | 활성 공간(마지막으로 고른 공간)의 멤버, 함께 봤는지 확인 요청, 최근 기록 5개와 추천 작품. 공간이 없으면 공간 만들기 안내 |
+| `/` | 활성 공간(마지막으로 고른 공간)의 멤버, 오늘 밤 후보(같이 보고 싶어요 목록에서 고른 한 편), 함께 봤는지 확인 요청, 최근 기록 5개와 추천 작품. 공간이 없으면 공간 만들기 안내 |
 | `/records/new` | 작품 찾기 → 기록 작성 (`?step=find`, `?mediaId=`). 새 기록은 활성 공간이 공유 대상으로, 2명 공간이면 상대가 함께 본 사람으로 미리 선택된다 |
 | `/records/:id`, `/records/:id/edit` | 감상 상세(참여자·개인 반응 포함), 수정 |
 | `/search?scope=friends` 또는 `/search?scope=mine` | 기록 검색 |
 | `/me` | 내 기록 |
 | `/friends`, `/friends/invite/:token` | 친구 목록·요청·초대 |
 | `/spaces`, `/spaces/invite/:token` | 공유 공간: 기록 타임라인과 함께 고르기(그룹 추천, `?view=recommend`), 멤버·초대 관리. 공간 초대 |
-| `/settings` | 프로필·사진, 로그아웃, 법률 문서, 계정 삭제(30일 유예) |
+| `/spaces/wishes` | 활성 공간의 같이 보고 싶어요 목록: 누가 담았는지, 모두 담았는지, 구독 OTT에서 볼 수 있는지, 빠른 추천(기분 선택·다른 후보) |
+| `/settings` | 프로필·사진, 구독 중인 OTT, 로그아웃, 법률 문서, 계정 삭제(30일 유예) |
 | `/login`, `/signup` | 로그인, 초대 코드·친구 초대 가입 |
 | `/terms`, `/privacy`, `/offline` | 법률 문서, PWA 오프라인 안내 |
 
@@ -124,7 +125,7 @@ graphify-out/      Graphify 코드 그래프 (도구가 생성, 손으로 수정
 | `spaces` | 2~5명 공유 공간, 공간 초대, 소유권 이전·탈퇴·종료 (`/v1/spaces`, `/v1/invites`) |
 | `diaries` | 감상 기록(`/diaries`)과 감상 사건·참여자·개인 반응(`/v1/watch-events`), 공간 타임라인 |
 | `media` | TMDB 검색·상세·인물 검색, 작품 선택(서버가 TMDB 원본 저장), 시청 가능성(`/media/:id/availability`) |
-| `recommendations` | 오늘의 추천·장르 추천, 그룹 추천 세션과 피드백(`/v1/recommendation-sessions`) |
+| `recommendations` | 오늘의 추천·장르 추천, 그룹 추천 세션과 피드백(`/v1/recommendation-sessions`), 공간의 같이 보고 싶어요 목록과 빠른 추천(`/v1/spaces/:spaceId/wishes`) |
 | `notifications` | 알림 목록과 알림 설정 |
 | `outbox` | 트랜잭션 아웃박스 저장 (소비 워커는 아직 없음) |
 | `watchlist`, `reactions`, `comments`, `community` | 예전 기능. 데이터·API 호환을 위해 유지 |
@@ -174,6 +175,10 @@ npm run migration:show --workspace @davas/api
 - 영화·드라마 구분은 작품(`MOVIE`/`TV`)에, 시청 방식(`THEATER`/`OTT` 등)은 기록마다 저장한다.
 - 감상 사건(`/v1/watch-events`)의 별점은 미평가 또는 0.5~5.0(0.5 단위)이다. 예전 `/diaries` API는 1~5 정수 별점을 유지한다.
 - 개인 리뷰(`watch_reactions`)는 별점·한줄평(40자)·소감(2,000자)·스포일러·블라인드 여부를 가진다. 블라인드 공개 규칙은 `diaries/blind-review.ts` 한 곳에 있고, 감상 상세·타임라인·반응 비교·예전 `/diaries/:id`·`/community/diaries/:id`가 모두 이 규칙으로 가린다. 가려진 리뷰는 내용·별점·좋아요 수·수정 시각을 보내지 않는다.
+- 구독 OTT: 사람마다 `users.ott_services`에 `OTT_SERVICES` 키(넷플릭스·티빙·쿠팡플레이·웨이브·디즈니+·왓챠·Apple TV+·프라임 비디오)를 저장한다(`PATCH /users/me`의 `ottServices`). 공유 타입의 `OTT_SERVICES`가 키, 한국어 이름, TMDB 제공자 이름을 함께 정의하고 서버·웹이 같이 쓴다.
+- 같이 보고 싶어요: `space_wishes`의 한 행이 "이 구성원이 이 작품을 보고 싶다"다. 목록은 작품별로 묶어 모두 담았는지, 담은 뒤 공간에 기록이 공유됐는지(봤어요), 구성원 누군가의 구독 OTT에서 정액제로 볼 수 있는지를 알려 준다. 목록을 열 때 볼 수 있는 곳 정보가 없거나 만료된 작품은 요청당 8편까지 TMDB에서 새로 받는다(결과는 6시간 보관). 빠른 추천(`/wishes/pick`)은 모두 담음 > 구독 OTT에서 볼 수 있음 > 기분 장르 순으로 점수를 매기고 `exclude`로 다음 후보를 고른다. 작품 상세 시트의 "보고 싶어요"는 공간이 있으면 이 목록을, 없으면 예전 개인 목록을 쓴다.
+- 그룹 추천 후보: 저장된 작품이 60편보다 적으면 TMDB 주간 인기작을 20편까지 저장하고, 표가 많은 작품 60편 중 볼 수 있는 곳 정보가 없거나 만료된 24편까지 세션을 만들 때 새로 받는다. 실패해도 세션은 있는 정보로 계속 만든다.
+- 볼 수 있는 곳 정보는 TMDB의 JustWatch 제공 데이터다. 이 정보를 보여 주는 화면에는 출처를 적는다.
 - 리뷰 좋아요: `PUT`/`DELETE /v1/watch-events/:id/reactions/:reactionId/like`. 내 리뷰와 잠긴 리뷰에는 누를 수 없다. 댓글은 기록 단위로 `/diaries/:id/comments`를 쓴다(500자).
 - 사진: 작성 화면에서 고르는 즉시 `POST /v1/watch-photos`로 올리고(한 장 15MB, JPEG·PNG·WebP), 기록을 저장할 때 `photoIds` 순서대로 붙인다(최대 10장, 첫 장이 대표). 서버는 sharp로 바로 세운 메타데이터 없는 WebP 썸네일(480px)·화면용(1600px)과 흐린 미리보기를 만들고 원본은 그대로 둔다. 파일은 `UPLOADS_DIR/watch-photos`에 있고 `/uploads` 정적 경로로는 나가지 않는다. `GET /v1/watch-photos/:id/thumb|display|original`이 기록을 볼 수 있는 사람에게만 주고, `original`은 올린 사람만 받는다. 기록에 붙지 않은 사진은 하루 뒤 정리한다.
 - `clientRequestId`로 같은 생성 요청의 중복 저장을 막는다. 같은 키에 다른 내용이면 충돌로 거부한다.

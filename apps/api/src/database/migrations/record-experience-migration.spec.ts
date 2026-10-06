@@ -16,11 +16,14 @@ async function statements() {
 }
 
 describe('record experience migration', () => {
-  it('is the newest migration and registers the photo and like entities', () => {
+  it('is registered after the earlier migrations and registers the photo and like entities', () => {
     const options = createTypeOrmOptions();
     const migrations = options.migrations as Array<new () => { name: string }>;
     const entities = options.entities as Array<new () => unknown>;
-    assert.equal(migrations.at(-1)?.name, 'RecordExperience1720671200000');
+    assert.equal(
+      migrations.findIndex((migration) => migration.name === 'RecordExperience1720671200000'),
+      14,
+    );
     for (const name of ['WatchPhotoEntity', 'WatchReviewLikeEntity']) {
       assert.ok(
         entities.some((entity) => entity.name === name),

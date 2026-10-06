@@ -8,6 +8,7 @@ import { CoreApiError } from '../../lib/api/core';
 import { listSpaces, type SpaceView } from '../../lib/api/spaces';
 import { respondToWatchParticipation, type WatchEvent } from '../../lib/api/watch-events';
 import { SpaceWatchCard } from '../spaces/SpaceWatchCard';
+import { WishPickCard } from '../spaces/WishPickCard';
 import {
   activeMembers,
   chooseActiveSpace,
@@ -134,6 +135,9 @@ export function SpaceHome() {
           아직 혼자 있는 공간이에요.{' '}
           <Link href="/spaces">초대 링크를 만들어 함께 볼 사람을 불러 보세요.</Link>
         </p>
+      ) : null}
+      {members.length > 1 ? (
+        <WishPickCard key={space.id} spaceId={space.id} variant="home" />
       ) : null}
       <SpaceHomeTimeline key={space.id} space={space} myAccountId={state.myAccountId} />
     </div>

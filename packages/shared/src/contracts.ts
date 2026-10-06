@@ -16,6 +16,8 @@ export type AuthenticatedUser = {
   profileImageUrl: string | null;
   bio: string | null;
   preferredGenres: string[];
+  /** Keys of OTT_SERVICES the person subscribes to. */
+  ottServices: string[];
 };
 
 export type MeResponse = { user: AuthenticatedUser };

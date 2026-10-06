@@ -4,13 +4,10 @@ import type {
   GroupRecommendationFeedbackResponse,
   GroupRecommendationSessionResponse,
 } from '@davas/shared';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, MoreThan, Repository } from 'typeorm';
+import { mapWithConcurrency } from '../common/concurrency';
 import {
   AvailabilityObservationEntity,
   DiaryEntity,
@@ -23,6 +20,8 @@ import {
   WatchReactionEntity,
 } from '../database/entities';
 import { AvailabilityService } from '../media/availability.service';
+import { MediaSelectionService } from '../media/media-selection.service';
+import { TmdbClient } from '../media/tmdb.client';
 import { SpaceAccessService } from '../spaces/space-access.service';
 import {
   CreateRecommendationSessionDto,
@@ -50,6 +49,12 @@ const response = (statusCode: number, code: string, message: string) => ({
   message,
 });
 const normalized = (value: string) => value.trim().toLocaleLowerCase('en-US');
+// Below this many stored titles of the requested types, trending titles are imported first.
+const MIN_CANDIDATE_POOL = 60;
+const POOL_IMPORT_LIMIT = 20;
+// Availability is refreshed for at most this many of the most-voted stale titles per session.
+const AVAILABILITY_WARM_POOL = 60;
+const AVAILABILITY_REFRESH_LIMIT = 24;
 const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
 const round = (value: number) => Number(value.toFixed(5));
 
@@ -88,21 +93,81 @@ export class GroupRecommendationsService {
     private readonly availability: AvailabilityService,
     private readonly spaceAccess: SpaceAccessService,
     private readonly dataSource: DataSource,
+    @Optional() private readonly mediaSelection?: MediaSelectionService,
+    @Optional() private readonly tmdb?: TmdbClient,
   ) {}
+
+  /**
+   * Candidates only come from titles stored locally, and only titles with a fresh "where can
+   * we watch it" observation pass the hard filters. Without this step a couple's database
+   * holds little more than what they already watched, and nothing ever has availability.
+   * It imports trending titles when the pool is small and refreshes availability for the
+   * most-voted titles that have none, within fixed budgets. Failures leave the pool as is.
+   */
+  private async warmCandidatePool(request: SessionRequest) {
+    try {
+      if (this.tmdb && this.mediaSelection) {
+        const poolSize = await this.media.count({
+          where: { mediaType: In(request.contentTypes) },
+        });
+        if (poolSize < MIN_CANDIDATE_POOL) {
+          const trending = await this.tmdb.trending({ period: 'week', page: 1, language: 'ko-KR' });
+          const imports = trending.items
+            .filter((item) => request.contentTypes.includes(item.mediaType))
+            .slice(0, POOL_IMPORT_LIMIT);
+          await mapWithConcurrency(imports, 3, async (item) => {
+            try {
+              await this.mediaSelection!.select({
+                externalProvider: 'TMDB',
+                externalId: item.externalId,
+                mediaType: item.mediaType,
+              });
+            } catch {
+              // One title failing to import does not stop the others.
+            }
+          });
+        }
+      }
+      const today = new Date().toISOString().slice(0, 10);
+      const pool = await this.media.find({
+        where: { mediaType: In(request.contentTypes) },
+        order: { tmdbVoteCount: 'DESC', id: 'ASC' },
+        take: AVAILABILITY_WARM_POOL,
+      });
+      if (!pool.length) return;
+      const fresh = await this.observations.find({
+        where: {
+          contentId: In(pool.map((item) => item.id)),
+          region: request.region,
+          expiresAt: MoreThan(new Date()),
+        },
+      });
+      const freshIds = new Set(fresh.map((observation) => observation.contentId));
+      const stale = pool
+        .filter(
+          (item) => !freshIds.has(item.id) && (!item.releaseDate || item.releaseDate <= today),
+        )
+        .slice(0, AVAILABILITY_REFRESH_LIMIT);
+      await mapWithConcurrency(stale, 4, async (item) => {
+        try {
+          await this.availability.refresh(item.id, request.region);
+        } catch {
+          // Recorded as a provider failure by the availability service when it can be.
+        }
+      });
+    } catch {
+      // Recommendations still run on whatever the pool already has.
+    }
+  }
 
   async create(
     accountId: string,
     dto: CreateRecommendationSessionDto,
   ): Promise<GroupRecommendationSessionResponse> {
     const request = this.normalizeRequest(dto);
-    await this.assertSpaceMembers(
-      request.spaceId,
-      [accountId, ...request.participantAccountIds],
-    );
+    await this.assertSpaceMembers(request.spaceId, [accountId, ...request.participantAccountIds]);
 
-    const seed = createHash('sha256')
-      .update(JSON.stringify(request))
-      .digest('hex');
+    const seed = createHash('sha256').update(JSON.stringify(request)).digest('hex');
     const ranked = await this.rankCandidates(request, seed);
 
     const saved = await this.dataSource.transaction(async (manager) => {
@@ -111,12 +176,8 @@ export class GroupRecommendationsService {
         [accountId, ...request.participantAccountIds],
         manager.getRepository(SpaceMembershipEntity),
       );
-      const sessionRepository = manager.getRepository(
-        RecommendationSessionEntity,
-      );
-      const exposureRepository = manager.getRepository(
-        RecommendationExposureEntity,
-      );
+      const sessionRepository = manager.getRepository(RecommendationSessionEntity);
+      const exposureRepository = manager.getRepository(RecommendationExposureEntity);
       const session = await sessionRepository.save(
         sessionRepository.create({
           spaceId: request.spaceId,
@@ -161,9 +222,7 @@ export class GroupRecommendationsService {
           availabilitySnapshot: item.availabilitySnapshot,
         }),
       );
-      const persisted = exposureRows.length
-        ? await exposureRepository.save(exposureRows)
-        : [];
+      const persisted = exposureRows.length ? await exposureRepository.save(exposureRows) : [];
       session.exposures = persisted;
       return session;
     });
@@ -171,10 +230,7 @@ export class GroupRecommendationsService {
     return this.sessionView(saved);
   }
 
-  async get(
-    sessionId: string,
-    accountId: string,
-  ): Promise<GroupRecommendationSessionResponse> {
+  async get(sessionId: string, accountId: string): Promise<GroupRecommendationSessionResponse> {
     const session = await this.sessions.findOne({
       where: { id: sessionId },
       relations: { exposures: { content: true, feedback: true } },
@@ -197,35 +253,24 @@ export class GroupRecommendationsService {
     if (!exposure.session.participantAccountIds.includes(accountId)) {
       throw this.notFound();
     }
-    await this.assertSpaceMembers(
-      exposure.session.spaceId,
-      [accountId],
-    );
-    const watchEventId = await this.validateWatchLink(
-      exposure,
-      accountId,
-      dto,
-    );
+    await this.assertSpaceMembers(exposure.session.spaceId, [accountId]);
+    const watchEventId = await this.validateWatchLink(exposure, accountId, dto);
 
     const saved = await this.dataSource.transaction(async (manager) => {
-      const feedbackRepository = manager.getRepository(
-        RecommendationFeedbackEntity,
-      );
+      const feedbackRepository = manager.getRepository(RecommendationFeedbackEntity);
       let row = await feedbackRepository.findOne({
         where: { exposureId, accountId },
       });
-      row = Object.assign(
-        row ?? feedbackRepository.create({ exposureId, accountId }),
-        { kind: dto.kind, watchEventId },
-      );
+      row = Object.assign(row ?? feedbackRepository.create({ exposureId, accountId }), {
+        kind: dto.kind,
+        watchEventId,
+      });
       await feedbackRepository.save(row);
       const all = await feedbackRepository.find({ where: { exposureId } });
       const consensus = this.consensus(exposure.session, all);
       if (consensus.status === 'MATCHED') {
         exposure.session.status = 'MATCHED';
-        await manager
-          .getRepository(RecommendationSessionEntity)
-          .save(exposure.session);
+        await manager.getRepository(RecommendationSessionEntity).save(exposure.session);
       }
       return { row, consensus };
     });
@@ -254,11 +299,7 @@ export class GroupRecommendationsService {
     }
     const runtimeMin = dto.runtime?.minMinutes ?? null;
     const runtimeMax = dto.runtime?.maxMinutes ?? null;
-    if (
-      runtimeMin !== null &&
-      runtimeMax !== null &&
-      runtimeMin > runtimeMax
-    ) {
+    if (runtimeMin !== null && runtimeMax !== null && runtimeMin > runtimeMax) {
       throw this.badRequest(
         'RECOMMENDATION_RUNTIME_INVALID',
         '최소 러닝타임은 최대 러닝타임보다 클 수 없어요.',
@@ -281,13 +322,8 @@ export class GroupRecommendationsService {
       );
     }
     const minimumApprovals =
-      dto.decisionRule === 'ALL'
-        ? participantAccountIds.length
-        : (dto.minimumApprovals ?? 0);
-    if (
-      minimumApprovals < 1 ||
-      minimumApprovals > participantAccountIds.length
-    ) {
+      dto.decisionRule === 'ALL' ? participantAccountIds.length : (dto.minimumApprovals ?? 0);
+    if (minimumApprovals < 1 || minimumApprovals > participantAccountIds.length) {
       throw this.badRequest(
         'RECOMMENDATION_DECISION_RULE_INVALID',
         '최소 동의 인원은 참여자 수 안에서 정해야 해요.',
@@ -298,9 +334,7 @@ export class GroupRecommendationsService {
       participantAccountIds: [...participantAccountIds].sort(),
       region: dto.region.trim().toUpperCase(),
       services,
-      contentTypes: [...new Set(dto.contentTypes)].sort() as Array<
-        'MOVIE' | 'TV'
-      >,
+      contentTypes: [...new Set(dto.contentTypes)].sort() as Array<'MOVIE' | 'TV'>,
       runtimeMin,
       runtimeMax,
       moodTags,
@@ -316,40 +350,40 @@ export class GroupRecommendationsService {
   }
 
   private async rankCandidates(request: SessionRequest, seed: string) {
+    await this.warmCandidatePool(request);
     const now = new Date();
-    const [media, observations, reactions, diaries, participations, feedback] =
-      await Promise.all([
-        this.media.find({
-          order: { tmdbVoteCount: 'DESC', id: 'ASC' },
-          take: 250,
-        }),
-        this.observations.find({
-          where: { region: request.region },
-          order: { observedAt: 'DESC', provider: 'ASC' },
-          take: 5000,
-        }),
-        this.watchReactions.find({
-          where: { accountId: In(request.participantAccountIds) },
-          relations: { diary: { media: true } },
-        }),
-        this.diaries.find({
-          where: { userId: In(request.participantAccountIds) },
-        }),
-        this.watchParticipants.find({
-          where: {
-            accountId: In(request.participantAccountIds),
-            status: 'CONFIRMED',
-          },
-          relations: { diary: true },
-        }),
-        this.feedback.find({
-          where: {
-            accountId: In(request.participantAccountIds),
-            kind: In(['REJECTED', 'ALREADY_WATCHED']),
-          },
-          relations: { exposure: true },
-        }),
-      ]);
+    const [media, observations, reactions, diaries, participations, feedback] = await Promise.all([
+      this.media.find({
+        order: { tmdbVoteCount: 'DESC', id: 'ASC' },
+        take: 250,
+      }),
+      this.observations.find({
+        where: { region: request.region },
+        order: { observedAt: 'DESC', provider: 'ASC' },
+        take: 5000,
+      }),
+      this.watchReactions.find({
+        where: { accountId: In(request.participantAccountIds) },
+        relations: { diary: { media: true } },
+      }),
+      this.diaries.find({
+        where: { userId: In(request.participantAccountIds) },
+      }),
+      this.watchParticipants.find({
+        where: {
+          accountId: In(request.participantAccountIds),
+          status: 'CONFIRMED',
+        },
+        relations: { diary: true },
+      }),
+      this.feedback.find({
+        where: {
+          accountId: In(request.participantAccountIds),
+          kind: In(['REJECTED', 'ALREADY_WATCHED']),
+        },
+        relations: { exposure: true },
+      }),
+    ]);
 
     const ratings = this.ratingSignals(request.participantAccountIds, reactions);
     const positiveGenres = new Set<string>();
@@ -366,23 +400,18 @@ export class GroupRecommendationsService {
         .map((item) => item.exposure?.contentId)
         .filter((contentId): contentId is string => Boolean(contentId)),
     );
-    const watched = new Set([
-      ...diaries.map((diary) => diary.mediaId),
-      ...participations.map((participant) => participant.diary?.mediaId),
-      ...feedback
-        .filter((item) => item.kind === 'ALREADY_WATCHED')
-        .map((item) => item.exposure?.contentId),
-    ].filter((contentId): contentId is string => Boolean(contentId)));
+    const watched = new Set(
+      [
+        ...diaries.map((diary) => diary.mediaId),
+        ...participations.map((participant) => participant.diary?.mediaId),
+        ...feedback
+          .filter((item) => item.kind === 'ALREADY_WATCHED')
+          .map((item) => item.exposure?.contentId),
+      ].filter((contentId): contentId is string => Boolean(contentId)),
+    );
 
-    const candidates = this.toCandidates(media, observations).filter(
-      ({ candidate }) =>
-        passesHardFilters(
-          candidate,
-          request,
-          now,
-          explicitlyRejected,
-          watched,
-        ),
+    const candidates = this.toCandidates(media, observations).filter(({ candidate }) =>
+      passesHardFilters(candidate, request, now, explicitlyRejected, watched),
     );
     const mediaById = new Map(candidates.map((item) => [item.candidate.id, item.media]));
     const channels = assignCandidateChannels(
@@ -394,9 +423,7 @@ export class GroupRecommendationsService {
       media: mediaById.get(candidate.id)!,
       channels,
     }));
-    const scored = channels.map((item) =>
-      this.scoreCandidate(item, request, ratings, now),
-    );
+    const scored = channels.map((item) => this.scoreCandidate(item, request, ratings, now));
     const reranked = diversityRerank(
       scored.map((item) => item.ranked),
       Math.min(scored.length, 30),
@@ -406,10 +433,7 @@ export class GroupRecommendationsService {
     for (const ranked of reranked) {
       if (result.length >= 10) break;
       const item = scoredById.get(ranked.candidate.id)!;
-      const finalAvailability = await this.finalAvailability(
-        ranked.candidate.id,
-        request,
-      );
+      const finalAvailability = await this.finalAvailability(ranked.candidate.id, request);
       if (!finalAvailability) continue;
       const reasons = this.reasons(item, request, finalAvailability.providers);
       result.push({
@@ -423,18 +447,13 @@ export class GroupRecommendationsService {
     return result;
   }
 
-  private toCandidates(
-    media: MediaEntity[],
-    observations: AvailabilityObservationEntity[],
-  ) {
+  private toCandidates(media: MediaEntity[], observations: AvailabilityObservationEntity[]) {
     const latest = new Map<string, AvailabilityObservationEntity[]>();
     for (const observation of observations) {
       const current = latest.get(observation.contentId);
       if (!current) {
         latest.set(observation.contentId, [observation]);
-      } else if (
-        current[0].observedAt.getTime() === observation.observedAt.getTime()
-      ) {
+      } else if (current[0].observedAt.getTime() === observation.observedAt.getTime()) {
         current.push(observation);
       }
     }
@@ -470,10 +489,7 @@ export class GroupRecommendationsService {
     });
   }
 
-  private ratingSignals(
-    participantIds: string[],
-    reactions: WatchReactionEntity[],
-  ) {
+  private ratingSignals(participantIds: string[], reactions: WatchReactionEntity[]) {
     const result = new Map<string, RatingSignal[]>(
       participantIds.map((accountId) => [accountId, []]),
     );
@@ -494,16 +510,9 @@ export class GroupRecommendationsService {
     now: Date,
   ) {
     const participantScores = request.participantAccountIds.map((accountId) =>
-      scoreParticipant(
-        accountId,
-        item.candidate,
-        ratings.get(accountId) ?? [],
-        request.moodTags,
-      ),
+      scoreParticipant(accountId, item.candidate, ratings.get(accountId) ?? [], request.moodTags),
     );
-    const group = calculateGroupBase(
-      participantScores.map(({ score }) => score),
-    );
+    const group = calculateGroupBase(participantScores.map(({ score }) => score));
     const contextFit = request.moodTags.some((tag) =>
       item.candidate.genres.some((genre) => normalized(genre) === tag),
     )
@@ -512,17 +521,10 @@ export class GroupRecommendationsService {
     const qualityBonus = qualityPrior(item.candidate) * 0.06;
     const releaseYear = Number(item.candidate.releaseDate?.slice(0, 4));
     const freshnessBonus =
-      Number.isFinite(releaseYear) && releaseYear >= now.getUTCFullYear() - 3
-        ? 0.03
-        : 0;
-    const explorationBonus = item.channels.includes('SAFE_EXPLORATION')
-      ? 0.015
-      : 0;
+      Number.isFinite(releaseYear) && releaseYear >= now.getUTCFullYear() - 3 ? 0.03 : 0;
+    const explorationBonus = item.channels.includes('SAFE_EXPLORATION') ? 0.015 : 0;
     const uncertaintyRisk =
-      (participantScores.reduce(
-        (total, prediction) => total + prediction.uncertainty,
-        0,
-      ) /
+      (participantScores.reduce((total, prediction) => total + prediction.uncertainty, 0) /
         participantScores.length) *
       0.06;
     const finalScore = round(
@@ -555,19 +557,11 @@ export class GroupRecommendationsService {
     return { media: item.media, ranked };
   }
 
-  private async finalAvailability(
-    contentId: string,
-    request: SessionRequest,
-  ) {
+  private async finalAvailability(contentId: string, request: SessionRequest) {
     try {
-      const current = await this.availability.getCurrent(
-        contentId,
-        request.region,
-      );
+      const current = await this.availability.getCurrent(contentId, request.region);
       const allowed = new Set(request.services);
-      const offers = current.offers.filter((offer) =>
-        allowed.has(normalized(offer.provider)),
-      );
+      const offers = current.offers.filter((offer) => allowed.has(normalized(offer.provider)));
       if (
         current.state !== 'AVAILABLE' ||
         offers.length === 0 ||
@@ -594,28 +588,20 @@ export class GroupRecommendationsService {
     providers: string[],
   ) {
     const codes = ['AVAILABLE_ON_SELECTED_SERVICES'];
-    if (item.ranked.channels.includes('CONTENT_AFFINITY'))
-      codes.push('GROUP_CONTENT_AFFINITY');
-    if (item.ranked.channels.includes('QUALITY_POPULAR'))
-      codes.push('QUALITY_COLD_START');
-    if (item.ranked.channels.includes('FRESH_RELEASE'))
-      codes.push('RECENT_RELEASE');
+    if (item.ranked.channels.includes('CONTENT_AFFINITY')) codes.push('GROUP_CONTENT_AFFINITY');
+    if (item.ranked.channels.includes('QUALITY_POPULAR')) codes.push('QUALITY_COLD_START');
+    if (item.ranked.channels.includes('FRESH_RELEASE')) codes.push('RECENT_RELEASE');
     if (
-      request.moodTags.some((tag) =>
-        item.media.genres.some((genre) => normalized(genre) === tag),
-      )
+      request.moodTags.some((tag) => item.media.genres.some((genre) => normalized(genre) === tag))
     )
       codes.push('MATCHES_REQUESTED_MOOD');
-    if ((item.ranked.diversityPenalty ?? 0) > 0)
-      codes.push('DIVERSITY_RERANKED');
+    if ((item.ranked.diversityPenalty ?? 0) > 0) codes.push('DIVERSITY_RERANKED');
     return {
       codes,
       params: {
         region: request.region,
         services: providers,
-        ...(codes.includes('MATCHES_REQUESTED_MOOD')
-          ? { moodTags: request.moodTags }
-          : {}),
+        ...(codes.includes('MATCHES_REQUESTED_MOOD') ? { moodTags: request.moodTags } : {}),
       },
     };
   }
@@ -669,17 +655,10 @@ export class GroupRecommendationsService {
     const approvals = participantFeedback.filter((row) =>
       ['INTERESTED', 'WATCHED'].includes(row.kind),
     ).length;
-    const rejections = participantFeedback.filter(
-      (row) => row.kind === 'REJECTED',
-    ).length;
+    const rejections = participantFeedback.filter((row) => row.kind === 'REJECTED').length;
     const required = session.minimumApprovals;
     const possible = session.participantAccountIds.length - rejections;
-    const status =
-      approvals >= required
-        ? 'MATCHED'
-        : possible < required
-          ? 'REJECTED'
-          : 'PENDING';
+    const status = approvals >= required ? 'MATCHED' : possible < required ? 'REJECTED' : 'PENDING';
     return {
       status,
       interestedCount: approvals,
@@ -689,10 +668,7 @@ export class GroupRecommendationsService {
     };
   }
 
-  private async assertSessionAudience(
-    session: RecommendationSessionEntity,
-    accountId: string,
-  ) {
+  private async assertSessionAudience(session: RecommendationSessionEntity, accountId: string) {
     if (
       session.requesterAccountId !== accountId &&
       !session.participantAccountIds.includes(accountId)
@@ -708,11 +684,7 @@ export class GroupRecommendationsService {
     repository?: Repository<SpaceMembershipEntity>,
   ) {
     try {
-      await this.spaceAccess.assertActiveMembers(
-        spaceId,
-        accountIds,
-        repository,
-      );
+      await this.spaceAccess.assertActiveMembers(spaceId, accountIds, repository);
     } catch (error) {
       if (error instanceof NotFoundException) throw this.notFound();
       throw error;
@@ -736,9 +708,7 @@ export class GroupRecommendationsService {
     };
   }
 
-  private sessionView(
-    session: RecommendationSessionEntity,
-  ): GroupRecommendationSessionResponse {
+  private sessionView(session: RecommendationSessionEntity): GroupRecommendationSessionResponse {
     const items = (session.exposures ?? [])
       .sort((left, right) => left.rank - right.rank)
       .map((exposure) => ({

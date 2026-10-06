@@ -8,8 +8,11 @@ import {
   RecommendationExposureEntity,
   RecommendationFeedbackEntity,
   RecommendationSessionEntity,
+  SpaceWishEntity,
+  UserEntity,
   WatchParticipantEntity,
   WatchReactionEntity,
+  WatchShareEntity,
 } from '../database/entities';
 import { MediaModule } from '../media/media.module';
 import { TmdbClient } from '../media/tmdb.client';
@@ -18,6 +21,8 @@ import { GroupRecommendationsController } from './group-recommendations.controll
 import { GroupRecommendationsService } from './group-recommendations.service';
 import { RecommendationsController } from './recommendations.controller';
 import { RecommendationsService } from './recommendations.service';
+import { SpaceWishesController } from './space-wishes.controller';
+import { SpaceWishesService } from './space-wishes.service';
 
 @Module({
   imports: [
@@ -33,13 +38,12 @@ import { RecommendationsService } from './recommendations.service';
       DiaryEntity,
       WatchParticipantEntity,
       WatchReactionEntity,
+      SpaceWishEntity,
+      UserEntity,
+      WatchShareEntity,
     ]),
   ],
-  controllers: [RecommendationsController, GroupRecommendationsController],
-  providers: [
-    RecommendationsService,
-    GroupRecommendationsService,
-    TmdbClient,
-  ],
+  controllers: [RecommendationsController, GroupRecommendationsController, SpaceWishesController],
+  providers: [RecommendationsService, GroupRecommendationsService, SpaceWishesService, TmdbClient],
 })
 export class RecommendationsModule {}

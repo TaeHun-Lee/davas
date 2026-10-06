@@ -39,6 +39,10 @@ export class UserEntity {
   @Column('text', { name: 'preferred_genres', array: true, default: () => "'{}'" })
   preferredGenres!: string[];
 
+  /** OTT_SERVICES keys this person subscribes to. */
+  @Column('text', { name: 'ott_services', array: true, default: () => "'{}'" })
+  ottServices!: string[];
+
   @Column({ type: 'varchar', length: 24, default: 'ACTIVE' })
   status!: UserAccountStatus;
 

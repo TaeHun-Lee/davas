@@ -31,6 +31,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
   const [spaces, setSpaces] = useState<SpaceView[]>([]);
   const [activeSpaceId, setActiveSpaceId] = useState<string | null>(null);
   const [myAccountId, setMyAccountId] = useState<string | null>(null);
+  const [myOttServices, setMyOttServices] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -52,6 +53,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
       setSpaces(items);
       setActiveSpaceId(selected?.id ?? null);
       setMyAccountId(me.id ?? null);
+      setMyOttServices(me.ottServices ?? []);
       if (selected) window.localStorage.setItem(ACTIVE_SPACE_KEY, selected.id);
       else window.localStorage.removeItem(ACTIVE_SPACE_KEY);
     } catch (caught) {
@@ -307,6 +309,13 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
 
             {activeSpace ? (
               <>
+                <Link href="/spaces/wishes" className="wish-pick-empty mt-4">
+                  <span>
+                    <strong>같이 보고 싶어요</strong>
+                    <span>공간에서 함께 채우는 목록과 오늘 볼 작품 빠른 추천</span>
+                  </span>
+                  <span aria-hidden="true">›</span>
+                </Link>
                 <div
                   role="group"
                   id="space-view-switch"
@@ -340,7 +349,11 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                   />
                 </div>
                 <div hidden={view !== 'recommend'} className="mt-4">
-                  <GroupRecommendationPanel space={activeSpace} myAccountId={myAccountId ?? ''} />
+                  <GroupRecommendationPanel
+                    space={activeSpace}
+                    myAccountId={myAccountId ?? ''}
+                    defaultServices={myOttServices}
+                  />
                 </div>
                 <section className="mt-4 core-card p-5">
                   <div className="flex items-start justify-between gap-3">

@@ -7,6 +7,8 @@ export type AuthenticatedUser = {
   profileImageUrl?: string | null;
   bio?: string | null;
   preferredGenres?: string[];
+  /** OTT_SERVICES keys. */
+  ottServices?: string[];
 };
 
 export type MeResponse = {
@@ -16,7 +18,10 @@ export type MeResponse = {
 export { getApiBaseUrl };
 
 export class ApiResponseError extends Error {
-  constructor(message: string, public readonly status: number) {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
     super(message);
     this.name = 'ApiResponseError';
   }

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -15,8 +15,19 @@ import {
 } from './media-detail-sections';
 import { getTmdbGenreNames } from './media-genres';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { useSpaceWish } from '../../hooks/useSpaceWish';
 
-function IconButton({ label, children, onClick, pressed }: { label: string; children: React.ReactNode; onClick?: () => void; pressed?: boolean }) {
+function IconButton({
+  label,
+  children,
+  onClick,
+  pressed,
+}: {
+  label: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+  pressed?: boolean;
+}) {
   return (
     <button
       type="button"
@@ -32,19 +43,36 @@ function IconButton({ label, children, onClick, pressed }: { label: string; chil
 
 function Poster({ media }: { media: MediaDetail }) {
   if (media.posterUrl) {
-    return <img src={media.posterUrl} alt={`${media.title} 포스터`} className="h-[158px] w-[106px] shrink-0 rounded-[16px] object-cover shadow-[0_16px_28px_rgba(21,38,69,0.18)] min-[390px]:h-[170px] min-[390px]:w-[114px]" />;
+    return (
+      <img
+        src={media.posterUrl}
+        alt={`${media.title} 포스터`}
+        className="h-[158px] w-[106px] shrink-0 rounded-[16px] object-cover shadow-[0_16px_28px_rgba(21,38,69,0.18)] min-[390px]:h-[170px] min-[390px]:w-[114px]"
+      />
+    );
   }
 
-  return <div className="h-[158px] w-[106px] shrink-0 rounded-[16px] bg-gradient-to-br from-[#0b1630] via-[#1e4f82] to-[#d99a66] shadow-[0_16px_28px_rgba(21,38,69,0.18)] min-[390px]:h-[170px] min-[390px]:w-[114px]" />;
+  return (
+    <div className="h-[158px] w-[106px] shrink-0 rounded-[16px] bg-gradient-to-br from-[#0b1630] via-[#1e4f82] to-[#d99a66] shadow-[0_16px_28px_rgba(21,38,69,0.18)] min-[390px]:h-[170px] min-[390px]:w-[114px]" />
+  );
 }
 
 function GenreTags({ media }: { media: MediaDetail }) {
-  const tags = (media.genres?.length ? media.genres : getTmdbGenreNames({ genreIds: media.genreIds ?? [], mediaType: media.mediaType })).slice(0, 3);
+  const tags = (
+    media.genres?.length
+      ? media.genres
+      : getTmdbGenreNames({ genreIds: media.genreIds ?? [], mediaType: media.mediaType })
+  ).slice(0, 3);
   const fallbackTags = tags.length > 0 ? tags : [media.mediaType === 'TV' ? '드라마' : '영화'];
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
       {fallbackTags.map((tag) => (
-        <span key={tag} className="rounded-full bg-[#eef6ff] px-2.5 py-1 text-[10px] font-extrabold text-[#2a5b8a]">{tag}</span>
+        <span
+          key={tag}
+          className="rounded-full bg-[#eef6ff] px-2.5 py-1 text-[10px] font-extrabold text-[#2a5b8a]"
+        >
+          {tag}
+        </span>
       ))}
     </div>
   );
@@ -55,15 +83,44 @@ function StarIcon() {
 }
 
 function BookmarkIcon({ filled = false }: { filled?: boolean }) {
-  return <svg width="18" height="18" viewBox="0 0 20 20" fill={filled ? 'currentColor' : 'none'} aria-hidden="true"><path d="M6 3.8h8A1.2 1.2 0 0 1 15.2 5v11L10 13.1 4.8 16V5A1.2 1.2 0 0 1 6 3.8Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>;
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 20 20"
+      fill={filled ? 'currentColor' : 'none'}
+      aria-hidden="true"
+    >
+      <path
+        d="M6 3.8h8A1.2 1.2 0 0 1 15.2 5v11L10 13.1 4.8 16V5A1.2 1.2 0 0 1 6 3.8Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }
 
 function ShareIcon() {
-  return <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 13V3.8m0 0L6.6 7.2M10 3.8l3.4 3.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><path d="M5 10.5v4.7h10v-4.7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>;
+  return (
+    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="M10 13V3.8m0 0L6.6 7.2M10 3.8l3.4 3.4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M5 10.5v4.7h10v-4.7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 function fallbackOverview(media: MediaDetail) {
-  return media.overview || '작품 소개가 아직 준비되지 않았어요. 다이어리를 작성하며 나만의 감상을 남겨보세요.';
+  return (
+    media.overview ||
+    '작품 소개가 아직 준비되지 않았어요. 다이어리를 작성하며 나만의 감상을 남겨보세요.'
+  );
 }
 
 type MediaDetailModalProps = {
@@ -90,19 +147,20 @@ export function MediaDetailModal({
   const [isFavoritePending, setIsFavoritePending] = useState(false);
   const [shareLabel, setShareLabel] = useState('공유하기');
   const [friendRecords, setFriendRecords] = useState<RecordCardData[]>([]);
-  const [friendRecordsStatus, setFriendRecordsStatus] =
-    useState<FriendRecordsStatus>('loading');
-  const [friendRecordsCursor, setFriendRecordsCursor] = useState<string | null>(
-    null,
-  );
+  const [friendRecordsStatus, setFriendRecordsStatus] = useState<FriendRecordsStatus>('loading');
+  const [friendRecordsCursor, setFriendRecordsCursor] = useState<string | null>(null);
   const [friendRecordsHasMore, setFriendRecordsHasMore] = useState(false);
-  const [isFriendRecordsLoadingMore, setIsFriendRecordsLoadingMore] =
-    useState(false);
-  const [friendRecordsLoadMoreError, setFriendRecordsLoadMoreError] =
-    useState(false);
+  const [isFriendRecordsLoadingMore, setIsFriendRecordsLoadingMore] = useState(false);
+  const [friendRecordsLoadMoreError, setFriendRecordsLoadMoreError] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const closeDialog = useCallback(() => onClose(), [onClose]);
   useFocusTrap(isOpen, dialogRef, closeDialog);
+  // With a space, "보고 싶어요" goes on the space's shared list; without one it stays personal.
+  const spaceWish = useSpaceWish(media.id, isOpen);
+  const wanted = spaceWish.wish ? spaceWish.wish.wanted : Boolean(watchlistItemId);
+  const wishPending = spaceWish.wish ? spaceWish.pending : isFavoritePending;
+  const wishLabel = spaceWish.wish ? '같이 보고 싶어요' : '보고 싶어요';
+  const toggleWish = () => (spaceWish.wish ? spaceWish.toggle() : handleFavoriteToggle());
 
   useEffect(() => {
     if (!isOpen) return;
@@ -142,11 +200,7 @@ export function MediaDetailModal({
   }, [isOpen, media.id]);
 
   async function loadMoreFriendRecords() {
-    if (
-      isFriendRecordsLoadingMore ||
-      !friendRecordsHasMore ||
-      !friendRecordsCursor
-    ) {
+    if (isFriendRecordsLoadingMore || !friendRecordsHasMore || !friendRecordsCursor) {
       return;
     }
     setIsFriendRecordsLoadingMore(true);
@@ -159,11 +213,7 @@ export function MediaDetailModal({
       });
       const visible = response.items.filter((record) => !record.isMine);
       setFriendRecords((current) =>
-        Array.from(
-          new Map(
-            [...current, ...visible].map((record) => [record.id, record]),
-          ).values(),
-        ),
+        Array.from(new Map([...current, ...visible].map((record) => [record.id, record])).values()),
       );
       setFriendRecordsCursor(response.nextCursor);
       setFriendRecordsHasMore(response.hasMore);
@@ -183,18 +233,25 @@ export function MediaDetailModal({
   const runtimeText = media.runtime ? `${media.runtime}분` : '러닝타임 준비 중';
   const overview = fallbackOverview(media);
   const tmdbRating = media.tmdbRating == null ? null : (media.tmdbRating / 2).toFixed(1);
-  const detailReturnTo =
-    returnTo ?? `/records/new?step=find&detail=${media.id}`;
-  const detailUrl = typeof window === 'undefined' ? detailReturnTo : `${window.location.origin}${detailReturnTo}`;
-  const recordUrl = recordHref ?? `/records/new?mediaId=${encodeURIComponent(media.id)}&returnTo=${encodeURIComponent(detailReturnTo)}`;
+  const detailReturnTo = returnTo ?? `/records/new?step=find&detail=${media.id}`;
+  const detailUrl =
+    typeof window === 'undefined' ? detailReturnTo : `${window.location.origin}${detailReturnTo}`;
+  const recordUrl =
+    recordHref ??
+    `/records/new?mediaId=${encodeURIComponent(media.id)}&returnTo=${encodeURIComponent(detailReturnTo)}`;
 
   async function handleFavoriteToggle() {
     if (isFavoritePending) return;
     const previous = watchlistItemId;
     setIsFavoritePending(true);
     try {
-      if (watchlistItemId) { await removeWatchlist(watchlistItemId); setWatchlistItemId(null); }
-      else { const result = await addWatchlist(media.id); setWatchlistItemId(result.id); }
+      if (watchlistItemId) {
+        await removeWatchlist(watchlistItemId);
+        setWatchlistItemId(null);
+      } else {
+        const result = await addWatchlist(media.id);
+        setWatchlistItemId(result.id);
+      }
     } catch {
       setWatchlistItemId(previous);
     } finally {
@@ -217,47 +274,98 @@ export function MediaDetailModal({
   }
 
   return (
-    <div ref={dialogRef} className="fixed inset-0 z-[80] flex justify-center overflow-hidden bg-[#172947]/35 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={detailTitle} data-design="media-detail-modal">
-      <div data-design="media-detail-scroll-shell" className="relative h-dvh w-full max-w-[430px] overflow-x-hidden overflow-y-auto bg-[#f8fafd] px-4 pb-28 pt-0 shadow-[0_0_40px_rgba(15,23,42,0.18)] min-[390px]:px-5">
+    <div
+      ref={dialogRef}
+      className="fixed inset-0 z-[80] flex justify-center overflow-hidden bg-[#172947]/35 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={detailTitle}
+      data-design="media-detail-modal"
+    >
+      <div
+        data-design="media-detail-scroll-shell"
+        className="relative h-dvh w-full max-w-[430px] overflow-x-hidden overflow-y-auto bg-[#f8fafd] px-4 pb-28 pt-0 shadow-[0_0_40px_rgba(15,23,42,0.18)] min-[390px]:px-5"
+      >
         <header className="sticky top-0 z-20 -mx-4 flex h-[62px] items-center justify-between bg-[#f8fafd]/95 px-4 shadow-[0_8px_24px_rgba(31,65,114,0.06)] backdrop-blur min-[390px]:-mx-5 min-[390px]:px-5">
           <IconButton label="상세 닫기" onClick={onClose}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m12.5 5-5 5 5 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path
+                d="m12.5 5-5 5 5 5"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </IconButton>
-          <h2 className="absolute left-1/2 -translate-x-1/2 text-[16px] font-black leading-[22px] tracking-[-0.025em] text-[#1f4e82]">{detailTitle}</h2>
+          <h2 className="absolute left-1/2 -translate-x-1/2 text-[16px] font-black leading-[22px] tracking-[-0.025em] text-[#1f4e82]">
+            {detailTitle}
+          </h2>
           <div className="flex gap-2">
-            <IconButton label={watchlistItemId ? '보고 싶어요에서 제거' : '보고 싶어요에 추가'} onClick={() => void handleFavoriteToggle()} pressed={Boolean(watchlistItemId)}><BookmarkIcon filled={Boolean(watchlistItemId)} /></IconButton>
-            <IconButton label={shareLabel} onClick={() => void handleShare()}><ShareIcon /></IconButton>
+            <IconButton
+              label={wanted ? `${wishLabel}에서 빼기` : `${wishLabel}에 담기`}
+              onClick={() => void toggleWish()}
+              pressed={wanted}
+            >
+              <BookmarkIcon filled={wanted} />
+            </IconButton>
+            <IconButton label={shareLabel} onClick={() => void handleShare()}>
+              <ShareIcon />
+            </IconButton>
           </div>
         </header>
 
         <section className="relative z-[1] mt-4 flex gap-3 min-[390px]:gap-4">
           <Poster media={media} />
           <div className="min-w-0 flex-1 pt-1">
-            <h1 className="line-clamp-2 text-[24px] font-black leading-[29px] tracking-[-0.045em] text-[#1f4e82]">{media.title}</h1>
-            <p className="mt-1 truncate text-[13px] font-bold leading-[18px] text-[#8a94a6]">{media.originalTitle || media.title}</p>
-            <p className="mt-2 text-[12px] font-extrabold leading-[17px] text-[#6e7889]">{year} · {runtimeText}</p>
+            <h1 className="line-clamp-2 text-[24px] font-black leading-[29px] tracking-[-0.045em] text-[#1f4e82]">
+              {media.title}
+            </h1>
+            <p className="mt-1 truncate text-[13px] font-bold leading-[18px] text-[#8a94a6]">
+              {media.originalTitle || media.title}
+            </p>
+            <p className="mt-2 text-[12px] font-extrabold leading-[17px] text-[#6e7889]">
+              {year} · {runtimeText}
+            </p>
             <GenreTags media={media} />
             <div className="mt-3 flex items-center gap-1.5">
               <StarIcon />
-              <strong className="text-[20px] font-black leading-none text-[#1f4e82]">{tmdbRating ?? '-'}</strong>
-              <span className="text-[11px] font-bold text-[#9aa6b8]">(TMDB{media.tmdbVoteCount ? ` · ${media.tmdbVoteCount.toLocaleString()}명` : ''})</span>
+              <strong className="text-[20px] font-black leading-none text-[#1f4e82]">
+                {tmdbRating ?? '-'}
+              </strong>
+              <span className="text-[11px] font-bold text-[#9aa6b8]">
+                (TMDB{media.tmdbVoteCount ? ` · ${media.tmdbVoteCount.toLocaleString()}명` : ''})
+              </span>
             </div>
           </div>
         </section>
 
         <div className="mt-5 grid grid-cols-1 gap-2.5 min-[375px]:grid-cols-[1.25fr_0.75fr]">
-          <button type="button" onClick={() => onRecord ? onRecord() : router.push(recordUrl)} className="flex h-[50px] items-center justify-center gap-2 rounded-[16px] bg-[#ff5a52] text-[13px] font-black text-white shadow-[0_12px_22px_rgba(255,90,82,0.28)]">
+          <button
+            type="button"
+            onClick={() => (onRecord ? onRecord() : router.push(recordUrl))}
+            className="flex h-[50px] items-center justify-center gap-2 rounded-[16px] bg-[#ff5a52] text-[13px] font-black text-white shadow-[0_12px_22px_rgba(255,90,82,0.28)]"
+          >
             <span aria-hidden="true">✎</span> {recordLabel}
           </button>
-          <button type="button" aria-pressed={Boolean(watchlistItemId)} disabled={isFavoritePending} onClick={() => void handleFavoriteToggle()} className={`flex h-[50px] items-center justify-center gap-1.5 rounded-[16px] bg-white text-[13px] font-black shadow-[0_10px_22px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8] transition ${watchlistItemId ? 'text-[#ff5a52]' : 'text-[#1f4e82]'}`}>
-            {watchlistItemId ? '♥ 보고 싶어요' : '♡ 보고 싶어요'}
+          <button
+            type="button"
+            aria-pressed={wanted}
+            disabled={wishPending}
+            onClick={() => void toggleWish()}
+            className={`flex h-[50px] items-center justify-center gap-1.5 rounded-[16px] bg-white text-[13px] font-black shadow-[0_10px_22px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8] transition ${wanted ? 'text-[#ff5a52]' : 'text-[#1f4e82]'}`}
+          >
+            {wanted ? `♥ ${wishLabel}` : `♡ ${wishLabel}`}
           </button>
         </div>
 
         <div className="mt-5 space-y-3">
           <DetailInfoCard title="시놉시스">{overview}</DetailInfoCard>
           <BasicInfoGrid media={media} />
-          <MyRatingCard diaries={media.myDiaries ?? (media.myDiary ? [media.myDiary] : [])} averageRating={media.myAverageRating ?? media.myDiary?.rating ?? null} />
+          <MyRatingCard
+            diaries={media.myDiaries ?? (media.myDiary ? [media.myDiary] : [])}
+            averageRating={media.myAverageRating ?? media.myDiary?.rating ?? null}
+          />
           <FriendRecordsCard
             records={friendRecords}
             status={friendRecordsStatus}

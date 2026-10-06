@@ -40,6 +40,6 @@ import { METADATA_PROVIDER } from './ports/metadata-provider.port';
     { provide: METADATA_PROVIDER, useExisting: TmdbMetadataAdapter },
     { provide: AVAILABILITY_PROVIDER, useExisting: TmdbAvailabilityAdapter },
   ],
-  exports: [AvailabilityService],
+  exports: [AvailabilityService, MediaSelectionService],
 })
 export class MediaModule {}
