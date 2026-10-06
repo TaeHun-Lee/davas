@@ -16,6 +16,7 @@ import {
 } from '../database/entities';
 import { SpaceAccessService } from '../spaces/space-access.service';
 import { DiaryAccessService } from './diary-access.service';
+import { SpaceMemoriesService } from './space-memories.service';
 import { WatchEventsService } from './watch-events.service';
 import type { WatchPhotosService } from './watch-photos.service';
 
@@ -283,6 +284,15 @@ function setup() {
       void attachedPhotoIds.push(ids),
     view: (photo: WatchPhotoEntity) => ({ id: photo.id }),
   } as unknown as WatchPhotosService;
+  // Records every notify* call as { method, ...input }.
+  const notified: Array<Record<string, unknown>> = [];
+  const notifications = new Proxy(
+    {},
+    {
+      get: (_target, method) => async (input: Record<string, unknown>) =>
+        void notified.push({ method: String(method), ...input }),
+    },
+  );
   const service = new WatchEventsService(
     database.repository(DiaryEntity),
     database.repository(MediaEntity),
@@ -297,8 +307,10 @@ function setup() {
     outbox as never,
     database.dataSource as never,
     photos,
+    notifications as never,
   );
-  return { attachedPhotoIds, database, outboxEvents, service };
+  const memories = new SpaceMemoriesService(watchShares, spaceAccess, photos);
+  return { attachedPhotoIds, database, memories, notified, outboxEvents, service };
 }
 
 async function coupleRecord(isBlind: boolean) {
@@ -633,5 +645,91 @@ describe('WatchEventsService', () => {
     assert.equal(updated.watchedDate, '2026-10-03');
     assert.equal(updated.reactions[0].rating, 4);
     assert.equal(updated.reactions[0].review, '좋았어요');
+  });
+
+  it('sums a space year, recalls this day in past years, and lists series in progress', async () => {
+    const { database, memories, service } = setup();
+    database.addMember('space-1', 'jiwoo');
+    database.addMember('space-1', 'minho');
+    Object.assign(database.media[0], { genres: ['스릴러', '드라마'] });
+    const series = database.addMedia('media-tv');
+    Object.assign(series, { mediaType: 'TV', genres: ['드라마'] });
+    const record = (mediaId: string, watchedDate: string, source: object, spaceIds = ['space-1']) =>
+      service.create('jiwoo', { mediaId, watchedDate, spaceIds, source: source as never });
+
+    await record('media-1', '2026-03-01', { kind: 'THEATER' });
+    await record('media-1', '2025-10-06', { kind: 'OTT', providerName: '넷플릭스' });
+    await record('media-tv', '2026-05-01', { kind: 'OTT', episodeWatched: 4, episodeTotal: 16 });
+    await record('media-tv', '2026-05-08', { kind: 'OTT', episodeWatched: 8, episodeTotal: 16 });
+    // A personal record never counts toward the space.
+    await record('media-1', '2026-04-01', { kind: 'THEATER' }, []);
+
+    const result = await memories.memories(
+      'space-1',
+      'minho',
+      undefined,
+      new Date('2026-10-06T03:00:00Z'),
+    );
+    assert.equal(result.year, 2026);
+    assert.deepEqual(result.totals, { records: 3, movies: 1, series: 2, photos: 0 });
+    assert.deepEqual(result.genres[0], { name: '드라마', count: 3 });
+    assert.deepEqual(result.sources, { theater: 1, ott: 2, other: 0 });
+    assert.deepEqual(
+      result.onThisDay.map((item) => [item.watchedDate, item.yearsAgo]),
+      [['2025-10-06', 1]],
+    );
+    assert.deepEqual(
+      result.inProgress.map((item) => [item.title, item.episodeWatched, item.episodeTotal]),
+      [['작품 media-tv', 8, 16]],
+    );
+
+    const lastYear = await memories.memories('space-1', 'minho', 2025, new Date('2026-10-06'));
+    assert.equal(lastYear.totals.records, 1);
+    await assert.rejects(() => memories.memories('space-1', 'stranger'));
+  });
+
+  it('reports where the viewer is up to in a series, from the newest record', async () => {
+    const { service } = setup();
+    assert.equal(await service.progress('owner', 'media-1'), null);
+    await service.create('owner', {
+      mediaId: 'media-1',
+      watchedDate: '2026-05-01',
+      source: { kind: 'OTT', providerName: '티빙', episodeWatched: 3, episodeTotal: 12 },
+    });
+    await service.create('owner', {
+      mediaId: 'media-1',
+      watchedDate: '2026-05-09',
+      source: { kind: 'OTT', providerName: '티빙', episodeWatched: 6, episodeTotal: 12 },
+    });
+    assert.deepEqual(await service.progress('owner', 'media-1'), {
+      mediaId: 'media-1',
+      episodeWatched: 6,
+      episodeTotal: 12,
+      completed: false,
+      providerName: '티빙',
+      sourceKind: 'OTT',
+      watchedDate: '2026-05-09',
+    });
+  });
+
+  it('notifies the companion, the rest of the space, an opened blind review, and a like', async () => {
+    const { created, database, notified, service } = await coupleRecord(true);
+    const sent = () => notified.map((item) => [item.method, item.recipientId, item.actorId]);
+    assert.deepEqual(sent(), [
+      ['notifyWatchParticipationRequested', 'minho', 'jiwoo'],
+      ['notifyWatchShared', 'seojun', 'jiwoo'],
+    ]);
+
+    notified.length = 0;
+    await service.upsertReaction(created.id, 'minho', { rating: 4 });
+    assert.deepEqual(sent(), [['notifyReviewRevealed', 'jiwoo', 'minho']]);
+
+    notified.length = 0;
+    await service.upsertReaction(created.id, 'minho', { rating: 4.5 });
+    assert.deepEqual(sent(), [], 'already open, nothing new to announce');
+
+    const jiwooReaction = database.reactions.find((reaction) => reaction.accountId === 'jiwoo')!;
+    await service.setReviewLike(created.id, jiwooReaction.id, 'minho', true);
+    assert.deepEqual(sent(), [['notifyReviewLiked', 'jiwoo', 'minho']]);
   });
 });

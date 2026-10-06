@@ -4,7 +4,16 @@ const CORE_ORIGIN = 'https://davas.invalid';
 const SAFE_SEGMENT = /^[A-Za-z0-9_-]+$/;
 const MAX_NESTED_RETURN_DEPTH = 2;
 
-const PARAMLESS_PATHS = new Set(['/', '/me', '/friends', '/settings', '/diary', '/spaces/wishes']);
+const PARAMLESS_PATHS = new Set([
+  '/',
+  '/me',
+  '/friends',
+  '/settings',
+  '/diary',
+  '/spaces/wishes',
+  '/spaces/memories',
+  '/notifications',
+]);
 
 function hasOnlySingleValueParams(params: URLSearchParams, allowed: ReadonlySet<string>) {
   for (const key of params.keys()) {

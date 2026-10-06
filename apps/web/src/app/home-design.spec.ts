@@ -16,7 +16,10 @@ describe('four-tab core shell', () => {
       assert.match(tabContract, new RegExp(label));
     }
     assert.equal((tabContract.match(/label:/g) ?? []).length, 4);
-    assert.doesNotMatch(code, /hamburger|drawer|추천|채팅|알림/);
+    assert.doesNotMatch(code, /hamburger|drawer|추천|채팅/);
+    // The only header addition is the notification bell, which says how many are unread.
+    assert.match(code, /href="\/notifications"/);
+    assert.match(code, /`알림, 안 읽은 알림 \$\{unread\}개`/);
   });
 
   it('uses accessible vector icons for home navigation and settings', () => {

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   ottServiceForProvider,
@@ -12,6 +12,7 @@ import { In, IsNull, Repository } from 'typeorm';
 import { mapWithConcurrency } from '../common/concurrency';
 import { MediaEntity, SpaceWishEntity, UserEntity, WatchShareEntity } from '../database/entities';
 import { AvailabilityService } from '../media/availability.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { SpaceAccessService } from '../spaces/space-access.service';
 
 const REGION = 'KR';
@@ -50,6 +51,7 @@ export class SpaceWishesService {
     private readonly shares: Repository<WatchShareEntity>,
     private readonly spaceAccess: SpaceAccessService,
     private readonly availability: AvailabilityService,
+    @Optional() private readonly notifications?: NotificationsService,
   ) {}
 
   async list(spaceId: string, viewerId: string): Promise<SpaceWishList> {
@@ -139,13 +141,41 @@ export class SpaceWishesService {
         message: '같이 보고 싶어요 목록이 가득 찼어요. 이미 본 작품을 정리해 주세요.',
       });
     }
+    const before = await this.wishes.find({ where: { spaceId, mediaId } });
     await this.wishes
       .createQueryBuilder()
       .insert()
       .values({ spaceId, mediaId, accountId: viewerId })
       .orIgnore()
       .execute();
+    if (!before.some((wish) => wish.accountId === viewerId)) {
+      await this.notifyIfEveryoneWants(spaceId, mediaId, viewerId);
+    }
     return this.status(spaceId, viewerId, mediaId);
+  }
+
+  private async notifyIfEveryoneWants(spaceId: string, mediaId: string, actorId: string) {
+    if (!this.notifications) return;
+    try {
+      const members = (await this.spaceAccess.activeMembersInSpaces([spaceId])).map(
+        (membership) => membership.accountId,
+      );
+      const wanting = new Set(
+        (await this.wishes.find({ where: { spaceId, mediaId } })).map((wish) => wish.accountId),
+      );
+      if (members.length < 2 || !members.every((accountId) => wanting.has(accountId))) return;
+      for (const recipientId of members) {
+        if (recipientId === actorId) continue;
+        await this.notifications.notifyWishMatched({
+          recipientId,
+          actorId,
+          mediaId,
+          idempotencyKey: `WISH_MATCHED:${recipientId}:${spaceId}:${mediaId}`,
+        });
+      }
+    } catch {
+      // A missed match notification never blocks adding the title.
+    }
   }
 
   async remove(spaceId: string, viewerId: string, mediaId: string) {

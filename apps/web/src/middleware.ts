@@ -24,6 +24,8 @@ export function middleware(request: NextRequest) {
     pathname === '/friends' ||
     pathname === '/spaces' ||
     pathname === '/spaces/wishes' ||
+    pathname === '/spaces/memories' ||
+    pathname === '/notifications' ||
     pathname.startsWith('/records/');
   if (protectedPath && !publicInvite && !request.cookies.get(ACCESS_TOKEN_COOKIE)?.value) {
     const login = new URL('/login', request.url);
@@ -42,6 +44,8 @@ export const config = {
     '/records/:path*',
     '/spaces',
     '/spaces/wishes',
+    '/spaces/memories',
+    '/notifications',
     '/login',
     '/signup',
     '/profile/:path*',

@@ -30,6 +30,14 @@ export class WatchEventsController {
     };
   }
 
+  @Get('progress/:mediaId')
+  async progress(
+    @Req() request: AuthenticatedRequest,
+    @Param('mediaId', ParseUUIDPipe) mediaId: string,
+  ) {
+    return { progress: await this.watchEvents.progress(request.user.id, mediaId) };
+  }
+
   @Get(':watchEventId')
   async detail(@Req() request: AuthenticatedRequest, @Param('watchEventId') watchEventId: string) {
     return {

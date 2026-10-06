@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Not, Repository } from 'typeorm';
+import { In, IsNull, Not, Repository } from 'typeorm';
 import {
   NOTIFICATION_PREFERENCE_CATEGORIES,
   NotificationEntity,
@@ -14,8 +14,23 @@ export type CreateNotificationInput = {
   recipientId: string;
   actorId: string;
   diaryId?: string | null;
+  mediaId?: string | null;
   idempotencyKey?: string;
 };
+
+// Kinds shown in the in-app notification center.
+const VISIBLE_TYPES = [
+  'DIARY_LIKED',
+  'DIARY_COMMENTED',
+  'FRIEND_REQUESTED',
+  'FRIEND_ACCEPTED',
+  'SPACE_INVITE',
+  'WATCH_PARTICIPATION_REQUESTED',
+  'WATCH_SHARED',
+  'REVIEW_REVEALED',
+  'REVIEW_LIKED',
+  'WISH_MATCHED',
+] as const satisfies readonly NotificationType[];
 
 export type CommunityNotificationView = {
   id: string;
@@ -26,6 +41,10 @@ export type CommunityNotificationView = {
     profileImageUrl: string | null;
   };
   diary: {
+    id: string;
+    title: string;
+  } | null;
+  media: {
     id: string;
     title: string;
   } | null;
@@ -75,15 +94,46 @@ export class NotificationsService {
 
   async listForUser(userId: string) {
     const rows = await this.notifications.find({
-      where: { userId, type: Not('AUTHOR_FOLLOWED') },
-      relations: { actor: true, diary: true },
+      where: { userId, type: In([...VISIBLE_TYPES]) },
+      relations: { actor: true, diary: true, media: true },
       order: { createdAt: 'DESC' },
       take: 50,
     });
     return {
-      unreadCount: rows.filter((notification) => !notification.readAt).length,
+      unreadCount: await this.unreadCount(userId),
       items: rows.map((notification) => this.toView(notification)),
     };
+  }
+
+  /** For the header bell; counts every unread notification, not just the latest 50. */
+  async unreadCount(userId: string) {
+    return this.notifications.count({
+      where: { userId, readAt: IsNull(), type: In([...VISIBLE_TYPES]) },
+    });
+  }
+
+  async markAllRead(userId: string) {
+    await this.notifications.update(
+      { userId, readAt: IsNull(), type: In([...VISIBLE_TYPES]) },
+      { readAt: new Date() },
+    );
+    return { unreadCount: 0 };
+  }
+
+  async notifyWatchShared(input: CreateNotificationInput) {
+    return this.createForOtherUser({ ...input, type: 'WATCH_SHARED' });
+  }
+
+  async notifyReviewRevealed(input: CreateNotificationInput) {
+    return this.createForOtherUser({ ...input, type: 'REVIEW_REVEALED' });
+  }
+
+  async notifyReviewLiked(input: CreateNotificationInput) {
+    return this.createForOtherUser({ ...input, type: 'REVIEW_LIKED' });
+  }
+
+  async notifyWishMatched(input: CreateNotificationInput) {
+    return this.createForOtherUser({ ...input, diaryId: null, type: 'WISH_MATCHED' });
   }
 
   async notifyDiaryLiked(input: CreateNotificationInput) {
@@ -147,6 +197,7 @@ export class NotificationsService {
           userId: input.recipientId,
           actorId: input.actorId,
           diaryId: input.diaryId ?? null,
+          mediaId: input.mediaId ?? null,
           type: input.type,
           idempotencyKey,
         }),
@@ -169,6 +220,7 @@ export class NotificationsService {
   private categoryFor(type: NotificationType): NotificationPreferenceCategory {
     if (type === 'SPACE_INVITE') return 'SPACE_INVITE';
     if (type === 'WATCH_PARTICIPATION_REQUESTED') return 'WATCH_PARTICIPATION';
+    if (type === 'WISH_MATCHED') return 'RECOMMENDATION';
     return 'SOCIAL';
   }
 
@@ -185,6 +237,12 @@ export class NotificationsService {
         ? {
             id: notification.diary.id,
             title: notification.diary.title,
+          }
+        : null,
+      media: notification.media
+        ? {
+            id: notification.media.id,
+            title: notification.media.title,
           }
         : null,
       readAt: notification.readAt?.toISOString() ?? null,

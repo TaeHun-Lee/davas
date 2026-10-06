@@ -16,11 +16,16 @@ async function statements() {
 }
 
 describe('space wishes and subscriptions migration', () => {
-  it('is the newest migration and registers the wish entity', () => {
+  it('is registered after the record experience migration and registers the wish entity', () => {
     const options = createTypeOrmOptions();
     const migrations = options.migrations as Array<new () => { name: string }>;
     const entities = options.entities as Array<new () => unknown>;
-    assert.equal(migrations.at(-1)?.name, 'SpaceWishesAndSubscriptions1720671300000');
+    assert.equal(
+      migrations.findIndex(
+        (migration) => migration.name === 'SpaceWishesAndSubscriptions1720671300000',
+      ),
+      15,
+    );
     assert.ok(entities.some((entity) => entity.name === 'SpaceWishEntity'));
   });
 

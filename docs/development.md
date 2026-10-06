@@ -86,7 +86,7 @@ graphify-out/      Graphify 코드 그래프 (도구가 생성, 손으로 수정
 
 ### Web 화면
 
-하단 탭은 홈(`/`), 기록하기(`/records/new`), 공간(`/spaces`), 내 기록(`/me`) 네 개이고, 설정(`/settings`)은 헤더 아이콘으로 연다. 친구 화면(`/friends`)은 공간 화면에서 들어가며, 그동안 공간 탭이 선택된 상태로 보인다.
+하단 탭은 홈(`/`), 기록하기(`/records/new`), 공간(`/spaces`), 내 기록(`/me`) 네 개이고, 헤더에는 알림(`/notifications`, 안 읽은 알림 점)과 설정(`/settings`) 아이콘이 있다. 친구 화면(`/friends`)은 공간 화면에서 들어가며, 그동안 공간 탭이 선택된 상태로 보인다.
 
 | 경로 | 역할 |
 |---|---|
@@ -97,6 +97,8 @@ graphify-out/      Graphify 코드 그래프 (도구가 생성, 손으로 수정
 | `/me` | 내 기록 |
 | `/friends`, `/friends/invite/:token` | 친구 목록·요청·초대 |
 | `/spaces`, `/spaces/invite/:token` | 공유 공간: 기록 타임라인과 함께 고르기(그룹 추천, `?view=recommend`), 멤버·초대 관리. 공간 초대 |
+| `/spaces/memories` | 우리 기록 모아보기: 연도별 함께 본 편수·장르·극장 vs OTT, 1년 전 오늘, 보고 있는 드라마(이어서 기록하기) |
+| `/notifications` | 알림 센터: 새 기록, 함께 봤는지 확인 요청, 열린 블라인드 리뷰, 좋아요·댓글, 같이 보고 싶어요 겹침. 모두 읽음 |
 | `/spaces/wishes` | 활성 공간의 같이 보고 싶어요 목록: 누가 담았는지, 모두 담았는지, 구독 OTT에서 볼 수 있는지, 빠른 추천(기분 선택·다른 후보) |
 | `/settings` | 프로필·사진, 구독 중인 OTT, 로그아웃, 법률 문서, 계정 삭제(30일 유예) |
 | `/login`, `/signup` | 로그인, 초대 코드·친구 초대 가입 |
@@ -177,6 +179,8 @@ npm run migration:show --workspace @davas/api
 - 개인 리뷰(`watch_reactions`)는 별점·한줄평(40자)·소감(2,000자)·스포일러·블라인드 여부를 가진다. 블라인드 공개 규칙은 `diaries/blind-review.ts` 한 곳에 있고, 감상 상세·타임라인·반응 비교·예전 `/diaries/:id`·`/community/diaries/:id`가 모두 이 규칙으로 가린다. 가려진 리뷰는 내용·별점·좋아요 수·수정 시각을 보내지 않는다.
 - 구독 OTT: 사람마다 `users.ott_services`에 `OTT_SERVICES` 키(넷플릭스·티빙·쿠팡플레이·웨이브·디즈니+·왓챠·Apple TV+·프라임 비디오)를 저장한다(`PATCH /users/me`의 `ottServices`). 공유 타입의 `OTT_SERVICES`가 키, 한국어 이름, TMDB 제공자 이름을 함께 정의하고 서버·웹이 같이 쓴다.
 - 같이 보고 싶어요: `space_wishes`의 한 행이 "이 구성원이 이 작품을 보고 싶다"다. 목록은 작품별로 묶어 모두 담았는지, 담은 뒤 공간에 기록이 공유됐는지(봤어요), 구성원 누군가의 구독 OTT에서 정액제로 볼 수 있는지를 알려 준다. 목록을 열 때 볼 수 있는 곳 정보가 없거나 만료된 작품은 요청당 8편까지 TMDB에서 새로 받는다(결과는 6시간 보관). 빠른 추천(`/wishes/pick`)은 모두 담음 > 구독 OTT에서 볼 수 있음 > 기분 장르 순으로 점수를 매기고 `exclude`로 다음 후보를 고른다. 작품 상세 시트의 "보고 싶어요"는 공간이 있으면 이 목록을, 없으면 예전 개인 목록을 쓴다.
+- 우리 기록 모아보기(`GET /v1/spaces/:spaceId/memories?year=`)는 공간에 공유된 기록만 센다. 1년 전 오늘은 한국 날짜 기준이다. 드라마 진행은 작품마다 가장 최근 기록의 회차를 쓰고, `GET /v1/watch-events/progress/:mediaId`가 내 최신 진행을 돌려줘 새 기록이 다음 화부터 시작한다.
+- 알림은 앱 안의 `notifications` 행이다(푸시·메일 없음). 새 기록 공유(공간 사람들), 함께 본 사람 확인 요청, 내 블라인드 리뷰가 상대에게 열림, 리뷰 좋아요, 댓글(작성자와 함께 본 사람, 댓글마다 한 번), 같이 보고 싶어요가 모두 겹침(`media_id`)을 남긴다. 알림을 못 남겨도 원래 요청은 성공한다. `GET /notifications/unread-count`, `PATCH /notifications/read-all`.
 - 그룹 추천 후보: 저장된 작품이 60편보다 적으면 TMDB 주간 인기작을 20편까지 저장하고, 표가 많은 작품 60편 중 볼 수 있는 곳 정보가 없거나 만료된 24편까지 세션을 만들 때 새로 받는다. 실패해도 세션은 있는 정보로 계속 만든다.
 - 볼 수 있는 곳 정보는 TMDB의 JustWatch 제공 데이터다. 이 정보를 보여 주는 화면에는 출처를 적는다.
 - 리뷰 좋아요: `PUT`/`DELETE /v1/watch-events/:id/reactions/:reactionId/like`. 내 리뷰와 잠긴 리뷰에는 누를 수 없다. 댓글은 기록 단위로 `/diaries/:id/comments`를 쓴다(500자).

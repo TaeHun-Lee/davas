@@ -316,6 +316,13 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                   </span>
                   <span aria-hidden="true">›</span>
                 </Link>
+                <Link href="/spaces/memories" className="wish-pick-empty mt-2">
+                  <span>
+                    <strong>우리 기록 모아보기</strong>
+                    <span>올해 함께 본 작품, 1년 전 오늘, 보고 있는 드라마</span>
+                  </span>
+                  <span aria-hidden="true">›</span>
+                </Link>
                 <div
                   role="group"
                   id="space-view-switch"

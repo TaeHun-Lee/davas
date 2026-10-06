@@ -53,6 +53,7 @@ import { LegacyTmdbImageSafety1720671000000 } from './migrations/1720671000000-L
 import { DropLegacyMediaIdentityIndex1720671100000 } from './migrations/1720671100000-DropLegacyMediaIdentityIndex';
 import { RecordExperience1720671200000 } from './migrations/1720671200000-RecordExperience';
 import { SpaceWishesAndSubscriptions1720671300000 } from './migrations/1720671300000-SpaceWishesAndSubscriptions';
+import { NotificationSubjects1720671400000 } from './migrations/1720671400000-NotificationSubjects';
 
 export function createTypeOrmOptions(): TypeOrmModuleOptions {
   return {
@@ -122,6 +123,7 @@ export function createTypeOrmOptions(): TypeOrmModuleOptions {
       GroupRecommendationSessions1720671100000,
       RecordExperience1720671200000,
       SpaceWishesAndSubscriptions1720671300000,
+      NotificationSubjects1720671400000,
     ],
     synchronize: process.env.TYPEORM_SYNC === 'true',
     logging: process.env.TYPEORM_LOGGING === 'true',

@@ -4,7 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { MediaType, ViewingMethod } from '@davas/shared';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { getUnreadNotificationCount } from '../../lib/api/notifications';
 import {
   mediaTypeLabel,
   viewingMethodLabel,
@@ -50,6 +51,34 @@ function CoreNavIcon({ icon }: { icon: (typeof tabs)[number]['icon'] }) {
   );
 }
 
+// Refreshed whenever a core page mounts; the bell is a hint, so a failed count stays quiet.
+function NotificationBell() {
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    let active = true;
+    getUnreadNotificationCount()
+      .then((count) => {
+        if (active) setUnread(count);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+  return (
+    <Link
+      href="/notifications"
+      className="core-icon-button core-bell"
+      aria-label={unread ? `알림, 안 읽은 알림 ${unread}개` : '알림'}
+    >
+      <svg data-icon="bell" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15ZM10 20.5a2 2 0 0 0 4 0" />
+      </svg>
+      {unread ? <span className="core-bell-dot" aria-hidden="true" /> : null}
+    </Link>
+  );
+}
+
 export function CoreHeader() {
   return (
     <header className="core-header">
@@ -64,12 +93,15 @@ export function CoreHeader() {
           className="object-contain"
         />
       </Link>
-      <Link href="/settings" className="core-icon-button" aria-label="설정 열기">
-        <svg data-icon="settings" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M9.7 3.5h4.6l.6 2.1c.5.2.9.4 1.3.7l2.1-.6 2.3 4-1.6 1.5v1.6l1.6 1.5-2.3 4-2.1-.6c-.4.3-.8.5-1.3.7l-.6 2.1H9.7l-.6-2.1c-.5-.2-.9-.4-1.3-.7l-2.1.6-2.3-4L5 12.8v-1.6L3.4 9.7l2.3-4 2.1.6c.4-.3.8-.5 1.3-.7l.6-2.1Z" />
-          <circle cx="12" cy="12" r="3" />
-        </svg>
-      </Link>
+      <div className="core-header-actions">
+        <NotificationBell />
+        <Link href="/settings" className="core-icon-button" aria-label="설정 열기">
+          <svg data-icon="settings" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9.7 3.5h4.6l.6 2.1c.5.2.9.4 1.3.7l2.1-.6 2.3 4-1.6 1.5v1.6l1.6 1.5-2.3 4-2.1-.6c-.4.3-.8.5-1.3.7l-.6 2.1H9.7l-.6-2.1c-.5-.2-.9-.4-1.3-.7l-2.1.6-2.3-4L5 12.8v-1.6L3.4 9.7l2.3-4 2.1.6c.4-.3.8-.5 1.3-.7l.6-2.1Z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </Link>
+      </div>
     </header>
   );
 }

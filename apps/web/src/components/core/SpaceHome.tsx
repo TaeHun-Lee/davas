@@ -207,6 +207,13 @@ function SpaceHomeTimeline({ space, myAccountId }: { space: SpaceView; myAccount
                 이전 기록 더 보기
               </Link>
             ) : null}
+            <Link href="/spaces/memories" className="wish-pick-empty">
+              <span>
+                <strong>우리 기록 모아보기</strong>
+                <span>올해 함께 본 작품과 1년 전 오늘을 모아 봐요.</span>
+              </span>
+              <span aria-hidden="true">›</span>
+            </Link>
           </div>
         )}
       </section>

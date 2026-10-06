@@ -3,7 +3,9 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -27,8 +29,10 @@ import {
   WatchShareEntity,
   WatchSourceEntity,
 } from '../database/entities';
+import { NotificationsService } from '../notifications/notifications.service';
 import { TransactionOutboxService } from '../outbox/transaction-outbox.service';
 import { SpaceAccessService } from '../spaces/space-access.service';
+import type { WatchProgress } from '@davas/shared';
 import { hiddenReviewAccountIds } from './blind-review';
 import { DiaryAccessService } from './diary-access.service';
 import { WatchPhotosService } from './watch-photos.service';
@@ -66,6 +70,8 @@ const WATCH_VIEW_RELATIONS = {
 
 @Injectable()
 export class WatchEventsService {
+  private readonly logger = new Logger(WatchEventsService.name);
+
   constructor(
     @InjectRepository(DiaryEntity)
     private readonly diaries: Repository<DiaryEntity>,
@@ -88,10 +94,69 @@ export class WatchEventsService {
     private readonly outbox: TransactionOutboxService,
     private readonly dataSource: DataSource,
     private readonly photos: WatchPhotosService,
+    @Optional() private readonly notifications?: NotificationsService,
   ) {}
+
+  /**
+   * In-app notifications are a courtesy: they are written after the record is saved and a
+   * failure is logged, never surfaced as a failed save.
+   */
+  private async notifySafely(work: () => Promise<unknown>) {
+    if (!this.notifications) return;
+    try {
+      await work();
+    } catch (error) {
+      this.logger.warn(`notification skipped: ${String(error)}`);
+    }
+  }
+
+  private notifyNewRecord(
+    diaryId: string,
+    authorId: string,
+    spaceIds: string[],
+    participantIds: string[],
+  ) {
+    return this.notifySafely(async () => {
+      for (const recipientId of participantIds) {
+        await this.notifications!.notifyWatchParticipationRequested({
+          recipientId,
+          actorId: authorId,
+          diaryId,
+        });
+      }
+      const members = await this.spaceAccess.activeMembersInSpaces(spaceIds);
+      const others = new Set(
+        members
+          .map((membership) => membership.accountId)
+          .filter((accountId) => accountId !== authorId && !participantIds.includes(accountId)),
+      );
+      for (const recipientId of others) {
+        await this.notifications!.notifyWatchShared({ recipientId, actorId: authorId, diaryId });
+      }
+    });
+  }
+
+  /** Whose blind reviews are still hidden from `viewerId` on this record. */
+  private async hiddenFrom(diaryId: string, viewerId: string) {
+    const [diary, participants, reactions] = await Promise.all([
+      this.diaries.findOne({ where: { id: diaryId } }),
+      this.participants.find({ where: { diaryId } }),
+      this.reactions.find({ where: { diaryId } }),
+    ]);
+    if (!diary) return new Set<string>();
+    return hiddenReviewAccountIds({
+      viewerId,
+      reactions,
+      participants: this.withAuthorParticipant(diary, participants),
+    });
+  }
 
   async create(accountId: string, dto: CreateWatchEventDto) {
     this.assertNotFuture(dto.watchedDate);
+    let shared: { spaceIds: string[]; participantIds: string[] } = {
+      spaceIds: [],
+      participantIds: [],
+    };
     const diaryId = await this.dataSource.transaction(async (manager) => {
       const media = await manager
         .getRepository(MediaEntity)
@@ -210,8 +275,10 @@ export class WatchEventsService {
       if (dto.photoIds?.length) {
         await this.photos.replaceForDiary(manager, diary.id, accountId, dto.photoIds);
       }
+      shared = { spaceIds, participantIds };
       return diary.id;
     });
+    await this.notifyNewRecord(diaryId, accountId, shared.spaceIds, shared.participantIds);
     return this.detail(accountId, diaryId);
   }
 
@@ -345,10 +412,25 @@ export class WatchEventsService {
       throw this.participationNotFound();
     }
 
+    const hiddenBefore = this.notifications ? await this.hiddenFrom(diaryId, accountId) : null;
     const reaction = await this.saveReaction(this.reactions, diaryId, accountId, dto);
     if (diary?.userId === accountId) {
       this.syncLegacyReview(diary, dto);
       await this.diaries.save(diary);
+    }
+    if (hiddenBefore?.size) {
+      const hiddenAfter = await this.hiddenFrom(diaryId, accountId);
+      await this.notifySafely(async () => {
+        for (const recipientId of hiddenBefore) {
+          if (hiddenAfter.has(recipientId)) continue;
+          await this.notifications!.notifyReviewRevealed({
+            recipientId,
+            actorId: accountId,
+            diaryId,
+            idempotencyKey: `REVIEW_REVEALED:${recipientId}:${accountId}:${diaryId}`,
+          });
+        }
+      });
     }
     return this.reactionView(reaction, accountId, false);
   }
@@ -382,6 +464,14 @@ export class WatchEventsService {
         .values({ reactionId, accountId })
         .orIgnore()
         .execute();
+      await this.notifySafely(() =>
+        this.notifications!.notifyReviewLiked({
+          recipientId: reaction.accountId,
+          actorId: accountId,
+          diaryId,
+          idempotencyKey: `REVIEW_LIKED:${reactionId}:${accountId}`,
+        }),
+      );
     } else {
       await this.reviewLikes.delete({ reactionId, accountId });
     }
@@ -434,6 +524,43 @@ export class WatchEventsService {
               }),
             ).toString('base64url')
           : null,
+    };
+  }
+
+  /** Where the viewer is up to in a series: their latest record of it, written or joined. */
+  async progress(accountId: string, mediaId: string): Promise<WatchProgress | null> {
+    const [own, joined] = await Promise.all([
+      this.diaries.find({
+        where: { userId: accountId, mediaId },
+        relations: { watchSource: true },
+      }),
+      this.participants.find({
+        where: { accountId, status: 'CONFIRMED', diary: { mediaId, deletedAt: IsNull() } },
+        relations: { diary: { watchSource: true } },
+      }),
+    ]);
+    const records = [
+      ...new Map(
+        [...own, ...joined.map((participant) => participant.diary)]
+          .filter((diary): diary is DiaryEntity => Boolean(diary))
+          .map((diary) => [diary.id, diary]),
+      ).values(),
+    ].sort(
+      (left, right) =>
+        right.watchedDate.localeCompare(left.watchedDate) ||
+        (right.createdAt?.getTime() ?? 0) - (left.createdAt?.getTime() ?? 0),
+    );
+    const latest = records[0];
+    if (!latest) return null;
+    const source = latest.watchSource;
+    return {
+      mediaId,
+      episodeWatched: source?.episodeWatched ?? null,
+      episodeTotal: source?.episodeTotal ?? null,
+      completed: source?.completed ?? false,
+      providerName: source?.providerName ?? null,
+      sourceKind: source?.kind ?? null,
+      watchedDate: latest.watchedDate,
     };
   }
 

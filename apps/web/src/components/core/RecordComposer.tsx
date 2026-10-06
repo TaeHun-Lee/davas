@@ -17,6 +17,7 @@ import {
   type MediaSearchResult,
   type SelectedMedia,
 } from '../../lib/api/media';
+import { getWatchProgress, type WatchProgress } from '../../lib/api/memories';
 import { listSpaces } from '../../lib/api/spaces';
 import {
   createWatchEvent,
@@ -103,6 +104,25 @@ const freshDraft = (): Draft => ({
   photos: [],
 });
 
+/**
+ * A new record of a series carries on from the latest one: same service, the next episode,
+ * and the series' episode count. Returns the progress it continued from, for the hint.
+ */
+async function continueSeries(draft: Draft, media: MediaDetail) {
+  if (media.mediaType !== 'TV') return null;
+  draft.episodeTotal = media.numberOfEpisodes ?? null;
+  const progress = await getWatchProgress(media.id).catch(() => null);
+  if (!progress) return null;
+  draft.sourceKind = draft.sourceKind ?? progress.sourceKind;
+  draft.providerName = draft.providerName || progress.providerName || '';
+  draft.episodeTotal = draft.episodeTotal ?? progress.episodeTotal;
+  if (progress.episodeWatched && !progress.completed) {
+    const next = progress.episodeWatched + 1;
+    draft.episodeWatched = draft.episodeTotal ? Math.min(next, draft.episodeTotal) : next;
+  }
+  return progress;
+}
+
 const sourceLabels: Record<WatchSourceKind, string> = {
   THEATER: '극장',
   OTT: 'OTT',
@@ -156,6 +176,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
   const [busy, setBusy] = useState(false);
   const [detailPreview, setDetailPreview] = useState<MediaDetail | null>(null);
   const [waitingForPhotos, setWaitingForPhotos] = useState(false);
+  const [continuedFrom, setContinuedFrom] = useState<WatchProgress | null>(null);
   const photoUploads = useWatchPhotoUploads();
   const { reset: resetPhotos } = photoUploads;
   const searchType = mediaType === 'MOVIE' ? 'movie' : mediaType === 'TV' ? 'tv' : 'multi';
@@ -281,7 +302,8 @@ export function RecordComposer({ editId }: { editId?: string }) {
             externalProvider: media.externalProvider,
             genreIds: media.genreIds ?? [],
           };
-          next.episodeTotal = media.mediaType === 'TV' ? (media.numberOfEpisodes ?? null) : null;
+          const progress = await continueSeries(next, media);
+          if (active) setContinuedFrom(progress);
         } else if (detailMediaId) {
           const media = await getMediaDetail(detailMediaId);
           next.selected = {
@@ -289,7 +311,8 @@ export function RecordComposer({ editId }: { editId?: string }) {
             externalProvider: media.externalProvider,
             genreIds: media.genreIds ?? [],
           };
-          next.episodeTotal = media.mediaType === 'TV' ? (media.numberOfEpisodes ?? null) : null;
+          const progress = await continueSeries(next, media);
+          if (active) setContinuedFrom(progress);
           if (active) setDetailPreview(media);
         }
         if (!active) return;
@@ -623,6 +646,12 @@ export function RecordComposer({ editId }: { editId?: string }) {
           draft.sourceKind !== 'THEATER' &&
           draft.selected?.mediaType === 'TV' ? (
             <div className="mt-4">
+              {continuedFrom?.episodeWatched && !editId ? (
+                <p className="record-compose-helper" role="status">
+                  지난 기록에서 {continuedFrom.episodeWatched}화까지 봐서{' '}
+                  {continuedFrom.completed ? '끝까지 본 상태예요.' : '다음 화부터 이어서 적었어요.'}
+                </p>
+              ) : null}
               <SeriesProgress
                 watched={draft.episodeWatched}
                 total={draft.episodeTotal}

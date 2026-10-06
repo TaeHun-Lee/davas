@@ -14,6 +14,16 @@ export class NotificationsController {
     return this.notifications.listForUser(request.user.id);
   }
 
+  @Get('unread-count')
+  async unreadCount(@Req() request: AuthenticatedRequest) {
+    return { unreadCount: await this.notifications.unreadCount(request.user.id) };
+  }
+
+  @Patch('read-all')
+  markAllRead(@Req() request: AuthenticatedRequest) {
+    return this.notifications.markAllRead(request.user.id);
+  }
+
   @Get('preferences')
   async listPreferences(@Req() request: AuthenticatedRequest) {
     return { items: await this.notifications.listPreferences(request.user.id) };

@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { DiaryEntity } from './diary.entity';
+import { MediaEntity } from './media.entity';
 import { UserEntity } from './user.entity';
 
 export type NotificationType =
@@ -17,7 +18,14 @@ export type NotificationType =
   | 'FRIEND_REQUESTED'
   | 'FRIEND_ACCEPTED'
   | 'SPACE_INVITE'
-  | 'WATCH_PARTICIPATION_REQUESTED';
+  | 'WATCH_PARTICIPATION_REQUESTED'
+  /** Someone shared a new record to a space the recipient is in. */
+  | 'WATCH_SHARED'
+  /** The actor wrote their review, so the recipient's blind review opened for them. */
+  | 'REVIEW_REVEALED'
+  | 'REVIEW_LIKED'
+  /** Everyone in the space now wants the same title (`mediaId`). */
+  | 'WISH_MATCHED';
 
 @Entity({ name: 'notifications' })
 @Index(['userId', 'createdAt'])
@@ -48,6 +56,13 @@ export class NotificationEntity {
   })
   @JoinColumn({ name: 'diary_id' })
   diary!: DiaryEntity | null;
+
+  @Column({ name: 'media_id', type: 'uuid', nullable: true })
+  mediaId!: string | null;
+
+  @ManyToOne(() => MediaEntity, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'media_id' })
+  media?: MediaEntity | null;
 
   @Column({ type: 'varchar', length: 32 })
   type!: NotificationType;

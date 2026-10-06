@@ -348,3 +348,44 @@ export type SpaceWishPick = {
   reasons: string[];
   remaining: number;
 };
+
+/** "우리 기록 모아보기" for one space and year. */
+export type SpaceMemories = {
+  year: number;
+  totals: { records: number; movies: number; series: number; photos: number };
+  genres: Array<{ name: string; count: number }>;
+  sources: { theater: number; ott: number; other: number };
+  /** Records watched on today's month and day in earlier years, newest first. */
+  onThisDay: Array<{
+    watchEventId: string;
+    title: string;
+    posterUrl: string | null;
+    watchedDate: string;
+    yearsAgo: number;
+    sourceKind: WatchSourceKind | null;
+    photoCount: number;
+    coverPhoto: WatchPhotoView | null;
+  }>;
+  /** Series the space is part-way through, from each series' latest record. */
+  inProgress: Array<{
+    watchEventId: string;
+    mediaId: string;
+    title: string;
+    posterUrl: string | null;
+    episodeWatched: number;
+    episodeTotal: number | null;
+    providerName: string | null;
+    watchedDate: string;
+  }>;
+};
+
+/** Where the viewer is up to in a series, from their latest record of it. */
+export type WatchProgress = {
+  mediaId: string;
+  episodeWatched: number | null;
+  episodeTotal: number | null;
+  completed: boolean;
+  providerName: string | null;
+  sourceKind: WatchSourceKind | null;
+  watchedDate: string;
+};

@@ -931,6 +931,367 @@ a {
   font-size: 14px;
 }
 
+.core-header-actions {
+  display: flex;
+  gap: 8px;
+}
+.core-bell {
+  position: relative;
+}
+.core-bell-dot {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d8453c;
+  box-shadow: 0 0 0 2px white;
+}
+
+/* Notification center. */
+.notifications-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.notifications-head p {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 750;
+}
+.notifications-head button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  padding: 0 8px;
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 850;
+}
+.notifications-head button:disabled {
+  color: #9aa6b8;
+}
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.notifications-list button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 40px minmax(0, 1fr) 10px;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e6ecf3;
+  border-radius: 18px;
+  background: #f6f8fc;
+  padding: 12px 14px;
+  color: inherit;
+  text-align: left;
+}
+.notifications-list button[data-unread] {
+  border-color: #dbe5f2;
+  background: white;
+}
+.notifications-icon {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.notifications-list button[data-icon='reveal'] .notifications-icon {
+  background: #fff1d9;
+  color: #7a4b00;
+}
+.notifications-list button[data-icon='like'] .notifications-icon,
+.notifications-list button[data-icon='match'] .notifications-icon {
+  background: #ffe7e5;
+  color: #8f2620;
+}
+.notifications-list button[data-icon='comment'] .notifications-icon {
+  background: #eaf6ef;
+  color: #1d6b4a;
+}
+.notifications-icon svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.notifications-list strong {
+  display: block;
+  color: var(--heading);
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+.notifications-list strong + span {
+  display: block;
+  overflow: hidden;
+  color: #56667b;
+  font-size: 12px;
+  line-height: 17px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.notifications-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.notifications-list button[data-unread] .notifications-dot {
+  background: #d8453c;
+}
+
+/* 우리 기록 모아보기 */
+.memories-year {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+}
+.memories-year button {
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: white;
+  color: var(--blue);
+  font-size: 22px;
+}
+.memories-year button:disabled {
+  color: #b7c2d1;
+}
+.memories-year strong {
+  color: var(--heading);
+  font-size: 16px;
+  font-weight: 900;
+  text-align: center;
+}
+.memories-total {
+  margin-top: 12px;
+  border-radius: 24px;
+  background: var(--blue);
+  padding: 20px;
+  color: white;
+  box-shadow: 0 14px 28px rgba(33, 107, 216, 0.2);
+}
+.memories-total h2 {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 800;
+}
+.memories-total-count {
+  margin-top: 6px;
+  font-size: 40px;
+  line-height: 46px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+.memories-total p:last-child {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 700;
+}
+.memories-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.memories-card {
+  min-width: 0;
+  border: 1px solid #e1e9f3;
+  border-radius: 20px;
+  background: white;
+  padding: 16px 14px;
+}
+.memories-card h2 {
+  color: var(--heading);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 900;
+}
+.memories-genres {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.memories-genres li > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+}
+.memories-bar {
+  display: block;
+  height: 8px;
+  margin-top: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf1f6;
+}
+.memories-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--blue);
+}
+.memories-split {
+  display: flex;
+  height: 14px;
+  margin-top: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf1f6;
+}
+.memories-split span:first-child {
+  background: var(--blue);
+}
+.memories-split span:last-child {
+  background: #c9d6e6;
+}
+.memories-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.memories-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+}
+.memories-legend li::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: #e1e9f3;
+}
+.memories-legend li[data-tone='theater']::before {
+  background: var(--blue);
+}
+.memories-legend li[data-tone='ott']::before {
+  background: #c9d6e6;
+}
+.memories-on-this-day {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  border: 1px solid #e1e9f3;
+  border-radius: 20px;
+  background: white;
+  padding: 14px 16px;
+  color: inherit;
+  box-shadow: 0 8px 22px rgba(31, 65, 114, 0.06);
+}
+.memories-on-this-day .poster,
+.memories-cover {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  overflow: hidden;
+  border-radius: 16px;
+}
+.memories-cover .watch-photo {
+  height: 100%;
+  aspect-ratio: auto !important;
+}
+.memories-on-this-day > span.min-w-0 {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+}
+.memories-eyebrow {
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 900;
+}
+.memories-on-this-day strong {
+  color: var(--heading);
+  font-size: 15px;
+  line-height: 21px;
+  font-weight: 850;
+}
+.memories-on-this-day strong + span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 17px;
+  font-weight: 650;
+}
+.memories-on-this-day > span:last-child {
+  color: #8593a6;
+  font-size: 20px;
+}
+.memories-dramas {
+  margin-top: 24px;
+}
+.memories-dramas ul {
+  margin-top: 10px;
+  border: 1px solid #e1e9f3;
+  border-radius: 20px;
+  background: white;
+  padding: 4px 16px;
+}
+.memories-dramas li {
+  padding: 12px 0;
+}
+.memories-dramas li + li {
+  border-top: 1px solid #edf1f6;
+}
+.memories-drama-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.memories-drama-head strong {
+  overflow: hidden;
+  color: var(--heading);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.memories-drama-head span {
+  flex: none;
+  color: #4a5a70;
+  font-size: 12px;
+  font-weight: 800;
+}
+.memories-continue {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  margin-top: 4px;
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 850;
+}
+
 /* 같이 고르기: the dark quick-pick card and the shared wish list. */
 .wish-pick {
   margin-top: 16px;

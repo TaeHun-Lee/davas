@@ -4,6 +4,7 @@ import { WATCH_COMMENT_MAX_LENGTH } from '@davas/shared';
 import { Repository } from 'typeorm';
 import { CommentEntity } from '../database/entities/comment.entity';
 import { DiaryEntity } from '../database/entities/diary.entity';
+import { WatchParticipantEntity } from '../database/entities/watch-participant.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { DiaryAccessService } from '../diaries/diary-access.service';
 
@@ -42,6 +43,9 @@ export class CommentsService {
     private readonly access: DiaryAccessService,
     @Optional()
     private readonly notifications?: NotificationsService,
+    @Optional()
+    @InjectRepository(WatchParticipantEntity)
+    private readonly participants?: Repository<WatchParticipantEntity>,
   ) {}
 
   async listForDiary(diaryId: string, userId = '') {
@@ -58,11 +62,19 @@ export class CommentsService {
     const diary = await this.ensureAccessibleDiary(diaryId, userId);
     const comment = this.comments.create({ diaryId, userId, content: normalizeContent(content) });
     const saved = await this.comments.save(comment);
-    await this.notifications?.notifyDiaryCommented({
-      diaryId,
-      recipientId: diary.userId,
-      actorId: userId,
-    });
+    // The author and everyone who confirmed watching hear about it, once per comment.
+    const watchers =
+      (await this.participants?.find({ where: { diaryId, status: 'CONFIRMED' } })) ?? [];
+    const recipients = new Set([diary.userId, ...watchers.map((row) => row.accountId)]);
+    recipients.delete(userId);
+    for (const recipientId of recipients) {
+      await this.notifications?.notifyDiaryCommented({
+        diaryId,
+        recipientId,
+        actorId: userId,
+        idempotencyKey: `DIARY_COMMENTED:${recipientId}:${saved.id}`,
+      });
+    }
     const savedWithUser = await this.comments.findOne({
       where: { id: saved.id, userId },
       relations: { user: true },

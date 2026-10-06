@@ -15,6 +15,7 @@ import {
   WatchShareEntity,
 } from '../database/entities';
 import { MediaModule } from '../media/media.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { TmdbClient } from '../media/tmdb.client';
 import { SpacesModule } from '../spaces/spaces.module';
 import { GroupRecommendationsController } from './group-recommendations.controller';
@@ -28,6 +29,7 @@ import { SpaceWishesService } from './space-wishes.service';
   imports: [
     AuthModule,
     MediaModule,
+    NotificationsModule,
     SpacesModule,
     TypeOrmModule.forFeature([
       RecommendationSessionEntity,

@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { CommentEntity } from '../database/entities/comment.entity';
 import { DiaryEntity } from '../database/entities/diary.entity';
+import { WatchParticipantEntity } from '../database/entities/watch-participant.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { CommentsController } from './comments.controller';
 import { CommentsService } from './comments.service';
@@ -13,7 +14,7 @@ import { DiariesModule } from '../diaries/diaries.module';
     AuthModule,
     NotificationsModule,
     DiariesModule,
-    TypeOrmModule.forFeature([CommentEntity, DiaryEntity]),
+    TypeOrmModule.forFeature([CommentEntity, DiaryEntity, WatchParticipantEntity]),
   ],
   controllers: [CommentsController],
   providers: [CommentsService],
