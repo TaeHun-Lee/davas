@@ -1755,8 +1755,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/spaces-design.spec.ts": {
-    "mtime": 1791273914.5637882,
-    "ast_hash": "fd69ecc8f42f7c036fda677961867a70",
+    "mtime": 1791274191.3924522,
+    "ast_hash": "6d820cffb02f5372fb69218ed656fa6d",
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/spaces.spec.ts": {
