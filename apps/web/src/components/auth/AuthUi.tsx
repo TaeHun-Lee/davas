@@ -3,7 +3,7 @@ import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from '@davas/shared';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FormEvent, ReactNode, useState } from 'react';
+import { FormEvent, ReactNode, useEffect, useRef, useState } from 'react';
 import { login, resetPassword } from '../../lib/api/auth';
 import { getApiBaseUrl } from '../../lib/api/base-url';
 import { CoreApiError } from '../../lib/api/core';
@@ -40,22 +40,48 @@ const koreanDate = (iso: string) =>
 
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
-    <main className="desktop-canvas flex min-h-[100dvh] items-center justify-center px-4 py-8">
+    <main className="auth-shell desktop-canvas flex min-h-[100dvh] items-center justify-center px-4 py-8">
       <div className="w-full max-w-[430px]">{children}</div>
     </main>
   );
 }
+/** The compact wordmark row at the top of each card, as on the C안 boards. */
 function Logo() {
   return (
-    <Image
-      src="/images/davas-logo.jpg"
-      alt="Davas"
-      width={112}
-      height={112}
-      priority
-      className="mx-auto h-24 w-24 rounded-3xl object-contain"
-    />
+    <p className="auth-logo">
+      <Image
+        src="/images/davas-logo-horizontal.png"
+        alt="Davas"
+        width={100}
+        height={32}
+        priority
+        style={{ width: 'auto', height: 32 }}
+      />
+    </p>
   );
+}
+/** What happened, as a tile: a check when done, a clock while an account waits. */
+function StatusTile({ tone }: { tone: 'done' | 'pending' }) {
+  return (
+    <span className="status-tile" data-tone={tone} aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path
+          d={tone === 'done' ? 'm5 12 5 5 9-10' : 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18ZM12 7v5l3 2'}
+        />
+      </svg>
+    </span>
+  );
+}
+/**
+ * When a card swaps for another (a waiting account, a finished reset), focus moves to its
+ * title so a screen reader announces the new card instead of losing the place.
+ */
+function useFocusOnShow<T extends HTMLElement>(shown: boolean) {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    if (shown) ref.current?.focus();
+  }, [shown]);
+  return ref;
 }
 function Field({
   label,
@@ -63,12 +89,14 @@ function Field({
   type = 'text',
   minLength,
   autoComplete,
+  inputClassName = '',
 }: {
   label: string;
   name: string;
   type?: string;
   minLength?: number;
   autoComplete?: string;
+  inputClassName?: string;
 }) {
   const [visible, setVisible] = useState(false);
   const password = type === 'password';
@@ -77,7 +105,7 @@ function Field({
       <span className="field-label">{label}</span>
       <div className="relative">
         <input
-          className="text-input pr-12"
+          className={`text-input pr-12 ${inputClassName}`}
           required
           name={name}
           type={password && visible ? 'text' : type}
@@ -87,7 +115,7 @@ function Field({
         {password ? (
           <button
             type="button"
-            aria-label={visible ? '비밀번호 숨기기' : '비밀번호 보기'}
+            aria-label="비밀번호 보기"
             aria-pressed={visible}
             onClick={() => setVisible(!visible)}
             className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-xl text-xs font-bold text-[var(--blue)]"
@@ -110,6 +138,7 @@ export function LoginCard() {
     password: string;
     until: string | null;
   } | null>(null);
+  const pendingTitle = useFocusOnShow<HTMLHeadingElement>(Boolean(pending));
   const enter = () => {
     router.replace(safeReturn(params.get('returnTo'), '/'));
     router.refresh();
@@ -151,12 +180,13 @@ export function LoginCard() {
   };
   if (pending)
     return (
-      <section className="core-card p-7" aria-labelledby="pending-deletion-title">
+      <section className="core-card auth-card text-center" aria-labelledby="pending-deletion-title">
         <Logo />
-        <h1 id="pending-deletion-title" className="page-title mt-5 text-center">
+        <StatusTile tone="pending" />
+        <h1 id="pending-deletion-title" ref={pendingTitle} tabIndex={-1} className="auth-title">
           삭제를 기다리는 계정이에요
         </h1>
-        <p className="page-description text-center">
+        <p className="auth-body" role="status">
           {pending.until ? `${koreanDate(pending.until)}에 ` : '곧 '}기록과 사진이 영구 삭제돼요.
           되살리면 지금 그대로 다시 쓸 수 있어요.
         </p>
@@ -180,10 +210,12 @@ export function LoginCard() {
   const signup = new URLSearchParams();
   if (params.get('returnTo')) signup.set('returnTo', params.get('returnTo')!);
   return (
-    <section className="core-card p-7">
+    <section className="core-card auth-card" aria-labelledby="login-title">
       <Logo />
-      <h1 className="page-title mt-5 text-center">다시 만나 반가워요</h1>
-      <p className="page-description text-center">친구들과 본 작품을 기록하고 나눠보세요.</p>
+      <h1 id="login-title" className="auth-title">
+        다시 만나 반가워요
+      </h1>
+      <p className="auth-lead">친구들과 본 작품을 기록하고 나눠보세요.</p>
       <form className="mt-7 space-y-4" onSubmit={submit}>
         <Field label="이메일" name="email" type="email" autoComplete="email" />
         <Field
@@ -230,6 +262,7 @@ export function ResetPasswordCard() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const doneTitle = useFocusOnShow<HTMLHeadingElement>(done);
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -255,12 +288,13 @@ export function ResetPasswordCard() {
   };
   if (done)
     return (
-      <section className="core-card p-7 text-center" aria-labelledby="reset-done-title">
+      <section className="core-card auth-card text-center" aria-labelledby="reset-done-title">
         <Logo />
-        <h1 id="reset-done-title" className="page-title mt-5">
+        <StatusTile tone="done" />
+        <h1 id="reset-done-title" ref={doneTitle} tabIndex={-1} className="auth-title">
           새 비밀번호로 바꿨어요
         </h1>
-        <p className="page-description">
+        <p className="auth-body" role="status">
           사용한 복구 코드는 이제 쓸 수 없어요. 로그인한 뒤 설정에서 새 복구 코드를 만들어 두세요.
         </p>
         <Link className="commit-button mt-6" href="/login">
@@ -269,17 +303,20 @@ export function ResetPasswordCard() {
       </section>
     );
   return (
-    <section className="core-card p-7" aria-labelledby="reset-title">
+    <section className="core-card auth-card" aria-labelledby="reset-title">
       <Logo />
-      <h1 id="reset-title" className="page-title mt-5 text-center">
+      <h1 id="reset-title" className="auth-title">
         비밀번호 다시 정하기
       </h1>
-      <p className="page-description text-center">
-        설정에서 만들어 둔 복구 코드로 새 비밀번호를 정할 수 있어요.
-      </p>
+      <p className="auth-lead">설정에서 만들어 둔 복구 코드로 새 비밀번호를 정할 수 있어요.</p>
       <form className="mt-7 space-y-4" onSubmit={submit}>
         <Field label="이메일" name="email" type="email" autoComplete="email" />
-        <Field label="복구 코드" name="recoveryCode" autoComplete="off" />
+        <Field
+          label="복구 코드"
+          name="recoveryCode"
+          autoComplete="off"
+          inputClassName="recovery-code-input"
+        />
         <Field
           label="새 비밀번호 (8자 이상)"
           name="newPassword"
@@ -369,10 +406,12 @@ export function SignupCard() {
     }
   };
   return (
-    <section className="core-card p-7">
+    <section className="core-card auth-card" aria-labelledby="signup-title">
       <Logo />
-      <h1 className="page-title mt-5 text-center">계정 만들기</h1>
-      <p className="page-description text-center">친구들과 기록을 나눌 최소 정보만 받아요.</p>
+      <h1 id="signup-title" className="auth-title">
+        계정 만들기
+      </h1>
+      <p className="auth-lead">친구들과 기록을 나눌 최소 정보만 받아요.</p>
       {!friendInviteToken ? (
         <div className="mt-6">
           <label className="field-label" htmlFor="invite-code">

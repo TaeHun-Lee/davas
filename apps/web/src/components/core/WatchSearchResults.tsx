@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type {
   MediaType,
   WatchSearchResponse,
@@ -27,6 +27,8 @@ export function WatchSearchResults({
   sourceKind,
   returnTo,
   onCount,
+  listLabel = '검색 결과',
+  empty,
 }: {
   scope: WatchSearchScope;
   q: string;
@@ -35,6 +37,9 @@ export function WatchSearchResults({
   returnTo: string;
   /** "2개", or "20개 이상" while more pages wait; null while nothing is shown. */
   onCount?: (label: string | null) => void;
+  listLabel?: string;
+  /** What to say when there is nothing yet and no words were typed (the 내 기록 tab). */
+  empty?: { title: string; description: string; action?: ReactNode };
 }) {
   const { state } = useActiveSpace();
   const spaceId = state.status === 'ready' ? (state.space?.id ?? null) : null;
@@ -109,6 +114,8 @@ export function WatchSearchResults({
         }
       />
     );
+  if (!items.length && empty && !q)
+    return <EmptyState title={empty.title} description={empty.description} action={empty.action} />;
   if (!items.length)
     return (
       <EmptyState
@@ -119,7 +126,7 @@ export function WatchSearchResults({
 
   return (
     <>
-      <ul className="search-results" aria-label="검색 결과">
+      <ul className="search-results" aria-label={listLabel}>
         {items.map(({ watchEvent, match }) => {
           const snippet = match && match.field !== 'title' ? searchSnippet(match.text, q) : null;
           return (

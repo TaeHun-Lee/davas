@@ -54,3 +54,43 @@ describe('design review fixes', () => {
     assert.match(source('components/core/WatchSearchResults.tsx'), /`\$\{items\.length\}개/);
   });
 });
+
+describe('design review, third round', () => {
+  it('draws watched days as photo tiles inside a calendar card', () => {
+    const calendar = source('components/spaces/SpaceCalendarView.tsx');
+    assert.match(calendar, /<div className="calendar-card">/);
+    assert.match(calendar, /className="calendar-day calendar-day-filled"/);
+    assert.match(calendar, /className="calendar-day-date"/);
+    assert.match(calendar, /`\$\{record\.authorName\}님 기록`/);
+    // A day without records is a plain date, not a disabled button.
+    assert.doesNotMatch(calendar, /disabled=\{!day\}/);
+  });
+
+  it('lays the year card and its saved image out as on the boards', () => {
+    const card = source('components/spaces/YearRecapCard.tsx');
+    const image = source('components/spaces/recap-image.ts');
+    assert.match(card, /\{totals\.records\}편을 함께 봤어요/);
+    assert.match(card, /<h3 className="recap-subtitle">별점 상위<\/h3>/);
+    assert.match(card, /data-busiest=/);
+    assert.match(image, /addColorStop\(0, ACCENT\)/);
+    assert.match(image, /\.slice\(0, 6\)/);
+    assert.match(image, /index % 2/);
+    assert.doesNotMatch(image, /우리 기록 모아보기/);
+  });
+
+  it('gives the account cards the wordmark row, status tiles and focus on swap', () => {
+    const auth = source('components/auth/AuthUi.tsx');
+    assert.match(auth, /src="\/images\/davas-logo-horizontal\.png"/);
+    assert.match(auth, /<StatusTile tone="done" \/>/);
+    assert.match(auth, /<StatusTile tone="pending" \/>/);
+    assert.match(auth, /ref=\{doneTitle\} tabIndex=\{-1\}/);
+    assert.match(auth, /aria-label="비밀번호 보기"\s+aria-pressed=\{visible\}/);
+  });
+
+  it('lists 내 기록 in the record search cards', () => {
+    const mine = source('components/core/RecordScreens.tsx');
+    const screen = mine.slice(mine.indexOf('export function MineScreen'));
+    assert.match(screen, /<WatchSearchResults\s+scope="mine"/);
+    assert.doesNotMatch(screen.slice(0, screen.indexOf('\n}\n')), /새 기록 남기기|RecordList/);
+  });
+});

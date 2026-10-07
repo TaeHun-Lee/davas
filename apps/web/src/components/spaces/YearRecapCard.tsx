@@ -48,22 +48,27 @@ export function YearRecapCard({ data, spaceName }: { data: SpaceMemories; spaceN
     <section className="recap-card" aria-labelledby="recap-title">
       <p className="recap-eyebrow">{spaceName}</p>
       <h2 id="recap-title">{data.year}년 우리 결산</h2>
-      <p className="recap-total">
-        <strong>{totals.records}</strong>편을 함께 봤어요
-      </p>
+      <p className="recap-total">{totals.records}편을 함께 봤어요</p>
       <p className="recap-split">
         영화 {totals.movies}편 · 드라마 {totals.series}편 · 사진 {totals.photos}장
       </p>
       <div
         className="recap-months"
         role="img"
-        aria-label={`달마다 본 편수: ${recap.monthly
-          .map((count, index) => `${index + 1}월 ${count}편`)
-          .join(', ')}`}
+        aria-label={`월별로 본 작품 수${
+          recap.busiestMonth
+            ? `, ${recap.busiestMonth.month}월이 ${recap.busiestMonth.count}편으로 가장 많아요`
+            : ''
+        }: ${recap.monthly.map((count, index) => `${index + 1}월 ${count}편`).join(', ')}`}
       >
         {recap.monthly.map((count, index) => (
-          <span key={index} data-empty={count ? undefined : true}>
-            <span style={{ height: `${Math.max(6, Math.round((count / top) * 100))}%` }} />
+          <span
+            key={index}
+            data-empty={count ? undefined : true}
+            data-busiest={recap.busiestMonth?.month === index + 1 || undefined}
+          >
+            {/* The busiest month reaches the top; an empty one keeps a sliver. */}
+            <span style={{ height: count ? `${Math.round((count / top) * 80)}px` : '4px' }} />
             <small>{index + 1}</small>
           </span>
         ))}
@@ -78,26 +83,43 @@ export function YearRecapCard({ data, spaceName }: { data: SpaceMemories; spaceN
           ))}
         </dl>
       ) : null}
-      {recap.topRated.length > 1 ? (
-        <ol className="recap-top" aria-label="우리 별점이 높았던 작품">
-          {recap.topRated.map((item) => (
-            <li key={item.mediaId}>
-              <span>{item.title}</span>
-              <span>★ {item.averageRating.toFixed(1)}</span>
-            </li>
-          ))}
-        </ol>
+      {recap.topRated.length ? (
+        <>
+          <h3 className="recap-subtitle">별점 상위</h3>
+          <ol className="recap-top">
+            {recap.topRated.map((item, index) => (
+              <li key={item.mediaId}>
+                <span className="recap-rank">{index + 1}</span>
+                <span className="recap-poster" aria-hidden="true">
+                  {item.posterUrl ? (
+                    <img src={item.posterUrl} alt="" loading="lazy" />
+                  ) : (
+                    [...item.title][0]
+                  )}
+                </span>
+                <span className="recap-top-title">{item.title}</span>
+                <span className="recap-top-score">★ {item.averageRating.toFixed(1)}</span>
+              </li>
+            ))}
+          </ol>
+        </>
       ) : null}
       {recap.coverPhotos.length ? (
-        <div className="recap-photos" aria-label="올해의 사진">
-          {recap.coverPhotos.map((photo) => (
-            <span key={photo.id}>
-              <WatchPhoto photo={photo} variant="thumb" alt="" />
-            </span>
-          ))}
-        </div>
+        <>
+          <h3 className="recap-subtitle">대표 사진</h3>
+          <ul className="recap-photos">
+            {recap.coverPhotos.map((photo, index) => (
+              <li key={photo.id}>
+                <WatchPhoto photo={photo} variant="thumb" alt={`대표 사진 ${index + 1}`} />
+              </li>
+            ))}
+          </ul>
+        </>
       ) : null}
       <button type="button" className="recap-save" disabled={busy} onClick={save}>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+        </svg>
         {busy ? '이미지 만드는 중…' : '카드 이미지로 저장'}
       </button>
       {message ? (

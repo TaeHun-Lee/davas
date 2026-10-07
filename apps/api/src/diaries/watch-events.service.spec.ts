@@ -1104,6 +1104,8 @@ describe('WatchEventsService', () => {
     );
     assert.equal(march.days[0].records[0].watchEventId, early.id);
     assert.equal(march.days[0].records[0].isMine, false);
+    // Minho sees whose record it is ("jiwoo님 기록") while Jiwoo is in the space.
+    assert.equal(march.days[0].records[0].authorName, 'jiwoo');
     await assert.rejects(() => memories.calendar('space-1', 'stranger', '2026-03'));
   });
 

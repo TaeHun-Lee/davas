@@ -1400,10 +1400,10 @@ a {
 }
 .memories-year button {
   height: 44px;
-  border: 1px solid var(--border);
+  border: 0;
   border-radius: 14px;
-  background: white;
-  color: var(--blue);
+  background: transparent;
+  color: var(--heading);
   font-size: 22px;
 }
 .memories-year button:disabled {
@@ -1428,54 +1428,62 @@ a {
   font-size: 14px;
   font-weight: 750;
 }
-.memories-view button[aria-pressed='true'] {
-  background: var(--blue-soft);
+.segmented.memories-view button[aria-pressed='true'] {
+  background: white;
   color: var(--blue-ink);
-  font-weight: 850;
+  font-weight: 900;
+  box-shadow: 0 4px 12px rgba(31, 65, 114, 0.1);
 }
-/* The year-end card; the saved image draws the same highlights. */
+/* As on the C안 board: a grey track with the chosen view raised in white. */
+.segmented.memories-view {
+  gap: 4px;
+  border: 0;
+  background: #e9eff7;
+}
+.segmented.memories-view button:not([aria-pressed='true']) {
+  color: #4a5a70;
+}
+/* The year-end card, as on the C안 board; the saved image draws the same highlights. */
 .recap-card {
-  margin-top: 12px;
-  border-radius: 24px;
-  background: linear-gradient(150deg, #16478f, #2f7eea);
-  padding: 20px;
+  margin-top: 8px;
+  border-radius: 26px;
+  background: linear-gradient(160deg, var(--blue) 0%, #144286 100%);
+  padding: 22px 18px 18px;
   color: white;
-  box-shadow: 0 14px 28px rgba(33, 107, 216, 0.22);
+  box-shadow: 0 18px 36px rgba(22, 45, 90, 0.28);
 }
 .recap-eyebrow {
-  font-size: 12px;
-  font-weight: 750;
-  opacity: 0.85;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 800;
 }
 .recap-card h2 {
-  margin-top: 2px;
-  font-size: 20px;
-  line-height: 26px;
+  margin-top: 4px;
+  font-size: 18px;
+  line-height: 25px;
   font-weight: 900;
 }
 .recap-total {
   margin-top: 10px;
-  font-size: 15px;
-  font-weight: 800;
-}
-.recap-total strong {
-  margin-right: 4px;
-  font-size: 44px;
-  line-height: 48px;
+  font-size: 30px;
+  line-height: 38px;
   font-weight: 900;
+  letter-spacing: -0.03em;
+  word-break: keep-all;
 }
 .recap-split {
-  margin-top: 2px;
-  font-size: 12px;
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 19px;
   font-weight: 700;
-  opacity: 0.9;
 }
 .recap-months {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 4px;
-  height: 92px;
-  margin-top: 14px;
+  align-items: end;
+  gap: 5px;
+  height: 104px;
+  margin-top: 18px;
 }
 .recap-months > span {
   display: flex;
@@ -1485,8 +1493,12 @@ a {
   gap: 4px;
 }
 .recap-months > span > span {
+  display: block;
   width: 100%;
-  border-radius: 6px;
+  border-radius: 6px 6px 3px 3px;
+  background: rgba(255, 255, 255, 0.62);
+}
+.recap-months > span[data-busiest] > span {
   background: white;
 }
 .recap-months > span[data-empty] > span {
@@ -1494,54 +1506,97 @@ a {
 }
 .recap-months small {
   font-size: 12px;
-  font-weight: 750;
-  opacity: 0.85;
+  line-height: 14px;
+  font-weight: 800;
 }
 .recap-lines {
-  display: grid;
-  gap: 8px;
-  margin-top: 16px;
+  margin-top: 18px;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.16);
+  padding: 4px 14px;
 }
 .recap-lines div {
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.12);
-  padding: 8px 12px;
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.recap-lines div + div {
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
 }
 .recap-lines dt {
   font-size: 12px;
-  font-weight: 750;
-  opacity: 0.8;
+  line-height: 17px;
+  font-weight: 700;
 }
 .recap-lines dd {
-  overflow-wrap: anywhere;
+  overflow: hidden;
   font-size: 14px;
   line-height: 20px;
   font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recap-subtitle {
+  margin-top: 18px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 900;
 }
 .recap-top {
-  margin-top: 10px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.12);
-  padding: 8px 12px;
-  font-size: 13px;
-  font-weight: 800;
-  list-style: decimal inside;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
 }
 .recap-top li {
-  display: list-item;
-  padding: 3px 0;
+  display: grid;
+  grid-template-columns: 24px 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
 }
-.recap-top li span + span {
-  margin-left: 6px;
-  opacity: 0.85;
+.recap-rank {
+  font-size: 16px;
+  font-weight: 900;
+  text-align: center;
+}
+.recap-poster {
+  display: flex;
+  width: 32px;
+  height: 48px;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+.recap-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.recap-top-title {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recap-top-score {
+  font-size: 14px;
+  font-weight: 900;
 }
 .recap-photos {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
-  margin-top: 12px;
+  margin-top: 8px;
 }
-.recap-photos > span {
+.recap-photos > li {
   overflow: hidden;
   border-radius: 12px;
   aspect-ratio: 1 / 1;
@@ -1551,15 +1606,29 @@ a {
   aspect-ratio: auto !important;
 }
 .recap-save {
+  display: flex;
   width: 100%;
-  min-height: 48px;
-  margin-top: 16px;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
   border: 0;
   border-radius: 15px;
   background: white;
   color: var(--blue-ink);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 900;
+  cursor: pointer;
+}
+.recap-save svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .recap-save:disabled {
   opacity: 0.7;
@@ -1569,136 +1638,204 @@ a {
   font-size: 12px;
   font-weight: 750;
 }
-/* 달력: a Sunday-first month grid, each watched day showing its first record. */
-.calendar .page-description {
-  margin-top: 10px;
+/* 달력, as on the C안 board: a white card with the month, and each watched day shown as its
+   first record's photo or poster with the date on it. */
+.calendar-card {
+  border: 1px solid #e1e9f3;
+  border-radius: 22px;
+  background: var(--card);
+  padding: 8px 12px 14px;
+  box-shadow: 0 10px 26px rgba(31, 65, 114, 0.06);
+}
+.calendar-month {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.calendar-month h2 {
+  color: var(--heading);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 900;
+}
+.calendar-month button {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--heading);
+  font-size: 22px;
+  cursor: pointer;
+}
+.calendar-month button:disabled {
+  color: #b3bdca;
+  cursor: not-allowed;
 }
 .calendar-weekdays,
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
+  gap: 6px;
 }
 .calendar-weekdays {
-  margin-top: 12px;
-  color: var(--muted);
+  margin-top: 4px;
+  color: #56667b;
   font-size: 12px;
+  line-height: 20px;
   font-weight: 800;
   text-align: center;
 }
 .calendar-weekdays span:first-child {
   color: #b63b36;
 }
+.calendar-weekdays span:last-child {
+  color: var(--blue-ink);
+}
 .calendar-grid {
   margin-top: 6px;
+}
+.calendar-grid[data-loading] {
+  opacity: 0.55;
 }
 .calendar-day {
   position: relative;
   display: flex;
-  min-height: 64px;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  border: 1px solid transparent;
+  height: 56px;
+  min-width: 0;
+  box-sizing: border-box;
+  align-items: flex-start;
+  justify-content: center;
   border-radius: 12px;
-  background: white;
-  padding: 4px 2px;
-  color: var(--heading);
+  padding-top: 6px;
+  color: #33445c;
+  font-size: 13px;
+  font-weight: 750;
 }
-.calendar-day:disabled {
-  background: transparent;
-  color: var(--muted);
+.calendar-day[data-tone='sun'] {
+  color: #b63b36;
+}
+.calendar-day[data-tone='sat'] {
+  color: var(--blue-ink);
 }
 .calendar-day[data-today] {
-  border-color: var(--blue);
+  border: 2px solid var(--heading);
 }
-.calendar-day[aria-pressed='true'] {
-  background: var(--blue-soft);
-  border-color: var(--blue);
-}
-.calendar-date {
-  font-size: 12px;
-  font-weight: 850;
-}
-.calendar-thumb {
-  position: relative;
+.calendar-day-filled {
   display: block;
-  width: 30px;
-  height: 36px;
+  width: 100%;
   overflow: hidden;
-  border-radius: 7px;
-  background: #e6ebf2;
+  border: 0;
+  background: #c9d3df;
+  padding: 0;
+  cursor: pointer;
 }
-.calendar-thumb img,
-.calendar-thumb .watch-photo {
+.calendar-day-filled[data-today] {
+  border: 0;
+  box-shadow: 0 0 0 2px var(--heading);
+}
+.calendar-day-filled[aria-pressed='true'] {
+  box-shadow: 0 0 0 3px var(--blue);
+}
+.calendar-day-filled img,
+.calendar-day-filled .watch-photo {
   width: 100%;
   height: 100%;
   object-fit: cover;
   aspect-ratio: auto !important;
 }
-.calendar-thumb i {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  border-radius: 6px 0 0 0;
-  background: rgba(10, 20, 38, 0.72);
-  padding: 0 3px;
+.calendar-day-fallback {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  background: #5a6b85;
   color: white;
-  font-size: 10px;
-  font-style: normal;
+  font-size: 16px;
   font-weight: 900;
 }
-.calendar-dot {
-  display: block;
-  width: 8px;
-  height: 8px;
-  margin: 14px auto 0;
-  border-radius: 50%;
-  background: var(--blue);
+.calendar-day-date {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  border-radius: 6px;
+  background: rgba(10, 20, 38, 0.66);
+  padding: 0 5px;
+  color: white;
+  font-size: 12px;
+  line-height: 17px;
+  font-weight: 800;
+}
+.calendar-day-more {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  border-radius: 6px;
+  background: white;
+  padding: 0 4px;
+  color: var(--heading);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 900;
 }
 .calendar-list {
-  margin-top: 16px;
+  margin-top: 20px;
+}
+.calendar-list h2 {
+  color: var(--heading);
+  font-size: 17px;
+  line-height: 24px;
+  font-weight: 850;
 }
 .calendar-list ul {
-  margin-top: 8px;
+  margin-top: 10px;
+  border: 1px solid #e1e9f3;
+  border-radius: 20px;
+  background: var(--card);
+  padding: 4px 14px;
 }
 .calendar-list li + li {
-  margin-top: 8px;
+  border-top: 1px solid #edf1f6;
 }
 .calendar-list a {
-  display: flex;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 16px;
   align-items: center;
   gap: 12px;
-  border-radius: 18px;
-  background: white;
-  padding: 10px 12px;
+  padding: 10px 0;
   color: inherit;
-  box-shadow: 0 6px 18px rgba(31, 65, 114, 0.06);
 }
 .calendar-list .poster {
   width: 40px;
   height: 60px;
-  flex: none;
   border-radius: 9px;
 }
 .calendar-list a > span.min-w-0 {
   display: flex;
-  flex: 1 1 auto;
   flex-direction: column;
   gap: 2px;
 }
 .calendar-list strong {
   overflow: hidden;
   color: var(--heading);
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 21px;
   font-weight: 850;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .calendar-list a > span.min-w-0 > span {
-  color: var(--muted);
+  color: #56667b;
   font-size: 12px;
+  line-height: 17px;
   font-weight: 700;
+}
+.calendar-list a > span:last-child {
+  color: #65758a;
+  font-size: 20px;
 }
 .memories-total {
   margin-top: 12px;
@@ -5162,6 +5299,99 @@ label:has(> input.sr-only:focus-visible) {
   min-height: 52px;
   margin-top: 20px;
   font-size: 15px;
+}
+/* 내 기록: a search-field-looking link into the record search. */
+.mine-search-link {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: white;
+  padding: 0 14px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 650;
+}
+.mine-search-link .search-field-icon {
+  flex: none;
+}
+/* Login, reset, restore and signup cards, as on the C안 auth boards. */
+.auth-shell {
+  background: var(--app-bg);
+}
+.auth-card {
+  border: 1px solid #e1e9f3;
+  padding: 28px 24px 22px;
+}
+.auth-logo {
+  display: flex;
+  justify-content: center;
+}
+.auth-title {
+  margin-top: 20px;
+  color: var(--heading);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 900;
+  text-align: center;
+  outline: none;
+}
+.status-tile + .auth-title {
+  margin-top: 16px;
+}
+.auth-lead {
+  margin-top: 6px;
+  color: #65758a;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 600;
+  text-align: center;
+  word-break: keep-all;
+}
+.auth-body {
+  margin-top: 8px;
+  color: #4a5a70;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 600;
+  word-break: keep-all;
+}
+.auth-card .commit-button {
+  min-height: 52px;
+  font-size: 15px;
+}
+.status-tile {
+  display: flex;
+  width: 56px;
+  height: 56px;
+  margin: 24px auto 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: #eaf6ef;
+  color: #1d6b4a;
+}
+.status-tile[data-tone='pending'] {
+  background: #fff1d9;
+  color: #7a4b00;
+}
+.status-tile svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.recovery-code-input {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 /* Space invite, as on the C안 invite boards: one centred card. */
 .invite-page {

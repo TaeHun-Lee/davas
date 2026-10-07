@@ -494,6 +494,8 @@ export type SpaceCalendar = {
       mediaType: MediaType | null;
       sourceKind: WatchSourceKind | null;
       isMine: boolean;
+      /** Whose record it is ("민지님 기록"), while they are still in the space. */
+      authorName: string | null;
       coverPhoto: WatchPhotoView | null;
     }>;
   }>;

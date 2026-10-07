@@ -13,6 +13,7 @@ import {
   MediaTypeControl,
   RecordCard,
   SearchField,
+  SearchIcon,
   TaskShell,
   ViewingMethodControl,
 } from './CoreUi';
@@ -204,26 +205,37 @@ export function FeedScreen() {
   );
 }
 
+/**
+ * 내 기록: every record I wrote or confirmed being on, newest first, in the same cards as the
+ * record search. Starting a record is the bottom bar's 기록하기.
+ */
 export function MineScreen() {
   return (
     <CoreAppShell>
       <h1 className="page-title">내 기록</h1>
-      <p className="page-description">공개 여부와 관계없이 내가 본 작품을 모아봐요.</p>
-      <div className="mt-5">
-        <Link href="/search?scope=mine" aria-label="내 기록 검색">
-          <SearchField
-            value=""
-            onChange={() => undefined}
-            label="내 기록 검색"
-            placeholder="내 기록 검색"
-          />
-        </Link>
-      </div>
-      <Link href="/records/new" className="secondary-button mt-4 w-full">
-        ＋ 새 기록 남기기
+      <p className="page-description">내가 쓰거나 함께 봤다고 확인한 기록이에요.</p>
+      <Link href="/search?scope=mine" className="mine-search-link">
+        <SearchIcon className="search-field-icon" />
+        <span>제목, 함께 본 사람, 장소, 메모, 리뷰로 찾기</span>
       </Link>
       <h2 className="section-title mb-3 mt-7">최근 본 작품</h2>
-      <RecordList scope="mine" />
+      <WatchSearchResults
+        scope="mine"
+        q=""
+        mediaType={null}
+        sourceKind={null}
+        returnTo="/me"
+        listLabel="최근 본 작품"
+        empty={{
+          title: '아직 남긴 기록이 없어요',
+          description: '본 작품을 기록하면 여기에 모여요.',
+          action: (
+            <Link className="primary-button" href="/records/new?step=find">
+              첫 기록 남기기
+            </Link>
+          ),
+        }}
+      />
     </CoreAppShell>
   );
 }

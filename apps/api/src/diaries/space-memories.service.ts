@@ -270,7 +270,7 @@ export class SpaceMemoriesService {
     const [shares, memberships] = await Promise.all([
       this.shares.find({
         where: { spaceId, revokedAt: IsNull(), diary: { deletedAt: IsNull() } },
-        relations: { diary: { media: true, watchSource: true, watchPhotos: true } },
+        relations: { diary: { media: true, watchSource: true, watchPhotos: true, user: true } },
       }),
       this.spaceAccess.activeMembersInSpaces([spaceId]),
     ]);
@@ -296,6 +296,7 @@ export class SpaceMemoriesService {
         // How it was watched is only known while its author is still in the space.
         sourceKind: memberIds.has(diary.userId) ? (diary.watchSource?.kind ?? null) : null,
         isMine: diary.userId === viewerId,
+        authorName: memberIds.has(diary.userId) ? (diary.user?.nickname ?? null) : null,
         coverPhoto: cover ? this.photos.view(cover, viewerId) : null,
       });
       days.set(diary.watchedDate, records);
