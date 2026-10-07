@@ -246,8 +246,10 @@ check(
 );
 
 const development = read('docs/development.md');
+// The search row lists several scopes; a bare `|` between them would split the table cell.
+const searchRow = development.split('\n').find((line) => line.startsWith('| `/search'));
 check(
-  development.includes('`/search?scope=friends` 또는 `/search?scope=mine`'),
+  Boolean(searchRow) && (searchRow.match(/(?<!\\)\|/g) ?? []).length === 3,
   'development route table must not contain an unescaped scope pipe',
 );
 const product = read('docs/product/README.md');

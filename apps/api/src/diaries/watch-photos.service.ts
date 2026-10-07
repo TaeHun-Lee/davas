@@ -110,14 +110,18 @@ export class WatchPhotosService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Makes `photoIds` (in order) the record's photos. Each id must already belong to this record
-   * or be a staged photo uploaded by `accountId`; photos left out are removed with their files.
+   * Makes `photoIds` (in order) `accountId`'s own photos on the record. Each id must be a photo
+   * of this record or one `accountId` staged; their own photos left out are removed with their
+   * files. Everyone manages only their own photos: other people's stay whatever the list says.
+   * The author's photos come first, then each other person's in the order they first added
+   * some, ten at most in all. Returns how many photos were newly added.
    */
   async replaceForDiary(
     manager: EntityManager,
     diaryId: string,
     accountId: string,
     photoIds: string[],
+    authorId = accountId,
   ) {
     const ids = [...new Set(photoIds)];
     if (ids.length > WATCH_PHOTO_MAX_COUNT) {
@@ -137,23 +141,49 @@ export class WatchPhotosService implements OnModuleInit, OnModuleDestroy {
         '올린 사진 일부를 찾을 수 없어요. 사진을 다시 올려 주세요.',
       );
     }
+    const byId = new Map(usable.map((photo) => [photo.id, photo]));
+    const mine = ids.map((id) => byId.get(id)!).filter((photo) => photo.uploaderId === accountId);
+    const others = current.filter((photo) => photo.uploaderId !== accountId);
+    if (mine.length + others.length > WATCH_PHOTO_MAX_COUNT) {
+      throw apiError(
+        400,
+        'TOO_MANY_PHOTOS',
+        `함께 올린 사진까지 기록 하나에 10장이에요. 지금은 ${Math.max(0, WATCH_PHOTO_MAX_COUNT - others.length)}장까지 올릴 수 있어요.`,
+      );
+    }
 
-    const removed = current.filter((photo) => !ids.includes(photo.id));
+    const removed = current.filter(
+      (photo) => photo.uploaderId === accountId && !mine.includes(photo),
+    );
     if (removed.length) {
       await repo.delete({ id: In(removed.map((photo) => photo.id)) });
       await this.enqueueFileCleanup(manager, removed);
     }
+    const added = mine.filter((photo) => photo.diaryId !== diaryId).length;
     const now = new Date();
-    const byId = new Map(usable.map((photo) => [photo.id, photo]));
-    await repo.save(
-      ids.map((id, position) =>
-        Object.assign(byId.get(id)!, {
-          diaryId,
-          position,
-          attachedAt: byId.get(id)!.attachedAt ?? now,
-        }),
-      ),
-    );
+    for (const photo of mine)
+      Object.assign(photo, { diaryId, attachedAt: photo.attachedAt ?? now });
+
+    const groups = new Map<string, WatchPhotoEntity[]>();
+    for (const photo of [...others].sort((left, right) => left.position - right.position)) {
+      groups.set(photo.uploaderId, [...(groups.get(photo.uploaderId) ?? []), photo]);
+    }
+    if (mine.length) groups.set(accountId, mine);
+    const firstAdded = (photos: WatchPhotoEntity[]) =>
+      Math.min(...photos.map((photo) => (photo.attachedAt ?? now).getTime()));
+    const ordered = [...groups.entries()]
+      .sort(([left, leftPhotos], [right, rightPhotos]) =>
+        left === authorId
+          ? -1
+          : right === authorId
+            ? 1
+            : firstAdded(leftPhotos) - firstAdded(rightPhotos),
+      )
+      .flatMap(([, photos]) => photos);
+    if (ordered.length) {
+      await repo.save(ordered.map((photo, position) => Object.assign(photo, { position })));
+    }
+    return added;
   }
 
   async open(photoId: string, variant: WatchPhotoVariant, viewerId: string) {

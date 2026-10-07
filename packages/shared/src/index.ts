@@ -397,6 +397,27 @@ export type SpaceWishPick = {
 };
 
 /** "우리 기록 모아보기" for one space and year. */
+/** The year-end card: the year's shape at a glance, built from the same records. */
+export type SpaceRecap = {
+  /** Records per month, January first. */
+  monthly: number[];
+  busiestMonth: { month: number; count: number } | null;
+  firstWatch: { watchEventId: string; title: string; watchedDate: string } | null;
+  latestWatch: { watchEventId: string; title: string; watchedDate: string } | null;
+  /** Titles we rated highest on average; locked blind ratings never count. */
+  topRated: Array<{
+    mediaId: string;
+    title: string;
+    posterUrl: string | null;
+    averageRating: number;
+    ratingCount: number;
+  }>;
+  favoritePlace: { name: string; count: number } | null;
+  favoriteService: { name: string; count: number } | null;
+  /** The first photo of up to four of the year's records, newest first. */
+  coverPhotos: WatchPhotoView[];
+};
+
 export type SpaceMemories = {
   year: number;
   totals: { records: number; movies: number; series: number; photos: number };
@@ -423,6 +444,41 @@ export type SpaceMemories = {
     episodeTotal: number | null;
     providerName: string | null;
     watchedDate: string;
+  }>;
+  recap: SpaceRecap;
+};
+
+export const WATCH_SEARCH_SCOPES = ['mine', 'space'] as const;
+export type WatchSearchScope = (typeof WATCH_SEARCH_SCOPES)[number];
+/** Where a search found its words, in the order they are checked. */
+export type WatchSearchMatchField = 'title' | 'people' | 'place' | 'service' | 'memo' | 'review';
+
+export type WatchSearchResponse = {
+  items: Array<{
+    watchEvent: WatchEventView;
+    /** The first field that matched, and its text; null when there were no words. */
+    match: { field: WatchSearchMatchField; text: string } | null;
+  }>;
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
+/** A month of the space's shared records by the day they were watched. */
+export type SpaceCalendar = {
+  /** `2026-10` */
+  month: string;
+  days: Array<{
+    /** `2026-10-04` */
+    date: string;
+    records: Array<{
+      watchEventId: string;
+      title: string;
+      posterUrl: string | null;
+      mediaType: MediaType | null;
+      sourceKind: WatchSourceKind | null;
+      isMine: boolean;
+      coverPhoto: WatchPhotoView | null;
+    }>;
   }>;
 };
 

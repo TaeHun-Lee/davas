@@ -174,10 +174,26 @@ const calls: Array<[string, () => Promise<unknown>]> = [
   ['search titles', () => media.searchMedia({ query: '파묘' })],
   ['choose a title to record', () => media.selectMedia(searchResult)],
   ['open a title', () => media.getMediaDetail(MEDIA)],
+  ['where to watch a title', () => media.getMediaAvailability(MEDIA)],
+  ['look up where to watch again', () => media.refreshMediaAvailability(MEDIA)],
   ['save a theater record', () => events.createWatchEvent(theaterRecord)],
   ['save a streaming record', () => events.createWatchEvent(streamingRecord)],
   ['edit a record', () => events.updateWatchEvent(EVENT, recordChanges)],
   ['open a record', () => events.getWatchEvent(EVENT)],
+  [
+    'search my records',
+    () => events.searchWatchEvents({ scope: 'mine', q: '팝콘', mediaType: 'MOVIE', limit: 20 }),
+  ],
+  [
+    "search the space's records",
+    () =>
+      events.searchWatchEvents({
+        scope: 'space',
+        spaceId: SPACE,
+        sourceKind: 'OTT',
+        cursor: '20',
+      }),
+  ],
   ['delete a record', () => events.deleteWatchEvent(EVENT)],
   ['answer a companion request', () => events.respondToWatchParticipation(EVENT, 'CONFIRMED')],
   [
@@ -191,6 +207,7 @@ const calls: Array<[string, () => Promise<unknown>]> = [
         isBlind: true,
       }),
   ],
+  ['add my photos to a record', () => events.setWatchEventPhotos(EVENT, [PHOTO])],
   ['like a review', () => events.setReviewLike(EVENT, REACTION, true)],
   ['unlike a review', () => events.setReviewLike(EVENT, REACTION, false)],
   ['list comments', () => events.listWatchComments(EVENT)],
@@ -204,6 +221,7 @@ const calls: Array<[string, () => Promise<unknown>]> = [
   ['waiting confirmations', () => events.getPendingConfirmations(SPACE)],
   ['compare reactions', () => events.compareSpaceReactions(SPACE, MEDIA)],
   ['memories', () => memories.getSpaceMemories(SPACE, 2026)],
+  ['calendar', () => memories.getSpaceCalendar(SPACE, '2026-10')],
   ['series progress', () => memories.getWatchProgress(MEDIA)],
   ['list spaces', () => spaces.listSpaces()],
   ['open a space', () => spaces.getSpace(SPACE)],

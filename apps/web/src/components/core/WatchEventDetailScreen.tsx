@@ -22,6 +22,7 @@ import {
 } from '../../lib/api/watch-events';
 import { CountedField, THEATER_FORMAT_LABELS, ToggleSwitch } from './ComposerFields';
 import { AsyncState, EmptyState, Poster, TaskShell } from './CoreUi';
+import { MyPhotosPanel } from './MyPhotosPanel';
 import { WatchPhotoGallery } from './WatchPhotoGallery';
 import { CommentsSection, ReviewCard } from './WatchReviews';
 import { WatchRatingControl } from './WatchRatingControl';
@@ -571,6 +572,10 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
         watchedDate={watchEvent.watchedDate}
         uploaderLabel={uploaderLabel}
       />
+      {/* The author and anyone who confirmed being there can add their own photos. */}
+      {canReact && myAccountId ? (
+        <MyPhotosPanel watchEvent={watchEvent} myAccountId={myAccountId} onSaved={setWatchEvent} />
+      ) : null}
 
       <section className="record-detail-head" aria-labelledby="record-detail-title">
         <div className="flex gap-3">

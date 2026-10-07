@@ -33,6 +33,7 @@ const VISIBLE_TYPES = [
   'SPACE_INVITE_DECLINED',
   'RECOMMENDATION_REQUESTED',
   'RECOMMENDATION_MATCHED',
+  'PHOTOS_ADDED',
 ] as const satisfies readonly NotificationType[];
 
 export type CommunityNotificationView = {
@@ -129,6 +130,10 @@ export class NotificationsService {
 
   async notifyReviewRevealed(input: CreateNotificationInput) {
     return this.createForOtherUser({ ...input, type: 'REVIEW_REVEALED' });
+  }
+
+  async notifyPhotosAdded(input: CreateNotificationInput) {
+    return this.createForOtherUser({ ...input, type: 'PHOTOS_ADDED' });
   }
 
   async notifyReviewLiked(input: CreateNotificationInput) {

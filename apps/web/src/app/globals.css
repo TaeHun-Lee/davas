@@ -1304,6 +1304,291 @@ a {
   font-weight: 900;
   text-align: center;
 }
+/* 한 해 돌아보기 | 달력 */
+.memories-view {
+  margin-bottom: 12px;
+}
+.memories-view button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 750;
+}
+.memories-view button[aria-pressed='true'] {
+  background: var(--blue-soft);
+  color: var(--blue-ink);
+  font-weight: 850;
+}
+/* The year-end card; the saved image draws the same highlights. */
+.recap-card {
+  margin-top: 12px;
+  border-radius: 24px;
+  background: linear-gradient(150deg, #16478f, #2f7eea);
+  padding: 20px;
+  color: white;
+  box-shadow: 0 14px 28px rgba(33, 107, 216, 0.22);
+}
+.recap-eyebrow {
+  font-size: 12px;
+  font-weight: 750;
+  opacity: 0.85;
+}
+.recap-card h2 {
+  margin-top: 2px;
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 900;
+}
+.recap-total {
+  margin-top: 10px;
+  font-size: 15px;
+  font-weight: 800;
+}
+.recap-total strong {
+  margin-right: 4px;
+  font-size: 44px;
+  line-height: 48px;
+  font-weight: 900;
+}
+.recap-split {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+.recap-months {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
+  height: 92px;
+  margin-top: 14px;
+}
+.recap-months > span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.recap-months > span > span {
+  width: 100%;
+  border-radius: 6px;
+  background: white;
+}
+.recap-months > span[data-empty] > span {
+  background: rgba(255, 255, 255, 0.28);
+}
+.recap-months small {
+  font-size: 10px;
+  font-weight: 750;
+  opacity: 0.85;
+}
+.recap-lines {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+.recap-lines div {
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 8px 12px;
+}
+.recap-lines dt {
+  font-size: 11px;
+  font-weight: 750;
+  opacity: 0.8;
+}
+.recap-lines dd {
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 850;
+}
+.recap-top {
+  margin-top: 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 800;
+  list-style: decimal inside;
+}
+.recap-top li {
+  display: list-item;
+  padding: 3px 0;
+}
+.recap-top li span + span {
+  margin-left: 6px;
+  opacity: 0.85;
+}
+.recap-photos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 12px;
+}
+.recap-photos > span {
+  overflow: hidden;
+  border-radius: 12px;
+  aspect-ratio: 1 / 1;
+}
+.recap-photos .watch-photo {
+  height: 100%;
+  aspect-ratio: auto !important;
+}
+.recap-save {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 16px;
+  border: 0;
+  border-radius: 15px;
+  background: white;
+  color: var(--blue-ink);
+  font-size: 14px;
+  font-weight: 900;
+}
+.recap-save:disabled {
+  opacity: 0.7;
+}
+.recap-message {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 750;
+}
+/* 달력: a Sunday-first month grid, each watched day showing its first record. */
+.calendar .page-description {
+  margin-top: 10px;
+}
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.calendar-weekdays {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+.calendar-weekdays span:first-child {
+  color: #b63b36;
+}
+.calendar-grid {
+  margin-top: 6px;
+}
+.calendar-day {
+  position: relative;
+  display: flex;
+  min-height: 64px;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: white;
+  padding: 4px 2px;
+  color: var(--heading);
+}
+.calendar-day:disabled {
+  background: transparent;
+  color: #9aa6b8;
+}
+.calendar-day[data-today] {
+  border-color: var(--blue);
+}
+.calendar-day[aria-pressed='true'] {
+  background: var(--blue-soft);
+  border-color: var(--blue);
+}
+.calendar-date {
+  font-size: 12px;
+  font-weight: 850;
+}
+.calendar-thumb {
+  position: relative;
+  display: block;
+  width: 30px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #e6ebf2;
+}
+.calendar-thumb img,
+.calendar-thumb .watch-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: auto !important;
+}
+.calendar-thumb i {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  border-radius: 6px 0 0 0;
+  background: rgba(10, 20, 38, 0.72);
+  padding: 0 3px;
+  color: white;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+}
+.calendar-dot {
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin: 14px auto 0;
+  border-radius: 50%;
+  background: var(--blue);
+}
+.calendar-list {
+  margin-top: 16px;
+}
+.calendar-list ul {
+  margin-top: 8px;
+}
+.calendar-list li + li {
+  margin-top: 8px;
+}
+.calendar-list a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 18px;
+  background: white;
+  padding: 10px 12px;
+  color: inherit;
+  box-shadow: 0 6px 18px rgba(31, 65, 114, 0.06);
+}
+.calendar-list .poster {
+  width: 40px;
+  height: 60px;
+  flex: none;
+  border-radius: 9px;
+}
+.calendar-list a > span.min-w-0 {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+}
+.calendar-list strong {
+  overflow: hidden;
+  color: var(--heading);
+  font-size: 14px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.calendar-list a > span.min-w-0 > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
 .memories-total {
   margin-top: 12px;
   border-radius: 24px;
@@ -2296,6 +2581,16 @@ label:has(> input.sr-only:focus-visible) {
   font-size: 13px;
   font-weight: 800;
   cursor: not-allowed;
+}
+/* On a record: my own photos, next to what others added. */
+.record-photos-add {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 16px;
+}
+.record-photos-panel {
+  margin-bottom: 16px;
+  padding: 16px;
 }
 .photo-picker-grid {
   display: grid;
@@ -3371,6 +3666,68 @@ label:has(> input.sr-only:focus-visible) {
   font-size: 25px;
   line-height: 1;
   text-align: right;
+}
+.record-search-scope {
+  margin-bottom: 12px;
+}
+/* A found record: poster, title, when and how, whose, and where the words were found. */
+.search-results li + li {
+  margin-top: 8px;
+}
+.search-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 18px;
+  background: white;
+  padding: 10px 12px;
+  color: inherit;
+  box-shadow: 0 6px 18px rgba(31, 65, 114, 0.06);
+}
+.search-result .poster {
+  width: 44px;
+  height: 66px;
+  flex: none;
+  border-radius: 10px;
+}
+.search-result > span.min-w-0 {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+}
+.search-result strong {
+  overflow: hidden;
+  color: var(--heading);
+  font-size: 15px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.search-result > span.min-w-0 > span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 17px;
+  font-weight: 700;
+}
+.search-result .search-match {
+  margin-top: 2px;
+  border-radius: 10px;
+  background: #f5f8fc;
+  padding: 5px 8px;
+  color: #3c4a5e;
+  overflow-wrap: anywhere;
+}
+.search-match b {
+  margin-right: 4px;
+  color: var(--blue-ink);
+  font-weight: 850;
+}
+.search-match mark {
+  border-radius: 4px;
+  background: #fff1d9;
+  padding: 0 2px;
+  color: #5d3a00;
 }
 .record-search-filters {
   margin-top: 18px;

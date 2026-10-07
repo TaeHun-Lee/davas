@@ -9,8 +9,10 @@ type Notice = { text: string; forCount: number };
 export function PhotoPicker({ uploads }: { uploads: WatchPhotoUploads }) {
   const inputId = useId();
   const [notice, setNotice] = useState<Notice | null>(null);
-  const { items } = uploads;
-  const room = WATCH_PHOTO_MAX_COUNT - items.length;
+  const { items, limit } = uploads;
+  const room = limit - items.length;
+  // Photos other people added to the same record count toward its ten.
+  const shared = limit < WATCH_PHOTO_MAX_COUNT;
   const full = room <= 0;
   // A notice belongs to the list it was about: removing or resetting photos retires it.
   const shownNotice = notice && notice.forCount === items.length ? notice : null;
@@ -22,7 +24,7 @@ export function PhotoPicker({ uploads }: { uploads: WatchPhotoUploads }) {
     const picked = result.added + result.overLimit + result.unsupported;
     const skipped = result.overLimit + result.unsupported;
     const text = result.overLimit
-      ? `사진은 기록 하나에 ${WATCH_PHOTO_MAX_COUNT}장까지예요. 고른 ${picked}장 중 ${skipped}장은 추가하지 않았어요.${
+      ? `${shared ? `함께 올린 사진까지 기록 하나에 ${WATCH_PHOTO_MAX_COUNT}장이라 내 사진은 ${limit}장까지예요.` : `사진은 기록 하나에 ${WATCH_PHOTO_MAX_COUNT}장까지예요.`} 고른 ${picked}장 중 ${skipped}장은 추가하지 않았어요.${
           result.unsupported ? ` 그중 ${result.unsupported}장은 JPEG, PNG, WebP가 아니에요.` : ''
         }`
       : result.unsupported
@@ -36,7 +38,7 @@ export function PhotoPicker({ uploads }: { uploads: WatchPhotoUploads }) {
       <legend>
         <span>사진 첨부 (선택)</span>
         <span className="photo-picker-count" data-full={full || undefined}>
-          {items.length}/{WATCH_PHOTO_MAX_COUNT}
+          {items.length}/{limit}
         </span>
       </legend>
       {shownNotice ? (
@@ -149,7 +151,7 @@ export function PhotoPicker({ uploads }: { uploads: WatchPhotoUploads }) {
       {/* Once the ten are there, the add tile becomes one plain, disabled row saying so. */}
       {full ? (
         <button type="button" className="photo-picker-full" disabled>
-          사진 추가 ({WATCH_PHOTO_MAX_COUNT}장을 모두 채웠어요)
+          사진 추가 ({limit}장을 모두 채웠어요)
         </button>
       ) : null}
       <p className="photo-picker-help">

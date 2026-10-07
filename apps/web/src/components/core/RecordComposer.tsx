@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import {
   WATCH_HEADLINE_MAX_LENGTH,
   WATCH_MEMORY_NOTE_MAX_LENGTH,
+  WATCH_PHOTO_MAX_COUNT,
   WATCH_REVIEW_MAX_LENGTH,
   type MediaType,
   type SpaceView,
@@ -112,7 +113,9 @@ export function RecordComposer({ editId }: { editId?: string }) {
   const [waitingForPhotos, setWaitingForPhotos] = useState(false);
   const [continuedFrom, setContinuedFrom] = useState<WatchProgress | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
-  const photoUploads = useWatchPhotoUploads();
+  // Companions may have added photos to the record being edited; they count toward its ten.
+  const [otherPhotoCount, setOtherPhotoCount] = useState(0);
+  const photoUploads = useWatchPhotoUploads(WATCH_PHOTO_MAX_COUNT - otherPhotoCount);
   const { reset: resetPhotos } = photoUploads;
   const searchType = mediaType === 'MOVIE' ? 'movie' : mediaType === 'TV' ? 'tv' : 'multi';
   const results = useMediaSearch(query, searchType);
@@ -149,7 +152,12 @@ export function RecordComposer({ editId }: { editId?: string }) {
           const mine = record.reactions.find(
             (reaction) => reaction.accountId === record.author.accountId,
           );
-          resetPhotos(record.photos);
+          // Only the author's own photos are theirs to edit here.
+          const ownPhotos = record.photos.filter(
+            (photo) => photo.uploaderAccountId === record.author.accountId,
+          );
+          setOtherPhotoCount(record.photos.length - ownPhotos.length);
+          resetPhotos(ownPhotos);
           setDraft({
             selected: {
               id: record.media.id,
@@ -181,7 +189,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
             episodeWatched: record.source?.episodeWatched ?? null,
             episodeTotal: record.source?.episodeTotal ?? null,
             completed: record.source?.completed ?? false,
-            photos: record.photos,
+            photos: ownPhotos,
             spaceIds: record.spaceIds,
             participantAccountIds: record.participants
               .filter(

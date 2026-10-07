@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -30,10 +31,10 @@ import {
   WatchSourceEntity,
 } from '../database/entities';
 import { NotificationsService } from '../notifications/notifications.service';
-import { isAfterSeoulToday } from '../common/seoul-date';
+import { isAfterSeoulToday, seoulToday } from '../common/seoul-date';
 import { TransactionOutboxService } from '../outbox/transaction-outbox.service';
 import { SpaceAccessService } from '../spaces/space-access.service';
-import type { WatchProgress } from '@davas/shared';
+import type { WatchProgress, WatchSearchMatchField, WatchSearchResponse } from '@davas/shared';
 import { hiddenReviewAccountIds } from './blind-review';
 import { DiaryAccessService } from './diary-access.service';
 import { WatchPhotosService } from './watch-photos.service';
@@ -41,6 +42,7 @@ import {
   CreateWatchEventDto,
   SaveWatchReactionDto,
   UpdateWatchEventDto,
+  WatchSearchQueryDto,
   WatchSourceDto,
   WatchTimelineQueryDto,
 } from './dto/watch-event.dto';
@@ -73,6 +75,8 @@ const WATCH_VIEW_RELATIONS = {
   spaceShares: true,
   watchPhotos: true,
 } as const;
+
+type SearchItem = WatchSearchResponse['items'][number];
 
 @Injectable()
 export class WatchEventsService {
@@ -292,6 +296,144 @@ export class WatchEventsService {
     const diary = await this.loadDiary(diaryId);
     await this.access.assertCanView(diary, accountId);
     return this.toView(diary!, accountId);
+  }
+
+  /**
+   * Finds records by their words: title (and original title), the people on it, where and on
+   * which service it was watched, the memory note and the reviews. `mine` covers records I
+   * wrote or confirmed I watched; `space` covers what is shared to a space I am in. Matching
+   * runs on each record as the viewer sees it, so a hidden memo, place or locked blind review
+   * never matches. A person or a space holds a few hundred records, so they are read whole.
+   */
+  async search(accountId: string, query: WatchSearchQueryDto): Promise<WatchSearchResponse> {
+    let diaryIds: string[];
+    if (query.scope === 'space') {
+      await this.access.assertActiveSpaceMember(query.spaceId!, accountId);
+      const shares = await this.spaceShares.find({
+        where: { spaceId: query.spaceId!, revokedAt: IsNull() },
+      });
+      diaryIds = [...new Set(shares.map((share) => share.diaryId))];
+    } else {
+      const [authored, joined] = await Promise.all([
+        this.diaries.find({ where: { userId: accountId }, select: { id: true } }),
+        this.participants.find({ where: { accountId, status: 'CONFIRMED' } }),
+      ]);
+      diaryIds = [
+        ...new Set([
+          ...authored.map((diary) => diary.id),
+          ...joined.map((participant) => participant.diaryId),
+        ]),
+      ];
+    }
+    const empty = { items: [], nextCursor: null, hasMore: false };
+    if (!diaryIds.length) return empty;
+
+    const loaded = await this.diaries.find({
+      where: { id: In(diaryIds) },
+      relations: WATCH_VIEW_RELATIONS,
+      relationLoadStrategy: 'query',
+    });
+    // A record I was asked onto stays searchable only while I can still open it.
+    const visible: DiaryEntity[] = [];
+    for (const diary of loaded) {
+      if (diary.userId === accountId || (await this.access.canView(diary, accountId))) {
+        visible.push(diary);
+      }
+    }
+    const views = await this.toViews(visible, accountId);
+    const originalTitles = new Map(visible.map((diary) => [diary.id, diary.media?.originalTitle]));
+    const squash = (value: string) => value.toLowerCase().replace(/\s+/g, '');
+    const needle = squash(query.q ?? '');
+
+    const matched = views
+      .filter(
+        (view) =>
+          (!query.mediaType || view.media.mediaType === query.mediaType) &&
+          (!query.sourceKind || view.source?.kind === query.sourceKind),
+      )
+      .map((view): SearchItem | null => {
+        // The view builder widens `visibility` to string; it is always PRIVATE or SPACES.
+        const watchEvent = view as SearchItem['watchEvent'];
+        if (!needle) return { watchEvent, match: null };
+        const fields: Array<[WatchSearchMatchField, Array<string | null | undefined>]> = [
+          ['title', [view.media.title, originalTitles.get(view.id)]],
+          [
+            'people',
+            [
+              view.author.nickname,
+              ...view.participants
+                .filter((participant) => participant.status !== 'DECLINED')
+                .map((participant) => participant.nickname),
+            ],
+          ],
+          ['place', [view.source?.placeText]],
+          ['service', [view.source?.providerName]],
+          ['memo', [view.memoryNote]],
+          ['review', view.reactions.flatMap((reaction) => [reaction.headline, reaction.review])],
+        ];
+        for (const [field, texts] of fields) {
+          const text = texts.find((value) => value && squash(value).includes(needle));
+          if (text) return { watchEvent, match: { field, text } };
+        }
+        return null;
+      })
+      .filter((item): item is SearchItem => Boolean(item))
+      .sort(
+        (left, right) =>
+          right.watchEvent.watchedDate.localeCompare(left.watchEvent.watchedDate) ||
+          (right.watchEvent.createdAt ?? '').localeCompare(left.watchEvent.createdAt ?? ''),
+      );
+    const offset = Number(query.cursor ?? 0);
+    const limit = query.limit ?? 20;
+    const page = matched.slice(offset, offset + limit);
+    const hasMore = offset + limit < matched.length;
+    return { items: page, nextCursor: hasMore ? String(offset + limit) : null, hasMore };
+  }
+
+  /**
+   * The author, or someone who confirmed they were there, sets their own photos on the record.
+   * Everyone else on the record who can still see it hears about new photos, once a day per
+   * person who added them.
+   */
+  async setMyPhotos(diaryId: string, accountId: string, photoIds: string[]) {
+    const diary = await this.loadDiary(diaryId);
+    await this.access.assertCanView(diary, accountId);
+    const participants = diary!.watchParticipants ?? [];
+    const confirmed = participants
+      .filter((participant) => participant.status === 'CONFIRMED')
+      .map((participant) => participant.accountId);
+    if (diary!.userId !== accountId && !confirmed.includes(accountId)) {
+      throw new ForbiddenException({
+        statusCode: 403,
+        code: 'WATCH_PHOTOS_FORBIDDEN',
+        message: '함께 봤다고 확인한 사람만 사진을 더할 수 있어요.',
+      });
+    }
+    const added = await this.dataSource.transaction((manager) =>
+      this.photos.replaceForDiary(manager, diaryId, accountId, photoIds, diary!.userId),
+    );
+    if (added && this.notifications) {
+      const day = seoulToday();
+      const recipients = [...new Set([diary!.userId, ...confirmed])].filter(
+        (recipientId) => recipientId !== accountId,
+      );
+      for (const recipientId of recipients) {
+        const canView = await this.access
+          .assertCanView(diary, recipientId)
+          .then(() => true)
+          .catch(() => false);
+        if (!canView) continue;
+        await this.notifications
+          .notifyPhotosAdded({
+            recipientId,
+            actorId: accountId,
+            diaryId,
+            idempotencyKey: `PHOTOS_ADDED:${recipientId}:${accountId}:${diaryId}:${day}`,
+          })
+          .catch(() => undefined);
+      }
+    }
+    return this.detail(accountId, diaryId);
   }
 
   async update(accountId: string, diaryId: string, dto: UpdateWatchEventDto) {
@@ -828,12 +970,15 @@ export class WatchEventsService {
         this.reactionView(reaction, viewerId, hidden.has(reaction.accountId)),
       ),
       memoryNote: authorVisible ? (diary.memoryNote ?? null) : null,
-      photos: authorVisible
-        ? (diary.watchPhotos ?? [])
-            .filter((photo) => photo.diaryId === diary.id)
-            .sort((left, right) => left.position - right.position)
-            .map((photo) => this.photos.view(photo, viewerId))
-        : [],
+      // Each photo follows its uploader: someone who left the space takes their photos along.
+      photos: (diary.watchPhotos ?? [])
+        .filter(
+          (photo) =>
+            photo.diaryId === diary.id &&
+            (photo.uploaderId === viewerId || visibleAccountIds.has(photo.uploaderId)),
+        )
+        .sort((left, right) => left.position - right.position)
+        .map((photo) => this.photos.view(photo, viewerId)),
       commentCount,
       createdAt: diary.createdAt?.toISOString(),
       updatedAt: diary.updatedAt?.toISOString(),

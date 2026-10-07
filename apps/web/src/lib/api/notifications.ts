@@ -63,7 +63,8 @@ export type NotificationKind =
   | 'WISH_MATCHED'
   | 'SPACE_INVITE_DECLINED'
   | 'RECOMMENDATION_REQUESTED'
-  | 'RECOMMENDATION_MATCHED';
+  | 'RECOMMENDATION_MATCHED'
+  | 'PHOTOS_ADDED';
 
 export type NotificationItem = {
   id: string;

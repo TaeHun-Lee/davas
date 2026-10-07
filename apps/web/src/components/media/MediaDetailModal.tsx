@@ -15,7 +15,9 @@ import {
 } from './media-detail-sections';
 import { getTmdbGenreNames } from './media-genres';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { useMediaTogether } from '../../hooks/useMediaTogether';
 import { useSpaceWish } from '../../hooks/useSpaceWish';
+import { OurReactionsCard, WatchableNowCard } from './media-together-sections';
 
 function IconButton({
   label,
@@ -158,6 +160,8 @@ export function MediaDetailModal({
   // With a space, "보고 싶어요" goes on the space's shared list; without one it stays personal.
   // Until the space lookup answers, the button waits instead of using the personal list.
   const spaceWish = useSpaceWish(media.id, isOpen);
+  // How my space rated the title and where it can be watched now.
+  const { together, watchable } = useMediaTogether(media.id, isOpen);
   const wanted = spaceWish.wish
     ? spaceWish.wish.wanted
     : !spaceWish.loading && Boolean(watchlistItemId);
@@ -367,20 +371,36 @@ export function MediaDetailModal({
 
         <div className="mt-5 space-y-3">
           <DetailInfoCard title="시놉시스">{overview}</DetailInfoCard>
+          <WatchableNowCard
+            status={watchable.status}
+            availability={watchable.availability}
+            myServices={together.myServices}
+          />
           <BasicInfoGrid media={media} />
           <MyRatingCard
             diaries={media.myDiaries ?? (media.myDiary ? [media.myDiary] : [])}
             averageRating={media.myAverageRating ?? media.myDiary?.rating ?? null}
           />
-          <FriendRecordsCard
-            records={friendRecords}
-            status={friendRecordsStatus}
-            returnTo={detailReturnTo}
-            hasMore={friendRecordsHasMore}
-            isLoadingMore={isFriendRecordsLoadingMore}
-            loadMoreError={friendRecordsLoadMoreError}
-            onLoadMore={() => void loadMoreFriendRecords()}
-          />
+          {/* With a space, its members' reactions; without one, the older friends' records. */}
+          {together.status === 'ready' && !together.space ? (
+            <FriendRecordsCard
+              records={friendRecords}
+              status={friendRecordsStatus}
+              returnTo={detailReturnTo}
+              hasMore={friendRecordsHasMore}
+              isLoadingMore={isFriendRecordsLoadingMore}
+              loadMoreError={friendRecordsLoadMoreError}
+              onLoadMore={() => void loadMoreFriendRecords()}
+            />
+          ) : (
+            <OurReactionsCard
+              status={together.status}
+              spaceName={together.space?.name ?? ''}
+              comparison={together.comparison}
+              myAccountId={together.myAccountId}
+              returnTo={detailReturnTo}
+            />
+          )}
         </div>
 
         <StillCutStrip media={media} />

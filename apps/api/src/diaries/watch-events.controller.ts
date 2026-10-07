@@ -8,13 +8,16 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Req,
 } from '@nestjs/common';
 import type { AuthenticatedRequest } from '../auth/jwt-cookie-auth.guard';
 import {
   CreateWatchEventDto,
   SaveWatchReactionDto,
+  SetWatchPhotosDto,
   UpdateWatchEventDto,
+  WatchSearchQueryDto,
   WatchParticipantResponseDto,
 } from './dto/watch-event.dto';
 import { WatchEventsService } from './watch-events.service';
@@ -28,6 +31,12 @@ export class WatchEventsController {
     return {
       watchEvent: await this.watchEvents.create(request.user.id, body),
     };
+  }
+
+  // Declared before ':watchEventId' so "search" is never read as a record id.
+  @Get('search')
+  async search(@Req() request: AuthenticatedRequest, @Query() query: WatchSearchQueryDto) {
+    return this.watchEvents.search(request.user.id, query);
   }
 
   @Get('progress/:mediaId')
@@ -73,6 +82,17 @@ export class WatchEventsController {
         request.user.id,
         body.status,
       ),
+    };
+  }
+
+  @Put(':watchEventId/photos')
+  async setPhotos(
+    @Req() request: AuthenticatedRequest,
+    @Param('watchEventId', ParseUUIDPipe) watchEventId: string,
+    @Body() body: SetWatchPhotosDto,
+  ) {
+    return {
+      watchEvent: await this.watchEvents.setMyPhotos(watchEventId, request.user.id, body.photoIds),
     };
   }
 

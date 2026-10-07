@@ -78,6 +78,7 @@ const VISIBLE_TYPES = [
   'SPACE_INVITE_DECLINED',
   'RECOMMENDATION_REQUESTED',
   'RECOMMENDATION_MATCHED',
+  'PHOTOS_ADDED',
 ];
 
 describe('NotificationsService', () => {

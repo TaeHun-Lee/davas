@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import type { MediaType, ViewingMethod } from '@davas/shared';
+import type { MediaType, ViewingMethod, WatchSourceKind } from '@davas/shared';
 import { CoreApiError, listRecords, type RecordCardData } from '../../lib/api/core';
 import { getFriends } from '../../lib/api/friends';
 import {
@@ -20,6 +20,23 @@ import {
 import { HomeRecommendations } from './HomeRecommendations';
 import { SpaceHome } from './SpaceHome';
 import { WatchEventDetailScreen } from './WatchEventDetailScreen';
+import { WatchSearchResults } from './WatchSearchResults';
+
+type SearchScope = 'mine' | 'space' | 'friends';
+
+const SCOPES: Array<{ value: SearchScope; label: string }> = [
+  { value: 'mine', label: '내 기록' },
+  { value: 'space', label: '우리 공간' },
+  { value: 'friends', label: '친구' },
+];
+
+const SOURCE_KINDS: Array<{ value: WatchSourceKind | null; label: string }> = [
+  { value: null, label: '전체' },
+  { value: 'THEATER', label: '극장' },
+  { value: 'OTT', label: 'OTT' },
+  { value: 'TV_OWNED', label: 'TV·소장' },
+  { value: 'OTHER', label: '기타' },
+];
 
 function useRecords(
   scope: 'friends' | 'mine',
@@ -211,14 +228,21 @@ export function MineScreen() {
   );
 }
 
+/**
+ * Record search. 내 기록 and 우리 공간 search titles, the people on a record, place, service,
+ * memory notes and reviews (as the viewer sees them); 친구 searches friends' older records.
+ */
 export function SearchScreen() {
   const params = useSearchParams();
   const router = useRouter();
-  const scope = params.get('scope') === 'mine' ? 'mine' : 'friends';
+  const rawScope = params.get('scope');
+  const scope: SearchScope =
+    rawScope === 'friends' ? 'friends' : rawScope === 'space' ? 'space' : 'mine';
   const [q, setQ] = useState(params.get('q') ?? '');
   const mediaType = (params.get('mediaType') as MediaType | null) || null;
   const viewingMethod = (params.get('viewingMethod') as ViewingMethod | null) || null;
-  const hasFilters = Boolean(q || mediaType || viewingMethod);
+  const sourceKind = (params.get('sourceKind') as WatchSourceKind | null) || null;
+  const hasFilters = Boolean(q || mediaType || (scope === 'friends' ? viewingMethod : sourceKind));
   const returnParams = new URLSearchParams(params.toString());
   returnParams.set('scope', scope);
   const returnTo = `/search?${returnParams.toString()}`;
@@ -226,11 +250,20 @@ export function SearchScreen() {
     q?: string;
     mediaType?: MediaType | null;
     viewingMethod?: ViewingMethod | null;
+    sourceKind?: WatchSourceKind | null;
   }) => {
     const p = new URLSearchParams(params.toString());
     p.set('scope', scope);
-    const values = { q, mediaType, viewingMethod, ...next };
+    const values = { q, mediaType, viewingMethod, sourceKind, ...next };
     Object.entries(values).forEach(([key, value]) => (value ? p.set(key, value) : p.delete(key)));
+    router.replace(`/search?${p}`);
+  };
+  // A new scope keeps the words and the title type; the way-watched filter differs per scope.
+  const changeScope = (next: SearchScope) => {
+    const p = new URLSearchParams();
+    p.set('scope', next);
+    if (q) p.set('q', q);
+    if (mediaType) p.set('mediaType', mediaType);
     router.replace(`/search?${p}`);
   };
   useEffect(() => {
@@ -245,14 +278,28 @@ export function SearchScreen() {
   }, [q, params, router, scope]);
   return (
     <TaskShell
-      title={scope === 'mine' ? '내 기록 검색' : '친구 기록 검색'}
-      fallback={scope === 'mine' ? '/me' : '/friends'}
+      title={scope === 'friends' ? '친구 기록 검색' : '기록 검색'}
+      fallback={scope === 'friends' ? '/friends' : '/me'}
     >
+      <div className="segmented record-search-scope" role="group" aria-label="검색 범위">
+        {SCOPES.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={scope === option.value}
+            onClick={() => changeScope(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
       <SearchField
         value={q}
         onChange={setQ}
         label="기록 검색"
-        placeholder={scope === 'mine' ? '작품 제목으로 내 기록 찾기' : '작품 제목 또는 친구 이름'}
+        placeholder={
+          scope === 'friends' ? '작품 제목 또는 친구 이름' : '제목, 함께 본 사람, 장소, 메모, 리뷰'
+        }
       />
       <section className="record-search-filters" aria-label="검색 필터">
         <div className="record-search-filter-heading">
@@ -278,27 +325,52 @@ export function SearchScreen() {
         </div>
         <div className="record-search-filter-row">
           <span className="field-label">관람 방식</span>
-          <ViewingMethodControl
-            includeAll
-            label="관람 방식"
-            value={viewingMethod}
-            onChange={(value) => update({ viewingMethod: value })}
-          />
+          {scope === 'friends' ? (
+            <ViewingMethodControl
+              includeAll
+              label="관람 방식"
+              value={viewingMethod}
+              onChange={(value) => update({ viewingMethod: value })}
+            />
+          ) : (
+            <div className="segmented" role="group" aria-label="관람 방식">
+              {SOURCE_KINDS.map((option) => (
+                <button
+                  key={option.label}
+                  type="button"
+                  aria-pressed={sourceKind === option.value}
+                  onClick={() => update({ sourceKind: option.value })}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </section>
       <div className="record-search-summary">
         <h2>검색 결과</h2>
         <span>{hasFilters ? '필터 적용 중' : '최신순'}</span>
       </div>
-      <RecordList
-        scope={scope}
-        returnTo={returnTo}
-        filters={{
-          q: params.get('q') ?? undefined,
-          mediaType: mediaType ?? undefined,
-          viewingMethod: viewingMethod ?? undefined,
-        }}
-      />
+      {scope === 'friends' ? (
+        <RecordList
+          scope="friends"
+          returnTo={returnTo}
+          filters={{
+            q: params.get('q') ?? undefined,
+            mediaType: mediaType ?? undefined,
+            viewingMethod: viewingMethod ?? undefined,
+          }}
+        />
+      ) : (
+        <WatchSearchResults
+          scope={scope}
+          q={params.get('q') ?? ''}
+          mediaType={mediaType}
+          sourceKind={sourceKind}
+          returnTo={returnTo}
+        />
+      )}
     </TaskShell>
   );
 }

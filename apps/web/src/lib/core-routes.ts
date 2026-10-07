@@ -11,7 +11,6 @@ const PARAMLESS_PATHS = new Set([
   '/settings',
   '/diary',
   '/spaces/wishes',
-  '/spaces/memories',
   '/notifications',
 ]);
 
@@ -23,18 +22,20 @@ function hasOnlySingleValueParams(params: URLSearchParams, allowed: ReadonlySet<
 }
 
 function isSafeSearchQuery(params: URLSearchParams) {
-  const allowed = new Set(['scope', 'q', 'mediaId', 'mediaType', 'viewingMethod']);
+  const allowed = new Set(['scope', 'q', 'mediaId', 'mediaType', 'viewingMethod', 'sourceKind']);
   if (!hasOnlySingleValueParams(params, allowed)) return false;
 
   const scope = params.get('scope');
   const mediaId = params.get('mediaId');
   const mediaType = params.get('mediaType');
   const viewingMethod = params.get('viewingMethod');
+  const sourceKind = params.get('sourceKind');
   return (
-    (scope === null || scope === 'friends' || scope === 'mine') &&
+    (scope === null || scope === 'friends' || scope === 'mine' || scope === 'space') &&
     (mediaId === null || SAFE_SEGMENT.test(mediaId)) &&
     (mediaType === null || mediaType === 'MOVIE' || mediaType === 'TV') &&
-    (viewingMethod === null || viewingMethod === 'THEATER' || viewingMethod === 'OTT')
+    (viewingMethod === null || viewingMethod === 'THEATER' || viewingMethod === 'OTT') &&
+    (sourceKind === null || ['THEATER', 'OTT', 'TV_OWNED', 'OTHER'].includes(sourceKind))
   );
 }
 
@@ -99,6 +100,14 @@ function isSafeAtDepth(value: string | null | undefined, depth: number): value i
   if (PARAMLESS_PATHS.has(pathname)) return searchParams.size === 0;
   if (pathname === '/search') return isSafeSearchQuery(searchParams);
   if (pathname === '/spaces') return isSafeSpacesQuery(searchParams);
+  // 모아보기 opens on the year or, with `view=calendar`, on the calendar.
+  if (pathname === '/spaces/memories') {
+    return (
+      searchParams.size === 0 ||
+      (hasOnlySingleValueParams(searchParams, new Set(['view'])) &&
+        searchParams.get('view') === 'calendar')
+    );
+  }
   if (pathname === '/records/new') {
     return searchParams.size === 0 || isSafeNewRecordQuery(searchParams, depth);
   }

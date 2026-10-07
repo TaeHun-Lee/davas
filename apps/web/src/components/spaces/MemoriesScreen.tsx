@@ -6,6 +6,8 @@ import { useActiveSpace } from '../../hooks/useActiveSpace';
 import { getSpaceMemories, type SpaceMemories } from '../../lib/api/memories';
 import { AsyncState, EmptyState, Poster, TaskShell } from '../core/CoreUi';
 import { WatchPhoto } from '../core/WatchPhoto';
+import { SpaceCalendarView } from './SpaceCalendarView';
+import { YearRecapCard } from './YearRecapCard';
 
 const percent = (part: number, whole: number) => (whole ? Math.round((part / whole) * 100) : 0);
 
@@ -16,11 +18,26 @@ export function MemoriesScreen() {
   const [year, setYear] = useState(thisYear);
   const [data, setData] = useState<SpaceMemories | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  // The year at a glance, or the records on a monthly calendar (`?view=calendar`).
+  const [view, setView] = useState<'year' | 'calendar'>('year');
   // Stepping through years quickly must not let an older year's answer land last.
   const latestRequest = useRef(0);
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('view') === 'calendar') setView('calendar');
+  }, []);
+
+  function changeView(next: 'year' | 'calendar') {
+    setView(next);
+    window.history.replaceState(
+      null,
+      '',
+      next === 'calendar' ? '/spaces/memories?view=calendar' : '/spaces/memories',
+    );
+  }
+
   const load = useCallback(async () => {
-    if (!space) return;
+    if (!space || view !== 'year') return;
     const request = ++latestRequest.current;
     setStatus('loading');
     try {
@@ -31,7 +48,7 @@ export function MemoriesScreen() {
     } catch {
       if (request === latestRequest.current) setStatus('error');
     }
-  }, [space, year]);
+  }, [space, year, view]);
 
   useEffect(() => {
     void load();
@@ -60,50 +77,73 @@ export function MemoriesScreen() {
 
   return (
     <TaskShell title="우리 기록 모아보기" fallback="/spaces">
-      <div className="memories-year" role="group" aria-label="연도 고르기">
-        <button
-          type="button"
-          onClick={() => setYear((value) => value - 1)}
-          aria-label={`${year - 1}년 보기`}
-        >
-          <span aria-hidden="true">‹</span>
+      <div className="segmented memories-view" role="group" aria-label="모아보기 방식">
+        <button type="button" aria-pressed={view === 'year'} onClick={() => changeView('year')}>
+          한 해 돌아보기
         </button>
-        <strong aria-live="polite">{year}년</strong>
         <button
           type="button"
-          onClick={() => setYear((value) => value + 1)}
-          disabled={year >= thisYear}
-          aria-label={`${year + 1}년 보기`}
+          aria-pressed={view === 'calendar'}
+          onClick={() => changeView('calendar')}
         >
-          <span aria-hidden="true">›</span>
+          달력
         </button>
       </div>
 
-      {status === 'loading' && !data ? (
-        <AsyncState kind="loading" loadingLabel="모아보기 불러오는 중" />
-      ) : status === 'error' ? (
-        <AsyncState kind="error" onRetry={load} errorTitle="모아보기를 불러오지 못했어요" />
-      ) : data ? (
-        <MemoriesBody data={data} />
-      ) : null}
+      {view === 'calendar' ? (
+        <SpaceCalendarView spaceId={space.id} />
+      ) : (
+        <>
+          <div className="memories-year" role="group" aria-label="연도 고르기">
+            <button
+              type="button"
+              onClick={() => setYear((value) => value - 1)}
+              aria-label={`${year - 1}년 보기`}
+            >
+              <span aria-hidden="true">‹</span>
+            </button>
+            <strong aria-live="polite">{year}년</strong>
+            <button
+              type="button"
+              onClick={() => setYear((value) => value + 1)}
+              disabled={year >= thisYear}
+              aria-label={`${year + 1}년 보기`}
+            >
+              <span aria-hidden="true">›</span>
+            </button>
+          </div>
+
+          {status === 'loading' && !data ? (
+            <AsyncState kind="loading" loadingLabel="모아보기 불러오는 중" />
+          ) : status === 'error' ? (
+            <AsyncState kind="error" onRetry={load} errorTitle="모아보기를 불러오지 못했어요" />
+          ) : data ? (
+            <MemoriesBody data={data} spaceName={space.name} />
+          ) : null}
+        </>
+      )}
     </TaskShell>
   );
 }
 
-function MemoriesBody({ data }: { data: SpaceMemories }) {
+function MemoriesBody({ data, spaceName }: { data: SpaceMemories; spaceName: string }) {
   const { totals, sources } = data;
   const topCount = data.genres[0]?.count ?? 0;
   // Records by someone who left the space have no known source, so the split uses its own sum.
   const sourceTotal = sources.theater + sources.ott + sources.other;
   return (
     <>
-      <section className="memories-total" aria-labelledby="memories-total-title">
-        <h2 id="memories-total-title">{data.year}년에 함께 본 작품</h2>
-        <p className="memories-total-count">{totals.records}편</p>
-        <p>
-          영화 {totals.movies}편 · 드라마 {totals.series}편 · 사진 {totals.photos}장
-        </p>
-      </section>
+      {totals.records ? (
+        <YearRecapCard data={data} spaceName={spaceName} />
+      ) : (
+        <section className="memories-total" aria-labelledby="memories-total-title">
+          <h2 id="memories-total-title">{data.year}년에 함께 본 작품</h2>
+          <p className="memories-total-count">{totals.records}편</p>
+          <p>
+            영화 {totals.movies}편 · 드라마 {totals.series}편 · 사진 {totals.photos}장
+          </p>
+        </section>
+      )}
 
       {totals.records ? (
         <div className="memories-grid">

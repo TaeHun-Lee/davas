@@ -3,8 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
-const source = (path: string) =>
-  readFileSync(join(process.cwd(), 'src', path), 'utf8');
+const source = (path: string) => readFileSync(join(process.cwd(), 'src', path), 'utf8');
 
 describe('record search experience', () => {
   it('uses a semantic search field with a vector magnifier', () => {
@@ -30,7 +29,7 @@ describe('record search experience', () => {
 
   it('returns friend search to the friend tab and preserves search context', () => {
     const screens = source('components/core/RecordScreens.tsx');
-    assert.match(screens, /fallback=\{scope === 'mine' \? '\/me' : '\/friends'\}/);
+    assert.match(screens, /fallback=\{scope === 'friends' \? '\/friends' : '\/me'\}/);
     assert.match(screens, /const returnTo = `\/search\?\$\{returnParams\.toString\(\)\}`/);
     assert.match(screens, /returnTo=\{returnTo\}/);
   });
@@ -47,7 +46,8 @@ describe('record search experience', () => {
   it('uses different friend and mine placeholders and URL query state', () => {
     const code = source('components/core/RecordScreens.tsx');
     assert.match(code, /작품 제목 또는 친구 이름/);
-    assert.match(code, /작품 제목으로 내 기록 찾기/);
+    // My and the space's records are searched by more than the title.
+    assert.match(code, /제목, 함께 본 사람, 장소, 메모, 리뷰/);
     assert.match(code, /URLSearchParams/);
   });
 });

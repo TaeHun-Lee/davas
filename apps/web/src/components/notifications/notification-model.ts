@@ -42,6 +42,13 @@ export function describeNotification(item: NotificationItem): NotificationText {
         href: record,
         icon: 'reveal',
       };
+    case 'PHOTOS_ADDED':
+      return {
+        title: `${actor}님이 ${quoted(title)} 기록에 사진을 더했어요`,
+        about: null,
+        href: record,
+        icon: 'record',
+      };
     case 'REVIEW_LIKED':
       return {
         title: `${actor}님이 내 리뷰에 좋아요를 눌렀어요`,

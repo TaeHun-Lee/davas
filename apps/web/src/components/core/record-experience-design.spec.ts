@@ -25,7 +25,7 @@ describe('record experience screens', () => {
     // Saving waits for uploads still in flight and refuses to drop failed ones silently.
     assert.match(composer, /await photoUploads\.settle\(\)/);
     assert.match(composer, /올리지 못한 사진이 있어요/);
-    assert.match(uploads, /WATCH_PHOTO_MAX_COUNT - items\.length/);
+    assert.match(uploads, /Math\.max\(0, limit - items\.length\)/);
     assert.match(uploads, /MAX_PARALLEL_UPLOADS = 2/);
     assert.match(picker, /role="progressbar"/);
     assert.match(picker, /다시 시도/);
@@ -33,7 +33,7 @@ describe('record experience screens', () => {
     assert.match(picker, /사진은 기록 하나에 \$\{WATCH_PHOTO_MAX_COUNT\}장까지예요/);
     assert.match(picker, /result\.added \+ result\.overLimit \+ result\.unsupported/);
     assert.match(picker, /notice\.forCount === items\.length/);
-    assert.match(picker, /사진 추가 \(\{WATCH_PHOTO_MAX_COUNT\}장을 모두 채웠어요\)/);
+    assert.match(picker, /사진 추가 \(\{limit\}장을 모두 채웠어요\)/);
     assert.match(client, /new XMLHttpRequest\(\)/);
     assert.match(client, /withCredentials = true/);
   });

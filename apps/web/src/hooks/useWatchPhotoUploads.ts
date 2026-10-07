@@ -67,6 +67,8 @@ export function createPhotoUploadQueue(
   retryDelaysMs: readonly number[] = RETRY_DELAYS_MS,
 ) {
   let items: PhotoUploadItem[] = [];
+  // Ten per record in all; less when other people have already added photos to it.
+  let limit = WATCH_PHOTO_MAX_COUNT;
   const waiting: string[] = [];
   const inflight = new Map<string, { promise: Promise<void>; abort: () => void }>();
   const objectUrls = new Set<string>();
@@ -139,10 +141,14 @@ export function createPhotoUploadQueue(
   }
 
   return {
+    setLimit(value: number) {
+      limit = Math.max(0, Math.min(WATCH_PHOTO_MAX_COUNT, value));
+    },
+
     add(files: FileList | File[]): AddPhotosResult {
       const picked = Array.from(files);
       const supported = picked.filter((file) => ACCEPTED_TYPES.has(file.type));
-      const room = Math.max(0, WATCH_PHOTO_MAX_COUNT - items.length);
+      const room = Math.max(0, limit - items.length);
       const accepted = supported.slice(0, room);
       const created = accepted.map((file): PhotoUploadItem => {
         const previewUrl = URL.createObjectURL(file);
@@ -225,16 +231,22 @@ export function createPhotoUploadQueue(
   };
 }
 
-export function useWatchPhotoUploads() {
+/**
+ * `limit` is how many of the record's ten photos this person may hold: all ten for a new
+ * record, fewer when others have already added theirs.
+ */
+export function useWatchPhotoUploads(limit: number = WATCH_PHOTO_MAX_COUNT) {
   const [items, setItems] = useState<PhotoUploadItem[]>([]);
   const queueRef = useRef<ReturnType<typeof createPhotoUploadQueue> | null>(null);
   if (!queueRef.current) queueRef.current = createPhotoUploadQueue(setItems);
   const queue = queueRef.current;
+  queue.setLimit(limit);
 
   useEffect(() => () => queue.dispose(), [queue]);
 
   return {
     items,
+    limit: Math.max(0, Math.min(WATCH_PHOTO_MAX_COUNT, limit)),
     add: queue.add,
     retry: queue.retry,
     remove: queue.remove,

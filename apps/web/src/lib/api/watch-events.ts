@@ -1,4 +1,5 @@
 import type {
+  MediaType,
   SpaceReactionComparison,
   TheaterFormat,
   WatchCommentView,
@@ -10,6 +11,8 @@ import type {
   WatchReactionView,
   WatchReactionWriteFields,
   WatchReviewLikeResponse,
+  WatchSearchResponse,
+  WatchSearchScope,
   WatchSourceKind,
   WatchSourceView,
   WatchTimelinePage,
@@ -99,6 +102,31 @@ export function compareSpaceReactions(spaceId: string, mediaId: string) {
   return coreFetch<SpaceReactionComparison>(
     `/v1/spaces/${encode(spaceId)}/titles/${encode(mediaId)}/reactions`,
   );
+}
+
+/** Records found by their words, in my records (`mine`) or a space's (`space`). */
+export function searchWatchEvents(params: {
+  scope: WatchSearchScope;
+  spaceId?: string;
+  q?: string;
+  mediaType?: MediaType;
+  sourceKind?: WatchSourceKind;
+  cursor?: string;
+  limit?: number;
+}) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== '') query.set(key, String(value));
+  }
+  return coreFetch<WatchSearchResponse>(`/v1/watch-events/search?${query}`);
+}
+
+/** My own photos on the record, in order; other people's photos are left as they are. */
+export function setWatchEventPhotos(watchEventId: string, photoIds: string[]) {
+  return coreFetch<{ watchEvent: WatchEvent }>(`/v1/watch-events/${encode(watchEventId)}/photos`, {
+    method: 'PUT',
+    body: JSON.stringify({ photoIds }),
+  });
 }
 
 export function setReviewLike(watchEventId: string, reactionId: string, liked: boolean) {

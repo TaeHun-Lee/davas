@@ -1,5 +1,6 @@
 import type { MediaSelectionInput } from '@davas/shared';
 import { getApiBaseUrl } from './base-url';
+import { coreFetch } from './core';
 
 export type MediaSearchResult = {
   externalProvider: 'TMDB';
@@ -193,4 +194,31 @@ export async function getMediaDetail(id: string) {
   }
 
   return (await response.json()) as MediaDetail;
+}
+
+export type MediaOfferType = 'STREAM' | 'RENT' | 'BUY' | 'FREE' | 'ADS';
+
+/** Where a title can be watched in a region now (TMDB, from JustWatch). */
+export type MediaAvailability = {
+  contentId: string;
+  region: string;
+  availability: 'AVAILABLE' | 'UNAVAILABLE' | 'UNKNOWN';
+  state: 'AVAILABLE' | 'NO_OFFERS' | 'PROVIDER_FAILURE' | 'EXPIRED' | 'UNMAPPED' | 'UNKNOWN';
+  observedAt: string | null;
+  expiresAt: string | null;
+  sourceProvider: string | null;
+  confidence: number;
+  offers: Array<{ provider: string; offerType: MediaOfferType | string; confidence: number }>;
+};
+
+/** The stored answer; it may be missing or expired (kept six hours). */
+export function getMediaAvailability(id: string) {
+  return coreFetch<MediaAvailability>(`/media/${encodeURIComponent(id)}/availability`);
+}
+
+/** Asks TMDB again and stores the answer. */
+export function refreshMediaAvailability(id: string) {
+  return coreFetch<MediaAvailability>(`/media/${encodeURIComponent(id)}/availability/refresh`, {
+    method: 'POST',
+  });
 }

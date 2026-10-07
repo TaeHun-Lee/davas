@@ -205,4 +205,39 @@ describe('WatchPhotosService', () => {
     );
     assert.equal(jobs.filter((job) => job.kind === 'WATCH_PHOTO').length, 3);
   });
+
+  it("keeps other people's photos, puts the author's first and counts everyone toward ten", async () => {
+    const { manager, photos, service } = setup(() => true);
+    const order = () =>
+      photos
+        .filter((photo) => photo.diaryId === 'diary-1')
+        .sort((a, b) => a.position - b.position)
+        .map((photo) => photo.id);
+    const first = await service.stage('jiwoo', upload());
+    await service.replaceForDiary(manager, 'diary-1', 'jiwoo', [first.id]);
+    const companion = await service.stage('minho', upload());
+    assert.equal(
+      await service.replaceForDiary(manager, 'diary-1', 'minho', [companion.id], 'jiwoo'),
+      1,
+    );
+
+    // The author saving their own list leaves the companion's photo where it is, after theirs.
+    const second = await service.stage('jiwoo', upload());
+    await service.replaceForDiary(manager, 'diary-1', 'jiwoo', [second.id, first.id]);
+    assert.deepEqual(order(), [second.id, first.id, companion.id]);
+    // A companion manages only their own photos.
+    await service.replaceForDiary(manager, 'diary-1', 'minho', [], 'jiwoo');
+    assert.deepEqual(order(), [second.id, first.id]);
+
+    // Ten in all: with the author's two, a companion can add eight.
+    const nine = [];
+    for (let index = 0; index < 9; index += 1)
+      nine.push((await service.stage('minho', upload())).id);
+    await assert.rejects(
+      service.replaceForDiary(manager, 'diary-1', 'minho', nine, 'jiwoo'),
+      (error) => code(error) === 'TOO_MANY_PHOTOS',
+    );
+    await service.replaceForDiary(manager, 'diary-1', 'minho', nine.slice(0, 8), 'jiwoo');
+    assert.equal(order().length, 10);
+  });
 });

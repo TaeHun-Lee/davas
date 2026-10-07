@@ -4,9 +4,11 @@ import {
   WATCH_MEMORY_NOTE_MAX_LENGTH,
   WATCH_PHOTO_MAX_COUNT,
   WATCH_REVIEW_MAX_LENGTH,
+  WATCH_SEARCH_SCOPES,
   WATCH_SOURCE_KINDS,
   type TheaterFormat,
   type WatchParticipantStatus,
+  type WatchSearchScope,
   type WatchSourceKind,
 } from '@davas/shared';
 import { Type } from 'class-transformer';
@@ -165,6 +167,49 @@ export class UpdateWatchEventDto extends WatchReviewFieldsDto {
   @ArrayUnique()
   @IsUUID('4', { each: true })
   photoIds?: string[];
+}
+
+export class WatchSearchQueryDto {
+  @IsIn(WATCH_SEARCH_SCOPES)
+  scope!: WatchSearchScope;
+
+  @ValidateIf((query: WatchSearchQueryDto) => query.scope === 'space')
+  @IsUUID()
+  spaceId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  q?: string;
+
+  @IsOptional()
+  @IsIn(['MOVIE', 'TV'])
+  mediaType?: 'MOVIE' | 'TV';
+
+  @IsOptional()
+  @IsIn(WATCH_SOURCE_KINDS)
+  sourceKind?: WatchSourceKind;
+
+  /** How many results to skip; the next page's cursor. */
+  @IsOptional()
+  @Matches(/^\d{1,4}$/)
+  cursor?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit?: number;
+}
+
+/** The caller's own photos on a record, in order; other people's photos are not part of it. */
+export class SetWatchPhotosDto {
+  @IsArray()
+  @ArrayMaxSize(WATCH_PHOTO_MAX_COUNT)
+  @ArrayUnique()
+  @IsUUID('4', { each: true })
+  photoIds!: string[];
 }
 
 export class WatchParticipantResponseDto {

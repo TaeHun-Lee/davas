@@ -31,7 +31,9 @@ export type NotificationType =
   /** The actor started picking a title together and included the recipient. */
   | 'RECOMMENDATION_REQUESTED'
   /** Everyone needed agreed on a title (`mediaId`) in a pick the recipient took part in. */
-  | 'RECOMMENDATION_MATCHED';
+  | 'RECOMMENDATION_MATCHED'
+  /** The actor added photos to a record the recipient is on. */
+  | 'PHOTOS_ADDED';
 
 @Entity({ name: 'notifications' })
 @Index(['userId', 'createdAt'])

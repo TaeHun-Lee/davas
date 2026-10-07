@@ -1,6 +1,6 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query, Req } from '@nestjs/common';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, Matches, Max, Min } from 'class-validator';
 import type { AuthenticatedRequest } from '../auth/jwt-cookie-auth.guard';
 import { WatchTimelineQueryDto } from './dto/watch-event.dto';
 import { SpaceMemoriesService } from './space-memories.service';
@@ -13,6 +13,12 @@ export class SpaceMemoriesQueryDto {
   @Min(1900)
   @Max(2100)
   year?: number;
+}
+
+export class SpaceCalendarQueryDto {
+  /** `2026-10` */
+  @Matches(/^\d{4}-(0[1-9]|1[0-2])$/)
+  month!: string;
 }
 
 @Controller('v1/spaces')
@@ -29,6 +35,15 @@ export class SpaceWatchController {
     @Query() query: SpaceMemoriesQueryDto,
   ) {
     return this.memories.memories(spaceId, request.user.id, query.year);
+  }
+
+  @Get(':spaceId/calendar')
+  async spaceCalendar(
+    @Req() request: AuthenticatedRequest,
+    @Param('spaceId', ParseUUIDPipe) spaceId: string,
+    @Query() query: SpaceCalendarQueryDto,
+  ) {
+    return this.memories.calendar(spaceId, request.user.id, query.month);
   }
 
   @Get(':spaceId/timeline')

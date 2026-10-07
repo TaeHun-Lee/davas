@@ -281,8 +281,15 @@ function setup() {
   const attachedPhotoIds: string[][] = [];
   const removedPhotosOf: string[] = [];
   const photos = {
-    replaceForDiary: async (_manager: unknown, _diaryId: string, _account: string, ids: string[]) =>
-      void attachedPhotoIds.push(ids),
+    replaceForDiary: async (
+      _manager: unknown,
+      _diaryId: string,
+      _account: string,
+      ids: string[],
+    ) => {
+      attachedPhotoIds.push(ids);
+      return ids.length;
+    },
     removeAllForDiary: async (_manager: unknown, diaryId: string) =>
       void removedPhotosOf.push(diaryId),
     view: (photo: WatchPhotoEntity) => ({ id: photo.id }),
@@ -608,6 +615,47 @@ describe('WatchEventsService', () => {
     assert.equal(counts.get(quiet.id), 0);
   });
 
+  it('lets a companion who was there add photos and tells the others', async () => {
+    const { attachedPhotoIds, created, database, notified, service } = await coupleRecord(false);
+    await assert.rejects(
+      () => service.setMyPhotos(created.id, 'seojun', []),
+      (error) => exceptionCode(error) === 'WATCH_PHOTOS_FORBIDDEN',
+    );
+    const photoId = '00000000-0000-4000-8000-0000000000aa';
+    await service.setMyPhotos(created.id, 'minho', [photoId]);
+    assert.deepEqual(attachedPhotoIds.at(-1), [photoId]);
+    assert.ok(
+      notified.some(
+        (call) =>
+          call.method === 'notifyPhotosAdded' &&
+          call.recipientId === 'jiwoo' &&
+          call.actorId === 'minho',
+      ),
+    );
+
+    // Each photo follows its uploader: a companion who leaves takes theirs along.
+    database.photos.push(
+      Object.assign(new WatchPhotoEntity(), {
+        id: 'p-jiwoo',
+        diaryId: created.id,
+        uploaderId: 'jiwoo',
+        position: 0,
+      }),
+      Object.assign(new WatchPhotoEntity(), {
+        id: 'p-minho',
+        diaryId: created.id,
+        uploaderId: 'minho',
+        position: 1,
+      }),
+    );
+    const seen = async () => (await service.detail('jiwoo', created.id)).photos.map((p) => p.id);
+    assert.deepEqual(await seen(), ['p-jiwoo', 'p-minho']);
+    const minho = database.memberships.find((membership) => membership.accountId === 'minho')!;
+    minho.status = 'LEFT';
+    minho.leftAt = new Date();
+    assert.deepEqual(await seen(), ['p-jiwoo']);
+  });
+
   it('removes the photos of a deleted record with it', async () => {
     const { database, removedPhotosOf, service } = setup();
     database.addMember('space-1', 'owner');
@@ -926,6 +974,153 @@ describe('WatchEventsService', () => {
     assert.equal(thisYear.onThisDay[0].coverPhoto, null);
     const lastYear = await memories.memories('space-1', 'jiwoo', 2025, now);
     assert.equal(lastYear.totals.photos, 0);
+  });
+
+  it('sums the year-end card without letting a locked blind rating count', async () => {
+    const { database, memories, service } = setup();
+    database.addMember('space-1', 'jiwoo');
+    database.addMember('space-1', 'minho');
+    database.addMedia('media-2');
+    const theater = (placeText: string) => ({ kind: 'THEATER', placeText }) as never;
+    const first = await service.create('jiwoo', {
+      mediaId: 'media-1',
+      watchedDate: '2026-03-01',
+      spaceIds: ['space-1'],
+      participantAccountIds: ['minho'],
+      source: theater('CGV 용산'),
+      rating: 4.5,
+    });
+    await service.respondToParticipation(first.id, 'minho', 'CONFIRMED');
+    await service.upsertReaction(first.id, 'minho', { rating: 3.5 });
+    // Jiwoo's blind 5.0 stays hidden from Minho until he writes his own review.
+    const blind = await service.create('jiwoo', {
+      mediaId: 'media-2',
+      watchedDate: '2026-03-15',
+      spaceIds: ['space-1'],
+      participantAccountIds: ['minho'],
+      source: theater('CGV 용산'),
+      rating: 5,
+      isBlind: true,
+    });
+    await service.respondToParticipation(blind.id, 'minho', 'CONFIRMED');
+    await service.create('jiwoo', {
+      mediaId: 'media-1',
+      watchedDate: '2026-07-02',
+      spaceIds: ['space-1'],
+      source: { kind: 'OTT', providerName: '넷플릭스' } as never,
+    });
+
+    const now = new Date('2026-10-06T03:00:00Z');
+    const forMinho = (await memories.memories('space-1', 'minho', undefined, now)).recap;
+    assert.equal(forMinho.monthly[2], 2);
+    assert.equal(forMinho.monthly[6], 1);
+    assert.deepEqual(forMinho.busiestMonth, { month: 3, count: 2 });
+    assert.equal(forMinho.firstWatch?.watchedDate, '2026-03-01');
+    assert.equal(forMinho.latestWatch?.watchedDate, '2026-07-02');
+    assert.deepEqual(
+      forMinho.topRated.map((item) => [item.mediaId, item.averageRating, item.ratingCount]),
+      [['media-1', 4, 2]],
+    );
+    assert.deepEqual(forMinho.favoritePlace, { name: 'CGV 용산', count: 2 });
+    assert.deepEqual(forMinho.favoriteService, { name: '넷플릭스', count: 1 });
+
+    const forJiwoo = (await memories.memories('space-1', 'jiwoo', undefined, now)).recap;
+    assert.deepEqual(
+      forJiwoo.topRated.map((item) => [item.mediaId, item.averageRating]),
+      [
+        ['media-2', 5],
+        ['media-1', 4],
+      ],
+    );
+  });
+
+  it('lays a month of shared records out by the day they were watched', async () => {
+    const { database, memories, service } = setup();
+    database.addMember('space-1', 'jiwoo');
+    database.addMember('space-1', 'minho');
+    const record = (watchedDate: string, spaceIds = ['space-1']) =>
+      service.create('jiwoo', { mediaId: 'media-1', watchedDate, spaceIds });
+    const early = await record('2026-03-01');
+    await record('2026-03-15');
+    await record('2026-03-15');
+    await record('2026-04-01');
+    // A personal record is not on the space's calendar.
+    await record('2026-03-20', []);
+
+    const march = await memories.calendar('space-1', 'minho', '2026-03');
+    assert.equal(march.month, '2026-03');
+    assert.deepEqual(
+      march.days.map((day) => [day.date, day.records.length]),
+      [
+        ['2026-03-01', 1],
+        ['2026-03-15', 2],
+      ],
+    );
+    assert.equal(march.days[0].records[0].watchEventId, early.id);
+    assert.equal(march.days[0].records[0].isMine, false);
+    await assert.rejects(() => memories.calendar('space-1', 'stranger', '2026-03'));
+  });
+
+  it('searches records by their words, as the viewer sees them', async () => {
+    const { database, service } = setup();
+    for (const member of ['jiwoo', 'minho', 'seojun']) database.addMember('space-1', member);
+    Object.assign(database.media[0], { originalTitle: 'Original One' });
+    database.addMedia('media-2');
+    const shared = await service.create('jiwoo', {
+      mediaId: 'media-1',
+      watchedDate: '2026-10-04',
+      spaceIds: ['space-1'],
+      participantAccountIds: ['minho'],
+      source: { kind: 'THEATER', placeText: 'CGV 용산' } as never,
+      memoryNote: '팝콘 반반',
+      headline: '결말이 오래 남아요',
+      isBlind: true,
+    });
+    await service.respondToParticipation(shared.id, 'minho', 'CONFIRMED');
+    await service.create('jiwoo', {
+      mediaId: 'media-1',
+      watchedDate: '2026-10-05',
+      memoryNote: '혼자 봄',
+    });
+    const streaming = await service.create('minho', {
+      mediaId: 'media-2',
+      watchedDate: '2026-10-06',
+      spaceIds: ['space-1'],
+      source: { kind: 'OTT', providerName: '넷플릭스' } as never,
+    });
+    const find = (accountId: string, q: string, extra: object = {}) =>
+      service.search(accountId, { scope: 'mine', q, ...extra } as never);
+    const ids = async (pending: ReturnType<typeof find>) =>
+      (await pending).items.map((item) => item.watchEvent.id);
+
+    assert.deepEqual((await find('jiwoo', '팝콘')).items[0].match, {
+      field: 'memo',
+      text: '팝콘 반반',
+    });
+    // Spaces do not matter, and an original title counts as the title.
+    assert.equal((await find('jiwoo', 'cgv용산')).items[0].match?.field, 'place');
+    assert.equal((await find('jiwoo', 'original')).items[0].match?.field, 'title');
+    assert.equal((await find('jiwoo', 'minho')).items[0].match?.field, 'people');
+    // A companion finds the record, but not by a blind review still locked for them.
+    assert.deepEqual(await ids(find('minho', '결말')), []);
+    await service.upsertReaction(shared.id, 'minho', { rating: 4 });
+    assert.deepEqual(await ids(find('minho', '결말')), [shared.id]);
+
+    // The space scope covers what is shared there, never a personal record.
+    const space = (q: string, extra: object = {}) =>
+      service.search('seojun', { scope: 'space', spaceId: 'space-1', q, ...extra } as never);
+    assert.deepEqual(
+      (await space('', { sourceKind: 'OTT' })).items.map((item) => item.watchEvent.id),
+      [streaming.id],
+    );
+    assert.deepEqual((await space('혼자')).items, []);
+    const firstPage = await space('', { limit: 1 });
+    assert.equal(firstPage.items[0].watchEvent.id, streaming.id);
+    assert.equal(firstPage.hasMore, true);
+    assert.equal(firstPage.nextCursor, '1');
+    await assert.rejects(() =>
+      service.search('stranger', { scope: 'space', spaceId: 'space-1' } as never),
+    );
   });
 
   it('reports where the viewer is up to in a series, from the newest record', async () => {
