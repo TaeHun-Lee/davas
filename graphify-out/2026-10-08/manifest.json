@@ -1740,8 +1740,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpacesScreen.tsx": {
-    "mtime": 1791389549.9509923,
-    "ast_hash": "ee8634c649955d4cfea9c961ccf6c421",
+    "mtime": 1791383379.2210062,
+    "ast_hash": "95497daa2dd825e63073175a6227a1ad",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/space-ui.spec.ts": {
@@ -1755,8 +1755,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/spaces-design.spec.ts": {
-    "mtime": 1791389611.1596582,
-    "ast_hash": "6acb5071ad2f67cdd74950e537e6698c",
+    "mtime": 1791360835.947833,
+    "ast_hash": "307f45f14346f3b973f1c12205225825",
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/spaces.spec.ts": {
@@ -2260,8 +2260,8 @@
     "semantic_hash": ""
   },
   "docs/development.md": {
-    "mtime": 1791389945.306487,
-    "ast_hash": "ce63864a80ae0978ca723e8d8c1315f9",
+    "mtime": 1791383239.260462,
+    "ast_hash": "103d2cc322a37f56539ea6845498f751",
     "semantic_hash": ""
   },
   "docs/operations.md": {
@@ -2725,8 +2725,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/design-review-fixes.spec.ts": {
-    "mtime": 1791389712.6023698,
-    "ast_hash": "6a588386cc56d65a3dbbf7072a652f84",
+    "mtime": 1791383008.8640172,
+    "ast_hash": "3b0e1e842b7e1ce836c9faeca80b06af",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceSwitcher.tsx": {
