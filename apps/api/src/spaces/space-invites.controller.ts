@@ -23,4 +23,9 @@ export class SpaceInvitesController {
   accept(@Req() request: AuthenticatedRequest, @Param('token') token: string) {
     return this.spaces.acceptInvite(token, request.user.id);
   }
+
+  @Post(':token/decline')
+  decline(@Req() request: AuthenticatedRequest, @Param('token') token: string) {
+    return this.spaces.declineInvite(token, request.user.id);
+  }
 }

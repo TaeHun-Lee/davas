@@ -55,7 +55,17 @@ export type SpaceInviteInspection =
       expiresAt: string;
     }
   | {
-      status: 'INVALID' | 'CANCELLED' | 'USED' | 'EXPIRED' | 'CLOSED' | 'ALREADY_MEMBER';
+      status:
+        | 'INVALID'
+        | 'CANCELLED'
+        | 'USED'
+        | 'EXPIRED'
+        | 'CLOSED'
+        | 'ALREADY_MEMBER'
+        /** Someone already said no with this link. */
+        | 'DECLINED'
+        /** Every seat is taken, so accepting would fail. */
+        | 'FULL';
     };
 
 export const WATCH_SOURCE_KINDS = ['THEATER', 'OTT', 'TV_OWNED', 'OTHER'] as const;
@@ -264,8 +274,28 @@ export type GroupRecommendationSessionResponse = {
       confidence: number;
     };
     consensus: GroupRecommendationConsensus;
+    /** What the viewer answered for this title, if they did. */
+    myFeedback?: RecommendationFeedbackKind | null;
   }>;
   emptyReason: 'NO_HARD_FILTER_MATCHES' | null;
+};
+
+/** One pick in a space, as listed for someone who started it or was asked to join it. */
+export type GroupRecommendationSessionSummary = {
+  id: string;
+  requesterAccountId: string;
+  participantAccountIds: string[];
+  status: 'OPEN' | 'MATCHED' | 'CLOSED';
+  createdAt?: string;
+  itemCount: number;
+  /** Titles in this pick the viewer has answered. */
+  answeredByMe: number;
+  /** The first title everyone needed agreed on, once there is one. */
+  matchedTitle: string | null;
+};
+
+export type GroupRecommendationSessionListResponse = {
+  items: GroupRecommendationSessionSummary[];
 };
 
 export type GroupRecommendationFeedbackRequest = {

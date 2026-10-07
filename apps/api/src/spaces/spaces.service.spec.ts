@@ -2,11 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { HttpException } from '@nestjs/common';
 import type { EntityManager, ObjectLiteral, Repository } from 'typeorm';
-import {
-  SpaceEntity,
-  SpaceInviteEntity,
-  SpaceMembershipEntity,
-} from '../database/entities';
+import { SpaceEntity, SpaceInviteEntity, SpaceMembershipEntity } from '../database/entities';
 import { SpaceAccessService } from './space-access.service';
 import { SpacesService } from './spaces.service';
 
@@ -36,8 +32,7 @@ class FakeDatabase {
   };
 
   readonly manager = {
-    getRepository: <T extends ObjectLiteral>(target: new () => T) =>
-      this.repository(target),
+    getRepository: <T extends ObjectLiteral>(target: new () => T) => this.repository(target),
   };
 
   repository<T extends ObjectLiteral>(target: new () => T): Repository<T> {
@@ -53,15 +48,11 @@ class FakeDatabase {
       return row;
     };
     const findOne = async (options: { where: Row; relations?: unknown }) => {
-      const row = rows.find((candidate) =>
-        this.matches(candidate, options.where),
-      ) as T | undefined;
+      const row = rows.find((candidate) => this.matches(candidate, options.where)) as T | undefined;
       if (!row) return null;
       if (targetKey === SpaceInviteEntity && options.relations) {
         const invite = row as unknown as SpaceInviteEntity;
-        invite.space = this.spaces.find(
-          (space) => space.id === invite.spaceId,
-        )!;
+        invite.space = this.spaces.find((space) => space.id === invite.spaceId)!;
         invite.inviter = {
           id: invite.inviterAccountId,
           nickname: invite.inviterAccountId,
@@ -90,19 +81,14 @@ class FakeDatabase {
     return {
       create: (input: Partial<T>) => Object.assign(new target(), input),
       save: async (input: T | T[]) =>
-        Array.isArray(input)
-          ? input.map((value) => saveOne(value))
-          : saveOne(input),
+        Array.isArray(input) ? input.map((value) => saveOne(value)) : saveOne(input),
       findOne,
       find: async (options: { where: Row; relations?: unknown }) => {
-        const matches = rows.filter((candidate) =>
-          this.matches(candidate, options.where),
-        ) as T[];
+        const matches = rows.filter((candidate) => this.matches(candidate, options.where)) as T[];
         return options.relations ? matches.map(hydrateRelations) : matches;
       },
       count: async (options: { where: Row }) =>
-        rows.filter((candidate) => this.matches(candidate, options.where))
-          .length,
+        rows.filter((candidate) => this.matches(candidate, options.where)).length,
     } as never;
   }
 
@@ -127,16 +113,13 @@ class FakeDatabase {
   private rows<T extends ObjectLiteral>(target: new () => T): T[] {
     const targetKey: unknown = target;
     if (targetKey === SpaceEntity) return this.spaces as unknown as T[];
-    if (targetKey === SpaceMembershipEntity)
-      return this.memberships as unknown as T[];
+    if (targetKey === SpaceMembershipEntity) return this.memberships as unknown as T[];
     if (targetKey === SpaceInviteEntity) return this.invites as unknown as T[];
     throw new Error(`Unexpected repository ${target.name}`);
   }
 
   private matches(candidate: Row, where: Row) {
-    return Object.entries(where).every(
-      ([key, value]) => candidate[key] === value,
-    );
+    return Object.entries(where).every(([key, value]) => candidate[key] === value);
   }
 }
 
@@ -231,10 +214,7 @@ describe('SpacesService lifecycle', () => {
 
     database.invites[0].expiresAt = new Date(Date.now() + 60_000);
     await service.cancelInvite(space.id, issued.id, 'owner');
-    assert.equal(
-      (await service.inspectInvite(issued.token)).status,
-      'CANCELLED',
-    );
+    assert.equal((await service.inspectInvite(issued.token)).status, 'CANCELLED');
     await assert.rejects(
       () => service.acceptInvite(issued.token, 'new-user'),
       (error) => {
@@ -284,17 +264,13 @@ describe('SpacesService lifecycle', () => {
       service.acceptInvite(inviteB.token, 'member-5b'),
     ]);
 
-    assert.equal(
-      results.filter((result) => result.status === 'fulfilled').length,
-      1,
-    );
+    assert.equal(results.filter((result) => result.status === 'fulfilled').length, 1);
     const rejected = results.find((result) => result.status === 'rejected');
     assert.ok(rejected && rejected.status === 'rejected');
     assert.equal(exceptionCode(rejected.reason), 'SPACE_FULL');
     assert.equal(
       database.memberships.filter(
-        (membership) =>
-          membership.spaceId === space.id && membership.status === 'ACTIVE',
+        (membership) => membership.spaceId === space.id && membership.status === 'ACTIVE',
       ).length,
       5,
     );
@@ -315,10 +291,7 @@ describe('SpacesService lifecycle', () => {
     );
     await service.transferOwnership(space.id, 'owner', 'next-owner');
     await service.leave(space.id, 'owner');
-    assert.equal(
-      database.memberships.find((row) => row.accountId === 'owner')?.status,
-      'LEFT',
-    );
+    assert.equal(database.memberships.find((row) => row.accountId === 'owner')?.status, 'LEFT');
 
     await service.close(space.id, 'next-owner');
     assert.equal(database.spaces[0].status, 'CLOSED');
@@ -343,5 +316,75 @@ describe('SpacesService lifecycle', () => {
         return true;
       });
     }
+  });
+
+  it('records a declined invite, tells the inviter and keeps the link from being used', async () => {
+    const { database, outboxEvents, service } = setup();
+    const told: Array<Record<string, unknown>> = [];
+    const notifying = new SpacesService(
+      database.repository(SpaceEntity),
+      database.repository(SpaceMembershipEntity),
+      database.repository(SpaceInviteEntity),
+      new SpaceAccessService(database.repository(SpaceMembershipEntity)),
+      {
+        enqueue: async (_manager: unknown, input: Record<string, unknown>) =>
+          outboxEvents.push(input),
+      } as never,
+      database.dataSource as never,
+      {
+        notifySpaceInviteDeclined: async (input: Record<string, unknown>) => told.push(input),
+      } as never,
+    );
+    const space = await service.create('owner', { name: '우리 둘' });
+    const invite = await service.createInvite(space.id, 'owner', {});
+
+    await notifying.declineInvite(invite.token, 'friend');
+
+    assert.equal(database.invites[0].declinedByAccountId, 'friend');
+    assert.ok(database.invites[0].declinedAt);
+    assert.equal((await service.inspectInvite(invite.token)).status, 'DECLINED');
+    assert.deepEqual(told, [
+      {
+        recipientId: 'owner',
+        actorId: 'friend',
+        idempotencyKey: `SPACE_INVITE_DECLINED:${invite.id}`,
+      },
+    ]);
+    assert.ok(outboxEvents.some((event) => event.eventType === 'SpaceInviteDeclined'));
+    await assert.rejects(
+      () => service.acceptInvite(invite.token, 'friend'),
+      (error) => exceptionCode(error) === 'SPACE_INVITE_DECLINED',
+    );
+    await assert.rejects(
+      () => service.declineInvite(invite.token, 'friend'),
+      (error) => exceptionCode(error) === 'SPACE_INVITE_DECLINED',
+    );
+  });
+
+  it('says an invite to a full space is full before anyone tries to accept it', async () => {
+    const { service } = setup();
+    const space = await service.create('owner', { name: '둘만', maxMembers: 2 });
+    const first = await service.createInvite(space.id, 'owner', {});
+    const second = await service.createInvite(space.id, 'owner', {});
+    await service.acceptInvite(first.token, 'partner');
+    assert.equal((await service.inspectInvite(second.token, 'third')).status, 'FULL');
+  });
+
+  it('lets only the owner rename the space', async () => {
+    const { service } = setup();
+    const space = await service.create('owner', { name: '처음 이름' });
+    const invite = await service.createInvite(space.id, 'owner', {});
+    await service.acceptInvite(invite.token, 'member');
+
+    const renamed = await service.rename(space.id, 'owner', '  우리 영화관  ');
+    assert.equal(renamed.name, '우리 영화관');
+    await assert.rejects(
+      () => service.rename(space.id, 'member', '바꿔 볼래'),
+      (error) => exceptionCode(error) === 'SPACE_OWNER_REQUIRED',
+    );
+    await assert.rejects(
+      () => service.rename(space.id, 'stranger', '남의 공간'),
+      (error) => exceptionCode(error) === 'SPACE_NOT_FOUND',
+    );
   });
 });

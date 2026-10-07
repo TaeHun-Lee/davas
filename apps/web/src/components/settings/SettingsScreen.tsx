@@ -3,10 +3,30 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getMe, logout, normalizeProfileImageUrl } from '../../lib/api/auth';
-import { deleteMe, deleteProfileImage, updateMe, uploadProfileImage } from '../../lib/api/users';
+import {
+  deleteMe,
+  deleteProfileImage,
+  exportMyData,
+  updateMe,
+  uploadProfileImage,
+} from '../../lib/api/users';
 import { purgeSessionDrafts } from '../../lib/api/core';
 import { AsyncState, TaskShell } from '../core/CoreUi';
+import { NotificationSettings } from './NotificationSettings';
 import { OttSubscriptions } from './OttSubscriptions';
+import { SecuritySettings } from './SecuritySettings';
+
+/** Hands the JSON over as a file named for today, without leaving the page. */
+function saveJson(data: unknown, name: string) {
+  const url = URL.createObjectURL(
+    new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }),
+  );
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = name;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 export function SettingsScreen() {
   const router = useRouter();
   const [user, setUser] = useState<Awaited<ReturnType<typeof getMe>> | null>(null);
@@ -15,6 +35,7 @@ export function SettingsScreen() {
   const [error, setError] = useState('');
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [password, setPassword] = useState('');
+  const [exportError, setExportError] = useState('');
   useEffect(() => {
     getMe()
       .then((value) => {
@@ -50,6 +71,18 @@ export function SettingsScreen() {
     await logout().catch(() => undefined);
     purgeSessionDrafts();
     router.replace('/login');
+  };
+  const download = async () => {
+    setBusy('export');
+    setExportError('');
+    try {
+      const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+      saveJson(await exportMyData(), `davas-my-data-${day}.json`);
+    } catch {
+      setExportError('내 데이터를 내려받지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setBusy('');
+    }
   };
   const remove = async () => {
     setBusy('delete');
@@ -135,6 +168,29 @@ export function SettingsScreen() {
         {error ? <p className="form-error mt-3">{error}</p> : null}
       </section>
       <OttSubscriptions initial={user.ottServices ?? []} />
+      <NotificationSettings />
+      <SecuritySettings user={user} onUser={setUser} />
+      <section className="core-card mt-5 p-5" aria-labelledby="my-data-title">
+        <h2 id="my-data-title" className="section-title">
+          내 데이터
+        </h2>
+        <p className="page-description">
+          내 계정, 기록, 리뷰, 공간과 같이 보고 싶어요 목록을 JSON 파일 하나로 내려받아요. 사진
+          파일은 목록만 들어 있어요.
+        </p>
+        <button
+          className="secondary-button mt-4 w-full"
+          disabled={busy === 'export'}
+          onClick={download}
+        >
+          {busy === 'export' ? '준비하는 중…' : '내 데이터 내려받기'}
+        </button>
+        {exportError ? (
+          <p className="form-error mt-3" role="alert">
+            {exportError}
+          </p>
+        ) : null}
+      </section>
       <section className="core-card mt-5 divide-y divide-[var(--border)] px-4">
         <Link
           className="flex min-h-14 items-center justify-between text-sm font-bold text-[var(--heading)]"
@@ -158,15 +214,23 @@ export function SettingsScreen() {
       </section>
       <section className="core-card mt-5 p-5">
         <h2 className="section-title text-[var(--danger)]">위험 영역</h2>
-        <p className="page-description">계정을 삭제하면 기록과 친구 연결을 되돌릴 수 없어요.</p>
+        {/* The server keeps a 30-day grace period; the copy says so instead of "irreversible". */}
+        <p className="page-description">
+          계정을 삭제하면 30일 동안 삭제 대기 상태가 돼요. 그동안 같은 이메일과 비밀번호로
+          로그인하면 되살릴 수 있고, 30일이 지나면 기록·사진·친구 연결이 영구 삭제돼요.
+        </p>
         <button className="danger-button mt-4 w-full" onClick={() => setDeleteOpen(true)}>
           계정 삭제
         </button>
       </section>
       {deleteOpen ? (
-        <section role="dialog" aria-modal="true" className="core-card mt-4 p-5">
-          <h2 className="section-title">계정을 삭제할까요?</h2>
-          <p className="page-description">확인을 위해 현재 비밀번호를 입력해 주세요.</p>
+        <section className="core-card mt-4 p-5" aria-labelledby="delete-account-title">
+          <h2 id="delete-account-title" className="section-title">
+            계정을 삭제할까요?
+          </h2>
+          <p className="page-description">
+            30일 안에 다시 로그인하면 되살릴 수 있어요. 확인을 위해 지금 비밀번호를 입력해 주세요.
+          </p>
           <label className="mt-4 block">
             <span className="field-label">비밀번호</span>
             <input

@@ -31,8 +31,7 @@ class FakeDatabase {
   private sequence = 0;
 
   readonly manager = {
-    getRepository: <T extends ObjectLiteral>(target: new () => T) =>
-      this.repository(target),
+    getRepository: <T extends ObjectLiteral>(target: new () => T) => this.repository(target),
   };
 
   readonly dataSource = {
@@ -55,9 +54,7 @@ class FakeDatabase {
       }
       if (targetKey === RecommendationFeedbackEntity) {
         const feedback = value as unknown as RecommendationFeedbackEntity;
-        feedback.exposure = this.exposures.find(
-          (exposure) => exposure.id === feedback.exposureId,
-        )!;
+        feedback.exposure = this.exposures.find((exposure) => exposure.id === feedback.exposureId)!;
       }
       return value;
     };
@@ -82,9 +79,7 @@ class FakeDatabase {
     return {
       create: (input: Partial<T>) => Object.assign(new target(), input),
       save: async (input: T | T[]) =>
-        Array.isArray(input)
-          ? input.map((value) => saveOne(value))
-          : saveOne(input),
+        Array.isArray(input) ? input.map((value) => saveOne(value)) : saveOne(input),
       find: async (options: { where?: Row; take?: number }) => {
         const found = options.where
           ? rows.filter((candidate) => this.matches(candidate, options.where!))
@@ -92,9 +87,8 @@ class FakeDatabase {
         return found.slice(0, options.take ?? found.length).map(hydrate) as T[];
       },
       findOne: async (options: { where: Row }) => {
-        const found = rows.find((candidate) =>
-          this.matches(candidate, options.where),
-        ) as T | undefined;
+        const found = rows.find((candidate) => this.matches(candidate, options.where)) as
+          T | undefined;
         return found ? hydrate(found) : null;
       },
     } as never;
@@ -114,12 +108,7 @@ class FakeDatabase {
     );
   }
 
-  addMedia(
-    id: string,
-    title: string,
-    genres: string[],
-    provider = 'Netflix',
-  ) {
+  addMedia(id: string, title: string, genres: string[], provider = 'Netflix') {
     const media = Object.assign(new MediaEntity(), {
       id,
       externalProvider: 'TMDB' as const,
@@ -162,34 +151,22 @@ class FakeDatabase {
   }
 
   private hydrateExposure(exposure: RecommendationExposureEntity) {
-    exposure.session = this.sessions.find(
-      (session) => session.id === exposure.sessionId,
-    )!;
-    exposure.content = this.media.find(
-      (media) => media.id === exposure.contentId,
-    )!;
-    exposure.feedback = this.feedback.filter(
-      (feedback) => feedback.exposureId === exposure.id,
-    );
+    exposure.session = this.sessions.find((session) => session.id === exposure.sessionId)!;
+    exposure.content = this.media.find((media) => media.id === exposure.contentId)!;
+    exposure.feedback = this.feedback.filter((feedback) => feedback.exposureId === exposure.id);
     return exposure;
   }
 
   private rows<T extends ObjectLiteral>(target: new () => T): T[] {
     const key: unknown = target;
-    if (key === RecommendationSessionEntity)
-      return this.sessions as unknown as T[];
-    if (key === RecommendationExposureEntity)
-      return this.exposures as unknown as T[];
-    if (key === RecommendationFeedbackEntity)
-      return this.feedback as unknown as T[];
-    if (key === SpaceMembershipEntity)
-      return this.memberships as unknown as T[];
+    if (key === RecommendationSessionEntity) return this.sessions as unknown as T[];
+    if (key === RecommendationExposureEntity) return this.exposures as unknown as T[];
+    if (key === RecommendationFeedbackEntity) return this.feedback as unknown as T[];
+    if (key === SpaceMembershipEntity) return this.memberships as unknown as T[];
     if (key === MediaEntity) return this.media as unknown as T[];
-    if (key === AvailabilityObservationEntity)
-      return this.observations as unknown as T[];
+    if (key === AvailabilityObservationEntity) return this.observations as unknown as T[];
     if (key === DiaryEntity) return this.diaries as unknown as T[];
-    if (key === WatchParticipantEntity)
-      return this.participants as unknown as T[];
+    if (key === WatchParticipantEntity) return this.participants as unknown as T[];
     if (key === WatchReactionEntity) return this.reactions as unknown as T[];
     throw new Error(`Unexpected repository ${target.name}`);
   }
@@ -202,28 +179,22 @@ class FakeDatabase {
         '_type' in expected &&
         (expected as { _type?: string })._type === 'in'
       ) {
-        return (expected as unknown as { _value: unknown[] })._value.includes(
-          candidate[key],
-        );
+        return (expected as unknown as { _value: unknown[] })._value.includes(candidate[key]);
       }
       return candidate[key] === expected;
     });
   }
 }
 
-function setup(participantIds = ['u1', 'u2']) {
+function setup(participantIds = ['u1', 'u2'], notifications?: object) {
   const database = new FakeDatabase();
-  participantIds.forEach((accountId) =>
-    database.addMembership('space-1', accountId),
-  );
+  participantIds.forEach((accountId) => database.addMembership('space-1', accountId));
   database.addMedia('content-drama', 'Drama Pick', ['drama']);
   database.addMedia('content-comedy', 'Comedy Pick', ['comedy']);
   database.addMedia('content-unavailable', 'Wrong Service', ['drama'], 'Wavve');
   const availability = {
     getCurrent: async (contentId: string) => {
-      const observation = database.observations.find(
-        (item) => item.contentId === contentId,
-      )!;
+      const observation = database.observations.find((item) => item.contentId === contentId)!;
       return {
         contentId,
         region: 'KR',
@@ -243,9 +214,7 @@ function setup(participantIds = ['u1', 'u2']) {
       };
     },
   };
-  const spaceAccess = new SpaceAccessService(
-    database.repository(SpaceMembershipEntity),
-  );
+  const spaceAccess = new SpaceAccessService(database.repository(SpaceMembershipEntity));
   const service = new GroupRecommendationsService(
     database.repository(RecommendationSessionEntity),
     database.repository(RecommendationExposureEntity),
@@ -258,6 +227,9 @@ function setup(participantIds = ['u1', 'u2']) {
     availability as never,
     spaceAccess,
     database.dataSource as never,
+    undefined,
+    undefined,
+    notifications as never,
   );
   return { database, service };
 }
@@ -323,10 +295,7 @@ describe('GroupRecommendationsService', () => {
           avoidTags: ['Horror'],
         }),
       (error) => {
-        assert.equal(
-          exceptionCode(error),
-          'RECOMMENDATION_CONSTRAINT_CONFLICT',
-        );
+        assert.equal(exceptionCode(error), 'RECOMMENDATION_CONSTRAINT_CONFLICT');
         return true;
       },
     );
@@ -395,6 +364,60 @@ describe('GroupRecommendationsService', () => {
     assert.equal(watched.feedback.watchEventId, 'watch-1');
   });
 
+  it('lets everyone in a pick find it, see their own answers and hear when it starts and matches', async () => {
+    const requested: Array<Record<string, unknown>> = [];
+    const matched: Array<Record<string, unknown>> = [];
+    const { service } = setup(['u1', 'u2', 'u3'], {
+      notifyRecommendationRequested: async (input: Record<string, unknown>) =>
+        requested.push(input),
+      notifyRecommendationMatched: async (input: Record<string, unknown>) => matched.push(input),
+    });
+    const created = await service.create('u1', request(['u1', 'u2']));
+    assert.deepEqual(
+      requested.map((input) => input.recipientId),
+      ['u2'],
+    );
+
+    const listed = await service.listForSpace('space-1', 'u2');
+    assert.equal(listed.items.length, 1);
+    assert.equal(listed.items[0].id, created.session.id);
+    assert.equal(listed.items[0].answeredByMe, 0);
+    assert.equal(listed.items[0].matchedTitle, null);
+    // A space member who was not asked does not see it; an outsider gets the usual 404.
+    assert.deepEqual((await service.listForSpace('space-1', 'u3')).items, []);
+    await assert.rejects(
+      () => service.listForSpace('space-1', 'stranger'),
+      (error) => exceptionCode(error) === 'RECOMMENDATION_NOT_FOUND',
+    );
+
+    const exposure = created.items[0];
+    await service.recordFeedback(exposure.exposureId, 'u1', { kind: 'INTERESTED' });
+    const forU1 = await service.get(created.session.id, 'u1');
+    const forU2 = await service.get(created.session.id, 'u2');
+    assert.equal(forU1.items[0].myFeedback, 'INTERESTED');
+    assert.equal(forU2.items[0].myFeedback, null);
+    assert.equal(matched.length, 0);
+
+    await service.recordFeedback(exposure.exposureId, 'u2', { kind: 'INTERESTED' });
+    assert.deepEqual(matched, [
+      {
+        recipientId: 'u1',
+        actorId: 'u2',
+        mediaId: exposure.content.id,
+        idempotencyKey: `RECOMMENDATION_MATCHED:u1:${created.session.id}`,
+      },
+    ]);
+    const after = await service.listForSpace('space-1', 'u1');
+    assert.equal(after.items[0].matchedTitle, exposure.content.title);
+    assert.equal(after.items[0].answeredByMe, 1);
+
+    // A second agreement in the same pick does not announce it again.
+    const other = created.items[1];
+    await service.recordFeedback(other.exposureId, 'u1', { kind: 'INTERESTED' });
+    await service.recordFeedback(other.exposureId, 'u2', { kind: 'INTERESTED' });
+    assert.equal(matched.length, 1);
+  });
+
   it('supports minimum agreement, availability-error feedback, and future explicit-reject exclusion', async () => {
     const { database, service } = setup(['u1', 'u2', 'u3']);
     const created = await service.create('u1', {
@@ -403,27 +426,19 @@ describe('GroupRecommendationsService', () => {
       minimumApprovals: 2,
     });
     const [firstExposure, secondExposure] = created.items;
-    const rejected = await service.recordFeedback(
-      firstExposure.exposureId,
-      'u1',
-      { kind: 'REJECTED' },
-    );
+    const rejected = await service.recordFeedback(firstExposure.exposureId, 'u1', {
+      kind: 'REJECTED',
+    });
     assert.equal(rejected.consensus.status, 'PENDING');
     await service.recordFeedback(secondExposure.exposureId, 'u1', {
       kind: 'AVAILABILITY_ERROR',
     });
     assert.equal(database.feedback.at(-1)?.kind, 'AVAILABILITY_ERROR');
-    const held = await service.recordFeedback(
-      secondExposure.exposureId,
-      'u2',
-      { kind: 'HOLD' },
-    );
+    const held = await service.recordFeedback(secondExposure.exposureId, 'u2', { kind: 'HOLD' });
     assert.equal(held.feedback.kind, 'HOLD');
-    const alreadyWatched = await service.recordFeedback(
-      secondExposure.exposureId,
-      'u2',
-      { kind: 'ALREADY_WATCHED' },
-    );
+    const alreadyWatched = await service.recordFeedback(secondExposure.exposureId, 'u2', {
+      kind: 'ALREADY_WATCHED',
+    });
     assert.equal(alreadyWatched.feedback.kind, 'ALREADY_WATCHED');
 
     const regenerated = await service.create('u1', {
@@ -432,15 +447,11 @@ describe('GroupRecommendationsService', () => {
       minimumApprovals: 2,
     });
     assert.equal(
-      regenerated.items.some(
-        (item) => item.content.id === firstExposure.content.id,
-      ),
+      regenerated.items.some((item) => item.content.id === firstExposure.content.id),
       false,
     );
     assert.equal(
-      regenerated.items.some(
-        (item) => item.content.id === secondExposure.content.id,
-      ),
+      regenerated.items.some((item) => item.content.id === secondExposure.content.id),
       false,
     );
   });

@@ -16,6 +16,7 @@ const { NestFactory } = require('@nestjs/core');
 
 const dist = (path: string) => require(join(root, 'apps/api/dist', path));
 const controllers = [
+  dist('auth/auth.controller.js').AuthController,
   dist('media/media.controller.js').MediaController,
   dist('diaries/watch-events.controller.js').WatchEventsController,
   dist('diaries/space-watch.controller.js').SpaceWatchController,
@@ -106,6 +107,7 @@ const wishes = await web('lib/api/wishes.ts');
 const users = await web('lib/api/users.ts');
 const recommendations = await web('lib/api/recommendations.ts');
 const notifications = await web('lib/api/notifications.ts');
+const auth = await web('lib/api/auth.ts');
 const groupModel = await web('components/spaces/group-recommendation-model.ts');
 const shared = require(join(root, 'packages/shared/dist/index.js'));
 
@@ -213,6 +215,8 @@ const calls: Array<[string, () => Promise<unknown>]> = [
   ['transfer ownership', () => spaces.transferSpaceOwnership(SPACE, PARTNER)],
   ['leave a space', () => spaces.leaveSpace(SPACE)],
   ['close a space', () => spaces.closeSpace(SPACE)],
+  ['rename a space', () => spaces.renameSpace(SPACE, '우리 영화관')],
+  ['decline an invite', () => spaces.declineSpaceInvite('demo-token')],
   ['wish list', () => wishes.listWishes(SPACE)],
   ['quick pick', () => wishes.pickWish(SPACE, { mood: 'LIGHT', exclude: [MEDIA] })],
   ['wish status', () => wishes.getWishStatus(SPACE, MEDIA)],
@@ -240,7 +244,7 @@ const calls: Array<[string, () => Promise<unknown>]> = [
           contentTypes: ['MOVIE', 'TV'],
           runtimeMin: '',
           runtimeMax: '150',
-          moodTags: ['LIGHT'],
+          moodTags: ['가벼운', '긴장감'],
           avoidTagsText: '공포',
           rewatchPolicy: 'EXCLUDE',
           decisionRule: 'ALL',
@@ -249,6 +253,7 @@ const calls: Array<[string, () => Promise<unknown>]> = [
       ),
   ],
   ['open group choosing', () => recommendations.getGroupRecommendationSession(SESSION)],
+  ["a space's group choosing", () => recommendations.listGroupRecommendationSessions(SPACE)],
   [
     'react to a candidate',
     () => recommendations.submitGroupRecommendationFeedback(EXPOSURE, { kind: 'INTERESTED' }),
@@ -257,6 +262,25 @@ const calls: Array<[string, () => Promise<unknown>]> = [
   ['unread count', () => notifications.getUnreadNotificationCount()],
   ['read one', () => notifications.markNotificationRead(NOTIFICATION)],
   ['read all', () => notifications.markAllNotificationsRead()],
+  ['notification settings', () => notifications.listNotificationPreferences()],
+  ['turn a notification off', () => notifications.setNotificationPreference('SOCIAL', false)],
+  ['log in', () => auth.login('jiwoo@example.com', 'password123')],
+  ['change password', () => auth.changePassword('password123', 'new-password-1')],
+  ['make a recovery code', () => auth.createRecoveryCode('password123')],
+  [
+    'reset a forgotten password',
+    () =>
+      auth.resetPassword({
+        email: 'jiwoo@example.com',
+        recoveryCode: 'ABCD-EFGH-JKMN',
+        newPassword: 'new-password-1',
+      }),
+  ],
+  [
+    'bring a deleted account back',
+    () => users.cancelAccountDeletion('jiwoo@example.com', 'password123'),
+  ],
+  ['export my data', () => users.exportMyData()],
 ];
 
 try {

@@ -25,7 +25,13 @@ export type NotificationType =
   | 'REVIEW_REVEALED'
   | 'REVIEW_LIKED'
   /** Everyone in the space now wants the same title (`mediaId`). */
-  | 'WISH_MATCHED';
+  | 'WISH_MATCHED'
+  /** The person the recipient's space invite went to said no. */
+  | 'SPACE_INVITE_DECLINED'
+  /** The actor started picking a title together and included the recipient. */
+  | 'RECOMMENDATION_REQUESTED'
+  /** Everyone needed agreed on a title (`mediaId`) in a pick the recipient took part in. */
+  | 'RECOMMENDATION_MATCHED';
 
 @Entity({ name: 'notifications' })
 @Index(['userId', 'createdAt'])

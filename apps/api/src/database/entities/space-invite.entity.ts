@@ -52,6 +52,13 @@ export class SpaceInviteEntity {
   @Column({ name: 'revoked_at', type: 'timestamptz', nullable: true })
   revokedAt!: Date | null;
 
+  /** The person the link was sent to said no; the link can no longer be used. */
+  @Column({ name: 'declined_at', type: 'timestamptz', nullable: true })
+  declinedAt!: Date | null;
+
+  @Column({ name: 'declined_by_account_id', type: 'uuid', nullable: true })
+  declinedByAccountId!: string | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 }

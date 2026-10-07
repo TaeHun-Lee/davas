@@ -16,9 +16,14 @@ async function statements() {
 }
 
 describe('notification subjects migration', () => {
-  it('is the newest migration', () => {
-    const migrations = createTypeOrmOptions().migrations as Array<new () => { name: string }>;
-    assert.equal(migrations.at(-1)?.name, 'NotificationSubjects1720671400000');
+  it('runs after the space wish list it builds on', () => {
+    const names = (createTypeOrmOptions().migrations as Array<new () => { name: string }>).map(
+      (migration) => new migration().name,
+    );
+    assert.ok(
+      names.indexOf('NotificationSubjects1720671400000') >
+        names.indexOf('SpaceWishesAndSubscriptions1720671300000'),
+    );
   });
 
   it('adds a nullable title link and an unread index without touching existing rows', async () => {

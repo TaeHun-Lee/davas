@@ -19,6 +19,7 @@ export type UserProfileResponse = {
   bio: string | null;
   preferredGenres: string[];
   ottServices: string[];
+  recoveryCodeCreatedAt: string | null;
 };
 
 export type UpdateMeDto = {
@@ -451,6 +452,7 @@ export class UsersService {
       bio: user.bio ?? null,
       preferredGenres: user.preferredGenres ?? [],
       ottServices: user.ottServices ?? [],
+      recoveryCodeCreatedAt: user.recoveryCodeCreatedAt?.toISOString() ?? null,
     };
   }
 }

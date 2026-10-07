@@ -6,8 +6,9 @@ import {
   RECOMMENDATION_MOODS,
   type SpaceView,
 } from '@davas/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGroupRecommendations } from '../../hooks/useGroupRecommendations';
+import { relativeTime } from '../core/WatchReviews';
 import {
   availabilityPresentation,
   buildGroupRecommendationRequest,
@@ -54,6 +55,7 @@ export function GroupRecommendationPanel({
   const [decisionRule, setDecisionRule] = useState<'ALL' | 'MINIMUM'>('ALL');
   const [minimumApprovals, setMinimumApprovals] = useState(2);
   const [formError, setFormError] = useState('');
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const activeMembers = useMemo(
     () => space.members.filter((member) => member.status === 'ACTIVE'),
@@ -82,6 +84,20 @@ export function GroupRecommendationPanel({
     if (accountId === myAccountId) return '나';
     return member?.nickname || '공간 멤버';
   });
+
+  const memberName = (accountId: string) =>
+    accountId === myAccountId
+      ? '나'
+      : activeMembers.find((member) => member.accountId === accountId)?.nickname || '공간 멤버';
+
+  async function openSession(sessionId: string) {
+    if (await group.openSession(sessionId)) {
+      // The results sit below the long form, so bring them into view.
+      requestAnimationFrame(() =>
+        resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      );
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -135,6 +151,57 @@ export function GroupRecommendationPanel({
           2~5명 전용
         </span>
       </div>
+
+      {group.sessions.length ? (
+        <div
+          className="mt-5 rounded-[20px] border border-[#dce7f4] bg-white p-4"
+          role="group"
+          aria-labelledby="group-sessions-title"
+        >
+          <h3 id="group-sessions-title" className="text-[15px] font-black text-[#172947]">
+            최근 함께 고르기
+          </h3>
+          <ul className="mt-2 space-y-2">
+            {group.sessions.map((item) => {
+              const starter =
+                item.requesterAccountId === myAccountId
+                  ? '내가'
+                  : `${memberName(item.requesterAccountId)}님이`;
+              const status =
+                item.status === 'MATCHED'
+                  ? `정해졌어요${item.matchedTitle ? ` · ${item.matchedTitle}` : ''}`
+                  : item.itemCount
+                    ? `후보 ${item.itemCount}개 중 ${item.answeredByMe}개에 답했어요`
+                    : '조건에 맞는 후보가 없었어요';
+              const viewing = group.session?.session.id === item.id;
+              const waitingForMe = item.status === 'OPEN' && item.answeredByMe < item.itemCount;
+              return (
+                <li
+                  key={item.id}
+                  className="flex min-h-12 items-center gap-3 rounded-2xl bg-[#f7f9fd] px-3 py-2"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] font-black text-[#284778]">
+                      {starter} 시작
+                      {item.createdAt ? ` · ${relativeTime(item.createdAt)}` : ''}
+                    </span>
+                    <span className="block text-[12px] font-bold text-[#65758a]">{status}</span>
+                  </span>
+                  <button
+                    type="button"
+                    disabled={viewing || group.requestStatus === 'loading'}
+                    aria-label={`${starter} 시작한 함께 고르기 ${viewing ? '보는 중' : '열기'}`}
+                    onClick={() => void openSession(item.id)}
+                    className="min-h-11 shrink-0 rounded-xl bg-white px-3 text-[12px] font-black text-[#456ca8] disabled:opacity-60"
+                  >
+                    {viewing ? '보는 중' : waitingForMe ? '답하기' : '열기'}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
 
       <form onSubmit={handleSubmit} className="mt-5 space-y-5">
         <div className="grid gap-4 md:grid-cols-2">
@@ -450,7 +517,7 @@ export function GroupRecommendationPanel({
       ) : null}
 
       {group.session ? (
-        <div className="mt-7" aria-live="polite">
+        <div ref={resultsRef} className="mt-7 scroll-mt-4" aria-live="polite">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-[18px] font-black text-[#172947]">함께 볼 후보</h3>

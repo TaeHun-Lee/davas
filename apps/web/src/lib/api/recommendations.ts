@@ -2,6 +2,7 @@ import type {
   GroupRecommendationFeedbackRequest,
   GroupRecommendationFeedbackResponse,
   GroupRecommendationSessionRequest,
+  GroupRecommendationSessionListResponse,
   GroupRecommendationSessionResponse,
 } from '@davas/shared';
 import type { MediaSearchResult } from './media';
@@ -60,9 +61,10 @@ async function fetchRecommendation<T>(path: string, init?: RequestInit) {
   });
 
   if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as
-      | { message?: string; code?: string }
-      | null;
+    const payload = (await response.json().catch(() => null)) as {
+      message?: string;
+      code?: string;
+    } | null;
     throw new RecommendationRequestError(
       payload?.message ?? '추천 요청을 처리하지 못했어요.',
       response.status,
@@ -73,29 +75,49 @@ async function fetchRecommendation<T>(path: string, init?: RequestInit) {
   return (await response.json()) as T;
 }
 
-export async function getTrendingRecommendations({ limit = 10, page = 1, language = 'ko-KR' }: { limit?: number; page?: number; language?: string } = {}) {
+export async function getTrendingRecommendations({
+  limit = 10,
+  page = 1,
+  language = 'ko-KR',
+}: { limit?: number; page?: number; language?: string } = {}) {
   const params = new URLSearchParams();
   params.set('limit', String(limit));
   params.set('page', String(page));
   params.set('language', language);
 
-  return fetchRecommendation<RecommendationListResponse>(`/recommendations/trending?${params.toString()}`);
+  return fetchRecommendation<RecommendationListResponse>(
+    `/recommendations/trending?${params.toString()}`,
+  );
 }
 
 export async function getGenreRecommendationPresets() {
   return fetchRecommendation<GenreRecommendationPresetsResponse>('/recommendations/genres');
 }
 
-export async function getGenreRecommendations(presetId: string, { limit = 4, page = 1, language = 'ko-KR' }: { limit?: number; page?: number; language?: string } = {}) {
+export async function getGenreRecommendations(
+  presetId: string,
+  {
+    limit = 4,
+    page = 1,
+    language = 'ko-KR',
+  }: { limit?: number; page?: number; language?: string } = {},
+) {
   const params = new URLSearchParams();
   params.set('limit', String(limit));
   params.set('page', String(page));
   params.set('language', language);
 
-  return fetchRecommendation<GenreRecommendationsResponse>(`/recommendations/genres/${presetId}?${params.toString()}`);
+  return fetchRecommendation<GenreRecommendationsResponse>(
+    `/recommendations/genres/${presetId}?${params.toString()}`,
+  );
 }
 
-export async function getRandomGenreRecommendations({ seed, limit = 4, page = 1, language = 'ko-KR' }: { seed?: string; limit?: number; page?: number; language?: string } = {}) {
+export async function getRandomGenreRecommendations({
+  seed,
+  limit = 4,
+  page = 1,
+  language = 'ko-KR',
+}: { seed?: string; limit?: number; page?: number; language?: string } = {}) {
   const params = new URLSearchParams();
   if (seed) {
     params.set('seed', seed);
@@ -104,23 +126,35 @@ export async function getRandomGenreRecommendations({ seed, limit = 4, page = 1,
   params.set('page', String(page));
   params.set('language', language);
 
-  return fetchRecommendation<GenreRecommendationsResponse>(`/recommendations/genres/random?${params.toString()}`);
+  return fetchRecommendation<GenreRecommendationsResponse>(
+    `/recommendations/genres/random?${params.toString()}`,
+  );
 }
 
-export async function getTodayRecommendation({ limit = 3, language = 'ko-KR' }: { limit?: number; language?: string } = {}) {
+export async function getTodayRecommendation({
+  limit = 3,
+  language = 'ko-KR',
+}: { limit?: number; language?: string } = {}) {
   const params = new URLSearchParams();
   params.set('limit', String(limit));
   params.set('language', language);
 
-  return fetchRecommendation<TodayRecommendationResponse>(`/recommendations/today/carousel?${params.toString()}`);
+  return fetchRecommendation<TodayRecommendationResponse>(
+    `/recommendations/today/carousel?${params.toString()}`,
+  );
 }
 
-export function createGroupRecommendationSession(
-  request: GroupRecommendationSessionRequest,
-) {
-  return fetchRecommendation<GroupRecommendationSessionResponse>(
-    '/v1/recommendation-sessions',
-    { method: 'POST', body: JSON.stringify(request) },
+export function createGroupRecommendationSession(request: GroupRecommendationSessionRequest) {
+  return fetchRecommendation<GroupRecommendationSessionResponse>('/v1/recommendation-sessions', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  });
+}
+
+/** Recent picks in the space that I started or was asked into. */
+export function listGroupRecommendationSessions(spaceId: string) {
+  return fetchRecommendation<GroupRecommendationSessionListResponse>(
+    `/v1/spaces/${encodeURIComponent(spaceId)}/recommendation-sessions`,
   );
 }
 

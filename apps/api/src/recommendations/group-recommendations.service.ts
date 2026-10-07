@@ -2,7 +2,9 @@ import { createHash } from 'node:crypto';
 import type {
   GroupRecommendationConsensus,
   GroupRecommendationFeedbackResponse,
+  GroupRecommendationSessionListResponse,
   GroupRecommendationSessionResponse,
+  GroupRecommendationSessionSummary,
 } from '@davas/shared';
 import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -23,6 +25,7 @@ import {
 import { AvailabilityService } from '../media/availability.service';
 import { MediaSelectionService } from '../media/media-selection.service';
 import { TmdbClient } from '../media/tmdb.client';
+import { NotificationsService } from '../notifications/notifications.service';
 import { SpaceAccessService } from '../spaces/space-access.service';
 import {
   CreateRecommendationSessionDto,
@@ -99,6 +102,7 @@ export class GroupRecommendationsService {
     private readonly dataSource: DataSource,
     @Optional() private readonly mediaSelection?: MediaSelectionService,
     @Optional() private readonly tmdb?: TmdbClient,
+    @Optional() private readonly notifications?: NotificationsService,
   ) {}
 
   /**
@@ -255,7 +259,51 @@ export class GroupRecommendationsService {
       return session;
     });
 
-    return this.sessionView(saved);
+    // The others are asked to answer; a pick with nothing to choose from asks no one.
+    if (saved.exposures?.length) {
+      await Promise.all(
+        request.participantAccountIds
+          .filter((recipientId) => recipientId !== accountId)
+          .map((recipientId) =>
+            this.notifications
+              ?.notifyRecommendationRequested({
+                recipientId,
+                actorId: accountId,
+                idempotencyKey: `RECOMMENDATION_REQUESTED:${recipientId}:${saved.id}`,
+              })
+              .catch(() => undefined),
+          ),
+      );
+    }
+    return this.sessionView(saved, accountId);
+  }
+
+  /**
+   * Recent picks in a space that the viewer started or was asked into, newest first, so
+   * everyone in a pick can come back to it and answer.
+   */
+  async listForSpace(
+    spaceId: string,
+    accountId: string,
+  ): Promise<GroupRecommendationSessionListResponse> {
+    await this.assertSpaceMembers(spaceId, [accountId]);
+    // A space has two to five people, so its recent picks are few enough to filter here.
+    const sessions = await this.sessions.find({
+      where: { spaceId },
+      order: { createdAt: 'DESC' },
+      take: 30,
+      relations: { exposures: { content: true, feedback: true } },
+    });
+    return {
+      items: sessions
+        .filter(
+          (session) =>
+            session.requesterAccountId === accountId ||
+            session.participantAccountIds.includes(accountId),
+        )
+        .slice(0, 10)
+        .map((session) => this.sessionSummary(session, accountId)),
+    };
   }
 
   async get(sessionId: string, accountId: string): Promise<GroupRecommendationSessionResponse> {
@@ -265,7 +313,7 @@ export class GroupRecommendationsService {
     });
     if (!session) throw this.notFound();
     await this.assertSessionAudience(session, accountId);
-    return this.sessionView(session);
+    return this.sessionView(session, accountId);
   }
 
   async recordFeedback(
@@ -283,6 +331,7 @@ export class GroupRecommendationsService {
     }
     await this.assertSpaceMembers(exposure.session.spaceId, [accountId]);
     const watchEventId = await this.validateWatchLink(exposure, accountId, dto);
+    const matchedBefore = exposure.session.status === 'MATCHED';
 
     const saved = await this.dataSource.transaction(async (manager) => {
       const feedbackRepository = manager.getRepository(RecommendationFeedbackEntity);
@@ -302,6 +351,26 @@ export class GroupRecommendationsService {
       }
       return { row, consensus };
     });
+
+    // The first agreement in a pick tells everyone in it, once each.
+    if (!matchedBefore && saved.consensus.status === 'MATCHED') {
+      const session = exposure.session;
+      const others = [
+        ...new Set([session.requesterAccountId, ...session.participantAccountIds]),
+      ].filter((recipientId) => recipientId !== accountId);
+      await Promise.all(
+        others.map((recipientId) =>
+          this.notifications
+            ?.notifyRecommendationMatched({
+              recipientId,
+              actorId: accountId,
+              mediaId: exposure.contentId,
+              idempotencyKey: `RECOMMENDATION_MATCHED:${recipientId}:${session.id}`,
+            })
+            .catch(() => undefined),
+        ),
+      );
+    }
 
     return {
       feedback: {
@@ -732,7 +801,32 @@ export class GroupRecommendationsService {
     };
   }
 
-  private sessionView(session: RecommendationSessionEntity): GroupRecommendationSessionResponse {
+  private sessionSummary(
+    session: RecommendationSessionEntity,
+    accountId: string,
+  ): GroupRecommendationSessionSummary {
+    const exposures = [...(session.exposures ?? [])].sort((left, right) => left.rank - right.rank);
+    const matched = exposures.find(
+      (exposure) => this.consensus(session, exposure.feedback ?? []).status === 'MATCHED',
+    );
+    return {
+      id: session.id,
+      requesterAccountId: session.requesterAccountId,
+      participantAccountIds: session.participantAccountIds,
+      status: session.status,
+      createdAt: session.createdAt?.toISOString(),
+      itemCount: exposures.length,
+      answeredByMe: exposures.filter((exposure) =>
+        (exposure.feedback ?? []).some((row) => row.accountId === accountId),
+      ).length,
+      matchedTitle: matched?.content?.title ?? null,
+    };
+  }
+
+  private sessionView(
+    session: RecommendationSessionEntity,
+    viewerAccountId: string,
+  ): GroupRecommendationSessionResponse {
     const items = (session.exposures ?? [])
       .sort((left, right) => left.rank - right.rank)
       .map((exposure) => ({
@@ -753,6 +847,8 @@ export class GroupRecommendationsService {
         })),
         availability: exposure.availabilitySnapshot,
         consensus: this.consensus(session, exposure.feedback ?? []),
+        myFeedback:
+          exposure.feedback?.find((row) => row.accountId === viewerAccountId)?.kind ?? null,
       }));
     return {
       session: {

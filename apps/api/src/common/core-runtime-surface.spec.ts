@@ -22,6 +22,7 @@ function controllerFiles(directory = sourceRoot): string[] {
 const PUBLIC_ROUTES = [
   'auth/auth.controller.ts#login',
   'auth/auth.controller.ts#logout',
+  'auth/auth.controller.ts#resetPassword',
   'auth/auth.controller.ts#signup',
   'friends/friend-invites.controller.ts#inspect',
   'health.controller.ts#check',

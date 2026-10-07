@@ -1,8 +1,4 @@
-import type {
-  SpaceInvite,
-  SpaceInviteInspection,
-  SpaceView,
-} from '@davas/shared';
+import type { SpaceInvite, SpaceInviteInspection, SpaceView } from '@davas/shared';
 import { coreFetch } from './core';
 
 export type {
@@ -32,10 +28,7 @@ export function createSpace(name: string, maxMembers: number) {
   });
 }
 
-export function createSpaceInvite(
-  spaceId: string,
-  expiresInHours: number,
-) {
+export function createSpaceInvite(spaceId: string, expiresInHours: number) {
   return coreFetch<SpaceInvite>(`/v1/spaces/${encode(spaceId)}/invites`, {
     method: 'POST',
     body: JSON.stringify({ expiresInHours }),
@@ -60,10 +53,7 @@ export function acceptSpaceInvite(token: string) {
   );
 }
 
-export function transferSpaceOwnership(
-  spaceId: string,
-  newOwnerAccountId: string,
-) {
+export function transferSpaceOwnership(spaceId: string, newOwnerAccountId: string) {
   return coreFetch<SpaceView>(`/v1/spaces/${encode(spaceId)}/owner`, {
     method: 'PATCH',
     body: JSON.stringify({ newOwnerAccountId }),
@@ -71,10 +61,9 @@ export function transferSpaceOwnership(
 }
 
 export function leaveSpace(spaceId: string) {
-  return coreFetch<{ left: true; spaceId: string }>(
-    `/v1/spaces/${encode(spaceId)}/members/me`,
-    { method: 'DELETE' },
-  );
+  return coreFetch<{ left: true; spaceId: string }>(`/v1/spaces/${encode(spaceId)}/members/me`, {
+    method: 'DELETE',
+  });
 }
 
 export function closeSpace(spaceId: string) {
@@ -82,4 +71,17 @@ export function closeSpace(spaceId: string) {
     `/v1/spaces/${encode(spaceId)}`,
     { method: 'DELETE' },
   );
+}
+
+export function renameSpace(spaceId: string, name: string) {
+  return coreFetch<SpaceView>(`/v1/spaces/${encode(spaceId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ name }),
+  });
+}
+
+export function declineSpaceInvite(token: string) {
+  return coreFetch<{ declined: true }>(`/v1/invites/${encode(token)}/decline`, {
+    method: 'POST',
+  });
 }

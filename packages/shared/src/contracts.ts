@@ -18,6 +18,8 @@ export type AuthenticatedUser = {
   preferredGenres: string[];
   /** Keys of OTT_SERVICES the person subscribes to. */
   ottServices: string[];
+  /** When the current password recovery code was made; null when there is none. */
+  recoveryCodeCreatedAt?: string | null;
 };
 
 export type MeResponse = { user: AuthenticatedUser };

@@ -1,6 +1,11 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Req } from '@nestjs/common';
 import type { AuthenticatedRequest } from '../auth/jwt-cookie-auth.guard';
-import { CreateSpaceDto, CreateSpaceInviteDto, TransferSpaceOwnershipDto } from './spaces.dto';
+import {
+  CreateSpaceDto,
+  CreateSpaceInviteDto,
+  RenameSpaceDto,
+  TransferSpaceOwnershipDto,
+} from './spaces.dto';
 import { SpacesService } from './spaces.service';
 
 @Controller('v1/spaces')
@@ -20,6 +25,15 @@ export class SpacesController {
   @Get(':spaceId')
   async get(@Req() request: AuthenticatedRequest, @Param('spaceId') spaceId: string) {
     return this.spaces.get(spaceId, request.user.id);
+  }
+
+  @Patch(':spaceId')
+  async rename(
+    @Req() request: AuthenticatedRequest,
+    @Param('spaceId') spaceId: string,
+    @Body() body: RenameSpaceDto,
+  ) {
+    return this.spaces.rename(spaceId, request.user.id, body.name);
   }
 
   @Post(':spaceId/invites')

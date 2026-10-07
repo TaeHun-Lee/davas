@@ -10,6 +10,7 @@ import {
   createSpaceInvite,
   leaveSpace,
   listSpaces,
+  renameSpace,
   transferSpaceOwnership,
   type SpaceInvite,
   type SpaceView,
@@ -42,6 +43,8 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
   const [invite, setInvite] = useState<SpaceInvite | null>(null);
   const [newOwnerId, setNewOwnerId] = useState('');
   const [dangerAction, setDangerAction] = useState<'leave' | 'close' | null>(null);
+  const [renaming, setRenaming] = useState(false);
+  const [spaceName, setSpaceName] = useState('');
 
   const reload = useCallback(async (preferredSpaceId?: string | null) => {
     setLoading(true);
@@ -108,6 +111,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
     setInvite(null);
     setNewOwnerId('');
     setDangerAction(null);
+    setRenaming(false);
     setError('');
     setNotice('');
     window.localStorage.setItem(ACTIVE_SPACE_KEY, spaceId);
@@ -133,6 +137,17 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
       setName('');
       setNotice('공간을 만들었어요. 초대 링크로 멤버를 불러보세요.');
       await reload(created.id);
+    });
+  }
+
+  async function handleRename(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!activeSpace) return;
+    await runAction(async () => {
+      await renameSpace(activeSpace.id, spaceName.trim());
+      setRenaming(false);
+      setNotice('공간 이름을 바꿨어요.');
+      await reload(activeSpace.id);
     });
   }
 
@@ -364,16 +379,61 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                 </div>
                 <section className="mt-4 core-card p-5">
                   <div className="flex items-start justify-between gap-3">
-                    <div>
+                    <div className="min-w-0">
                       <h2 className="text-[18px] font-black text-[#284778]">{activeSpace.name}</h2>
                       <p className="mt-1 text-[12px] font-bold text-[#8190a5]">
                         멤버 {activeSpace.members.length}/{activeSpace.maxMembers}명 · 최대 5명
                       </p>
                     </div>
-                    <span className="rounded-full bg-[#edf3fb] px-3 py-1 text-[11px] font-black text-[#5575a6]">
+                    <span className="shrink-0 rounded-full bg-[#edf3fb] px-3 py-1 text-[11px] font-black text-[#5575a6]">
                       {isOwner ? '소유자' : '멤버'}
                     </span>
                   </div>
+                  {/* Only the owner renames the space, as only the owner manages invites. */}
+                  {isOwner && renaming ? (
+                    <form className="mt-3" onSubmit={handleRename}>
+                      <label className="block text-[13px] font-black text-[#53637b]">
+                        새 공간 이름
+                        <input
+                          autoFocus
+                          required
+                          maxLength={80}
+                          value={spaceName}
+                          onChange={(event) => setSpaceName(event.target.value)}
+                          className="mt-2 min-h-12 w-full rounded-2xl border border-[#dce4ef] bg-[#f8faff] px-4 text-[14px] font-bold"
+                        />
+                      </label>
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setRenaming(false)}
+                          className="min-h-11 rounded-xl bg-[#f1f5fb] text-[13px] font-black text-[#53637b]"
+                        >
+                          취소
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={
+                            busy || !spaceName.trim() || spaceName.trim() === activeSpace.name
+                          }
+                          className="min-h-11 rounded-xl bg-[#456ca8] text-[13px] font-black text-white disabled:opacity-50"
+                        >
+                          이름 저장
+                        </button>
+                      </div>
+                    </form>
+                  ) : isOwner ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSpaceName(activeSpace.name);
+                        setRenaming(true);
+                      }}
+                      className="mt-3 min-h-11 rounded-xl bg-[#f1f5fb] px-4 text-[13px] font-black text-[#456ca8]"
+                    >
+                      공간 이름 바꾸기
+                    </button>
+                  ) : null}
                   <h3 className="mt-5 text-[13px] font-black text-[#53637b]">멤버 목록</h3>
                   <ul className="mt-2 space-y-2" aria-label="공간 멤버 목록">
                     {activeSpace.members.map((member) => (

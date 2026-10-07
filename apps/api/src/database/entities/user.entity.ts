@@ -55,6 +55,17 @@ export class UserEntity {
   @Column({ name: 'anonymized_at', type: 'timestamptz', nullable: true })
   anonymizedAt!: Date | null;
 
+  /** Goes up when the password changes; sign-ins issued before that stop working. */
+  @Column({ name: 'session_version', type: 'int', default: 0 })
+  sessionVersion!: number;
+
+  /** bcrypt hash of the one recovery code that can reset a forgotten password. */
+  @Column({ name: 'recovery_code_hash', type: 'varchar', length: 100, nullable: true })
+  recoveryCodeHash!: string | null;
+
+  @Column({ name: 'recovery_code_created_at', type: 'timestamptz', nullable: true })
+  recoveryCodeCreatedAt!: Date | null;
+
   @OneToMany(() => DiaryEntity, (diary) => diary.user)
   diaries!: DiaryEntity[];
 

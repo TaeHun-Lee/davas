@@ -1,13 +1,4 @@
-import {
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Length,
-  Matches,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsInt, IsOptional, IsString, IsUUID, Length, Matches, Max, Min } from 'class-validator';
 
 export class CreateSpaceDto {
   @IsString()
@@ -20,6 +11,13 @@ export class CreateSpaceDto {
   @Min(2)
   @Max(5)
   maxMembers?: number;
+}
+
+export class RenameSpaceDto {
+  @IsString()
+  @Length(1, 80)
+  @Matches(/\S/)
+  name!: string;
 }
 
 export class CreateSpaceInviteDto {

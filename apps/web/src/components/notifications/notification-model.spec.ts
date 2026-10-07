@@ -45,4 +45,18 @@ describe('notification copy', () => {
       '/friends',
     );
   });
+
+  it('sends invite answers to spaces and group picks to the picking screen', () => {
+    const declined = describeNotification(item({ type: 'SPACE_INVITE_DECLINED', diary: null }));
+    assert.match(declined.title, /공간 초대를 거절했어요/);
+    assert.equal(declined.href, '/spaces');
+    const asked = describeNotification(item({ type: 'RECOMMENDATION_REQUESTED', diary: null }));
+    assert.match(asked.title, /함께 볼 작품을 고르고 있어요/);
+    assert.equal(asked.href, '/spaces?view=recommend');
+    const agreed = describeNotification(
+      item({ type: 'RECOMMENDATION_MATCHED', diary: null, media: { id: 'm-1', title: '파묘' } }),
+    );
+    assert.equal(agreed.title, '함께 볼 작품이 정해졌어요');
+    assert.equal(agreed.about, '파묘');
+  });
 });

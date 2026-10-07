@@ -75,6 +75,9 @@ const VISIBLE_TYPES = [
   'REVIEW_REVEALED',
   'REVIEW_LIKED',
   'WISH_MATCHED',
+  'SPACE_INVITE_DECLINED',
+  'RECOMMENDATION_REQUESTED',
+  'RECOMMENDATION_MATCHED',
 ];
 
 describe('NotificationsService', () => {

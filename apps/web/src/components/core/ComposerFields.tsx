@@ -22,12 +22,15 @@ export function ToggleSwitch({
   checked,
   onChange,
   icon,
+  disabled = false,
   children,
 }: {
   label: string;
   description: string;
   checked: boolean;
   onChange: (value: boolean) => void;
+  /** Shown but fixed, such as a notification that cannot be turned off. */
+  disabled?: boolean;
   /** A small picture in front of the label, such as the blind switch's lock. */
   icon?: ReactNode;
   children?: ReactNode;
@@ -56,6 +59,7 @@ export function ToggleSwitch({
           aria-labelledby={`${id}-label`}
           aria-describedby={`${id}-description`}
           className="composer-switch-control"
+          disabled={disabled}
           onClick={() => onChange(!checked)}
         >
           <span aria-hidden="true" />

@@ -3,15 +3,24 @@
 import type {
   GroupRecommendationSessionRequest,
   GroupRecommendationSessionResponse,
+  GroupRecommendationSessionSummary,
   RecommendationFeedbackKind,
   SpaceView,
 } from '@davas/shared';
 import { useCallback, useEffect, useState } from 'react';
 import {
   createGroupRecommendationSession,
+  getGroupRecommendationSession,
+  listGroupRecommendationSessions,
   RecommendationRequestError,
   submitGroupRecommendationFeedback,
 } from '../lib/api/recommendations';
+
+/** My earlier answers in a pick, keyed by exposure, so reopening it shows what I chose. */
+const answersOf = (session: GroupRecommendationSessionResponse) =>
+  Object.fromEntries(
+    session.items.flatMap((item) => (item.myFeedback ? [[item.exposureId, item.myFeedback]] : [])),
+  ) as Record<string, RecommendationFeedbackKind>;
 
 type RequestStatus = 'idle' | 'loading' | 'ready' | 'error' | 'provider-error';
 
@@ -24,6 +33,16 @@ export function useGroupRecommendations(space: SpaceView) {
   const [feedbackBusy, setFeedbackBusy] = useState('');
   const [feedbackError, setFeedbackError] = useState('');
   const [myFeedback, setMyFeedback] = useState<Record<string, RecommendationFeedbackKind>>({});
+  // Picks in this space I started or was asked into, so anyone in one can come back and answer.
+  const [sessions, setSessions] = useState<GroupRecommendationSessionSummary[]>([]);
+
+  const refreshSessions = useCallback(async () => {
+    try {
+      setSessions((await listGroupRecommendationSessions(space.id)).items);
+    } catch {
+      // The list is a shortcut; starting a new pick still works without it.
+    }
+  }, [space.id]);
 
   useEffect(() => {
     setSession(null);
@@ -32,32 +51,56 @@ export function useGroupRecommendations(space: SpaceView) {
     setRequestStatus('idle');
     setFeedbackError('');
     setMyFeedback({});
-  }, [space.id]);
+    setSessions([]);
+    void refreshSessions();
+  }, [refreshSessions]);
 
-  const requestRecommendations = useCallback(async (request: GroupRecommendationSessionRequest) => {
+  const openSession = useCallback(async (sessionId: string) => {
     setRequestStatus('loading');
     setRequestError('');
     setFeedbackError('');
-    setLastRequest(request);
     try {
-      const next = await createGroupRecommendationSession(request);
+      const next = await getGroupRecommendationSession(sessionId);
       setSession(next);
-      setMyFeedback({});
+      setMyFeedback(answersOf(next));
       setRequestStatus('ready');
       return next;
     } catch (caught) {
-      const providerFailure = caught instanceof RecommendationRequestError && caught.status >= 500;
-      setRequestStatus(providerFailure ? 'provider-error' : 'error');
-      setRequestError(
-        providerFailure
-          ? '시청 경로 공급자 응답을 확인하지 못했어요. 조건을 유지한 채 다시 시도해 주세요.'
-          : caught instanceof Error
-            ? caught.message
-            : '그룹 추천을 만들지 못했어요.',
-      );
-      throw caught;
+      setRequestStatus('error');
+      setRequestError(caught instanceof Error ? caught.message : '함께 고르기를 열지 못했어요.');
+      return null;
     }
   }, []);
+
+  const requestRecommendations = useCallback(
+    async (request: GroupRecommendationSessionRequest) => {
+      setRequestStatus('loading');
+      setRequestError('');
+      setFeedbackError('');
+      setLastRequest(request);
+      try {
+        const next = await createGroupRecommendationSession(request);
+        setSession(next);
+        setMyFeedback({});
+        setRequestStatus('ready');
+        void refreshSessions();
+        return next;
+      } catch (caught) {
+        const providerFailure =
+          caught instanceof RecommendationRequestError && caught.status >= 500;
+        setRequestStatus(providerFailure ? 'provider-error' : 'error');
+        setRequestError(
+          providerFailure
+            ? '시청 경로 공급자 응답을 확인하지 못했어요. 조건을 유지한 채 다시 시도해 주세요.'
+            : caught instanceof Error
+              ? caught.message
+              : '그룹 추천을 만들지 못했어요.',
+        );
+        throw caught;
+      }
+    },
+    [refreshSessions],
+  );
 
   const retryLastRequest = useCallback(async () => {
     if (!lastRequest) return null;
@@ -87,10 +130,13 @@ export function useGroupRecommendations(space: SpaceView) {
               status: matched ? 'MATCHED' : current.session.status,
             },
             items: current.items.map((item) =>
-              item.exposureId === exposureId ? { ...item, consensus: response.consensus } : item,
+              item.exposureId === exposureId
+                ? { ...item, consensus: response.consensus, myFeedback: kind }
+                : item,
             ),
           };
         });
+        void refreshSessions();
       } catch (caught) {
         setFeedbackError(
           caught instanceof Error
@@ -101,7 +147,7 @@ export function useGroupRecommendations(space: SpaceView) {
         setFeedbackBusy('');
       }
     },
-    [],
+    [refreshSessions],
   );
 
   return {
@@ -111,6 +157,8 @@ export function useGroupRecommendations(space: SpaceView) {
     feedbackBusy,
     feedbackError,
     myFeedback,
+    sessions,
+    openSession,
     requestRecommendations,
     retryLastRequest,
     submitFeedback,

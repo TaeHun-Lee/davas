@@ -2581,6 +2581,47 @@ label:has(> input.sr-only:focus-visible) {
 .composer-switch-control[aria-checked='true'] span {
   transform: translateX(20px);
 }
+/* A switch that cannot change, such as a notification that always arrives. */
+.composer-switch-control:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.settings-subtitle {
+  color: var(--heading);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 850;
+}
+.settings-hint {
+  margin-top: 8px;
+  color: #56667b;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 650;
+}
+.settings-ok {
+  border-radius: 14px;
+  background: var(--blue-soft);
+  padding: 12px 14px;
+  color: var(--blue-ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+/* The recovery code, shown once right after it is made. */
+.recovery-code-box {
+  border: 1.5px solid var(--blue);
+  border-radius: 18px;
+  background: var(--blue-soft);
+  padding: 16px;
+}
+.recovery-code {
+  color: var(--heading);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
 .composer-chips div {
   display: flex;
   flex-wrap: wrap;

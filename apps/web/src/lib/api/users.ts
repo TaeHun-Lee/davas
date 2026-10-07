@@ -1,4 +1,5 @@
 import { getApiBaseUrl, type AuthenticatedUser } from './auth';
+import { coreFetch } from './core';
 
 export type UpdateMePayload = {
   nickname?: string;
@@ -68,4 +69,18 @@ export async function deleteMe(password: string) {
     const body = await response.json().catch(() => ({}));
     throw new Error(body.message || '계정을 삭제하지 못했어요.');
   }
+}
+
+/** A deletion-pending account has no session, so the password is checked again. */
+export function cancelAccountDeletion(email: string, password: string) {
+  return coreFetch<{ status: 'ACTIVE' }>(
+    '/users/me/deletion/cancel',
+    { method: 'POST', body: JSON.stringify({ email, password }) },
+    { auth: 'optional' },
+  );
+}
+
+/** Everything the account holds, as one JSON document. */
+export function exportMyData() {
+  return coreFetch<Record<string, unknown>>('/users/me/export');
 }

@@ -30,6 +30,9 @@ const VISIBLE_TYPES = [
   'REVIEW_REVEALED',
   'REVIEW_LIKED',
   'WISH_MATCHED',
+  'SPACE_INVITE_DECLINED',
+  'RECOMMENDATION_REQUESTED',
+  'RECOMMENDATION_MATCHED',
 ] as const satisfies readonly NotificationType[];
 
 export type CommunityNotificationView = {
@@ -161,6 +164,15 @@ export class NotificationsService {
   async notifySpaceInvite(input: Omit<CreateNotificationInput, 'diaryId'>) {
     return this.createForOtherUser({ ...input, diaryId: null, type: 'SPACE_INVITE' });
   }
+  async notifySpaceInviteDeclined(input: Omit<CreateNotificationInput, 'diaryId'>) {
+    return this.createForOtherUser({ ...input, diaryId: null, type: 'SPACE_INVITE_DECLINED' });
+  }
+  async notifyRecommendationRequested(input: Omit<CreateNotificationInput, 'diaryId'>) {
+    return this.createForOtherUser({ ...input, diaryId: null, type: 'RECOMMENDATION_REQUESTED' });
+  }
+  async notifyRecommendationMatched(input: Omit<CreateNotificationInput, 'diaryId'>) {
+    return this.createForOtherUser({ ...input, diaryId: null, type: 'RECOMMENDATION_MATCHED' });
+  }
   async notifyWatchParticipationRequested(input: CreateNotificationInput) {
     return this.createForOtherUser({
       ...input,
@@ -218,9 +230,14 @@ export class NotificationsService {
   }
 
   private categoryFor(type: NotificationType): NotificationPreferenceCategory {
-    if (type === 'SPACE_INVITE') return 'SPACE_INVITE';
+    if (type === 'SPACE_INVITE' || type === 'SPACE_INVITE_DECLINED') return 'SPACE_INVITE';
     if (type === 'WATCH_PARTICIPATION_REQUESTED') return 'WATCH_PARTICIPATION';
-    if (type === 'WISH_MATCHED') return 'RECOMMENDATION';
+    if (
+      type === 'WISH_MATCHED' ||
+      type === 'RECOMMENDATION_REQUESTED' ||
+      type === 'RECOMMENDATION_MATCHED'
+    )
+      return 'RECOMMENDATION';
     return 'SOCIAL';
   }
 

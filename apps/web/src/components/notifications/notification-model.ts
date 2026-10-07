@@ -77,6 +77,27 @@ export function describeNotification(item: NotificationItem): NotificationText {
         href: '/spaces',
         icon: 'people',
       };
+    case 'SPACE_INVITE_DECLINED':
+      return {
+        title: `${actor}님이 공간 초대를 거절했어요`,
+        about: '필요하면 새 초대 링크를 보낼 수 있어요',
+        href: '/spaces',
+        icon: 'people',
+      };
+    case 'RECOMMENDATION_REQUESTED':
+      return {
+        title: `${actor}님이 함께 볼 작품을 고르고 있어요`,
+        about: '후보에 의견을 남겨 주세요',
+        href: '/spaces?view=recommend',
+        icon: 'match',
+      };
+    case 'RECOMMENDATION_MATCHED':
+      return {
+        title: '함께 볼 작품이 정해졌어요',
+        about: item.media?.title ?? '함께 고르기',
+        href: '/spaces?view=recommend',
+        icon: 'match',
+      };
     case 'FRIEND_REQUESTED':
       return {
         title: `${actor}님이 친구 요청을 보냈어요`,

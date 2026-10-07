@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomInt } from 'node:crypto';
 import {
   CURRENT_PRIVACY_VERSION,
   CURRENT_TERMS_VERSION,
@@ -24,12 +24,38 @@ import {
   UserEntity,
 } from '../database/entities';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto, ResetPasswordDto } from './dto/password.dto';
 import { SignupDto } from './dto/signup.dto';
 
 export type AuthResult = {
   accessToken: string;
   user: AuthenticatedUser;
 };
+
+const PASSWORD_HASH_COST = 12;
+const RECOVERY_CODE_HASH_COST = 10;
+// No 0/O, 1/I/L: a code copied down by hand reads back the same. 31^12 is about 2^59.
+const RECOVERY_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const RECOVERY_CODE_LENGTH = 12;
+
+/** `ABCD-EFGH-JKMN`: shown once, stored only as a hash. */
+export function newRecoveryCode() {
+  const characters = Array.from(
+    { length: RECOVERY_CODE_LENGTH },
+    () => RECOVERY_CODE_ALPHABET[randomInt(RECOVERY_CODE_ALPHABET.length)],
+  ).join('');
+  return [0, 4, 8].map((start) => characters.slice(start, start + 4)).join('-');
+}
+
+const normalizeRecoveryCode = (code: string) => code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+// Not 401: the web treats any 401 as a lost session and sends the person to the login page.
+const passwordMismatch = () =>
+  new BadRequestException({
+    statusCode: 400,
+    code: 'PASSWORD_MISMATCH',
+    message: '지금 비밀번호가 맞지 않아요.',
+  });
 
 @Injectable()
 export class AuthService {
@@ -191,7 +217,7 @@ export class AuthService {
       throw new ConflictException('이미 사용 중인 이메일 또는 닉네임입니다.');
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, 12);
+    const passwordHash = await bcrypt.hash(dto.password, PASSWORD_HASH_COST);
     const user = await repository.save(
       repository.create({
         email,
@@ -237,9 +263,97 @@ export class AuthService {
       throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
     }
 
+    // Said only after the password matched, so it never tells a stranger an email is registered.
+    if (
+      user.status === 'DELETION_PENDING' &&
+      user.deletionScheduledFor &&
+      user.deletionScheduledFor > new Date()
+    ) {
+      throw new UnauthorizedException({
+        statusCode: 401,
+        code: 'ACCOUNT_DELETION_PENDING',
+        message: '삭제를 기다리는 계정이에요. 되살리면 기록 그대로 다시 쓸 수 있어요.',
+        deletionScheduledFor: user.deletionScheduledFor.toISOString(),
+      });
+    }
     this.assertActive(user);
 
     return this.createAuthResult(user);
+  }
+
+  /** Every other device has to sign in again; this one gets a fresh sign-in. */
+  async changePassword(userId: string, dto: ChangePasswordDto): Promise<AuthResult> {
+    const user = await this.users.findOne({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
+    this.assertActive(user);
+    if (!(await bcrypt.compare(dto.currentPassword, user.passwordHash))) throw passwordMismatch();
+    user.passwordHash = await bcrypt.hash(dto.newPassword, PASSWORD_HASH_COST);
+    user.sessionVersion = (user.sessionVersion ?? 0) + 1;
+    await this.users.update(
+      { id: user.id },
+      { passwordHash: user.passwordHash, sessionVersion: user.sessionVersion },
+    );
+    return this.createAuthResult(user);
+  }
+
+  /** A new code replaces the old one; the plain code is returned this once and never stored. */
+  async createRecoveryCode(userId: string, password: string, now = new Date()) {
+    const user = await this.users.findOne({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
+    this.assertActive(user);
+    if (!(await bcrypt.compare(password, user.passwordHash))) throw passwordMismatch();
+    const recoveryCode = newRecoveryCode();
+    await this.users.update(
+      { id: user.id },
+      {
+        recoveryCodeHash: await bcrypt.hash(
+          normalizeRecoveryCode(recoveryCode),
+          RECOVERY_CODE_HASH_COST,
+        ),
+        recoveryCodeCreatedAt: now,
+      },
+    );
+    return { recoveryCode, createdAt: now.toISOString() };
+  }
+
+  /**
+   * Sets a new password with the recovery code, which is then used up. Earlier sign-ins stop
+   * working. Wrong email and wrong code get the same answer and take about the same time.
+   */
+  async resetPassword(dto: ResetPasswordDto) {
+    const user = await this.users.findOne({ where: { email: this.normalizeEmail(dto.email) } });
+    // A pending deletion may still reset; the login then offers to bring the account back.
+    const usable = user?.recoveryCodeHash && user.status !== 'DELETED' && !user.anonymizedAt;
+    const code = normalizeRecoveryCode(dto.recoveryCode);
+    const matches = await bcrypt.compare(
+      code,
+      usable ? user.recoveryCodeHash! : await this.unusableRecoveryHash(),
+    );
+    if (!usable || !matches) {
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'RECOVERY_CODE_INVALID',
+        message: '이메일이나 복구 코드가 맞지 않아요.',
+      });
+    }
+    await this.users.update(
+      { id: user.id },
+      {
+        passwordHash: await bcrypt.hash(dto.newPassword, PASSWORD_HASH_COST),
+        sessionVersion: (user.sessionVersion ?? 0) + 1,
+        recoveryCodeHash: null,
+        recoveryCodeCreatedAt: null,
+      },
+    );
+    return { ok: true as const };
+  }
+
+  private unusableHash?: Promise<string>;
+
+  // Compared against when there is no code, so a miss costs as long as a real check.
+  private unusableRecoveryHash() {
+    this.unusableHash ??= bcrypt.hash(newRecoveryCode(), RECOVERY_CODE_HASH_COST);
+    return this.unusableHash;
   }
 
   async findMe(accessToken: string | undefined): Promise<AuthenticatedUser> {
@@ -248,12 +362,16 @@ export class AuthService {
     }
 
     try {
-      const payload = this.jwt.verify<{ sub: string }>(accessToken);
+      const payload = this.jwt.verify<{ sub: string; sv?: number }>(accessToken);
       const user = await this.users.findOne({ where: { id: payload.sub } });
       if (!user) {
         throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
       }
       this.assertActive(user);
+      // Sign-ins from before a password change (version 0 for those issued before versions).
+      if ((payload.sv ?? 0) !== (user.sessionVersion ?? 0)) {
+        throw new UnauthorizedException('비밀번호가 바뀌어서 다시 로그인해야 해요.');
+      }
       return this.toUserResponse(user);
     } catch (error) {
       if (error instanceof UnauthorizedException) {
@@ -271,6 +389,7 @@ export class AuthService {
         sub: safeUser.id,
         email: safeUser.email,
         nickname: safeUser.nickname,
+        sv: user.sessionVersion ?? 0,
       }),
       user: safeUser,
     };
@@ -291,6 +410,7 @@ export class AuthService {
       bio: user.bio ?? null,
       preferredGenres: user.preferredGenres ?? [],
       ottServices: user.ottServices ?? [],
+      recoveryCodeCreatedAt: user.recoveryCodeCreatedAt?.toISOString() ?? null,
     };
   }
 

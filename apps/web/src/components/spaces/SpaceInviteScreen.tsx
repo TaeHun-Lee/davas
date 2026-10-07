@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { getMe } from '../../lib/api/auth';
 import {
   acceptSpaceInvite,
+  declineSpaceInvite,
   inspectSpaceInvite,
   type SpaceInviteInspection,
 } from '../../lib/api/spaces';
@@ -18,6 +19,8 @@ export function SpaceInviteScreen({ token }: { token: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [joinedSpaceId, setJoinedSpaceId] = useState<string | null>(null);
+  const [confirmDecline, setConfirmDecline] = useState(false);
+  const [declined, setDeclined] = useState(false);
 
   // Login and signup bring the visitor back here so they can review the space before joining.
   const returnTo = encodeURIComponent(`/spaces/invite/${token}`);
@@ -63,6 +66,19 @@ export function SpaceInviteScreen({ token }: { token: string }) {
     }
   }
 
+  async function handleDecline() {
+    setBusy(true);
+    setError('');
+    try {
+      await declineSpaceInvite(token);
+      setDeclined(true);
+    } catch (caught) {
+      setError(spaceErrorMessage(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <TaskShell title="공간 초대" fallback={authenticated ? '/spaces' : '/login'}>
       <div aria-busy={loading || busy}>
@@ -83,6 +99,20 @@ export function SpaceInviteScreen({ token }: { token: string }) {
               className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-[#456ca8] text-[14px] font-black text-white"
             >
               공간 열기
+            </Link>
+          </section>
+        ) : declined ? (
+          <section role="status" data-state="declined" className="mt-5 core-card p-6 text-center">
+            <h2 className="text-[20px] font-black text-[#284778]">초대를 거절했어요.</h2>
+            <p className="mt-2 text-[13px] font-semibold leading-5 text-[#738096]">
+              초대한 사람에게 거절했다고 알렸어요. 마음이 바뀌면 새 초대 링크를 받아 참여할 수
+              있어요.
+            </p>
+            <Link
+              href="/"
+              className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-[#456ca8] text-[14px] font-black text-white"
+            >
+              홈으로
             </Link>
           </section>
         ) : inspection?.status === 'VALID' ? (
@@ -119,12 +149,48 @@ export function SpaceInviteScreen({ token }: { token: string }) {
                 >
                   {busy ? '참여하는 중…' : '초대 수락'}
                 </button>
-                <Link
-                  href="/spaces"
-                  className="mt-3 flex min-h-11 items-center justify-center text-[13px] font-black text-[#718098]"
-                >
-                  나중에 하기
-                </Link>
+                {confirmDecline ? (
+                  <div className="mt-4 rounded-2xl bg-[#fff6f5] p-4 text-left">
+                    <p className="text-[13px] font-bold leading-5 text-[#8f2a24]">
+                      거절하면 이 링크로는 다시 참여할 수 없고, {inspection.inviter.nickname}님에게
+                      거절했다고 알려요.
+                    </p>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDecline(false)}
+                        className="min-h-11 rounded-xl bg-white text-[13px] font-black text-[#53637b]"
+                      >
+                        취소
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={handleDecline}
+                        className="min-h-11 rounded-xl bg-[#c4453c] text-[13px] font-black text-white disabled:opacity-50"
+                      >
+                        {busy ? '거절하는 중…' : '거절하기'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <Link
+                      href="/spaces"
+                      className="flex min-h-11 items-center justify-center text-[13px] font-black text-[#718098]"
+                    >
+                      나중에 하기
+                    </Link>
+                    <button
+                      type="button"
+                      aria-label={`${inspection.space.name} 공간 초대 거절`}
+                      onClick={() => setConfirmDecline(true)}
+                      className="min-h-11 rounded-xl text-[13px] font-black text-[#c4453c]"
+                    >
+                      초대 거절
+                    </button>
+                  </div>
+                )}
               </>
             ) : (
               <div data-state="signed-out">

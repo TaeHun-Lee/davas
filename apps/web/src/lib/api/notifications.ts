@@ -60,7 +60,10 @@ export type NotificationKind =
   | 'WATCH_SHARED'
   | 'REVIEW_REVEALED'
   | 'REVIEW_LIKED'
-  | 'WISH_MATCHED';
+  | 'WISH_MATCHED'
+  | 'SPACE_INVITE_DECLINED'
+  | 'RECOMMENDATION_REQUESTED'
+  | 'RECOMMENDATION_MATCHED';
 
 export type NotificationItem = {
   id: string;
@@ -90,4 +93,30 @@ export function markNotificationRead(id: string) {
 
 export function markAllNotificationsRead() {
   return coreFetch<{ unreadCount: number }>('/notifications/read-all', { method: 'PATCH' });
+}
+
+export type NotificationPreferenceCategory =
+  'SPACE_INVITE' | 'WATCH_PARTICIPATION' | 'SOCIAL' | 'RECOMMENDATION';
+
+export type NotificationPreference = {
+  category: NotificationPreferenceCategory;
+  /** Invites and "함께 봤나요?" requests always arrive. */
+  required: boolean;
+  enabled: boolean;
+};
+
+export function listNotificationPreferences() {
+  return coreFetch<{ items: NotificationPreference[] }>('/notifications/preferences').then(
+    (response) => response.items,
+  );
+}
+
+export function setNotificationPreference(
+  category: NotificationPreferenceCategory,
+  enabled: boolean,
+) {
+  return coreFetch<NotificationPreference>('/notifications/preferences', {
+    method: 'PUT',
+    body: JSON.stringify({ category, enabled }),
+  });
 }

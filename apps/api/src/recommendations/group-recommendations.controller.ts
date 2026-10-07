@@ -15,6 +15,11 @@ export class GroupRecommendationsController {
     return this.recommendations.create(request.user.id, body);
   }
 
+  @Get('spaces/:spaceId/recommendation-sessions')
+  async list(@Req() request: AuthenticatedRequest, @Param('spaceId') spaceId: string) {
+    return this.recommendations.listForSpace(spaceId, request.user.id);
+  }
+
   @Get('recommendation-sessions/:sessionId')
   async get(@Req() request: AuthenticatedRequest, @Param('sessionId') sessionId: string) {
     return this.recommendations.get(sessionId, request.user.id);

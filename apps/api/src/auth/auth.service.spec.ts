@@ -36,11 +36,20 @@ class FakeUserRepository {
     this.users.push(saved);
     return saved;
   }
+
+  async update(criteria: { id: string }, changes: Partial<UserEntity>) {
+    const user = this.users.find((candidate) => candidate.id === criteria.id);
+    if (user) Object.assign(user, changes);
+  }
 }
 
 class FakeJwtService {
   sign(payload: object) {
     return `signed:${JSON.stringify(payload)}`;
+  }
+
+  verify(token: string) {
+    return JSON.parse(token.replace(/^signed:/, ''));
   }
 }
 
@@ -205,6 +214,123 @@ describe('AuthService', () => {
       new FakeInviteUseRepository() as never,
     );
     await assert.rejects(() => sessionService.findMe(token), UnauthorizedException);
+  });
+
+  it('says a pending deletion only to someone who knows the password', async () => {
+    await service.signup({
+      ...legal,
+      inviteCode: 'DAVAS-TEST',
+      email: 'pending@example.com',
+      nickname: 'pending',
+      password: 'password123',
+    });
+    users.users[0].status = 'DELETION_PENDING';
+    users.users[0].deletionScheduledFor = new Date(Date.now() + 86400000);
+
+    await assert.rejects(
+      () => service.login({ email: 'pending@example.com', password: 'password123' }),
+      (error) =>
+        error instanceof UnauthorizedException &&
+        (error.getResponse() as { code: string }).code === 'ACCOUNT_DELETION_PENDING',
+    );
+    await assert.rejects(
+      () => service.login({ email: 'pending@example.com', password: 'wrong-password' }),
+      (error) =>
+        error instanceof UnauthorizedException &&
+        !JSON.stringify(error.getResponse()).includes('ACCOUNT_DELETION_PENDING'),
+    );
+  });
+
+  it('changes the password and signs every earlier session out', async () => {
+    const signedUp = await service.signup({
+      ...legal,
+      inviteCode: 'DAVAS-TEST',
+      email: 'user@example.com',
+      nickname: 'cinephile',
+      password: 'password123',
+    });
+    const userId = users.users[0].id;
+    assert.equal((await service.findMe(signedUp.accessToken)).email, 'user@example.com');
+
+    await assert.rejects(
+      () =>
+        service.changePassword(userId, {
+          currentPassword: 'wrong-password',
+          newPassword: 'new-password-1',
+        }),
+      (error) =>
+        error instanceof BadRequestException &&
+        (error.getResponse() as { code: string }).code === 'PASSWORD_MISMATCH',
+    );
+    const changed = await service.changePassword(userId, {
+      currentPassword: 'password123',
+      newPassword: 'new-password-1',
+    });
+
+    await assert.rejects(() => service.findMe(signedUp.accessToken), UnauthorizedException);
+    assert.equal((await service.findMe(changed.accessToken)).email, 'user@example.com');
+    await service.login({ email: 'user@example.com', password: 'new-password-1' });
+  });
+
+  it('resets a forgotten password once with the recovery code', async () => {
+    const signedUp = await service.signup({
+      ...legal,
+      inviteCode: 'DAVAS-TEST',
+      email: 'user@example.com',
+      nickname: 'cinephile',
+      password: 'password123',
+    });
+    const userId = users.users[0].id;
+    await assert.rejects(
+      () => service.createRecoveryCode(userId, 'wrong-password'),
+      BadRequestException,
+    );
+    const { recoveryCode } = await service.createRecoveryCode(userId, 'password123');
+    assert.match(recoveryCode, /^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/);
+    assert.ok(users.users[0].recoveryCodeHash);
+    assert.notEqual(users.users[0].recoveryCodeHash, recoveryCode);
+    assert.ok((await service.findMe(signedUp.accessToken)).recoveryCodeCreatedAt);
+
+    const invalid = (error: unknown) =>
+      error instanceof BadRequestException &&
+      (error.getResponse() as { code: string }).code === 'RECOVERY_CODE_INVALID';
+    await assert.rejects(
+      () =>
+        service.resetPassword({
+          email: 'user@example.com',
+          recoveryCode: 'AAAA-BBBB-CCCC',
+          newPassword: 'new-password-1',
+        }),
+      invalid,
+    );
+    await assert.rejects(
+      () =>
+        service.resetPassword({
+          email: 'nobody@example.com',
+          recoveryCode,
+          newPassword: 'new-password-1',
+        }),
+      invalid,
+    );
+    // Typed in lower case without dashes, as someone might copy it.
+    await service.resetPassword({
+      email: 'USER@example.com',
+      recoveryCode: recoveryCode.toLowerCase().replaceAll('-', ''),
+      newPassword: 'new-password-1',
+    });
+
+    await service.login({ email: 'user@example.com', password: 'new-password-1' });
+    await assert.rejects(() => service.findMe(signedUp.accessToken), UnauthorizedException);
+    assert.equal(users.users[0].recoveryCodeHash, null);
+    await assert.rejects(
+      () =>
+        service.resetPassword({
+          email: 'user@example.com',
+          recoveryCode,
+          newPassword: 'another-password',
+        }),
+      invalid,
+    );
   });
 
   it('rejects signup without a valid invite code', async () => {

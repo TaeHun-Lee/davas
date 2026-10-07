@@ -53,7 +53,8 @@ describe('space UI state policy', () => {
   });
 
   it('distinguishes capacity, expiry, already accepted, permission, and hidden 404 errors', () => {
-    assert.match(spaceErrorMessage(apiError(409, 'SPACE_FULL')), /정원 5명/);
+    assert.match(spaceErrorMessage(apiError(409, 'SPACE_FULL')), /정원이 모두 찼어요/);
+    assert.match(spaceErrorMessage(apiError(410, 'SPACE_INVITE_DECLINED')), /거절한/);
     assert.match(spaceErrorMessage(apiError(410, 'SPACE_INVITE_EXPIRED')), /만료/);
     assert.match(spaceErrorMessage(apiError(409, 'SPACE_INVITE_USED')), /이미 수락/);
     assert.match(spaceErrorMessage(apiError(403, 'SPACE_OWNER_REQUIRED')), /소유자만/);
@@ -66,5 +67,7 @@ describe('space UI state policy', () => {
     assert.match(inviteStatusMessage('ALREADY_MEMBER'), /이미 참여/);
     assert.match(inviteStatusMessage('CLOSED'), /종료/);
     assert.match(inviteStatusMessage('INVALID'), /유효하지/);
+    assert.match(inviteStatusMessage('DECLINED'), /거절한 초대/);
+    assert.match(inviteStatusMessage('FULL'), /정원이 모두 차서/);
   });
 });

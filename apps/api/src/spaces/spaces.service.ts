@@ -6,20 +6,17 @@ import {
   GoneException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
-import {
-  SpaceEntity,
-  SpaceInviteEntity,
-  SpaceMembershipEntity,
-} from '../database/entities';
+import { SpaceEntity, SpaceInviteEntity, SpaceMembershipEntity } from '../database/entities';
+import { NotificationsService } from '../notifications/notifications.service';
 import { TransactionOutboxService } from '../outbox/transaction-outbox.service';
 import { SpaceAccessService } from './space-access.service';
 import { CreateSpaceDto, CreateSpaceInviteDto } from './spaces.dto';
 
-const hashToken = (token: string) =>
-  createHash('sha256').update(token).digest('hex');
+const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 const response = (statusCode: number, code: string, message: string) => ({
   statusCode,
   code,
@@ -38,6 +35,8 @@ export class SpacesService {
     private readonly access: SpaceAccessService,
     private readonly outbox: TransactionOutboxService,
     private readonly dataSource: DataSource,
+    @Optional()
+    private readonly notifications?: NotificationsService,
   ) {}
 
   async create(accountId: string, dto: CreateSpaceDto) {
@@ -82,9 +81,7 @@ export class SpacesService {
         items.push(
           this.spaceView(
             space,
-            (space.memberships ?? []).filter(
-              (candidate) => candidate.status === 'ACTIVE',
-            ),
+            (space.memberships ?? []).filter((candidate) => candidate.status === 'ACTIVE'),
           ),
         );
       }
@@ -101,23 +98,15 @@ export class SpacesService {
     if (!space) throw this.notFound();
     return this.spaceView(
       space,
-      (space.memberships ?? []).filter(
-        (membership) => membership.status === 'ACTIVE',
-      ),
+      (space.memberships ?? []).filter((membership) => membership.status === 'ACTIVE'),
     );
   }
 
-  async createInvite(
-    spaceId: string,
-    accountId: string,
-    dto: CreateSpaceInviteDto,
-  ) {
+  async createInvite(spaceId: string, accountId: string, dto: CreateSpaceInviteDto) {
     return this.dataSource.transaction(async (manager) => {
       await this.ownerMembershipOrNotFound(manager, spaceId, accountId);
       const token = randomBytes(32).toString('base64url');
-      const expiresAt = new Date(
-        Date.now() + (dto.expiresInHours ?? 168) * 60 * 60 * 1000,
-      );
+      const expiresAt = new Date(Date.now() + (dto.expiresInHours ?? 168) * 60 * 60 * 1000);
       const invites = manager.getRepository(SpaceInviteEntity);
       const invite = await invites.save(
         invites.create({
@@ -146,10 +135,7 @@ export class SpacesService {
     });
   }
 
-  async inspectInvite(
-    token: string,
-    viewerAccountId?: string,
-  ): Promise<SpaceInviteInspection> {
+  async inspectInvite(token: string, viewerAccountId?: string): Promise<SpaceInviteInspection> {
     const invite = await this.invites.findOne({
       where: { tokenHash: hashToken(token) },
       relations: { space: true, inviter: true },
@@ -157,10 +143,9 @@ export class SpacesService {
     if (!invite) return { status: 'INVALID' as const };
     if (invite.revokedAt) return { status: 'CANCELLED' as const };
     if (invite.usedAt) return { status: 'USED' as const };
-    if (invite.expiresAt.getTime() <= Date.now())
-      return { status: 'EXPIRED' as const };
-    if (!invite.space || invite.space.status !== 'ACTIVE')
-      return { status: 'CLOSED' as const };
+    if (invite.declinedAt) return { status: 'DECLINED' as const };
+    if (invite.expiresAt.getTime() <= Date.now()) return { status: 'EXPIRED' as const };
+    if (!invite.space || invite.space.status !== 'ACTIVE') return { status: 'CLOSED' as const };
     if (viewerAccountId) {
       const membership = await this.memberships.findOne({
         where: {
@@ -171,6 +156,10 @@ export class SpacesService {
       });
       if (membership) return { status: 'ALREADY_MEMBER' as const };
     }
+    const activeMembers = await this.memberships.count({
+      where: { spaceId: invite.spaceId, status: 'ACTIVE' },
+    });
+    if (activeMembers >= Math.min(invite.space.maxMembers, 5)) return { status: 'FULL' as const };
     return {
       status: 'VALID' as const,
       space: { id: invite.space.id, name: invite.space.name },
@@ -196,9 +185,7 @@ export class SpacesService {
         lock: { mode: 'pessimistic_write' },
       });
       if (!space || space.status !== 'ACTIVE') {
-        throw new GoneException(
-          response(410, 'SPACE_CLOSED', '종료된 공간이에요.'),
-        );
+        throw new GoneException(response(410, 'SPACE_CLOSED', '종료된 공간이에요.'));
       }
       const invite = await invites.findOne({
         where: { tokenHash },
@@ -220,9 +207,7 @@ export class SpacesService {
         where: { spaceId: space.id, status: 'ACTIVE' },
       });
       if (activeMemberCount >= space.maxMembers || activeMemberCount >= 5) {
-        throw new ConflictException(
-          response(409, 'SPACE_FULL', '공간 정원이 가득 찼어요.'),
-        );
+        throw new ConflictException(response(409, 'SPACE_FULL', '공간 정원이 가득 찼어요.'));
       }
 
       const joinedAt = new Date();
@@ -262,6 +247,66 @@ export class SpacesService {
     });
   }
 
+  /**
+   * The person the link went to says no. The link is used up, and the inviter hears about it
+   * after the answer is saved, so a failed notice never undoes the answer.
+   */
+  async declineInvite(token: string, accountId: string) {
+    const declined = await this.dataSource.transaction(async (manager) => {
+      const invites = manager.getRepository(SpaceInviteEntity);
+      const invite = await invites.findOne({
+        where: { tokenHash: hashToken(token) },
+        lock: { mode: 'pessimistic_write' },
+      });
+      this.assertUsableInvite(invite);
+      const membership = await manager.getRepository(SpaceMembershipEntity).findOne({
+        where: { spaceId: invite!.spaceId, accountId, status: 'ACTIVE' },
+      });
+      if (membership) {
+        throw new ConflictException(
+          response(409, 'ALREADY_SPACE_MEMBER', '이미 참여 중인 공간이에요.'),
+        );
+      }
+      const declinedAt = new Date();
+      invite!.declinedAt = declinedAt;
+      invite!.declinedByAccountId = accountId;
+      await invites.save(invite!);
+      await this.outbox.enqueue(manager, {
+        eventType: 'SpaceInviteDeclined',
+        aggregateType: 'Space',
+        aggregateId: invite!.spaceId,
+        idempotencyKey: `space-invite-declined:${invite!.id}`,
+        payload: {
+          spaceId: invite!.spaceId,
+          inviteId: invite!.id,
+          inviterAccountId: invite!.inviterAccountId,
+          declinedByAccountId: accountId,
+          declinedAt: declinedAt.toISOString(),
+        },
+      });
+      return invite!;
+    });
+    await this.notifications
+      ?.notifySpaceInviteDeclined({
+        recipientId: declined.inviterAccountId,
+        actorId: accountId,
+        idempotencyKey: `SPACE_INVITE_DECLINED:${declined.id}`,
+      })
+      .catch(() => undefined);
+    return { declined: true as const };
+  }
+
+  /** Only the owner renames the space, as only the owner manages invites. */
+  async rename(spaceId: string, accountId: string, name: string) {
+    await this.dataSource.transaction(async (manager) => {
+      const space = await this.lockActiveSpace(manager, spaceId);
+      await this.ownerMembershipOrNotFound(manager, spaceId, accountId, space);
+      space.name = name.trim();
+      await manager.getRepository(SpaceEntity).save(space);
+    });
+    return this.get(spaceId, accountId);
+  }
+
   async cancelInvite(spaceId: string, inviteId: string, accountId: string) {
     return this.dataSource.transaction(async (manager) => {
       await this.ownerMembershipOrNotFound(manager, spaceId, accountId);
@@ -272,9 +317,7 @@ export class SpacesService {
       });
       if (!invite) throw this.notFound();
       if (invite.usedAt) {
-        throw new ConflictException(
-          response(409, 'SPACE_INVITE_USED', '이미 사용된 초대예요.'),
-        );
+        throw new ConflictException(response(409, 'SPACE_INVITE_USED', '이미 사용된 초대예요.'));
       }
       if (!invite.revokedAt) {
         invite.revokedAt = new Date();
@@ -284,11 +327,7 @@ export class SpacesService {
     });
   }
 
-  async transferOwnership(
-    spaceId: string,
-    accountId: string,
-    newOwnerAccountId: string,
-  ) {
+  async transferOwnership(spaceId: string, accountId: string, newOwnerAccountId: string) {
     return this.dataSource.transaction(async (manager) => {
       const space = await this.lockActiveSpace(manager, spaceId);
       const membershipRepository = manager.getRepository(SpaceMembershipEntity);
@@ -299,15 +338,10 @@ export class SpacesService {
       );
       if (space.ownerAccountId !== accountId || currentOwner.role !== 'OWNER') {
         throw new ForbiddenException(
-          response(
-            403,
-            'SPACE_OWNER_REQUIRED',
-            '공간 소유자만 소유권을 이전할 수 있어요.',
-          ),
+          response(403, 'SPACE_OWNER_REQUIRED', '공간 소유자만 소유권을 이전할 수 있어요.'),
         );
       }
-      if (newOwnerAccountId === accountId)
-        return this.spaceView(space, [currentOwner]);
+      if (newOwnerAccountId === accountId) return this.spaceView(space, [currentOwner]);
       const newOwner = await membershipRepository.findOne({
         where: { spaceId, accountId: newOwnerAccountId, status: 'ACTIVE' },
         lock: { mode: 'pessimistic_write' },
@@ -334,11 +368,7 @@ export class SpacesService {
       );
       if (space.ownerAccountId === accountId || membership.role === 'OWNER') {
         throw new ConflictException(
-          response(
-            409,
-            'LAST_SPACE_OWNER',
-            '소유권을 이전하거나 공간을 종료한 뒤 탈퇴해 주세요.',
-          ),
+          response(409, 'LAST_SPACE_OWNER', '소유권을 이전하거나 공간을 종료한 뒤 탈퇴해 주세요.'),
         );
       }
       membership.status = 'LEFT';
@@ -364,18 +394,12 @@ export class SpacesService {
         membership.status = 'LEFT';
         membership.leftAt = now;
       }
-      if (memberships.length)
-        await manager.getRepository(SpaceMembershipEntity).save(memberships);
+      if (memberships.length) await manager.getRepository(SpaceMembershipEntity).save(memberships);
 
-      const invites = await manager
-        .getRepository(SpaceInviteEntity)
-        .find({ where: { spaceId } });
-      const usableInvites = invites.filter(
-        (invite) => !invite.usedAt && !invite.revokedAt,
-      );
+      const invites = await manager.getRepository(SpaceInviteEntity).find({ where: { spaceId } });
+      const usableInvites = invites.filter((invite) => !invite.usedAt && !invite.revokedAt);
       for (const invite of usableInvites) invite.revokedAt = now;
-      if (usableInvites.length)
-        await manager.getRepository(SpaceInviteEntity).save(usableInvites);
+      if (usableInvites.length) await manager.getRepository(SpaceInviteEntity).save(usableInvites);
       return { closed: true, spaceId, closedAt: now.toISOString() };
     });
   }
@@ -415,32 +439,24 @@ export class SpacesService {
         response(404, 'SPACE_INVITE_NOT_FOUND', '초대를 찾을 수 없어요.'),
       );
     if (invite.revokedAt) {
-      throw new GoneException(
-        response(410, 'SPACE_INVITE_CANCELLED', '취소된 초대예요.'),
-      );
+      throw new GoneException(response(410, 'SPACE_INVITE_CANCELLED', '취소된 초대예요.'));
     }
     if (invite.usedAt) {
-      throw new ConflictException(
-        response(409, 'SPACE_INVITE_USED', '이미 사용된 초대예요.'),
-      );
+      throw new ConflictException(response(409, 'SPACE_INVITE_USED', '이미 사용된 초대예요.'));
+    }
+    if (invite.declinedAt) {
+      throw new GoneException(response(410, 'SPACE_INVITE_DECLINED', '거절한 초대예요.'));
     }
     if (invite.expiresAt.getTime() <= Date.now()) {
-      throw new GoneException(
-        response(410, 'SPACE_INVITE_EXPIRED', '만료된 초대예요.'),
-      );
+      throw new GoneException(response(410, 'SPACE_INVITE_EXPIRED', '만료된 초대예요.'));
     }
   }
 
   private notFound() {
-    return new NotFoundException(
-      response(404, 'SPACE_NOT_FOUND', '공간을 찾을 수 없어요.'),
-    );
+    return new NotFoundException(response(404, 'SPACE_NOT_FOUND', '공간을 찾을 수 없어요.'));
   }
 
-  private spaceView(
-    space: SpaceEntity,
-    memberships: SpaceMembershipEntity[],
-  ): SpaceView {
+  private spaceView(space: SpaceEntity, memberships: SpaceMembershipEntity[]): SpaceView {
     return {
       id: space.id,
       name: space.name,
