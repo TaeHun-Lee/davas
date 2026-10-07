@@ -94,3 +94,39 @@ describe('design review, third round', () => {
     assert.doesNotMatch(screen.slice(0, screen.indexOf('\n}\n')), /새 기록 남기기|RecordList/);
   });
 });
+
+describe('design decisions: five tabs, the desktop layout and the title sheet', () => {
+  it('raises recording in the middle of five tabs and adds 탐색', () => {
+    const shell = source('components/core/CoreUi.tsx');
+    assert.match(shell, /href: '\/explore', label: '탐색'/);
+    assert.match(shell, /className="core-nav-raised"/);
+    assert.match(
+      source('app/globals.css'),
+      /grid-template-columns: repeat\(5, minmax\(0, 1fr\)\);/,
+    );
+  });
+
+  it('turns the header and bottom bar into a sidebar from 1024px', () => {
+    const shell = source('components/core/CoreUi.tsx');
+    const css = source('app/globals.css');
+    assert.match(shell, /<CoreSidebar lead=\{headerLead\} \/>/);
+    assert.match(shell, /<CoreSidebar \/>/);
+    assert.match(shell, /href="\/notifications"\s+className="core-sidebar-item"/);
+    const desktop = css.slice(css.indexOf('@media (min-width: 1024px) {\n  .core-shell'));
+    assert.match(desktop, /grid-template-columns: 248px minmax\(0, 1fr\);/);
+    assert.match(desktop, /\.core-header,\n  \.core-bottom-nav \{\n    display: none;/);
+    assert.match(desktop, /\.task-main\[data-wide\] > \.watch-gallery \{/);
+    assert.match(desktop, /\.space-home > \.space-home-timeline \{/);
+  });
+
+  it('opens a title as a sheet that a drag down closes, centred on a computer', () => {
+    const modal = source('components/media/MediaDetailModal.tsx');
+    const css = source('app/globals.css');
+    assert.match(modal, /className="media-sheet-backdrop"/);
+    assert.match(modal, /onPointerMove=\{moveDrag\}/);
+    assert.match(modal, /if \(distance > 120\) onClose\(\);/);
+    assert.match(modal, /aria-labelledby="media-sheet-title"/);
+    assert.match(css, /border-radius: 28px 28px 0 0;/);
+    assert.match(css, /\.media-sheet \{\n    width: min\(100%, 560px\);/);
+  });
+});

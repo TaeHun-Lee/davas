@@ -13,24 +13,34 @@ import {
   type RecordCardData,
 } from '../../lib/api/core';
 
-// Friends live under the space tab: the space is the main place to share, and the friends
-// screen is reached from the spaces screen.
+// Five tabs as on the C안 boards, recording raised in the middle. Friends live under the
+// space tab: the space is the main place to share, and the friends screen is reached from it.
 const tabs = [
-  { href: '/', label: '홈', icon: 'home', activeOn: [] },
-  { href: '/records/new', label: '기록하기', icon: 'add', activeOn: [] },
-  { href: '/spaces', label: '공간', icon: 'space', activeOn: ['/friends'] },
-  { href: '/me', label: '내 기록', icon: 'records', activeOn: [] },
+  { href: '/', label: '홈', icon: 'home', activeOn: [], raised: false },
+  { href: '/explore', label: '탐색', icon: 'explore', activeOn: [], raised: false },
+  { href: '/records/new', label: '기록', icon: 'add', activeOn: [], raised: true },
+  { href: '/spaces', label: '공간', icon: 'space', activeOn: ['/friends'], raised: false },
+  { href: '/me', label: '내 기록', icon: 'records', activeOn: [], raised: false },
 ] as const;
+
+type Tab = (typeof tabs)[number];
+
+function isActive(tab: Tab, pathname: string) {
+  return tab.href === '/'
+    ? pathname === '/'
+    : [tab.href, ...tab.activeOn].some((prefix) => pathname.startsWith(prefix));
+}
 
 function CoreNavIcon({ icon }: { icon: (typeof tabs)[number]['icon'] }) {
   const paths = {
     home: (
       <path d="M3 10.8 12 3l9 7.8v9.7a.5.5 0 0 1-.5.5h-5.25v-6.4h-6.5V21H3.5a.5.5 0 0 1-.5-.5v-9.7Z" />
     ),
-    add: (
+    add: <path d="M12 5v14M5 12h14" />,
+    explore: (
       <>
         <circle cx="12" cy="12" r="9" />
-        <path d="M12 8v8M8 12h8" />
+        <path d="m15.5 8.5-2 5-5 2 2-5Z" />
       </>
     ),
     records: (
@@ -51,12 +61,21 @@ function CoreNavIcon({ icon }: { icon: (typeof tabs)[number]['icon'] }) {
   );
 }
 
+// The header bell and the desktop sidebar mount together: they share one request.
+let unreadRequest: { at: number; promise: Promise<number> } | null = null;
+function loadUnreadCount() {
+  if (!unreadRequest || Date.now() - unreadRequest.at > 2000) {
+    unreadRequest = { at: Date.now(), promise: getUnreadNotificationCount() };
+  }
+  return unreadRequest.promise;
+}
+
 // Refreshed whenever a core page mounts; the bell is a hint, so a failed count stays quiet.
-function NotificationBell() {
+function useUnreadCount() {
   const [unread, setUnread] = useState(0);
   useEffect(() => {
     let active = true;
-    getUnreadNotificationCount()
+    loadUnreadCount()
       .then((count) => {
         if (active) setUnread(count);
       })
@@ -65,6 +84,11 @@ function NotificationBell() {
       active = false;
     };
   }, []);
+  return unread;
+}
+
+function NotificationBell() {
+  const unread = useUnreadCount();
   return (
     <Link
       href="/notifications"
@@ -125,19 +149,23 @@ export function CoreBottomNav() {
   return (
     <nav className="core-bottom-nav" aria-label="주요 메뉴">
       {tabs.map((tab) => {
-        const active =
-          tab.href === '/'
-            ? pathname === '/'
-            : [tab.href, ...tab.activeOn].some((prefix) => pathname.startsWith(prefix));
+        const active = isActive(tab, pathname);
         return (
           <Link
             key={tab.href}
             href={tab.href}
             className="core-nav-item"
+            data-raised={tab.raised || undefined}
             aria-current={active ? 'page' : undefined}
             data-active={active}
           >
-            <CoreNavIcon icon={tab.icon} />
+            {tab.raised ? (
+              <span className="core-nav-raised" aria-hidden="true">
+                <CoreNavIcon icon={tab.icon} />
+              </span>
+            ) : (
+              <CoreNavIcon icon={tab.icon} />
+            )}
             <span>{tab.label}</span>
           </Link>
         );
@@ -146,19 +174,93 @@ export function CoreBottomNav() {
   );
 }
 
+/**
+ * The desktop sidebar (1024px and wider), as on the C안 desktop boards: the wordmark, the
+ * space switcher where a screen has one, recording, the tabs, then notices and settings.
+ * Below that width it is hidden and the header and bottom bar do the same jobs.
+ */
+export function CoreSidebar({ lead }: { lead?: ReactNode }) {
+  const pathname = usePathname();
+  const unread = useUnreadCount();
+  return (
+    <aside className="core-sidebar">
+      <DavasLogoLink />
+      {lead ? <div className="core-sidebar-space">{lead}</div> : null}
+      <Link href="/records/new" className="primary-button core-sidebar-record">
+        <CoreNavIcon icon="add" />
+        기록 남기기
+      </Link>
+      <nav className="core-sidebar-nav" aria-label="주요 메뉴">
+        {tabs
+          .filter((tab) => !tab.raised)
+          .map((tab) => {
+            const active = isActive(tab, pathname);
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className="core-sidebar-item"
+                aria-current={active ? 'page' : undefined}
+                data-active={active}
+              >
+                <CoreNavIcon icon={tab.icon} />
+                {tab.label}
+              </Link>
+            );
+          })}
+      </nav>
+      <div className="core-sidebar-foot">
+        <Link
+          href="/notifications"
+          className="core-sidebar-item"
+          aria-current={pathname.startsWith('/notifications') ? 'page' : undefined}
+          aria-label={unread ? `알림, 안 읽은 알림 ${unread}개` : '알림'}
+        >
+          <svg className="core-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15ZM10 20.5a2 2 0 0 0 4 0" />
+          </svg>
+          알림
+          {unread ? (
+            <span className="core-sidebar-count" aria-hidden="true">
+              {unread > 99 ? '99+' : unread}
+            </span>
+          ) : null}
+        </Link>
+        <Link
+          href="/settings"
+          className="core-sidebar-item"
+          aria-current={pathname.startsWith('/settings') ? 'page' : undefined}
+        >
+          <svg className="core-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9.7 3.5h4.6l.6 2.1c.5.2.9.4 1.3.7l2.1-.6 2.3 4-1.6 1.5v1.6l1.6 1.5-2.3 4-2.1-.6c-.4.3-.8.5-1.3.7l-.6 2.1H9.7l-.6-2.1c-.5-.2-.9-.4-1.3-.7l-2.1.6-2.3-4L5 12.8v-1.6L3.4 9.7l2.3-4 2.1.6c.4-.3.8-.5 1.3-.7l.6-2.1Z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          설정
+        </Link>
+      </div>
+    </aside>
+  );
+}
+
 export function CoreAppShell({
   children,
   headerLead,
+  wide = false,
 }: {
   children: ReactNode;
   /** Replaces the logo, as the space switcher does on home and the space tab. */
   headerLead?: ReactNode;
+  /** Home's two desktop columns need the wider content area. */
+  wide?: boolean;
 }) {
   return (
     <div className="desktop-canvas">
       <div className="core-shell">
+        <CoreSidebar lead={headerLead} />
         <CoreHeader lead={headerLead} />
-        <main className="core-main">{children}</main>
+        <main className="core-main" data-wide={wide || undefined}>
+          {children}
+        </main>
         <CoreBottomNav />
       </div>
     </div>
@@ -200,18 +302,24 @@ export function TaskShell({
   title,
   fallback,
   headerAction,
+  wide = false,
   children,
 }: {
   title: string;
   fallback: string;
   headerAction?: ReactNode;
+  /** A record's desktop layout splits photos and details, so it needs more room. */
+  wide?: boolean;
   children: ReactNode;
 }) {
   return (
     <div className="desktop-canvas">
-      <div className="core-shell">
+      <div className="core-shell" data-task="true">
+        <CoreSidebar />
         <BackHeader title={title} fallback={fallback} action={headerAction} />
-        <main className="task-main">{children}</main>
+        <main className="task-main" data-wide={wide || undefined}>
+          {children}
+        </main>
       </div>
     </div>
   );

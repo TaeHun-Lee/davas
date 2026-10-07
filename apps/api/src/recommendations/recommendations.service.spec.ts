@@ -97,6 +97,13 @@ describe('RecommendationsService', () => {
 
     assert.ok(presets.items.some((preset) => preset.id === 'rainy-day'));
     assert.ok(presets.items.some((preset) => preset.id === 'immersive-thriller'));
+    // The 탐색 tab's four mood cards each have a preset.
+    for (const id of ['light-comedy', 'immersive-thriller', 'good-cry', 'chills']) {
+      assert.ok(
+        presets.items.some((preset) => preset.id === id),
+        id,
+      );
+    }
   });
 
   it('loads genre recommendations through a configured TMDB discover preset', async () => {

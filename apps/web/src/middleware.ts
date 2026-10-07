@@ -9,16 +9,15 @@ export function middleware(request: NextRequest) {
       ? '/'
       : pathname === '/watchlist'
         ? '/me'
-        : pathname === '/explore'
-          ? '/records/new'
-          : pathname.startsWith('/diary/')
-            ? pathname.replace(/^\/diary/, '/records')
-            : null;
+        : pathname.startsWith('/diary/')
+          ? pathname.replace(/^\/diary/, '/records')
+          : null;
   if (legacy) return NextResponse.redirect(new URL(legacy, request.url));
   const publicInvite = pathname.startsWith('/friends/invite/');
   const protectedPath =
     pathname === '/' ||
     pathname === '/me' ||
+    pathname === '/explore' ||
     pathname === '/search' ||
     pathname === '/settings' ||
     pathname === '/friends' ||

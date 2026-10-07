@@ -7,6 +7,7 @@ const MAX_NESTED_RETURN_DEPTH = 2;
 const PARAMLESS_PATHS = new Set([
   '/',
   '/me',
+  '/explore',
   '/friends',
   '/settings',
   '/diary',

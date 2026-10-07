@@ -49,13 +49,13 @@ function Poster({ media }: { media: MediaDetail }) {
       <img
         src={media.posterUrl}
         alt={`${media.title} 포스터`}
-        className="h-[158px] w-[106px] shrink-0 rounded-[16px] object-cover shadow-[0_16px_28px_rgba(21,38,69,0.18)] min-[390px]:h-[170px] min-[390px]:w-[114px]"
+        className="h-[108px] w-[72px] shrink-0 rounded-[14px] object-cover shadow-[0_16px_28px_rgba(21,38,69,0.18)]"
       />
     );
   }
 
   return (
-    <div className="h-[158px] w-[106px] shrink-0 rounded-[16px] bg-gradient-to-br from-[#0b1630] via-[#1e4f82] to-[#d99a66] shadow-[0_16px_28px_rgba(21,38,69,0.18)] min-[390px]:h-[170px] min-[390px]:w-[114px]" />
+    <div className="h-[108px] w-[72px] shrink-0 rounded-[14px] bg-gradient-to-br from-[#0b1630] via-[#1e4f82] to-[#d99a66] shadow-[0_16px_28px_rgba(21,38,69,0.18)]" />
   );
 }
 
@@ -82,25 +82,6 @@ function GenreTags({ media }: { media: MediaDetail }) {
 
 function StarIcon() {
   return <span className="text-[17px] leading-none text-[#b63b36]">★</span>;
-}
-
-function BookmarkIcon({ filled = false }: { filled?: boolean }) {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 20 20"
-      fill={filled ? 'currentColor' : 'none'}
-      aria-hidden="true"
-    >
-      <path
-        d="M6 3.8h8A1.2 1.2 0 0 1 15.2 5v11L10 13.1 4.8 16V5A1.2 1.2 0 0 1 6 3.8Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
 }
 
 function ShareIcon() {
@@ -154,6 +135,8 @@ export function MediaDetailModal({
   const [isFriendRecordsLoadingMore, setIsFriendRecordsLoadingMore] = useState(false);
   const [friendRecordsLoadMoreError, setFriendRecordsLoadMoreError] = useState(false);
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+  const drag = useRef<{ startY: number; distance: number } | null>(null);
   const closeDialog = useCallback(() => onClose(), [onClose]);
   useFocusTrap(isOpen, dialogRef, closeDialog);
   // With a space, "보고 싶어요" goes on the space's shared list; without one it stays personal.
@@ -282,54 +265,77 @@ export function MediaDetailModal({
     }
   }
 
+  // Dragging the handle down past a short distance closes the sheet, as phones do.
+  const startDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    drag.current = { startY: event.clientY, distance: 0 };
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Without capture the drag still follows moves over the handle.
+    }
+  };
+  const moveDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current || !sheetRef.current) return;
+    drag.current.distance = Math.max(0, event.clientY - drag.current.startY);
+    sheetRef.current.style.transform = `translateY(${drag.current.distance}px)`;
+  };
+  const endDrag = () => {
+    const distance = drag.current?.distance ?? 0;
+    drag.current = null;
+    if (distance > 120) onClose();
+    else if (sheetRef.current) sheetRef.current.style.transform = '';
+  };
+
   return (
     <div
       ref={dialogRef}
-      className="fixed inset-0 z-[80] flex justify-center overflow-hidden bg-[#172947]/35 backdrop-blur-sm"
+      className="media-sheet-backdrop"
       role="dialog"
       aria-modal="true"
-      aria-label={detailTitle}
+      aria-labelledby="media-sheet-title"
       data-design="media-detail-modal"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
     >
-      <div
-        data-design="media-detail-scroll-shell"
-        className="relative h-dvh w-full max-w-[430px] overflow-x-hidden overflow-y-auto bg-[#f8fafd] px-4 pb-28 pt-0 shadow-[0_0_40px_rgba(15,23,42,0.18)] min-[390px]:px-5"
-      >
-        <header className="sticky top-0 z-20 -mx-4 flex h-[62px] items-center justify-between bg-[#f8fafd]/95 px-4 shadow-[0_8px_24px_rgba(31,65,114,0.06)] backdrop-blur min-[390px]:-mx-5 min-[390px]:px-5">
-          <IconButton label="상세 닫기" onClick={onClose}>
+      {/* As on the C안 board: a sheet from the bottom on a phone, a centred window on a
+          computer, with the same content. */}
+      <div ref={sheetRef} className="media-sheet" data-design="media-detail-scroll-shell">
+        <div
+          className="media-sheet-handle"
+          aria-hidden="true"
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+        >
+          <span />
+        </div>
+        <div className="media-sheet-tools">
+          <IconButton label={shareLabel} onClick={() => void handleShare()}>
+            <ShareIcon />
+          </IconButton>
+          <IconButton label={`${detailTitle} 닫기`} onClick={onClose}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
               <path
-                d="m12.5 5-5 5 5 5"
+                d="M5 5l10 10M15 5 5 15"
                 stroke="currentColor"
-                strokeWidth="2.2"
+                strokeWidth="2"
                 strokeLinecap="round"
-                strokeLinejoin="round"
               />
             </svg>
           </IconButton>
-          <h2 className="absolute left-1/2 -translate-x-1/2 text-[16px] font-black leading-[22px] tracking-[-0.025em] text-[var(--heading)]">
-            {detailTitle}
-          </h2>
-          <div className="flex gap-2">
-            <IconButton
-              label={wanted ? `${wishLabel}에서 빼기` : `${wishLabel}에 담기`}
-              onClick={() => void toggleWish()}
-              pressed={wanted}
-            >
-              <BookmarkIcon filled={wanted} />
-            </IconButton>
-            <IconButton label={shareLabel} onClick={() => void handleShare()}>
-              <ShareIcon />
-            </IconButton>
-          </div>
-        </header>
+        </div>
 
-        <section className="relative z-[1] mt-4 flex gap-3 min-[390px]:gap-4">
+        <section className="relative z-[1] mt-1 flex gap-3 min-[390px]:gap-4">
           <Poster media={media} />
           <div className="min-w-0 flex-1 pt-1">
-            <h1 className="line-clamp-2 text-[24px] font-black leading-[29px] tracking-[-0.045em] text-[var(--heading)]">
+            <h2
+              id="media-sheet-title"
+              className="line-clamp-2 text-[22px] font-black leading-[28px] tracking-[-0.04em] text-[var(--heading)]"
+            >
               {media.title}
-            </h1>
+            </h2>
             <p className="mt-1 truncate text-[13px] font-bold leading-[18px] text-[var(--muted)]">
               {media.originalTitle || media.title}
             </p>

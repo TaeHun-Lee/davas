@@ -197,8 +197,13 @@ function RecordList({
 export function FeedScreen() {
   const active = useActiveSpace();
   return (
-    <CoreAppShell headerLead={<SpaceSwitcher state={active.state} onSelect={active.select} />}>
-      <h1 className="sr-only">홈</h1>
+    <CoreAppShell wide headerLead={<SpaceSwitcher state={active.state} onSelect={active.select} />}>
+      {/* Hidden on a phone, where the header names the space; the desktop board shows it. */}
+      <h1 className="home-title">
+        {active.state.status === 'ready' && active.state.space
+          ? `${active.state.space.name}의 홈`
+          : '홈'}
+      </h1>
       <SpaceHome active={active} />
       <HomeRecommendations />
     </CoreAppShell>

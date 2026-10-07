@@ -1,0 +1,317 @@
+'use client';
+
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { useMediaSearch } from '../../hooks/useMediaSearch';
+import {
+  getMediaDetail,
+  selectMedia,
+  type MediaDetail,
+  type MediaSearchResult,
+} from '../../lib/api/media';
+import {
+  getGenreRecommendations,
+  getTrendingRecommendations,
+  type MediaRecommendationItem,
+} from '../../lib/api/recommendations';
+import { MediaDetailModal } from '../media/MediaDetailModal';
+import { AsyncState, CoreAppShell, EmptyState, Poster, SearchField } from './CoreUi';
+
+type Kind = 'MOVIE' | 'TV';
+type Loaded<T> = { status: 'loading' | 'ready' | 'error'; items: T[] };
+
+/** The four mood cards and the genre preset each one asks for. */
+export const EXPLORE_MOODS = [
+  { preset: 'light-comedy', title: '가볍게 웃고 싶어요', detail: '코미디', tone: 'laugh' },
+  {
+    preset: 'immersive-thriller',
+    title: '푹 빠져서 몰입',
+    detail: '스릴러 · 미스터리',
+    tone: 'focus',
+  },
+  { preset: 'good-cry', title: '실컷 울고 싶어요', detail: '드라마 · 가족', tone: 'cry' },
+  { preset: 'chills', title: '오싹하게 보고 싶어요', detail: '공포', tone: 'chills' },
+] as const;
+
+const KINDS: Array<{ value: Kind; label: string }> = [
+  { value: 'MOVIE', label: '영화' },
+  { value: 'TV', label: '드라마' },
+];
+
+const meta = (item: MediaSearchResult) =>
+  [item.mediaType === 'TV' ? '드라마' : '영화', item.releaseDate?.slice(0, 4)]
+    .filter(Boolean)
+    .join(' · ');
+
+function ResultList({
+  label,
+  items,
+  opening,
+  onOpen,
+}: {
+  label: string;
+  items: MediaSearchResult[];
+  opening: string | null;
+  onOpen: (item: MediaSearchResult) => void;
+}) {
+  return (
+    <ul className="explore-results" aria-label={label}>
+      {items.map((item) => (
+        <li key={`${item.mediaType}-${item.externalId}`}>
+          <button
+            type="button"
+            className="explore-result"
+            disabled={opening !== null}
+            aria-busy={opening === item.externalId || undefined}
+            onClick={() => onOpen(item)}
+          >
+            <Poster url={item.posterUrl} title={item.title} />
+            <span className="min-w-0">
+              <strong>{item.title}</strong>
+              <span>{meta(item)}</span>
+            </span>
+            <span aria-hidden="true">›</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * 탐색: find a title by its name, or browse what is popular and what fits tonight's mood.
+ * Any title opens the same title sheet as elsewhere, to record it or add it to the shared list.
+ */
+export function ExploreScreen() {
+  const [query, setQuery] = useState('');
+  const search = useMediaSearch(query, 'multi');
+  const searching = query.trim().length >= 2;
+  const [kind, setKind] = useState<Kind>('MOVIE');
+  const [trending, setTrending] = useState<Loaded<MediaRecommendationItem>>({
+    status: 'loading',
+    items: [],
+  });
+  const [mood, setMood] = useState<(typeof EXPLORE_MOODS)[number]['preset'] | null>(null);
+  const [moodPicks, setMoodPicks] = useState<Loaded<MediaRecommendationItem>>({
+    status: 'loading',
+    items: [],
+  });
+  const [trendingAttempt, setTrendingAttempt] = useState(0);
+  const [detail, setDetail] = useState<MediaDetail | null>(null);
+  const [opening, setOpening] = useState<string | null>(null);
+  const [openError, setOpenError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    setTrending({ status: 'loading', items: [] });
+    getTrendingRecommendations({ limit: 20 })
+      .then((response) => {
+        if (active) setTrending({ status: 'ready', items: response.items });
+      })
+      .catch(() => {
+        if (active) setTrending({ status: 'error', items: [] });
+      });
+    return () => {
+      active = false;
+    };
+  }, [trendingAttempt]);
+
+  useEffect(() => {
+    if (!mood) return;
+    let active = true;
+    setMoodPicks({ status: 'loading', items: [] });
+    getGenreRecommendations(mood, { limit: 8 })
+      .then((response) => {
+        if (active) setMoodPicks({ status: 'ready', items: response.items });
+      })
+      .catch(() => {
+        if (active) setMoodPicks({ status: 'error', items: [] });
+      });
+    return () => {
+      active = false;
+    };
+  }, [mood]);
+
+  async function open(item: MediaSearchResult) {
+    setOpening(item.externalId);
+    setOpenError('');
+    try {
+      const selected = await selectMedia(item);
+      setDetail(await getMediaDetail(selected.id));
+    } catch {
+      setOpenError('작품 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setOpening(null);
+    }
+  }
+
+  const popular = trending.items.filter((item) => item.mediaType === kind).slice(0, 10);
+  const moodCard = EXPLORE_MOODS.find((item) => item.preset === mood);
+
+  return (
+    <CoreAppShell>
+      <h1 className="page-title">탐색</h1>
+      <div className="mt-4">
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          label="영화, 드라마 제목으로 찾기"
+          placeholder="영화, 드라마 제목으로 찾기"
+        />
+      </div>
+      {openError ? (
+        <p role="alert" className="form-error mt-3">
+          {openError}
+        </p>
+      ) : null}
+
+      {searching ? (
+        <section className="explore-section" aria-labelledby="explore-search-title">
+          <h2 id="explore-search-title" className="section-title">
+            찾은 작품
+          </h2>
+          {search.status === 'searching' ? (
+            <AsyncState kind="loading" />
+          ) : search.status === 'error' ? (
+            <EmptyState
+              title="작품을 찾지 못했어요"
+              description="연결 상태를 확인하고 다시 검색해 주세요."
+            />
+          ) : search.status === 'empty' ? (
+            <EmptyState
+              title={`‘${query.trim()}’에 맞는 작품이 없어요`}
+              description="띄어쓰기나 원제로도 찾아보세요."
+            />
+          ) : (
+            <ResultList
+              label="찾은 작품"
+              items={search.items}
+              opening={opening}
+              onOpen={(item) => void open(item)}
+            />
+          )}
+        </section>
+      ) : (
+        <>
+          <section className="explore-section" aria-labelledby="explore-popular-title">
+            <div className="explore-section-head">
+              <div>
+                <h2 id="explore-popular-title" className="section-title">
+                  지금 화제작
+                </h2>
+                <p>요즘 많이 보는 영화와 드라마예요.</p>
+              </div>
+              <div className="explore-kinds" role="group" aria-label="화제작 종류">
+                {KINDS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={kind === option.value}
+                    onClick={() => setKind(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {trending.status === 'loading' ? (
+              <AsyncState kind="loading" />
+            ) : trending.status === 'error' ? (
+              <EmptyState
+                title="화제작을 불러오지 못했어요"
+                description="검색은 그대로 쓸 수 있어요."
+                action={
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => setTrendingAttempt((value) => value + 1)}
+                  >
+                    다시 시도
+                  </button>
+                }
+              />
+            ) : (
+              <ul
+                className="explore-rail"
+                aria-label={`지금 화제작, ${kind === 'TV' ? '드라마' : '영화'}`}
+              >
+                {popular.map((item) => (
+                  <li key={item.externalId}>
+                    <button
+                      type="button"
+                      disabled={opening !== null}
+                      aria-busy={opening === item.externalId || undefined}
+                      aria-label={`${item.title} 상세 보기`}
+                      onClick={() => void open(item)}
+                    >
+                      <Poster url={item.posterUrl} title={item.title} />
+                      <strong>{item.title}</strong>
+                      <span>{meta(item)}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="explore-section" aria-labelledby="explore-mood-title">
+            <h2 id="explore-mood-title" className="section-title">
+              오늘은 어떤 기분이에요?
+            </h2>
+            <p className="explore-hint">기분을 고르면 어울리는 작품을 골라 드려요.</p>
+            <div className="explore-moods">
+              {EXPLORE_MOODS.map((item) => (
+                <button
+                  key={item.preset}
+                  type="button"
+                  data-tone={item.tone}
+                  aria-pressed={mood === item.preset}
+                  onClick={() => setMood(mood === item.preset ? null : item.preset)}
+                >
+                  <strong>{item.title}</strong>
+                  <span>{item.detail}</span>
+                </button>
+              ))}
+            </div>
+            {moodCard ? (
+              <div className="explore-mood-picks" aria-live="polite">
+                {moodPicks.status === 'loading' ? (
+                  <AsyncState kind="loading" />
+                ) : moodPicks.status === 'error' || !moodPicks.items.length ? (
+                  <p className="explore-hint">
+                    {moodCard.title}에 맞는 작품을 불러오지 못했어요. 다른 기분을 골라 보세요.
+                  </p>
+                ) : (
+                  <ResultList
+                    label={`${moodCard.title}에 어울리는 작품`}
+                    items={moodPicks.items}
+                    opening={opening}
+                    onOpen={(item) => void open(item)}
+                  />
+                )}
+              </div>
+            ) : null}
+          </section>
+
+          <Link href="/spaces?view=recommend" className="wish-pick-empty explore-together">
+            <span>
+              <strong>둘이 같이 고르기</strong>
+              <span>참여자와 조건을 정하면 모두 볼 수 있는 후보를 찾아요.</span>
+            </span>
+            <span aria-hidden="true">›</span>
+          </Link>
+        </>
+      )}
+
+      {detail ? (
+        <MediaDetailModal
+          media={detail}
+          isOpen
+          onClose={() => setDetail(null)}
+          returnTo="/explore"
+          recordHref={`/records/new?mediaId=${encodeURIComponent(detail.id)}&returnTo=${encodeURIComponent('/explore')}`}
+        />
+      ) : null}
+    </CoreAppShell>
+  );
+}

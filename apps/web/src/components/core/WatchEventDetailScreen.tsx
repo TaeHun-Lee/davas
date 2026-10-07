@@ -516,6 +516,7 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
     <TaskShell
       title="기록"
       fallback={fallback}
+      wide
       headerAction={
         <RecordMenu
           watchEvent={watchEvent}

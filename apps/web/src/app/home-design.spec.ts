@@ -6,16 +6,17 @@ import { describe, it } from 'node:test';
 const source = (path: string) => readFileSync(join(process.cwd(), 'src', path), 'utf8');
 
 describe('four-tab core shell', () => {
-  it('renders exactly the four navigation labels with home first and no drawer', () => {
+  it('renders the five navigation labels with home first, recording raised, no drawer', () => {
     const code = source('components/core/CoreUi.tsx');
     const tabContract = code.slice(
       code.indexOf('const tabs'),
       code.indexOf('export function CoreHeader'),
     );
-    for (const label of ['홈', '기록하기', '공간', '내 기록']) {
-      assert.match(tabContract, new RegExp(label));
+    for (const label of ['홈', '탐색', '기록', '공간', '내 기록']) {
+      assert.match(tabContract, new RegExp(`label: '${label}'`));
     }
-    assert.equal((tabContract.match(/label:/g) ?? []).length, 4);
+    assert.equal((tabContract.match(/label:/g) ?? []).length, 5);
+    assert.match(tabContract, /label: '기록', icon: 'add', activeOn: \[\], raised: true/);
     assert.doesNotMatch(code, /hamburger|drawer|추천|채팅/);
     // The only header addition is the notification bell, which says how many are unread.
     assert.match(code, /href="\/notifications"/);
@@ -27,20 +28,25 @@ describe('four-tab core shell', () => {
     assert.match(code, /CoreNavIcon/);
     assert.match(code, /data-icon="settings"/);
     assert.match(code, /aria-label="설정 열기"/);
-    assert.doesNotMatch(code, />\s*설정\s*</);
+    // The phone header shows settings as an icon; only the desktop sidebar spells it out.
+    const header = code.slice(
+      code.indexOf('export function CoreHeader'),
+      code.indexOf('export function CoreBottomNav'),
+    );
+    assert.doesNotMatch(header, />\s*설정\s*</);
   });
 
   it('keeps home on the space and leaves recording to the bottom bar', () => {
     const feed = source('components/core/RecordScreens.tsx');
     const shell = source('components/core/CoreUi.tsx');
-    assert.match(feed, /<h1 className="sr-only">홈<\/h1>/);
+    assert.match(feed, /<h1 className="home-title">/);
     // As on the C안 board, there is no separate "본 작품 기록하기" button on home.
     const home = feed.slice(feed.indexOf('export function FeedScreen'));
     assert.doesNotMatch(
       home.slice(0, home.indexOf('\n}\n')),
       /본 작품 기록하기|home-search-link|home-intro/,
     );
-    assert.match(shell, /href: '\/records\/new', label: '기록하기'/);
+    assert.match(shell, /href: '\/records\/new', label: '기록'/);
   });
 
   it('puts the space switcher and the unread count in the header', () => {
@@ -49,7 +55,7 @@ describe('four-tab core shell', () => {
     const switcher = source('components/spaces/SpaceSwitcher.tsx');
     assert.match(
       feed,
-      /<CoreAppShell headerLead=\{<SpaceSwitcher state=\{active\.state\} onSelect=\{active\.select\} \/>\}>/,
+      /<CoreAppShell\s+wide\s+headerLead=\{<SpaceSwitcher state=\{active\.state\} onSelect=\{active\.select\} \/>\}/,
     );
     assert.match(shell, /\{lead \?\? <DavasLogoLink \/>\}/);
     assert.match(shell, /className="core-bell-count"/);
