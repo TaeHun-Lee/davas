@@ -391,12 +391,24 @@ function SpaceOverview({ active }: { active: ActiveSpace }) {
           <>
             <section className="space-panel" aria-labelledby="members-title">
               <div className="space-panel-head">
-                <h2 id="members-title" className="space-panel-title">
+                <h2 id="members-title" className="space-panel-title space-members-title">
                   멤버
+                  <span className="space-count-pill" data-full={full || undefined}>
+                    {members.length} / {activeSpace.maxMembers}명
+                  </span>
                 </h2>
-                <span className="space-count-pill">
-                  {members.length} / {activeSpace.maxMembers}명
-                </span>
+                {isOwner && !renaming ? (
+                  <button
+                    type="button"
+                    className="space-rename-button"
+                    onClick={() => {
+                      setSpaceName(activeSpace.name);
+                      setRenaming(true);
+                    }}
+                  >
+                    공간 이름 바꾸기
+                  </button>
+                ) : null}
               </div>
 
               {/* Only the owner renames the space, as only the owner manages invites. */}
@@ -426,21 +438,6 @@ function SpaceOverview({ active }: { active: ActiveSpace }) {
                     </button>
                   </div>
                 </form>
-              ) : isOwner ? (
-                <div className="space-name-row">
-                  <span>
-                    공간 이름 · <b>{activeSpace.name}</b>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSpaceName(activeSpace.name);
-                      setRenaming(true);
-                    }}
-                  >
-                    이름 바꾸기
-                  </button>
-                </div>
               ) : null}
 
               <ul className="space-member-list" aria-label="공간 멤버 목록">
@@ -511,14 +508,21 @@ function SpaceOverview({ active }: { active: ActiveSpace }) {
                   </div>
                 ) : full ? (
                   <p role="status" className="space-full-note">
-                    공간 정원이 모두 차서 지금은 초대할 수 없어요.
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18ZM12 8v5M12 16h.01" />
+                    </svg>
+                    <span>공간 정원이 모두 차서 지금은 초대할 수 없어요.</span>
                   </p>
                 ) : (
                   <div className="space-invite-row">
-                    <span className="space-invite-label" aria-hidden="true">
+                    <span id="space-invite-period" className="space-invite-label">
                       초대 링크 기간
                     </span>
-                    <div className="space-expiry" role="group" aria-label="초대 링크 만료 시간">
+                    <div
+                      className="space-expiry"
+                      role="group"
+                      aria-labelledby="space-invite-period"
+                    >
                       {INVITE_EXPIRY_OPTIONS.map((option) => (
                         <button
                           key={option.hours}
@@ -615,90 +619,137 @@ function SpaceManagement({
   onLeave: () => void;
   onClose: () => void;
 }) {
+  const [transferring, setTransferring] = useState(false);
+  const transferable = isOwner && ownershipCandidates.length > 0;
   return (
-    <section className="space-panel" aria-labelledby="space-manage-title">
+    <section className="space-panel space-manage" aria-labelledby="space-manage-title">
       <h2 id="space-manage-title" className="space-panel-title">
         공간 관리
       </h2>
-      <button
-        type="button"
-        className="space-manage-row"
-        aria-expanded={creating}
-        onClick={onToggleCreate}
-      >
-        새 공간 만들기 <span aria-hidden="true">{creating ? '−' : '+'}</span>
-      </button>
-      {creating ? <div className="pb-3">{createForm}</div> : null}
-
-      {isOwner && ownershipCandidates.length > 0 ? (
-        <div className="space-manage-block">
-          <label className="block">
-            <span className="field-label">소유권 넘기기</span>
-            <select
-              aria-label="소유권을 이전할 멤버"
-              value={newOwnerId}
-              onChange={(event) => onNewOwner(event.target.value)}
-              className="text-input"
-            >
-              <option value="">멤버 선택</option>
-              {ownershipCandidates.map((member) => (
-                <option key={member.accountId} value={member.accountId}>
-                  {member.nickname || '이름 없는 멤버'}
-                </option>
-              ))}
-            </select>
-          </label>
+      <ul className="space-manage-list">
+        <li>
           <button
             type="button"
-            aria-label="공간 소유권 이전"
-            disabled={busy || !newOwnerId}
-            onClick={onTransfer}
-            className="secondary-button mt-2 w-full"
+            className="space-manage-row"
+            aria-expanded={creating}
+            aria-controls="space-manage-create"
+            onClick={onToggleCreate}
           >
-            소유권 넘기기
+            <ManageIcon tone="create" path={MANAGE_ICONS.create} />
+            <span className="space-manage-label">새 공간 만들기</span>
+            <span className="space-manage-chevron" aria-hidden="true">
+              ›
+            </span>
           </button>
-        </div>
-      ) : null}
-
-      <div className="space-manage-block">
-        <button
-          type="button"
-          aria-label={isOwner ? '공간 종료 시작' : '공간 나가기 시작'}
-          onClick={() => onDanger(isOwner ? 'close' : 'leave')}
-          className="space-danger-link"
-        >
-          {isOwner ? '공간 종료' : '공간 나가기'}
-        </button>
-        {dangerAction ? (
-          <div
-            role="group"
-            aria-label={dangerAction === 'close' ? '공간 종료 확인' : '공간 나가기 확인'}
-            className="space-danger-confirm"
-          >
-            <p>
-              {dangerAction === 'close'
-                ? `‘${space.name}’을 종료하면 모든 멤버의 접근과 남은 초대가 바로 중단돼요.`
-                : `‘${space.name}’에서 나가면 이 공간의 공유 기록을 바로 볼 수 없어요.`}
-            </p>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => onDanger(null)} className="secondary-button">
-                취소
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={dangerAction === 'close' ? onClose : onLeave}
-                className="danger-button"
-              >
-                {dangerAction === 'close' ? '종료 확인' : '나가기 확인'}
-              </button>
+          {creating ? (
+            <div id="space-manage-create" className="space-manage-panel">
+              {createForm}
             </div>
-          </div>
+          ) : null}
+        </li>
+        {transferable ? (
+          <li>
+            <button
+              type="button"
+              className="space-manage-row"
+              aria-expanded={transferring}
+              aria-controls="space-manage-transfer"
+              onClick={() => setTransferring((value) => !value)}
+            >
+              <ManageIcon tone="plain" path={MANAGE_ICONS.transfer} />
+              <span className="space-manage-label">소유권 넘기기</span>
+              <span className="space-manage-chevron" aria-hidden="true">
+                ›
+              </span>
+            </button>
+            {transferring ? (
+              <div id="space-manage-transfer" className="space-manage-panel">
+                <select
+                  aria-label="소유권을 이전할 멤버"
+                  value={newOwnerId}
+                  onChange={(event) => onNewOwner(event.target.value)}
+                  className="text-input"
+                >
+                  <option value="">넘겨받을 멤버 선택</option>
+                  {ownershipCandidates.map((member) => (
+                    <option key={member.accountId} value={member.accountId}>
+                      {member.nickname || '이름 없는 멤버'}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={busy || !newOwnerId}
+                  onClick={onTransfer}
+                  className="secondary-button mt-2 w-full"
+                >
+                  소유권 넘기기
+                </button>
+              </div>
+            ) : null}
+          </li>
         ) : null}
-      </div>
+        <li>
+          <button
+            type="button"
+            className="space-manage-row"
+            data-tone="danger"
+            aria-expanded={dangerAction !== null}
+            aria-controls="space-manage-danger"
+            onClick={() => onDanger(dangerAction ? null : isOwner ? 'close' : 'leave')}
+          >
+            <ManageIcon tone="danger" path={MANAGE_ICONS.exit} />
+            <span className="space-manage-label">{isOwner ? '공간 종료' : '공간 나가기'}</span>
+          </button>
+          {dangerAction ? (
+            <div
+              id="space-manage-danger"
+              role="group"
+              aria-label={dangerAction === 'close' ? '공간 종료 확인' : '공간 나가기 확인'}
+              className="space-danger-confirm"
+            >
+              <p>
+                {dangerAction === 'close'
+                  ? `‘${space.name}’을 종료하면 모든 멤버의 접근과 남은 초대가 바로 중단돼요.`
+                  : `‘${space.name}’에서 나가면 이 공간의 공유 기록을 바로 볼 수 없어요.`}
+              </p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => onDanger(null)} className="secondary-button">
+                  취소
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={dangerAction === 'close' ? onClose : onLeave}
+                  className="danger-button"
+                >
+                  {dangerAction === 'close' ? '종료 확인' : '나가기 확인'}
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </li>
+      </ul>
+      {/* Friends stay a separate, older boundary from spaces. */}
       <Link href="/friends" className="space-friends-link">
-        예전 친구 관리 <span>· 친구 관계와는 별도로 관리돼요</span>
+        예전 친구 관리 ›
       </Link>
     </section>
+  );
+}
+
+const MANAGE_ICONS = {
+  create: 'M12 5v14M5 12h14',
+  transfer: 'M4 8h13M14 5l3 3-3 3M20 16H7M10 13l-3 3 3 3',
+  exit: 'M10 4H5v16h5M15 8l4 4-4 4M19 12H9',
+} as const;
+
+function ManageIcon({ tone, path }: { tone: 'create' | 'plain' | 'danger'; path: string }) {
+  return (
+    <span className="space-manage-icon" data-tone={tone} aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path d={path} />
+      </svg>
+    </span>
   );
 }

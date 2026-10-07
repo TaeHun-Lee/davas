@@ -171,3 +171,29 @@ describe('the explore and desktop boards', () => {
     );
   });
 });
+
+describe('the space tab, matched to both space boards', () => {
+  it('puts the count beside 멤버, renaming on the right and the period as a labelled pill row', () => {
+    const screen = source('components/spaces/SpacesScreen.tsx');
+    assert.match(screen, /className="space-count-pill" data-full=\{full \|\| undefined\}/);
+    assert.match(screen, /className="space-rename-button"/);
+    assert.doesNotMatch(screen, /space-name-row/);
+    assert.match(screen, /<span id="space-invite-period" className="space-invite-label">/);
+    assert.match(screen, /M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18ZM12 8v5M12 16h\.01/);
+    const css = source('app/globals.css');
+    assert.match(
+      css,
+      /\.space-expiry button \{\n  min-height: 44px;\n  border: 1px solid #dce5ef;\n  border-radius: 999px;/,
+    );
+    assert.match(css, /\.space-count-pill\[data-full\] \{\n  background: #fff1d9;/);
+  });
+
+  it('folds creating, handing over and closing the space into rows', () => {
+    const screen = source('components/spaces/SpacesScreen.tsx');
+    assert.match(screen, /aria-controls="space-manage-create"/);
+    assert.match(screen, /aria-controls="space-manage-transfer"/);
+    assert.match(screen, /aria-controls="space-manage-danger"/);
+    assert.match(screen, /onDanger\(dangerAction \? null : isOwner \? 'close' : 'leave'\)/);
+    assert.match(screen, /<ManageIcon tone="danger" path=\{MANAGE_ICONS\.exit\} \/>/);
+  });
+});

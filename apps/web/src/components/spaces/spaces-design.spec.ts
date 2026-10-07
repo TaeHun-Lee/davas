@@ -19,7 +19,7 @@ describe('spaces onboarding and member management UI', () => {
       /<TaskShell title="공간 초대" fallback=\{authenticated \? '\/spaces' : '\/login'\}>/,
     );
     assert.doesNotMatch(screen + invite, /layout\/AppShell/);
-    assert.match(screen, /친구 관계와는 별도로 관리돼요/);
+    assert.match(screen, /예전 친구 관리 ›/);
     assert.match(screen, /href="\/friends"/);
     assert.match(friends, /href="\/spaces"/);
   });
@@ -30,7 +30,7 @@ describe('spaces onboarding and member management UI', () => {
     // Switching spaces lives in the header; the page keeps every management control.
     assert.match(screen, /aria-label="공간 이름"/);
     assert.match(screen, /aria-label="공간 최대 인원"/);
-    assert.match(screen, /aria-label="초대 링크 만료 시간"/);
+    assert.match(screen, /aria-labelledby="space-invite-period"/);
     assert.match(screen, /aria-label="소유권을 이전할 멤버"/);
     assert.match(screen, /data-state="loading"/);
     assert.match(screen, /data-state="empty"/);
