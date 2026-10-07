@@ -17,7 +17,7 @@ describe('choosing together screens', () => {
     assert.match(middleware, /'\/spaces\/wishes',/);
     assert.match(routes, /'\/spaces\/wishes'/);
     assert.match(home, /<WishPickCard key=\{space\.id\} spaceId=\{space\.id\} variant="home" \/>/);
-    assert.match(spaces, /href="\/spaces\/wishes"/);
+    assert.match(spaces, /href: '\/spaces\/wishes'/);
   });
 
   it('shows who added each title, whether everyone wants it, and where it streams', () => {

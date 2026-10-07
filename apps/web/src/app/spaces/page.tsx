@@ -7,6 +7,7 @@ type SpacesPageProps = {
 export default async function SpacesPage({ searchParams }: SpacesPageProps) {
   const params = await searchParams;
   const view = Array.isArray(params?.view) ? params.view[0] : params?.view;
-  const initialView: SpacesView = view === 'recommend' ? 'recommend' : 'timeline';
+  const initialView: SpacesView =
+    view === 'recommend' ? 'recommend' : view === 'timeline' ? 'timeline' : 'space';
   return <SpacesScreen initialView={initialView} />;
 }

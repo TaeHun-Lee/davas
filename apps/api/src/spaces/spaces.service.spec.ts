@@ -45,6 +45,13 @@ class FakeDatabase {
           (membership) => membership.spaceId === space.id,
         );
       }
+      if (targetKey === SpaceMembershipEntity) {
+        const membership = row as unknown as SpaceMembershipEntity;
+        membership.account = {
+          id: membership.accountId,
+          nickname: membership.accountId,
+        } as never;
+      }
       return row;
     };
     const findOne = async (options: { where: Row; relations?: unknown }) => {
@@ -367,7 +374,12 @@ describe('SpacesService lifecycle', () => {
     const first = await service.createInvite(space.id, 'owner', {});
     const second = await service.createInvite(space.id, 'owner', {});
     await service.acceptInvite(first.token, 'partner');
-    assert.equal((await service.inspectInvite(second.token, 'third')).status, 'FULL');
+    const full = await service.inspectInvite(second.token, 'third');
+    assert.equal(full.status, 'FULL');
+    // The full card still says what the invite was for, with members only as initials.
+    assert.ok(full.status === 'FULL');
+    assert.equal(full.space.name, '둘만');
+    assert.deepEqual(full.members, { count: 2, max: 2, initials: ['o', 'p'] });
   });
 
   it('lets only the owner rename the space', async () => {

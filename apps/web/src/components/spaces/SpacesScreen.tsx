@@ -1,44 +1,177 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getMe } from '../../lib/api/auth';
+import { useState, type ReactNode } from 'react';
+import { useActiveSpace } from '../../hooks/useActiveSpace';
 import {
   cancelSpaceInvite,
   closeSpace,
   createSpace,
   createSpaceInvite,
   leaveSpace,
-  listSpaces,
   renameSpace,
   transferSpaceOwnership,
   type SpaceInvite,
   type SpaceView,
 } from '../../lib/api/spaces';
-import { CoreAppShell } from '../core/CoreUi';
+import { CoreAppShell, TaskShell } from '../core/CoreUi';
 import { GroupRecommendationPanel } from './GroupRecommendationPanel';
-import { ACTIVE_SPACE_KEY, chooseActiveSpace, spaceErrorMessage } from './space-ui';
+import { monthDayLabel, seoulDay } from './memories-model';
+import {
+  activeMembers,
+  inviteDeadlineLabel,
+  rememberActiveSpace,
+  spaceErrorMessage,
+} from './space-ui';
+import { SpaceSwitcher } from './SpaceSwitcher';
 import { SpaceTimeline } from './SpaceTimeline';
 
-export type SpacesView = 'timeline' | 'recommend';
+/** `/spaces` shows the space; `?view=timeline` and `?view=recommend` open its full screens. */
+export type SpacesView = 'space' | 'timeline' | 'recommend';
 
-const VIEW_OPTIONS: Array<{ value: SpacesView; label: string }> = [
-  { value: 'timeline', label: '기록 타임라인' },
-  { value: 'recommend', label: '함께 고르기' },
-];
+type ActiveSpace = ReturnType<typeof useActiveSpace>;
 
-export function SpacesScreen({ initialView = 'timeline' }: { initialView?: SpacesView }) {
-  const [view, setView] = useState<SpacesView>(initialView);
-  const [spaces, setSpaces] = useState<SpaceView[]>([]);
-  const [activeSpaceId, setActiveSpaceId] = useState<string | null>(null);
-  const [myAccountId, setMyAccountId] = useState<string | null>(null);
-  const [myOttServices, setMyOttServices] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+const INVITE_EXPIRY_OPTIONS = [
+  { hours: 24, label: '24시간' },
+  { hours: 72, label: '3일' },
+  { hours: 168, label: '7일' },
+] as const;
+
+export function SpacesScreen({ initialView = 'space' }: { initialView?: SpacesView }) {
+  const active = useActiveSpace();
+  if (initialView === 'timeline') return <SpaceTimelineScreen active={active} />;
+  if (initialView === 'recommend') return <ChooseTogetherScreen active={active} />;
+  return <SpaceOverview active={active} />;
+}
+
+/** The space's whole timeline, reached from the home timeline's "전체". */
+function SpaceTimelineScreen({ active }: { active: ActiveSpace }) {
+  const { state } = active;
+  return (
+    <TaskShell title="우리 공간 타임라인" fallback="/">
+      <SpaceGate active={active}>
+        {state.status === 'ready' && state.space ? (
+          <SpaceTimeline
+            key={state.space.id}
+            spaceId={state.space.id}
+            spaceName={state.space.name}
+            myAccountId={state.myAccountId}
+          />
+        ) : null}
+      </SpaceGate>
+    </TaskShell>
+  );
+}
+
+/** 함께 고르기 on its own screen, as on the C안 board. */
+function ChooseTogetherScreen({ active }: { active: ActiveSpace }) {
+  const { state } = active;
+  return (
+    <TaskShell title="함께 고르기" fallback="/spaces">
+      <SpaceGate active={active} empty="함께 고르기는 공간을 만들고 멤버를 초대한 뒤 쓸 수 있어요.">
+        {state.status === 'ready' && state.space ? (
+          <GroupRecommendationPanel
+            key={state.space.id}
+            space={state.space}
+            myAccountId={state.myAccountId}
+            defaultServices={state.myOttServices}
+          />
+        ) : null}
+      </SpaceGate>
+    </TaskShell>
+  );
+}
+
+/** Loading, error and "no space yet" for the space's full screens. */
+function SpaceGate({
+  active,
+  empty = '공간에 공유된 기록이 여기에 모여요.',
+  children,
+}: {
+  active: ActiveSpace;
+  empty?: string;
+  children: ReactNode;
+}) {
+  const { state, reload } = active;
+  if (state.status === 'loading')
+    return (
+      <section data-state="loading" className="space-panel" aria-busy="true">
+        <p className="space-panel-hint">공간을 불러오는 중이에요…</p>
+      </section>
+    );
+  if (state.status === 'error')
+    return (
+      <section className="space-panel" role="alert">
+        <p className="space-panel-hint">공간을 불러오지 못했어요.</p>
+        <button
+          type="button"
+          className="secondary-button mt-3 w-full"
+          onClick={() => void reload()}
+        >
+          다시 시도
+        </button>
+      </section>
+    );
+  if (!state.space)
+    return (
+      <section data-state="empty" className="space-panel">
+        <h2 className="space-panel-title">아직 참여 중인 공간이 없어요</h2>
+        <p className="space-panel-hint">{empty}</p>
+        <Link href="/spaces" className="primary-button mt-4 w-full">
+          공간 만들기
+        </Link>
+      </section>
+    );
+  return <>{children}</>;
+}
+
+function MemberFace({ name, isMe }: { name: string; isMe: boolean }) {
+  return (
+    <span className="space-member-face" data-me={isMe || undefined} aria-hidden="true">
+      {[...(name.trim() || '멤')][0]}
+    </span>
+  );
+}
+
+const FEATURES = [
+  {
+    href: '/spaces/wishes',
+    label: '같이 보고 싶어요',
+    tone: 'wish',
+    icon: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z',
+  },
+  {
+    href: '/spaces?view=recommend',
+    label: '함께 고르기',
+    tone: 'pick',
+    icon: 'M9 6a3 3 0 1 0 0 6a3 3 0 1 0 0-6ZM16.5 7.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5ZM3.5 19c.5-3.3 2.3-5 5.5-5s5 1.7 5.5 5M14 15c3.5-.4 5.5.9 6 4',
+  },
+  {
+    href: '/spaces/memories',
+    label: '우리 기록 모아보기',
+    tone: 'memories',
+    icon: 'M5 6h14v14H5ZM5 10h14M9 4v4M15 4v4',
+  },
+  {
+    href: '/search?scope=space',
+    label: '기록 검색',
+    tone: 'search',
+    icon: 'M10.5 5a5.5 5.5 0 1 0 0 11a5.5 5.5 0 1 0 0-11ZM15 15l4 4',
+  },
+] as const;
+
+/**
+ * The space tab, as on the C안 board: who is in the space (with renaming and inviting for the
+ * owner), what the space can do, and then managing it.
+ */
+function SpaceOverview({ active }: { active: ActiveSpace }) {
+  const { state, reload, select } = active;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [name, setName] = useState('');
   const [maxMembers, setMaxMembers] = useState(5);
+  const [creating, setCreating] = useState(false);
   const [expiresInHours, setExpiresInHours] = useState(168);
   const [invite, setInvite] = useState<SpaceInvite | null>(null);
   const [newOwnerId, setNewOwnerId] = useState('');
@@ -46,34 +179,9 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
   const [renaming, setRenaming] = useState(false);
   const [spaceName, setSpaceName] = useState('');
 
-  const reload = useCallback(async (preferredSpaceId?: string | null) => {
-    setLoading(true);
-    setError('');
-    try {
-      const [{ items }, me] = await Promise.all([listSpaces(), getMe()]);
-      const preferred = preferredSpaceId ?? window.localStorage.getItem(ACTIVE_SPACE_KEY);
-      const selected = chooseActiveSpace(items, preferred);
-      setSpaces(items);
-      setActiveSpaceId(selected?.id ?? null);
-      setMyAccountId(me.id ?? null);
-      setMyOttServices(me.ottServices ?? []);
-      if (selected) window.localStorage.setItem(ACTIVE_SPACE_KEY, selected.id);
-      else window.localStorage.removeItem(ACTIVE_SPACE_KEY);
-    } catch (caught) {
-      setError(spaceErrorMessage(caught));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void reload();
-  }, [reload]);
-
-  const activeSpace = useMemo(
-    () => chooseActiveSpace(spaces, activeSpaceId),
-    [activeSpaceId, spaces],
-  );
+  const ready = state.status === 'ready' ? state : null;
+  const activeSpace = ready?.space ?? null;
+  const myAccountId = ready?.myAccountId ?? '';
   const isOwner = Boolean(
     activeSpace &&
     (activeSpace.ownerAccountId === myAccountId ||
@@ -81,40 +189,22 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
         (member) => member.accountId === myAccountId && member.role === 'OWNER',
       )),
   );
-  const ownershipCandidates =
-    activeSpace?.members.filter((member) => member.accountId !== myAccountId) ?? [];
+  const members = activeSpace ? activeMembers(activeSpace) : [];
+  const full = Boolean(activeSpace && members.length >= activeSpace.maxMembers);
+  const ownershipCandidates = members.filter((member) => member.accountId !== myAccountId);
   const inviteUrl =
     invite && typeof window !== 'undefined'
       ? `${window.location.origin}/spaces/invite/${encodeURIComponent(invite.token)}`
       : '';
 
-  // Arriving from the home "함께 고르기" link lands below the space picker, so bring the
-  // panel into view once, after the first load (not again on later reloads).
-  const scrolledToPanel = useRef(false);
-  useEffect(() => {
-    if (scrolledToPanel.current || loading || initialView !== 'recommend' || !activeSpace) return;
-    scrolledToPanel.current = true;
-    document.getElementById('space-view-switch')?.scrollIntoView({ block: 'start' });
-  }, [activeSpace, initialView, loading]);
-
-  function changeView(next: SpacesView) {
-    setView(next);
-    window.history.replaceState(
-      null,
-      '',
-      next === 'recommend' ? '/spaces?view=recommend' : '/spaces',
-    );
-  }
-
-  function selectSpace(spaceId: string) {
-    setActiveSpaceId(spaceId);
+  function switchSpace(spaceId: string) {
+    select(spaceId);
     setInvite(null);
     setNewOwnerId('');
     setDangerAction(null);
     setRenaming(false);
     setError('');
     setNotice('');
-    window.localStorage.setItem(ACTIVE_SPACE_KEY, spaceId);
   }
 
   async function runAction(action: () => Promise<void>) {
@@ -135,8 +225,10 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
     await runAction(async () => {
       const created = await createSpace(name.trim(), maxMembers);
       setName('');
+      setCreating(false);
+      rememberActiveSpace(created.id);
+      await reload();
       setNotice('공간을 만들었어요. 초대 링크로 멤버를 불러보세요.');
-      await reload(created.id);
     });
   }
 
@@ -146,17 +238,16 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
     await runAction(async () => {
       await renameSpace(activeSpace.id, spaceName.trim());
       setRenaming(false);
+      await reload();
       setNotice('공간 이름을 바꿨어요.');
-      await reload(activeSpace.id);
     });
   }
 
   async function handleCreateInvite() {
     if (!activeSpace) return;
     await runAction(async () => {
-      const created = await createSpaceInvite(activeSpace.id, expiresInHours);
-      setInvite(created);
-      setNotice('초대 링크를 만들었어요. 만료 전에 한 명에게 공유해 주세요.');
+      setInvite(await createSpaceInvite(activeSpace.id, expiresInHours));
+      setNotice('초대 링크를 만들었어요. 만료 전에 한 명에게 보내 주세요.');
     });
   }
 
@@ -166,7 +257,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
       await navigator.clipboard.writeText(inviteUrl);
       setNotice('초대 링크를 복사했어요.');
     } catch {
-      setError('링크를 복사하지 못했어요. 아래 주소를 길게 눌러 복사해 주세요.');
+      setError('링크를 복사하지 못했어요. 링크 주소를 길게 눌러 복사해 주세요.');
     }
   }
 
@@ -184,8 +275,8 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
     await runAction(async () => {
       await transferSpaceOwnership(activeSpace.id, newOwnerId);
       setNewOwnerId('');
-      setNotice('소유권을 이전했어요. 이제 일반 멤버로 참여 중이에요.');
-      await reload(activeSpace.id);
+      await reload();
+      setNotice('소유권을 넘겼어요. 이제 일반 멤버로 참여 중이에요.');
     });
   }
 
@@ -195,7 +286,8 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
       await leaveSpace(activeSpace.id);
       setDangerAction(null);
       setInvite(null);
-      await reload(null);
+      rememberActiveSpace(null);
+      await reload();
     });
   }
 
@@ -205,402 +297,396 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
       await closeSpace(activeSpace.id);
       setDangerAction(null);
       setInvite(null);
-      await reload(null);
+      rememberActiveSpace(null);
+      await reload();
     });
   }
 
-  return (
-    <CoreAppShell>
-      <div aria-busy={loading || busy}>
-        <header>
-          <h1 className="page-title">공유 공간</h1>
-          <p className="page-description">
-            한 공간을 먼저 골라 멤버와 감상 기록을 나누고, 함께 볼 작품을 골라요. 친구 관계와는
-            별도로 관리돼요.
-          </p>
-          <Link
-            href="/friends"
-            className="mt-3 inline-flex min-h-11 items-center text-[13px] font-black text-[var(--blue-ink)] underline underline-offset-4"
-          >
-            기존 친구 관리로 이동
-          </Link>
-        </header>
+  const createForm = (
+    <form onSubmit={handleCreate} className="space-create-form">
+      <label className="block">
+        <span className="field-label">공간 이름</span>
+        <input
+          aria-label="공간 이름"
+          required
+          maxLength={80}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+          placeholder="예: 주말 영화 모임"
+          className="text-input"
+        />
+      </label>
+      <label className="mt-3 block">
+        <span className="field-label">최대 인원 (2~5명)</span>
+        <select
+          aria-label="공간 최대 인원"
+          value={maxMembers}
+          onChange={(event) => setMaxMembers(Number(event.target.value))}
+          className="text-input"
+        >
+          {[2, 3, 4, 5].map((count) => (
+            <option key={count} value={count}>
+              {count}명
+            </option>
+          ))}
+        </select>
+      </label>
+      <button type="submit" disabled={busy || !name.trim()} className="primary-button mt-4 w-full">
+        공간 만들기
+      </button>
+    </form>
+  );
 
+  return (
+    <CoreAppShell headerLead={<SpaceSwitcher state={state} onSelect={switchSpace} />}>
+      <h1 className="sr-only">공간</h1>
+      <div aria-busy={state.status === 'loading' || busy} className="space-overview">
         {error ? (
-          <p
-            role="alert"
-            className="mt-4 rounded-2xl bg-[#fff1f0] px-4 py-3 text-[13px] font-bold leading-5 text-[var(--danger)]"
-          >
+          <p role="alert" className="space-banner" data-tone="error">
             {error}
           </p>
         ) : null}
         {notice ? (
-          <p
-            role="status"
-            className="mt-4 rounded-2xl bg-[#eef7f1] px-4 py-3 text-[13px] font-bold leading-5 text-[#327653]"
-          >
+          <p role="status" className="space-banner" data-tone="done">
             {notice}
           </p>
         ) : null}
 
-        {loading ? (
-          <section data-state="loading" className="mt-5 core-card p-6 text-center">
-            <p className="text-[14px] font-bold text-[var(--muted)]">공간을 불러오는 중이에요…</p>
+        {state.status === 'loading' ? (
+          <section data-state="loading" className="space-panel">
+            <p className="space-panel-hint">공간을 불러오는 중이에요…</p>
+          </section>
+        ) : state.status === 'error' ? (
+          <section className="space-panel" role="alert">
+            <p className="space-panel-hint">공간을 불러오지 못했어요.</p>
+            <button
+              type="button"
+              className="secondary-button mt-3 w-full"
+              onClick={() => void reload()}
+            >
+              다시 시도
+            </button>
+          </section>
+        ) : !activeSpace ? (
+          <section data-state="empty" className="space-panel" aria-labelledby="space-start-title">
+            <h2 id="space-start-title" className="space-panel-title">
+              둘만의 공간을 만들어 보세요
+            </h2>
+            <p className="space-panel-hint">
+              새 공간은 나 혼자로 시작해요. 초대 링크로 2~5명이 함께할 수 있어요. 공간에 들어오기
+              전의 개인 기록은 자동으로 공유되지 않아요.
+            </p>
+            <div className="mt-4">{createForm}</div>
           </section>
         ) : (
           <>
-            <section className="mt-5 core-card p-5">
-              <h2 className="text-[17px] font-black text-[var(--heading)]">내 공간</h2>
-              {spaces.length > 0 ? (
-                <label className="mt-4 block text-[13px] font-black text-[#53637b]">
-                  활성 공간 선택
-                  <select
-                    aria-label="활성 공간 선택"
-                    value={activeSpaceId ?? ''}
-                    onChange={(event) => selectSpace(event.target.value)}
-                    className="mt-2 min-h-12 w-full rounded-2xl border border-[#dce4ef] bg-[#f8faff] px-4 text-[15px] font-bold text-[var(--heading)]"
-                  >
-                    {spaces.map((space) => (
-                      <option key={space.id} value={space.id}>
-                        {space.name} · {space.members.length}/{space.maxMembers}명
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : (
-                <div data-state="empty" className="py-5 text-center">
-                  <p className="text-[15px] font-black text-[var(--heading)]">
-                    아직 참여 중인 공간이 없어요.
-                  </p>
-                  <p className="mt-2 text-[13px] font-semibold leading-5 text-[var(--muted)]">
-                    새 공간은 소유자 한 명으로 시작해요. 초대로 2~5명이 함께할 수 있어요.
-                  </p>
-                  {view === 'recommend' ? (
-                    <p className="mt-2 text-[13px] font-bold leading-5 text-[var(--blue-ink)]">
-                      함께 고르기는 공간을 만들고 멤버를 초대한 뒤 쓸 수 있어요.
-                    </p>
-                  ) : null}
-                </div>
-              )}
-            </section>
+            <section className="space-panel" aria-labelledby="members-title">
+              <div className="space-panel-head">
+                <h2 id="members-title" className="space-panel-title">
+                  멤버
+                </h2>
+                <span className="space-count-pill">
+                  {members.length} / {activeSpace.maxMembers}명
+                </span>
+              </div>
 
-            <form onSubmit={handleCreate} className="mt-4 core-card p-5">
-              <h2 className="text-[17px] font-black text-[var(--heading)]">새 공간 만들기</h2>
-              <label className="mt-4 block text-[13px] font-black text-[#53637b]">
-                공간 이름
-                <input
-                  aria-label="공간 이름"
-                  required
-                  maxLength={80}
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="예: 주말 영화 모임"
-                  className="mt-2 min-h-12 w-full rounded-2xl border border-[#dce4ef] bg-[#f8faff] px-4 text-[15px] font-bold outline-none focus:border-[#6c8cc0]"
-                />
-              </label>
-              <label className="mt-3 block text-[13px] font-black text-[#53637b]">
-                최대 인원 (2~5명)
-                <select
-                  aria-label="공간 최대 인원"
-                  value={maxMembers}
-                  onChange={(event) => setMaxMembers(Number(event.target.value))}
-                  className="mt-2 min-h-12 w-full rounded-2xl border border-[#dce4ef] bg-[#f8faff] px-4 text-[15px] font-bold"
-                >
-                  {[2, 3, 4, 5].map((count) => (
-                    <option key={count} value={count}>
-                      {count}명
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button
-                type="submit"
-                disabled={busy || !name.trim()}
-                className="mt-4 min-h-12 w-full rounded-2xl bg-[var(--blue)] px-4 text-[14px] font-black text-white disabled:opacity-50"
-              >
-                공간 만들기
-              </button>
-            </form>
-
-            {activeSpace ? (
-              <>
-                <Link href="/spaces/wishes" className="wish-pick-empty mt-4">
-                  <span>
-                    <strong>같이 보고 싶어요</strong>
-                    <span>공간에서 함께 채우는 목록과 오늘 볼 작품 빠른 추천</span>
-                  </span>
-                  <span aria-hidden="true">›</span>
-                </Link>
-                <Link href="/spaces/memories" className="wish-pick-empty mt-2">
-                  <span>
-                    <strong>우리 기록 모아보기</strong>
-                    <span>올해 함께 본 작품, 1년 전 오늘, 보고 있는 드라마</span>
-                  </span>
-                  <span aria-hidden="true">›</span>
-                </Link>
-                <div
-                  role="group"
-                  id="space-view-switch"
-                  aria-label="공간 화면 전환"
-                  className="mt-4 grid scroll-mt-24 grid-cols-2 gap-1 rounded-2xl bg-[#eef3fa] p-1"
-                >
-                  {VIEW_OPTIONS.map((option) => (
+              {/* Only the owner renames the space, as only the owner manages invites. */}
+              {isOwner && renaming ? (
+                <form className="space-rename" onSubmit={handleRename}>
+                  <label htmlFor="space-rename-input">공간 이름</label>
+                  <div className="space-rename-row">
+                    <input
+                      id="space-rename-input"
+                      autoFocus
+                      required
+                      maxLength={80}
+                      value={spaceName}
+                      onChange={(event) => setSpaceName(event.target.value)}
+                    />
                     <button
-                      key={option.value}
-                      type="button"
-                      aria-pressed={view === option.value}
-                      onClick={() => changeView(option.value)}
-                      className={`min-h-11 rounded-xl text-[13px] font-black ${
-                        view === option.value
-                          ? 'bg-white text-[var(--heading)] shadow-[0_4px_12px_rgba(31,65,114,0.10)]'
-                          : 'text-[var(--muted)]'
-                      }`}
+                      type="submit"
+                      disabled={busy || !spaceName.trim() || spaceName.trim() === activeSpace.name}
                     >
-                      {option.label}
+                      이름 저장
                     </button>
-                  ))}
-                </div>
-                {/* Both views stay mounted so switching keeps an in-progress recommendation. */}
-                <div hidden={view !== 'timeline'}>
-                  {/* Keyed by space so a comparison panel never outlives the space it came from. */}
-                  <SpaceTimeline
-                    key={activeSpace.id}
-                    spaceId={activeSpace.id}
-                    spaceName={activeSpace.name}
-                    myAccountId={myAccountId ?? ''}
-                  />
-                </div>
-                <div hidden={view !== 'recommend'} className="mt-4">
-                  <GroupRecommendationPanel
-                    space={activeSpace}
-                    myAccountId={myAccountId ?? ''}
-                    defaultServices={myOttServices}
-                  />
-                </div>
-                <section className="mt-4 core-card p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h2 className="text-[18px] font-black text-[var(--heading)]">
-                        {activeSpace.name}
-                      </h2>
-                      <p className="mt-1 text-[12px] font-bold text-[var(--muted)]">
-                        멤버 {activeSpace.members.length}/{activeSpace.maxMembers}명 · 최대 5명
-                      </p>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-[#edf3fb] px-3 py-1 text-[12px] font-black text-[var(--blue-ink)]">
-                      {isOwner ? '소유자' : '멤버'}
-                    </span>
                   </div>
-                  {/* Only the owner renames the space, as only the owner manages invites. */}
-                  {isOwner && renaming ? (
-                    <form className="mt-3" onSubmit={handleRename}>
-                      <label className="block text-[13px] font-black text-[#53637b]">
-                        새 공간 이름
-                        <input
-                          autoFocus
-                          required
-                          maxLength={80}
-                          value={spaceName}
-                          onChange={(event) => setSpaceName(event.target.value)}
-                          className="mt-2 min-h-12 w-full rounded-2xl border border-[#dce4ef] bg-[#f8faff] px-4 text-[14px] font-bold"
-                        />
-                      </label>
-                      <div className="mt-2 grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setRenaming(false)}
-                          className="min-h-11 rounded-xl bg-[#f1f5fb] text-[13px] font-black text-[#53637b]"
-                        >
-                          취소
-                        </button>
-                        <button
-                          type="submit"
-                          disabled={
-                            busy || !spaceName.trim() || spaceName.trim() === activeSpace.name
-                          }
-                          className="min-h-11 rounded-xl bg-[var(--blue)] text-[13px] font-black text-white disabled:opacity-50"
-                        >
-                          이름 저장
-                        </button>
-                      </div>
-                    </form>
-                  ) : isOwner ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSpaceName(activeSpace.name);
-                        setRenaming(true);
-                      }}
-                      className="mt-3 min-h-11 rounded-xl bg-[#f1f5fb] px-4 text-[13px] font-black text-[var(--blue-ink)]"
-                    >
-                      공간 이름 바꾸기
+                  <div className="space-rename-foot">
+                    <span>공간 멤버 모두에게 바뀐 이름으로 보여요.</span>
+                    <button type="button" onClick={() => setRenaming(false)}>
+                      취소
                     </button>
-                  ) : null}
-                  <h3 className="mt-5 text-[13px] font-black text-[#53637b]">멤버 목록</h3>
-                  <ul className="mt-2 space-y-2" aria-label="공간 멤버 목록">
-                    {activeSpace.members.map((member) => (
-                      <li
-                        key={member.accountId}
-                        className="flex min-h-12 items-center justify-between rounded-2xl bg-[#f7f9fd] px-4"
-                      >
-                        <span className="text-[14px] font-bold text-[var(--heading)]">
-                          {member.nickname || '이름 없는 멤버'}
-                          {member.accountId === myAccountId ? ' (나)' : ''}
-                        </span>
-                        <span className="text-[12px] font-black text-[var(--muted)]">
-                          {member.role === 'OWNER' ? '소유자' : '멤버'}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
+                  </div>
+                </form>
+              ) : isOwner ? (
+                <div className="space-name-row">
+                  <span>
+                    공간 이름 · <b>{activeSpace.name}</b>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSpaceName(activeSpace.name);
+                      setRenaming(true);
+                    }}
+                  >
+                    이름 바꾸기
+                  </button>
+                </div>
+              ) : null}
 
-                {isOwner ? (
-                  <section className="mt-4 core-card p-5">
-                    <h2 className="text-[17px] font-black text-[var(--heading)]">초대 관리</h2>
-                    <p className="mt-2 text-[13px] font-semibold leading-5 text-[var(--muted)]">
-                      링크 하나는 한 명만 수락할 수 있어요. 정원은 최대 5명이에요.
-                    </p>
-                    <label className="mt-4 block text-[13px] font-black text-[#53637b]">
-                      초대 링크 만료
-                      <select
-                        aria-label="초대 링크 만료 시간"
-                        value={expiresInHours}
-                        onChange={(event) => setExpiresInHours(Number(event.target.value))}
-                        className="mt-2 min-h-12 w-full rounded-2xl border border-[#dce4ef] bg-[#f8faff] px-4 text-[14px] font-bold"
-                      >
-                        <option value={24}>24시간</option>
-                        <option value={72}>3일</option>
-                        <option value={168}>7일</option>
-                      </select>
+              <ul className="space-member-list" aria-label="공간 멤버 목록">
+                {members.map((member) => {
+                  const isMe = member.accountId === myAccountId;
+                  const owner = member.role === 'OWNER';
+                  const nickname = member.nickname || '이름 없는 멤버';
+                  return (
+                    <li key={member.accountId}>
+                      <MemberFace name={nickname} isMe={isMe} />
+                      <span className="space-member-text">
+                        <strong>
+                          {nickname}
+                          {isMe ? ' (나)' : ''}
+                        </strong>
+                        <span>
+                          {owner
+                            ? '공간을 만든 사람'
+                            : member.joinedAt
+                              ? `${monthDayLabel(seoulDay(new Date(member.joinedAt)))}에 참여`
+                              : '멤버'}
+                        </span>
+                      </span>
+                      <span className="space-role-chip" data-owner={owner || undefined}>
+                        {owner ? '소유자' : '멤버'}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              {isOwner ? (
+                invite ? (
+                  <div className="space-invite-box">
+                    <label className="block">
+                      <span className="field-label">초대 링크</span>
+                      <input
+                        aria-label="생성된 초대 링크"
+                        readOnly
+                        value={inviteUrl}
+                        onFocus={(event) => event.target.select()}
+                        className="text-input"
+                      />
                     </label>
+                    <p className="space-panel-hint mt-2">
+                      {inviteDeadlineLabel(invite.expiresAt)}까지 쓸 수 있어요. 한 명만 참여할 수
+                      있어요.
+                    </p>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        aria-label="초대 링크 복사"
+                        onClick={handleCopyInvite}
+                        className="primary-button"
+                      >
+                        링크 복사
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="초대 취소"
+                        onClick={handleCancelInvite}
+                        disabled={busy}
+                        className="danger-button"
+                      >
+                        초대 취소
+                      </button>
+                    </div>
+                  </div>
+                ) : full ? (
+                  <p role="status" className="space-full-note">
+                    공간 정원이 모두 차서 지금은 초대할 수 없어요.
+                  </p>
+                ) : (
+                  <>
+                    <div className="space-expiry" role="group" aria-label="초대 링크 만료 시간">
+                      {INVITE_EXPIRY_OPTIONS.map((option) => (
+                        <button
+                          key={option.hours}
+                          type="button"
+                          aria-pressed={expiresInHours === option.hours}
+                          onClick={() => setExpiresInHours(option.hours)}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
                     <button
                       type="button"
                       disabled={busy || activeSpace.members.length >= activeSpace.maxMembers}
                       onClick={handleCreateInvite}
-                      className="mt-3 min-h-12 w-full rounded-2xl bg-[var(--blue)] px-4 text-[14px] font-black text-white disabled:opacity-50"
+                      className="space-invite-button"
                     >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M10 6a3 3 0 1 0 0 6a3 3 0 1 0 0-6ZM4.5 19c.5-3.3 2.3-5 5.5-5s5 1.7 5.5 5M18.5 8v6M15.5 11h6" />
+                      </svg>
                       초대 링크 만들기
                     </button>
-                    {activeSpace.members.length >= activeSpace.maxMembers ? (
-                      <p role="status" className="mt-2 text-[12px] font-bold text-[#b05d39]">
-                        공간 정원이 모두 차서 지금은 초대할 수 없어요.
-                      </p>
-                    ) : null}
-                    {invite ? (
-                      <div className="mt-4 rounded-2xl bg-[#f7f9fd] p-4">
-                        <label className="block text-[12px] font-black text-[#53637b]">
-                          생성된 초대 링크
-                          <input
-                            aria-label="생성된 초대 링크"
-                            readOnly
-                            value={inviteUrl}
-                            className="mt-2 min-h-12 w-full rounded-xl border border-[#dce4ef] bg-white px-3 text-[12px] text-[#53637b]"
-                          />
-                        </label>
-                        <p className="mt-2 text-[12px] font-bold text-[var(--muted)]">
-                          {new Date(invite.expiresAt).toLocaleString('ko-KR')} 만료
-                        </p>
-                        <div className="mt-3 grid grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            aria-label="초대 링크 복사"
-                            onClick={handleCopyInvite}
-                            className="min-h-11 rounded-xl bg-[#e9f0fa] text-[13px] font-black text-[var(--blue-ink)]"
-                          >
-                            링크 복사
-                          </button>
-                          <button
-                            type="button"
-                            aria-label="초대 취소"
-                            onClick={handleCancelInvite}
-                            disabled={busy}
-                            className="min-h-11 rounded-xl bg-[#fff1f0] text-[13px] font-black text-[var(--danger)]"
-                          >
-                            초대 취소
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
-                  </section>
-                ) : null}
+                  </>
+                )
+              ) : null}
+            </section>
 
-                <section className="mt-4 core-card p-5">
-                  <h2 className="text-[17px] font-black text-[var(--heading)]">멤버십 관리</h2>
-                  {isOwner && ownershipCandidates.length > 0 ? (
-                    <div className="mt-4">
-                      <label className="block text-[13px] font-black text-[#53637b]">
-                        새 소유자
-                        <select
-                          aria-label="소유권을 이전할 멤버"
-                          value={newOwnerId}
-                          onChange={(event) => setNewOwnerId(event.target.value)}
-                          className="mt-2 min-h-12 w-full rounded-2xl border border-[#dce4ef] bg-[#f8faff] px-4 text-[14px] font-bold"
-                        >
-                          <option value="">멤버 선택</option>
-                          {ownershipCandidates.map((member) => (
-                            <option key={member.accountId} value={member.accountId}>
-                              {member.nickname || '이름 없는 멤버'}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <button
-                        type="button"
-                        aria-label="공간 소유권 이전"
-                        disabled={busy || !newOwnerId}
-                        onClick={handleTransferOwnership}
-                        className="mt-3 min-h-12 w-full rounded-2xl bg-[#e9f0fa] text-[13px] font-black text-[var(--blue-ink)] disabled:opacity-50"
-                      >
-                        소유권 이전
-                      </button>
-                    </div>
-                  ) : null}
+            <nav aria-label="공간 기능" className="space-features">
+              {FEATURES.map((feature) => (
+                <Link key={feature.href} href={feature.href}>
+                  <span className="space-feature-icon" data-tone={feature.tone} aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path d={feature.icon} />
+                    </svg>
+                  </span>
+                  <span className="space-feature-label">{feature.label}</span>
+                  <span aria-hidden="true">›</span>
+                </Link>
+              ))}
+            </nav>
 
-                  <button
-                    type="button"
-                    aria-label={isOwner ? '공간 종료 시작' : '공간 탈퇴 시작'}
-                    onClick={() => setDangerAction(isOwner ? 'close' : 'leave')}
-                    className="mt-4 min-h-12 w-full rounded-2xl bg-[#fff1f0] text-[13px] font-black text-[var(--danger)]"
-                  >
-                    {isOwner ? '공간 종료' : '공간 탈퇴'}
-                  </button>
-                  {dangerAction ? (
-                    <div
-                      role="group"
-                      aria-label={dangerAction === 'close' ? '공간 종료 확인' : '공간 탈퇴 확인'}
-                      className="mt-3 rounded-2xl border border-[#f4cbc7] bg-[#fff8f7] p-4"
-                    >
-                      <p className="text-[13px] font-bold leading-5 text-[#91443d]">
-                        {dangerAction === 'close'
-                          ? '공간을 종료하면 모든 멤버의 접근과 남은 초대가 즉시 중단돼요.'
-                          : '탈퇴하면 이 공간의 공유 기록을 즉시 볼 수 없어요.'}
-                      </p>
-                      <div className="mt-3 grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setDangerAction(null)}
-                          className="min-h-11 rounded-xl bg-white text-[13px] font-black text-[#63738b]"
-                        >
-                          취소
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={dangerAction === 'close' ? handleClose : handleLeave}
-                          className="min-h-11 rounded-xl bg-[#c4453c] text-[13px] font-black text-white disabled:opacity-50"
-                        >
-                          {dangerAction === 'close' ? '종료 확인' : '탈퇴 확인'}
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </section>
-              </>
-            ) : null}
+            <SpaceManagement
+              space={activeSpace}
+              isOwner={isOwner}
+              busy={busy}
+              creating={creating}
+              onToggleCreate={() => setCreating((value) => !value)}
+              createForm={createForm}
+              ownershipCandidates={ownershipCandidates}
+              newOwnerId={newOwnerId}
+              onNewOwner={setNewOwnerId}
+              onTransfer={handleTransferOwnership}
+              dangerAction={dangerAction}
+              onDanger={setDangerAction}
+              onLeave={handleLeave}
+              onClose={handleClose}
+            />
           </>
         )}
       </div>
     </CoreAppShell>
+  );
+}
+
+/** Making another space, handing the space over, and leaving or closing it. */
+function SpaceManagement({
+  space,
+  isOwner,
+  busy,
+  creating,
+  onToggleCreate,
+  createForm,
+  ownershipCandidates,
+  newOwnerId,
+  onNewOwner,
+  onTransfer,
+  dangerAction,
+  onDanger,
+  onLeave,
+  onClose,
+}: {
+  space: SpaceView;
+  isOwner: boolean;
+  busy: boolean;
+  creating: boolean;
+  onToggleCreate: () => void;
+  createForm: ReactNode;
+  ownershipCandidates: SpaceView['members'];
+  newOwnerId: string;
+  onNewOwner: (accountId: string) => void;
+  onTransfer: () => void;
+  dangerAction: 'leave' | 'close' | null;
+  onDanger: (action: 'leave' | 'close' | null) => void;
+  onLeave: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <section className="space-panel" aria-labelledby="space-manage-title">
+      <h2 id="space-manage-title" className="space-panel-title">
+        공간 관리
+      </h2>
+      <button
+        type="button"
+        className="space-manage-row"
+        aria-expanded={creating}
+        onClick={onToggleCreate}
+      >
+        새 공간 만들기 <span aria-hidden="true">{creating ? '−' : '+'}</span>
+      </button>
+      {creating ? <div className="pb-3">{createForm}</div> : null}
+
+      {isOwner && ownershipCandidates.length > 0 ? (
+        <div className="space-manage-block">
+          <label className="block">
+            <span className="field-label">소유권 넘기기</span>
+            <select
+              aria-label="소유권을 이전할 멤버"
+              value={newOwnerId}
+              onChange={(event) => onNewOwner(event.target.value)}
+              className="text-input"
+            >
+              <option value="">멤버 선택</option>
+              {ownershipCandidates.map((member) => (
+                <option key={member.accountId} value={member.accountId}>
+                  {member.nickname || '이름 없는 멤버'}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            aria-label="공간 소유권 이전"
+            disabled={busy || !newOwnerId}
+            onClick={onTransfer}
+            className="secondary-button mt-2 w-full"
+          >
+            소유권 넘기기
+          </button>
+        </div>
+      ) : null}
+
+      <div className="space-manage-block">
+        <button
+          type="button"
+          aria-label={isOwner ? '공간 종료 시작' : '공간 나가기 시작'}
+          onClick={() => onDanger(isOwner ? 'close' : 'leave')}
+          className="space-danger-link"
+        >
+          {isOwner ? '공간 종료' : '공간 나가기'}
+        </button>
+        {dangerAction ? (
+          <div
+            role="group"
+            aria-label={dangerAction === 'close' ? '공간 종료 확인' : '공간 나가기 확인'}
+            className="space-danger-confirm"
+          >
+            <p>
+              {dangerAction === 'close'
+                ? `‘${space.name}’을 종료하면 모든 멤버의 접근과 남은 초대가 바로 중단돼요.`
+                : `‘${space.name}’에서 나가면 이 공간의 공유 기록을 바로 볼 수 없어요.`}
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => onDanger(null)} className="secondary-button">
+                취소
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={dangerAction === 'close' ? onClose : onLeave}
+                className="danger-button"
+              >
+                {dangerAction === 'close' ? '종료 확인' : '나가기 확인'}
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+      <Link href="/friends" className="space-friends-link">
+        예전 친구 관리 <span>· 친구 관계와는 별도로 관리돼요</span>
+      </Link>
+    </section>
   );
 }

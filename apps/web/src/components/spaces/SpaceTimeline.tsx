@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 import { useSpaceTimeline } from '../../hooks/useSpaceTimeline';
 import { CoreApiError } from '../../lib/api/core';
@@ -95,26 +94,14 @@ export function SpaceTimeline({
   }
 
   return (
-    <section className="mt-4 core-card p-5" aria-labelledby="active-space-timeline-title">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2
-            id="active-space-timeline-title"
-            className="text-[17px] font-black text-[var(--heading)]"
-          >
-            활성 공간 타임라인
-          </h2>
-          <p className="mt-1 text-[12px] font-bold text-[var(--muted)]">
-            {spaceName}에 명시적으로 공유된 감상만 보여요.
-          </p>
-        </div>
-        <Link
-          href="/records/new"
-          className="inline-flex min-h-11 items-center rounded-xl bg-[var(--blue)] px-3 text-[12px] font-black text-white"
-        >
-          감상 기록
-        </Link>
-      </div>
+    // Its own screen under the "우리 공간 타임라인" header, so the cards sit on the page.
+    <section aria-labelledby="space-timeline-title">
+      <h1 id="space-timeline-title" className="sr-only">
+        우리 공간 타임라인
+      </h1>
+      <p className="text-[13px] font-bold text-[var(--muted)]">
+        {spaceName}에 공유된 기록만 보여요. 같은 작품은 한 카드로 모아 보여요.
+      </p>
 
       {status === 'loading' ? (
         <div data-state="loading" className="mt-4 space-y-3" aria-label="공간 타임라인 불러오는 중">

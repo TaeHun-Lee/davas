@@ -13,10 +13,11 @@ import {
   MediaTypeControl,
   RecordCard,
   SearchField,
-  SearchIcon,
   TaskShell,
   ViewingMethodControl,
 } from './CoreUi';
+import { useActiveSpace } from '../../hooks/useActiveSpace';
+import { SpaceSwitcher } from '../spaces/SpaceSwitcher';
 import { HomeRecommendations } from './HomeRecommendations';
 import { SpaceHome } from './SpaceHome';
 import { WatchEventDetailScreen } from './WatchEventDetailScreen';
@@ -188,17 +189,16 @@ function RecordList({
   );
 }
 
+/**
+ * Home, as on the C안 board: the space switcher in the header, then the space's quick pick,
+ * timeline and recommendations. Recording starts from the bottom bar's 기록하기.
+ */
 export function FeedScreen() {
+  const active = useActiveSpace();
   return (
-    <CoreAppShell>
+    <CoreAppShell headerLead={<SpaceSwitcher state={active.state} onSelect={active.select} />}>
       <h1 className="sr-only">홈</h1>
-      <Link href="/records/new?step=find" className="wide-cta home-record-cta">
-        <span className="wide-cta-label">
-          <SearchIcon className="wide-cta-icon" />본 작품 기록하기
-        </span>
-        <span aria-hidden="true">›</span>
-      </Link>
-      <SpaceHome />
+      <SpaceHome active={active} />
       <HomeRecommendations />
     </CoreAppShell>
   );

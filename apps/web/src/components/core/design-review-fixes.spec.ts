@@ -37,7 +37,7 @@ describe('design review fixes', () => {
   it('shows the invite deadline, the search focus and a retry the way people expect', () => {
     assert.match(
       source('components/spaces/SpaceInviteScreen.tsx'),
-      /\{inviteDeadlineLabel\(inspection\.expiresAt\)\}까지 참여할 수 있어요/,
+      /\{inviteDeadlineLabel\(details\.expiresAt\)\}까지 참여할 수 있어요/,
     );
     const css = source('app/globals.css');
     assert.match(css, /\.search-field:focus-within \{\n  border-color: var\(--blue\);/);

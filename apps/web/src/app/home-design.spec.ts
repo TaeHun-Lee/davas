@@ -30,12 +30,33 @@ describe('four-tab core shell', () => {
     assert.doesNotMatch(code, />\s*설정\s*</);
   });
 
-  it('keeps home task-first and sends record creation to TMDB search', () => {
+  it('keeps home on the space and leaves recording to the bottom bar', () => {
     const feed = source('components/core/RecordScreens.tsx');
+    const shell = source('components/core/CoreUi.tsx');
     assert.match(feed, /<h1 className="sr-only">홈<\/h1>/);
-    assert.match(feed, /href="\/records\/new\?step=find"/);
-    assert.match(feed, /<SearchIcon className="wide-cta-icon"/);
-    assert.doesNotMatch(feed, /home-search-link|home-intro/);
+    // As on the C안 board, there is no separate "본 작품 기록하기" button on home.
+    const home = feed.slice(feed.indexOf('export function FeedScreen'));
+    assert.doesNotMatch(
+      home.slice(0, home.indexOf('\n}\n')),
+      /본 작품 기록하기|home-search-link|home-intro/,
+    );
+    assert.match(shell, /href: '\/records\/new', label: '기록하기'/);
+  });
+
+  it('puts the space switcher and the unread count in the header', () => {
+    const feed = source('components/core/RecordScreens.tsx');
+    const shell = source('components/core/CoreUi.tsx');
+    const switcher = source('components/spaces/SpaceSwitcher.tsx');
+    assert.match(
+      feed,
+      /<CoreAppShell headerLead=\{<SpaceSwitcher state=\{active\.state\} onSelect=\{active\.select\} \/>\}>/,
+    );
+    assert.match(shell, /\{lead \?\? <DavasLogoLink \/>\}/);
+    assert.match(shell, /className="core-bell-count"/);
+    assert.match(switcher, /aria-label=\{`공간 전환, 지금은 \$\{space\.name\}`\}/);
+    assert.match(switcher, /aria-expanded=\{open\}/);
+    assert.match(switcher, /event\.key !== 'Escape'/);
+    assert.match(switcher, /href="\/spaces" className="space-switcher-manage"/);
   });
 
   it('provides padded movie and drama carousel controls', () => {
@@ -65,10 +86,14 @@ describe('four-tab core shell', () => {
   it('centres home on the active space with independent space and recommendation errors', () => {
     const feed = source('components/core/RecordScreens.tsx');
     const home = source('components/core/SpaceHome.tsx');
-    assert.match(feed, /<SpaceHome \/>\s*<HomeRecommendations \/>/);
+    assert.match(feed, /<SpaceHome active=\{active\} \/>\s*<HomeRecommendations \/>/);
     assert.doesNotMatch(feed, /친구들의 최근 기록|scope="friends" compact/);
     assert.match(home, /home-feed-message/);
-    assert.match(home, /chooseActiveSpace\(items, readActiveSpaceId\(\)\)/);
+    assert.match(
+      source('hooks/useActiveSpace.ts'),
+      /chooseActiveSpace\(items, readActiveSpaceId\(\)\)/,
+    );
+    assert.match(home, /href="\/spaces\?view=timeline"/);
     assert.match(home, /data-state="no-space"/);
     assert.match(home, /우리 공간 타임라인/);
     assert.match(home, /getPendingConfirmations\(space\.id\)/);

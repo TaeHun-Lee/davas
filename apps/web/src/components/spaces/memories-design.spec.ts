@@ -26,7 +26,7 @@ describe('memories, drama progress, and the notification center', () => {
     assert.match(screen, /\{item\.yearsAgo\}년 전 오늘/);
     assert.match(screen, /보고 있는 드라마/);
     assert.match(screen, /이어서 기록하기/);
-    assert.match(source('components/spaces/SpacesScreen.tsx'), /href="\/spaces\/memories"/);
+    assert.match(source('components/spaces/SpacesScreen.tsx'), /href: '\/spaces\/memories'/);
   });
 
   it('continues a series from the latest record when a new one starts', () => {

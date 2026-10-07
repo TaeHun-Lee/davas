@@ -47,13 +47,20 @@ export type SpaceInvite = {
   token: string;
   expiresAt: string;
 };
+/**
+ * What a usable (or full) invite shows before anyone joins. Anyone holding the link sees it,
+ * so members appear only as a count and the first letter of each nickname.
+ */
+export type SpaceInviteDetails = {
+  space: { id: string; name: string };
+  inviter: { id: string; nickname: string; profileImageUrl: string | null };
+  expiresAt: string;
+  members: { count: number; max: number; initials: string[] };
+};
 export type SpaceInviteInspection =
-  | {
-      status: 'VALID';
-      space: { id: string; name: string };
-      inviter: { id: string; nickname: string; profileImageUrl: string | null };
-      expiresAt: string;
-    }
+  | ({ status: 'VALID' } & SpaceInviteDetails)
+  /** Every seat is taken, so accepting would fail; the card still shows what it was for. */
+  | ({ status: 'FULL' } & SpaceInviteDetails)
   | {
       status:
         | 'INVALID'
@@ -63,9 +70,7 @@ export type SpaceInviteInspection =
         | 'CLOSED'
         | 'ALREADY_MEMBER'
         /** Someone already said no with this link. */
-        | 'DECLINED'
-        /** Every seat is taken, so accepting would fail. */
-        | 'FULL';
+        | 'DECLINED';
     };
 
 export const WATCH_SOURCE_KINDS = ['THEATER', 'OTT', 'TV_OWNED', 'OTHER'] as const;

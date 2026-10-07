@@ -23,6 +23,15 @@ function toggleValue(values: string[], value: string, checked: boolean) {
   return checked ? [...new Set([...values, value])] : values.filter((item) => item !== value);
 }
 
+const CONTENT_CHOICES = [
+  { label: '영화', types: ['MOVIE'] },
+  { label: '드라마', types: ['TV'] },
+  { label: '둘 다', types: ['MOVIE', 'TV'] },
+] as const;
+
+const sameTypes = (current: string[], choice: readonly string[]) =>
+  current.length === choice.length && choice.every((type) => current.includes(type));
+
 type GroupRecommendationPanelProps = {
   space: SpaceView;
   myAccountId: string;
@@ -37,7 +46,7 @@ export function GroupRecommendationPanel({
 }: GroupRecommendationPanelProps) {
   const group = useGroupRecommendations(space);
   const [participants, setParticipants] = useState<string[]>([]);
-  const [region, setRegion] = useState('KR');
+  const region = 'KR';
   // Selected OTT_SERVICES keys; the request sends the TMDB provider names behind them.
   const [services, setServices] = useState<string[]>(
     defaultServices.length ? defaultServices : ['netflix'],
@@ -79,14 +88,9 @@ export function GroupRecommendationPanel({
     );
   }, [participants.length]);
 
-  const participantNames = participants.map((accountId) => {
-    const member = activeMembers.find((item) => item.accountId === accountId);
-    if (accountId === myAccountId) return '나';
-    return member?.nickname || '공간 멤버';
-  });
-
-  const memberName = (accountId: string) =>
-    accountId === myAccountId
+  /** "나" for the viewer unless `own` asks for the nickname itself (for an avatar letter). */
+  const memberName = (accountId: string, own = false) =>
+    accountId === myAccountId && !own
       ? '나'
       : activeMembers.find((member) => member.accountId === accountId)?.nickname || '공간 멤버';
 
@@ -126,47 +130,16 @@ export function GroupRecommendationPanel({
   }
 
   return (
-    <section
-      id="group-recommendation"
-      className="rounded-[26px] border border-[#dbe7f7] bg-gradient-to-br from-white via-[#f7fbff] to-[#edf5ff] p-4 shadow-[0_16px_42px_rgba(31,65,114,0.10)] sm:p-6"
-      aria-labelledby="group-recommendation-title"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-[12px] font-black uppercase tracking-[0.14em] text-[var(--blue-ink)]">
-            오늘, 함께 볼 작품
-          </p>
-          <h2
-            id="group-recommendation-title"
-            className="mt-1 text-[22px] font-black text-[var(--heading)]"
-          >
-            함께 고르기
-          </h2>
-          <p className="mt-1 max-w-xl text-[13px] font-semibold leading-6 text-[#65758a]">
-            참여자와 조건을 직접 정하면, 모두가 실제로 볼 수 있는 후보와 합의 진행만 보여드려요.
-            개인 점수와 숨은 선호는 공개하지 않아요.
-          </p>
-        </div>
-        <span className="rounded-full bg-[#e7f1ff] px-3 py-1.5 text-[12px] font-extrabold text-[var(--blue-ink)]">
-          2~5명 전용
-        </span>
-      </div>
-
+    <div id="group-recommendation" className="choose-together">
       {group.sessions.length ? (
-        <div
-          className="mt-5 rounded-[20px] border border-[#dce7f4] bg-white p-4"
-          role="group"
-          aria-labelledby="group-sessions-title"
-        >
-          <h3 id="group-sessions-title" className="text-[15px] font-black text-[var(--heading)]">
+        <section aria-labelledby="group-sessions-title">
+          <h2 id="group-sessions-title" className="choose-section-title">
             최근 함께 고르기
-          </h3>
-          <ul className="mt-2 space-y-2">
+          </h2>
+          <ul className="choose-sessions">
             {group.sessions.map((item) => {
-              const starter =
-                item.requesterAccountId === myAccountId
-                  ? '내가'
-                  : `${memberName(item.requesterAccountId)}님이`;
+              const mine = item.requesterAccountId === myAccountId;
+              const starter = mine ? '내가' : `${memberName(item.requesterAccountId)}님이`;
               const status =
                 item.status === 'MATCHED'
                   ? `정해졌어요${item.matchedTitle ? ` · ${item.matchedTitle}` : ''}`
@@ -176,195 +149,107 @@ export function GroupRecommendationPanel({
               const viewing = group.session?.session.id === item.id;
               const waitingForMe = item.status === 'OPEN' && item.answeredByMe < item.itemCount;
               return (
-                <li
-                  key={item.id}
-                  className="flex min-h-12 items-center gap-3 rounded-2xl bg-[#f7f9fd] px-3 py-2"
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[13px] font-black text-[var(--heading)]">
+                <li key={item.id}>
+                  <span className="choose-face" data-me={mine || undefined} aria-hidden="true">
+                    {[...memberName(item.requesterAccountId, true)][0]}
+                  </span>
+                  <span className="choose-session-text">
+                    <span>
                       {starter} 시작
                       {item.createdAt ? ` · ${relativeTime(item.createdAt)}` : ''}
                     </span>
-                    <span className="block text-[12px] font-bold text-[#65758a]">{status}</span>
+                    <strong data-decided={item.status === 'MATCHED' || undefined}>{status}</strong>
                   </span>
-                  <button
-                    type="button"
-                    disabled={viewing || group.requestStatus === 'loading'}
-                    aria-label={`${starter} 시작한 함께 고르기 ${viewing ? '보는 중' : '열기'}`}
-                    onClick={() => void openSession(item.id)}
-                    className="min-h-11 shrink-0 rounded-xl bg-white px-3 text-[12px] font-black text-[var(--blue-ink)] disabled:opacity-60"
-                  >
-                    {viewing ? '보는 중' : waitingForMe ? '답하기' : '열기'}
-                  </button>
+                  {viewing ? (
+                    <button
+                      type="button"
+                      disabled
+                      aria-current="true"
+                      className="choose-session-button"
+                      data-tone="viewing"
+                    >
+                      보는 중
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={group.requestStatus === 'loading'}
+                      aria-label={`${starter} 시작한 함께 고르기 ${waitingForMe ? '답하기' : '열기'}`}
+                      onClick={() => void openSession(item.id)}
+                      className="choose-session-button"
+                      data-tone={waitingForMe ? 'answer' : 'open'}
+                    >
+                      {waitingForMe ? '답하기' : '열기'}
+                    </button>
+                  )}
                 </li>
               );
             })}
           </ul>
-        </div>
+        </section>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="mt-5 space-y-5">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <span className="text-[12px] font-extrabold text-[var(--heading)]">공간</span>
-            <p className="mt-2 flex min-h-11 items-center rounded-2xl border border-[#d8e4f2] bg-[#f7f9fd] px-3 text-[14px] font-bold text-[var(--heading)]">
-              {space.name}
-            </p>
-          </div>
-          <label className="block">
-            <span className="text-[12px] font-extrabold text-[var(--heading)]">지역</span>
-            <select
-              value={region}
-              onChange={(event) => setRegion(event.target.value)}
-              className="mt-2 min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[14px] font-bold text-[var(--heading)]"
-            >
-              <option value="KR">대한민국 (KR)</option>
-            </select>
-          </label>
-        </div>
+      <form onSubmit={handleSubmit} className="choose-form" aria-labelledby="new-pick-title">
+        <h2 id="new-pick-title">새로 함께 고르기</h2>
+        <p className="choose-form-hint">조건을 정하면 모두 볼 수 있는 후보를 찾아요.</p>
 
-        <fieldset>
-          <legend className="text-[12px] font-extrabold text-[var(--heading)]">
-            추천 참여자 · {participants.length}명 선택
-          </legend>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <fieldset className="choose-field">
+          <legend>참여자</legend>
+          <div className="choose-people">
             {activeMembers.map((member) => {
               const selected = participants.includes(member.accountId);
               const isMe = member.accountId === myAccountId;
-              const disabled = isMe || (!selected && participants.length >= 5);
+              const name = member.nickname || (isMe ? '내 계정' : '공간 멤버');
               return (
-                <label
+                <button
                   key={member.accountId}
-                  className="flex min-h-11 cursor-pointer items-center gap-3 rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[var(--heading)]"
+                  type="button"
+                  aria-pressed={selected}
+                  // The person asking is always in it.
+                  aria-disabled={isMe || undefined}
+                  disabled={!isMe && !selected && participants.length >= 5}
+                  onClick={() => {
+                    if (isMe) return;
+                    setParticipants((current) => toggleValue(current, member.accountId, !selected));
+                  }}
+                  className="choose-person"
                 >
-                  <input
-                    type="checkbox"
-                    checked={selected}
-                    disabled={disabled}
-                    onChange={(event) =>
-                      setParticipants((current) =>
-                        toggleValue(current, member.accountId, event.target.checked),
-                      )
-                    }
-                    className="h-5 w-5 accent-[var(--blue)]"
-                  />
-                  <span>
-                    {isMe ? `${member.nickname || '내 계정'} (나)` : member.nickname || '공간 멤버'}
-                    {isMe ? (
-                      <span className="ml-1 text-[12px] font-semibold text-[var(--muted)]">
-                        요청자 필수
-                      </span>
-                    ) : null}
+                  <span className="choose-face" data-me={isMe || undefined} aria-hidden="true">
+                    {[...name][0]}
                   </span>
-                </label>
+                  {isMe ? `${name} (나)` : name}
+                </button>
               );
             })}
           </div>
           {activeMembers.length < 2 ? (
-            <p className="mt-2 text-[12px] font-bold text-[#b45309]">
+            <p className="choose-warning">
               추천을 시작하려면 공간에 활성 구성원이 2명 이상 필요해요.
             </p>
           ) : null}
         </fieldset>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <fieldset>
-            <legend className="text-[12px] font-extrabold text-[var(--heading)]">
-              시청 경로 · 하나 이상
-            </legend>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {OTT_SERVICES.map((service) => (
-                <label
-                  key={service.key}
-                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-[#d8e4f2] bg-white px-3 text-[12px] font-bold text-[var(--heading)]"
-                >
-                  <input
-                    type="checkbox"
-                    checked={services.includes(service.key)}
-                    onChange={(event) =>
-                      setServices((current) =>
-                        toggleValue(current, service.key, event.target.checked),
-                      )
-                    }
-                    className="h-4 w-4 accent-[var(--blue)]"
-                  />
-                  {service.label}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend className="text-[12px] font-extrabold text-[var(--heading)]">작품 유형</legend>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {(
-                [
-                  ['MOVIE', '영화'],
-                  ['TV', '드라마'],
-                ] as const
-              ).map(([value, label]) => (
-                <label
-                  key={value}
-                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[var(--heading)]"
-                >
-                  <input
-                    type="checkbox"
-                    checked={contentTypes.includes(value)}
-                    onChange={(event) =>
-                      setContentTypes(
-                        (current) =>
-                          toggleValue(current, value, event.target.checked) as Array<
-                            'MOVIE' | 'TV'
-                          >,
-                      )
-                    }
-                    className="h-5 w-5 accent-[var(--blue)]"
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        </div>
-
-        <fieldset>
-          <legend className="text-[12px] font-extrabold text-[var(--heading)]">러닝타임</legend>
-          <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-            <label>
-              <span className="sr-only">최소 러닝타임</span>
-              <input
-                type="number"
-                min="1"
-                max="600"
-                inputMode="numeric"
-                value={runtimeMin}
-                onChange={(event) => setRuntimeMin(event.target.value)}
-                placeholder="최소 분"
-                className="min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[var(--heading)]"
-              />
-            </label>
-            <span className="text-[12px] font-bold text-[var(--muted)]">~</span>
-            <label>
-              <span className="sr-only">최대 러닝타임</span>
-              <input
-                type="number"
-                min="1"
-                max="600"
-                inputMode="numeric"
-                value={runtimeMax}
-                onChange={(event) => setRuntimeMax(event.target.value)}
-                placeholder="최대 분"
-                className="min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[var(--heading)]"
-              />
-            </label>
+        <fieldset className="choose-field">
+          <legend>작품 유형</legend>
+          <div className="choose-segment" data-columns="3">
+            {CONTENT_CHOICES.map((choice) => (
+              <button
+                key={choice.label}
+                type="button"
+                aria-pressed={sameTypes(contentTypes, choice.types)}
+                onClick={() => setContentTypes([...choice.types])}
+              >
+                {choice.label}
+              </button>
+            ))}
           </div>
         </fieldset>
 
-        <fieldset>
-          <legend className="text-[12px] font-extrabold text-[var(--heading)]">
-            오늘의 분위기
+        <fieldset className="choose-field">
+          <legend>
+            오늘의 분위기 <span>여러 개 골라도 돼요</span>
           </legend>
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="choose-moods">
             {RECOMMENDATION_MOODS.map((mood) => {
               const selected = moodTags.includes(mood);
               return (
@@ -373,11 +258,6 @@ export function GroupRecommendationPanel({
                   type="button"
                   aria-pressed={selected}
                   onClick={() => setMoodTags((current) => toggleValue(current, mood, !selected))}
-                  className={`min-h-11 rounded-full border px-4 text-[12px] font-extrabold ${
-                    selected
-                      ? 'border-[var(--blue)] bg-[var(--blue)] text-white'
-                      : 'border-[#d8e4f2] bg-white text-[#52677e]'
-                  }`}
                 >
                   {mood}
                 </button>
@@ -386,115 +266,121 @@ export function GroupRecommendationPanel({
           </div>
         </fieldset>
 
-        <label className="block">
-          <span className="text-[12px] font-extrabold text-[var(--heading)]">제외 조건</span>
-          <span className="ml-2 text-[12px] font-semibold text-[var(--muted)]">쉼표로 구분</span>
+        <div className="choose-field">
+          <label htmlFor="choose-max-runtime" className="choose-label">
+            최대 러닝타임
+          </label>
+          <div className="choose-runtime">
+            <input
+              id="choose-max-runtime"
+              type="number"
+              min="30"
+              max="600"
+              inputMode="numeric"
+              value={runtimeMax}
+              onChange={(event) => setRuntimeMax(event.target.value)}
+              placeholder="제한 없음"
+            />
+            <span>분까지</span>
+          </div>
+        </div>
+
+        <label className="choose-check">
           <input
-            value={avoidTagsText}
-            onChange={(event) => setAvoidTagsText(event.target.value)}
-            placeholder="장르나 분위기, 예: 공포, 전쟁, 긴장감"
-            className="mt-2 min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[var(--heading)]"
+            type="checkbox"
+            checked={rewatchPolicy === 'EXCLUDE'}
+            onChange={(event) => setRewatchPolicy(event.target.checked ? 'EXCLUDE' : 'ALLOW')}
           />
+          누군가 이미 본 작품 제외
         </label>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <fieldset>
-            <legend className="text-[12px] font-extrabold text-[var(--heading)]">
-              재감상 정책
-            </legend>
-            <div className="mt-2 space-y-2">
-              {(
-                [
-                  ['EXCLUDE', '누군가 이미 본 작품 제외'],
-                  ['ALLOW', '재감상 후보도 허용'],
-                ] as const
-              ).map(([value, label]) => (
-                <label
-                  key={value}
-                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl bg-white px-3 text-[12px] font-bold text-[var(--heading)]"
-                >
-                  <input
-                    type="radio"
-                    name="rewatch-policy"
-                    value={value}
-                    checked={rewatchPolicy === value}
-                    onChange={() => setRewatchPolicy(value)}
-                    className="h-5 w-5 accent-[var(--blue)]"
-                  />
-                  {label}
-                </label>
-              ))}
+        <fieldset className="choose-field">
+          <legend>합의 규칙</legend>
+          <div className="choose-segment" data-columns="2">
+            {(
+              [
+                ['ALL', '전원 동의'],
+                ['MINIMUM', '최소 인원 동의'],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={decisionRule === value}
+                onClick={() => setDecisionRule(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {decisionRule === 'MINIMUM' ? (
+            <label className="choose-minimum">
+              <span className="sr-only">최소 동의 인원</span>
+              <select
+                value={Math.min(minimumApprovals, participants.length || 1)}
+                onChange={(event) => setMinimumApprovals(Number(event.target.value))}
+                className="text-input"
+              >
+                {Array.from(
+                  { length: Math.max(1, participants.length) },
+                  (_, index) => index + 1,
+                ).map((count) => (
+                  <option key={count} value={count}>
+                    {count}명 이상 동의
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+        </fieldset>
+
+        {/* Where to watch starts from the subscriptions in settings; it and the exclusions stay
+            folded away unless someone wants to change them. */}
+        <details className="choose-more">
+          <summary>
+            <span>볼 수 있는 곳 · {services.map(ottLabel).join(', ') || '고르지 않았어요'}</span>
+            <span className="choose-more-toggle">조건 더 보기</span>
+          </summary>
+          <fieldset className="choose-field">
+            <legend>볼 수 있는 곳 · 하나 이상</legend>
+            <div className="choose-services">
+              {OTT_SERVICES.map((service) => {
+                const selected = services.includes(service.key);
+                return (
+                  <button
+                    key={service.key}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() =>
+                      setServices((current) => toggleValue(current, service.key, !selected))
+                    }
+                  >
+                    {service.label}
+                  </button>
+                );
+              })}
             </div>
           </fieldset>
-
-          <fieldset>
-            <legend className="text-[12px] font-extrabold text-[var(--heading)]">합의 규칙</legend>
-            <div className="mt-2 space-y-2">
-              {(
-                [
-                  ['ALL', '전원 동의'],
-                  ['MINIMUM', '최소 인원 동의'],
-                ] as const
-              ).map(([value, label]) => (
-                <label
-                  key={value}
-                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl bg-white px-3 text-[12px] font-bold text-[var(--heading)]"
-                >
-                  <input
-                    type="radio"
-                    name="decision-rule"
-                    value={value}
-                    checked={decisionRule === value}
-                    onChange={() => setDecisionRule(value)}
-                    className="h-5 w-5 accent-[var(--blue)]"
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
-            {decisionRule === 'MINIMUM' ? (
-              <label className="mt-2 block">
-                <span className="sr-only">최소 동의 인원</span>
-                <select
-                  value={Math.min(minimumApprovals, participants.length || 1)}
-                  onChange={(event) => setMinimumApprovals(Number(event.target.value))}
-                  className="min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[var(--heading)]"
-                >
-                  {Array.from(
-                    { length: Math.max(1, participants.length) },
-                    (_, index) => index + 1,
-                  ).map((count) => (
-                    <option key={count} value={count}>
-                      {count}명 이상
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-          </fieldset>
-        </div>
-
-        <div className="rounded-2xl border border-[#cfe0f5] bg-white/80 p-4">
-          <p className="text-[12px] font-extrabold text-[var(--heading)]">요청 전 확인</p>
-          <p className="mt-1 text-[12px] font-semibold leading-5 text-[#65758a]">
-            {participantNames.join(', ') || '참여자 미선택'} · {region} ·{' '}
-            {services.map(ottLabel).join(', ') || '시청 경로 미선택'} ·{' '}
-            {decisionRule === 'ALL' ? '전원 동의' : `${minimumApprovals}명 이상 동의`}
-          </p>
-          <p className="mt-1 text-[12px] font-semibold text-[var(--muted)]">
-            이 조건은 자동으로 완화되지 않으며, 새 요청을 만들기 전까지 그대로 유지돼요.
-          </p>
-        </div>
+          <label className="choose-field block">
+            <span className="choose-label">제외할 장르나 분위기</span>
+            <input
+              value={avoidTagsText}
+              onChange={(event) => setAvoidTagsText(event.target.value)}
+              placeholder="쉼표로 구분, 예: 공포, 전쟁"
+              className="text-input"
+            />
+          </label>
+        </details>
 
         {formError ? (
-          <p role="alert" className="text-[12px] font-bold text-[#c24156]">
+          <p role="alert" className="form-error mt-3">
             {formError}
           </p>
         ) : null}
         <button
           type="submit"
           disabled={group.requestStatus === 'loading' || activeMembers.length < 2}
-          className="min-h-12 w-full rounded-2xl bg-[var(--blue)] px-5 text-[14px] font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="primary-button choose-submit"
         >
           {group.requestStatus === 'loading'
             ? '조건을 확인하고 있어요…'
@@ -527,7 +413,7 @@ export function GroupRecommendationPanel({
               <h3 className="text-[18px] font-black text-[var(--heading)]">함께 볼 후보</h3>
               <p className="mt-1 text-[12px] font-semibold text-[var(--muted)]">
                 {group.session.session.createdAt
-                  ? `${new Date(group.session.session.createdAt).toLocaleString('ko-KR')} 요청`
+                  ? `${relativeTime(group.session.session.createdAt)} 요청`
                   : '방금 요청'}
                 {' · '}조건과 이유 코드는 이 세션에 고정돼요.
               </p>
@@ -672,9 +558,6 @@ export function GroupRecommendationPanel({
                                 key={`${reason.reasonCode}-${index}`}
                                 className="rounded-xl bg-[#f6f9fd] px-3 py-2 text-[12px] font-semibold leading-5 text-[#52677e]"
                               >
-                                <code className="mr-2 rounded bg-[#e6eef8] px-1.5 py-0.5 text-[12px] font-bold text-[#345b89]">
-                                  {reason.reasonCode}
-                                </code>
                                 {recommendationReasonText(reason.reasonCode)}
                               </li>
                             ))}
@@ -761,6 +644,6 @@ export function GroupRecommendationPanel({
           ) : null}
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }

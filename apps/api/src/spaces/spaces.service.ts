@@ -156,12 +156,18 @@ export class SpacesService {
       });
       if (membership) return { status: 'ALREADY_MEMBER' as const };
     }
-    const activeMembers = await this.memberships.count({
+    const members = await this.memberships.find({
       where: { spaceId: invite.spaceId, status: 'ACTIVE' },
+      relations: { account: true },
+      order: { joinedAt: 'ASC' },
     });
-    if (activeMembers >= Math.min(invite.space.maxMembers, 5)) return { status: 'FULL' as const };
-    return {
-      status: 'VALID' as const,
+    const max = Math.min(invite.space.maxMembers, 5);
+    // The link may travel further than the person it was for: members show only as a count
+    // and the first letter of each nickname, owner first.
+    const initials = [...members]
+      .sort((left, right) => Number(right.role === 'OWNER') - Number(left.role === 'OWNER'))
+      .map((member) => [...(member.account?.nickname?.trim() || '?')][0]);
+    const details = {
       space: { id: invite.space.id, name: invite.space.name },
       inviter: {
         id: invite.inviterAccountId,
@@ -169,7 +175,10 @@ export class SpacesService {
         profileImageUrl: invite.inviter?.profileImageUrl ?? null,
       },
       expiresAt: invite.expiresAt.toISOString(),
+      members: { count: members.length, max, initials },
     };
+    if (members.length >= max) return { status: 'FULL' as const, ...details };
+    return { status: 'VALID' as const, ...details };
   }
 
   async acceptInvite(token: string, accountId: string) {

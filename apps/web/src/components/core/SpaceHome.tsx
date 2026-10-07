@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { useActiveSpace } from '../../hooks/useActiveSpace';
 import { useSpaceTimeline } from '../../hooks/useSpaceTimeline';
-import { getMe } from '../../lib/api/auth';
 import { CoreApiError } from '../../lib/api/core';
-import { listSpaces, type SpaceView } from '../../lib/api/spaces';
+import type { SpaceView } from '../../lib/api/spaces';
 import {
   getPendingConfirmations,
   respondToWatchParticipation,
@@ -13,12 +13,7 @@ import {
 } from '../../lib/api/watch-events';
 import { TimelineCard } from '../spaces/SpaceWatchGroupCard';
 import { WishPickCard } from '../spaces/WishPickCard';
-import {
-  activeMembers,
-  chooseActiveSpace,
-  readActiveSpaceId,
-  rememberActiveSpace,
-} from '../spaces/space-ui';
+import { activeMembers } from '../spaces/space-ui';
 import {
   pendingConfirmations,
   watchedDayLabel,
@@ -28,32 +23,12 @@ import {
 
 const HOME_TIMELINE_LIMIT = 5;
 
-type HomeState =
-  | { status: 'loading' }
-  | { status: 'error' }
-  | { status: 'ready'; spaces: SpaceView[]; myAccountId: string };
-
-/** Home is built around the space the couple shares: who is in it and what they watched. */
-export function SpaceHome() {
-  const [state, setState] = useState<HomeState>({ status: 'loading' });
-  const [activeSpaceId, setActiveSpaceId] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setState({ status: 'loading' });
-    try {
-      const [{ items }, me] = await Promise.all([listSpaces(), getMe()]);
-      const selected = chooseActiveSpace(items, readActiveSpaceId());
-      rememberActiveSpace(selected?.id ?? null);
-      setActiveSpaceId(selected?.id ?? null);
-      setState({ status: 'ready', spaces: items, myAccountId: me.id ?? '' });
-    } catch {
-      setState({ status: 'error' });
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+/**
+ * Home is built around the space the couple shares: what they want to watch tonight and what
+ * they watched. The header's switcher says which space this is, so it is not repeated here.
+ */
+export function SpaceHome({ active }: { active: ReturnType<typeof useActiveSpace> }) {
+  const { state, reload } = active;
 
   if (state.status === 'loading')
     return (
@@ -69,13 +44,13 @@ export function SpaceHome() {
           <h2>우리 공간을 불러오지 못했어요.</h2>
           <p>추천 작품은 그대로 둘러볼 수 있어요.</p>
         </div>
-        <button type="button" onClick={load}>
+        <button type="button" onClick={() => void reload()}>
           다시 시도
         </button>
       </section>
     );
 
-  const space = chooseActiveSpace(state.spaces, activeSpaceId);
+  const space = state.space;
   if (!space)
     return (
       <section
@@ -97,43 +72,7 @@ export function SpaceHome() {
   const members = activeMembers(space);
   return (
     <div className="space-home">
-      <section className="space-home-header" aria-labelledby="space-home-title">
-        <span className="space-home-avatars" aria-hidden="true">
-          {members.slice(0, 4).map((member) => (
-            <span key={member.accountId}>
-              {member.accountId === state.myAccountId
-                ? '나'
-                : (member.nickname || '멤').slice(0, 1)}
-            </span>
-          ))}
-        </span>
-        <div className="min-w-0 flex-1">
-          <h2 id="space-home-title">{space.name}</h2>
-          <p>공간 · {members.length}명</p>
-        </div>
-        {state.spaces.length > 1 ? (
-          <label className="space-home-switch">
-            <select
-              aria-label="홈에 보여 줄 공간"
-              value={space.id}
-              onChange={(event) => {
-                setActiveSpaceId(event.target.value);
-                rememberActiveSpace(event.target.value);
-              }}
-            >
-              {state.spaces.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : (
-          <Link href="/spaces" className="space-home-manage">
-            공간 관리
-          </Link>
-        )}
-      </section>
+      <h2 className="sr-only">{space.name}</h2>
       {members.length < 2 ? (
         <p className="space-home-nudge">
           아직 혼자 있는 공간이에요.{' '}
@@ -187,7 +126,7 @@ function SpaceHomeTimeline({ space, myAccountId }: { space: SpaceView; myAccount
             </h2>
             <p>함께 본 작품을 서로의 별점과 함께 모았어요.</p>
           </div>
-          <Link href="/spaces">
+          <Link href="/spaces?view=timeline">
             전체 <span aria-hidden="true">›</span>
           </Link>
         </div>
@@ -229,7 +168,7 @@ function SpaceHomeTimeline({ space, myAccountId }: { space: SpaceView; myAccount
               />
             ))}
             {timeline.hasMore ? (
-              <Link href="/spaces" className="secondary-button w-full">
+              <Link href="/spaces?view=timeline" className="secondary-button w-full">
                 이전 기록 더 보기
               </Link>
             ) : null}

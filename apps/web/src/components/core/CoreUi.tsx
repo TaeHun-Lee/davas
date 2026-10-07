@@ -74,25 +74,39 @@ function NotificationBell() {
       <svg data-icon="bell" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15ZM10 20.5a2 2 0 0 0 4 0" />
       </svg>
-      {unread ? <span className="core-bell-dot" aria-hidden="true" /> : null}
+      {unread ? (
+        <span className="core-bell-count" aria-hidden="true">
+          {unread > 99 ? '99+' : unread}
+        </span>
+      ) : null}
     </Link>
   );
 }
 
-export function CoreHeader() {
+export function DavasLogoLink() {
+  return (
+    <Link href="/" aria-label="홈으로 이동" className="core-logo-link">
+      <Image
+        src="/images/davas-logo-horizontal.png"
+        alt="Davas"
+        width={112}
+        height={36}
+        priority
+        style={{ width: 'auto', height: 36 }}
+        className="object-contain"
+      />
+    </Link>
+  );
+}
+
+/**
+ * The tab screens' header. Home and the space tab put the space switcher where the logo is;
+ * the bell shows how many are unread, and settings sit beside it.
+ */
+export function CoreHeader({ lead }: { lead?: ReactNode }) {
   return (
     <header className="core-header">
-      <Link href="/" aria-label="홈으로 이동">
-        <Image
-          src="/images/davas-logo-horizontal.png"
-          alt="Davas"
-          width={112}
-          height={36}
-          priority
-          style={{ width: 'auto', height: 36 }}
-          className="object-contain"
-        />
-      </Link>
+      {lead ?? <DavasLogoLink />}
       <div className="core-header-actions">
         <NotificationBell />
         <Link href="/settings" className="core-icon-button" aria-label="설정 열기">
@@ -132,11 +146,18 @@ export function CoreBottomNav() {
   );
 }
 
-export function CoreAppShell({ children }: { children: ReactNode }) {
+export function CoreAppShell({
+  children,
+  headerLead,
+}: {
+  children: ReactNode;
+  /** Replaces the logo, as the space switcher does on home and the space tab. */
+  headerLead?: ReactNode;
+}) {
   return (
     <div className="desktop-canvas">
       <div className="core-shell">
-        <CoreHeader />
+        <CoreHeader lead={headerLead} />
         <main className="core-main">{children}</main>
         <CoreBottomNav />
       </div>
