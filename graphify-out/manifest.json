@@ -1405,8 +1405,8 @@
     "semantic_hash": ""
   },
   "packages/shared/src/index.ts": {
-    "mtime": 1791350577.480493,
-    "ast_hash": "cf493c6edc61e03ed3f7f9db01e4b0cf",
+    "mtime": 1791354719.3580015,
+    "ast_hash": "f282183fd57c8cbcf24f8b35ff95f57d",
     "semantic_hash": ""
   },
   "packages/shared/tsconfig.json": {
@@ -1465,8 +1465,8 @@
     "semantic_hash": ""
   },
   "docs/product/README.md": {
-    "mtime": 1791350982.2021036,
-    "ast_hash": "6b4fe826ea832aeb4a5443677cca212f",
+    "mtime": 1791354762.590836,
+    "ast_hash": "739099cf5a128f49f405397dea6b065f",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20260811_143223_agents_md\uc5d0_graphify\ub791_serena_\uc0ac\uc6a9_\uc9c0\uce68_\uc801\ub2f9\ud55c\uc9c0_\ud655\uc778\ud574\uc918__\uadf8\ub9ac\uace0_\ub2e4.md": {
@@ -1605,13 +1605,13 @@
     "semantic_hash": ""
   },
   "apps/api/src/diaries/watch-events.service.spec.ts": {
-    "mtime": 1791350655.139913,
-    "ast_hash": "830f8bf87057fd1ae3a0c91c471cfa63",
+    "mtime": 1791354719.3438056,
+    "ast_hash": "9daee08c5fc82dca58bda89b0daf53fc",
     "semantic_hash": ""
   },
   "apps/api/src/diaries/watch-events.service.ts": {
-    "mtime": 1791350621.5869565,
-    "ast_hash": "9f01f3f6a706a89fcc5782ff4f58fa6b",
+    "mtime": 1791354719.34535,
+    "ast_hash": "fc8e627c3c2cd080943d9b940c4751a2",
     "semantic_hash": ""
   },
   "apps/api/src/database/entities/availability-observation.entity.ts": {
@@ -1845,8 +1845,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceTimeline.tsx": {
-    "mtime": 1791289374.724219,
-    "ast_hash": "2c67cdeb169bdb3c97795f14b779dc69",
+    "mtime": 1791354719.3493574,
+    "ast_hash": "7e9a79cb4c46e472f97c3df2cc321c91",
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/watch-events.spec.ts": {
@@ -1855,8 +1855,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/watch-events.ts": {
-    "mtime": 1791350770.3949676,
-    "ast_hash": "cc4d45a34f1e80d6f88d36b7a3c9923b",
+    "mtime": 1791354719.3564544,
+    "ast_hash": "570fc58bffd9c5e19a9f370ad4d2b470",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20260815_230050_trace_recordcomposer_diarycomposescreen_diarydetai.md": {
@@ -1890,8 +1890,8 @@
     "semantic_hash": ""
   },
   "docs/product/implementation-coverage.md": {
-    "mtime": 1791350982.217163,
-    "ast_hash": "8ccaed03dd8de7d35c78c6eb31cf36c8",
+    "mtime": 1791354762.5918348,
+    "ast_hash": "b3ad348fbe480e00cdf0d45986083916",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20260815_233610_audit_to_be_integration__composition_roots__entiti.md": {
@@ -2255,13 +2255,13 @@
     "semantic_hash": ""
   },
   "docs/appendix.md": {
-    "mtime": 1791350982.201588,
-    "ast_hash": "0c430150ba2548dbf7cea55516f87511",
+    "mtime": 1791354762.590836,
+    "ast_hash": "ba2acf01433d8c79895d045a210e04d0",
     "semantic_hash": ""
   },
   "docs/development.md": {
-    "mtime": 1791350982.2010741,
-    "ast_hash": "36d74ceddab8e4f1ce2596b7cac8cb95",
+    "mtime": 1791354762.5898356,
+    "ast_hash": "63ebada3355066ea97cb45c1b8e7a47f",
     "semantic_hash": ""
   },
   "docs/operations.md": {
@@ -2285,28 +2285,28 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/SpaceHome.tsx": {
-    "mtime": 1791291681.5532043,
-    "ast_hash": "d582ecc207491ff6a189aad0c5d24872",
+    "mtime": 1791354719.3483572,
+    "ast_hash": "27b64dcc34d30dc657631513781343a3",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceWatchCard.tsx": {
-    "mtime": 1791304318.2725325,
-    "ast_hash": "348f09a9c178476d028ec001b428e459",
+    "mtime": 1791354719.3504276,
+    "ast_hash": "e9beb0610ce9c377968679cf8ecbdbf6",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/space-watch-model.spec.ts": {
-    "mtime": 1791304181.9171822,
-    "ast_hash": "a4162f52faa2f155eb919b181017c607",
+    "mtime": 1791354719.351427,
+    "ast_hash": "ca632df37295c9e2d4516f754f76f042",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/space-watch-model.ts": {
-    "mtime": 1791304139.527189,
-    "ast_hash": "f69a6d2acc852427df00863a2a9d393b",
+    "mtime": 1791354773.920857,
+    "ast_hash": "4eed81ec45d4a9e19e918f936f2ea94d",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useSpaceTimeline.ts": {
-    "mtime": 1791289361.2996063,
-    "ast_hash": "15671e61c6a6a2565cb47a86e246cece",
+    "mtime": 1791354719.3548517,
+    "ast_hash": "4c9ac7504d69c07fdd02ca5e29a797da",
     "semantic_hash": ""
   },
   "apps/api/src/database/entities/watch-photo.entity.ts": {
@@ -2702,6 +2702,26 @@
   "apps/web/src/hooks/useMediaTogether.ts": {
     "mtime": 1791350029.7952614,
     "ast_hash": "1d0ced19e7868a9bf428bfcc0f45a250",
+    "semantic_hash": ""
+  },
+  "apps/api/src/diaries/timeline-groups.spec.ts": {
+    "mtime": 1791354421.0641716,
+    "ast_hash": "a6dd0ede7646002defaa403ba95fc71f",
+    "semantic_hash": ""
+  },
+  "apps/api/src/diaries/timeline-groups.ts": {
+    "mtime": 1791354374.031529,
+    "ast_hash": "a63eeed363a4eaae203e3ae7a83177fe",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/spaces/SpaceWatchGroupCard.tsx": {
+    "mtime": 1791354704.0807822,
+    "ast_hash": "ed6ddbab305c57f47381b1db21f82867",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/spaces/timeline-cards-design.spec.ts": {
+    "mtime": 1791354732.7184343,
+    "ast_hash": "6e63bba3a8a1efcda3ad456944b9cb38",
     "semantic_hash": ""
   }
 }
