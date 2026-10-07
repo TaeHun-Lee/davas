@@ -620,8 +620,8 @@
     "semantic_hash": "0758f6ea621339f66f9f6e5bf339d5fc"
   },
   "apps/web/src/app/diary-compose-design.spec.ts": {
-    "mtime": 1791286572.6509762,
-    "ast_hash": "c560571fd0e9d5d051cd60ea86a34e2e",
+    "mtime": 1791333738.8040473,
+    "ast_hash": "2bd7a60e74a5fa64546e0b863cf0b739",
     "semantic_hash": ""
   },
   "apps/web/src/app/diary-dashboard-design.spec.ts": {
@@ -900,8 +900,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/RecordComposer.tsx": {
-    "mtime": 1791298077.9622157,
-    "ast_hash": "4b8e4f55ea041b2139a9407880371fab",
+    "mtime": 1791334073.050088,
+    "ast_hash": "f3def8fa67d7da74a68bd8dc08da000e",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/RecordScreens.tsx": {
@@ -1830,13 +1830,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/app/watch-flow.spec.ts": {
-    "mtime": 1791279340.997284,
-    "ast_hash": "493240792353d89db593c5f75a75f131",
+    "mtime": 1791333740.3134406,
+    "ast_hash": "0db770e08b926c07dbf397321ec803cb",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchEventDetailScreen.tsx": {
-    "mtime": 1791302967.4487224,
-    "ast_hash": "fff2b8eb36d55966f43474a2d653c1b9",
+    "mtime": 1791334073.0674672,
+    "ast_hash": "051579ed5c107a3fd5f30d93c56d1cf8",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchRatingControl.tsx": {
@@ -2260,8 +2260,8 @@
     "semantic_hash": ""
   },
   "docs/development.md": {
-    "mtime": 1791304430.533218,
-    "ast_hash": "dee71daac9aed43a7690f9959938e733",
+    "mtime": 1791334214.2841854,
+    "ast_hash": "12ca68d669b5c5cce3079f005fda1550",
     "semantic_hash": ""
   },
   "docs/operations.md": {
@@ -2365,23 +2365,23 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/ComposerFields.tsx": {
-    "mtime": 1791291947.9182267,
-    "ast_hash": "963979b80e48d0091c81027528a4bd4b",
+    "mtime": 1791333630.1614094,
+    "ast_hash": "f56d79e85274ccefc6cbed971ce525d1",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/PhotoPicker.tsx": {
-    "mtime": 1791298077.9612143,
-    "ast_hash": "a89472813c050ef2706b9af213306d86",
+    "mtime": 1791334034.5194182,
+    "ast_hash": "f4f45b5bf9b0ef90f49213cf23bd20b3",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchPhoto.tsx": {
-    "mtime": 1791278414.6365473,
-    "ast_hash": "14906c0831ad0c4ff93a554ef8a2a282",
+    "mtime": 1791333441.2953696,
+    "ast_hash": "f7e926f0123715248785ba3fed6db117",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchPhotoGallery.tsx": {
-    "mtime": 1791291984.092225,
-    "ast_hash": "cb387500a4f70c5156a4a9d7468bd37f",
+    "mtime": 1791333442.8143938,
+    "ast_hash": "553a4dcacd12ffd9f63072c584d0ca55",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchReviews.tsx": {
@@ -2390,8 +2390,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/record-experience-design.spec.ts": {
-    "mtime": 1791304176.7281475,
-    "ast_hash": "06453dcafd7734f586a3726a7e32003e",
+    "mtime": 1791333684.112986,
+    "ast_hash": "ef9f80a8d65c877b52013f3cfe6f421b",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useWatchPhotoUploads.ts": {
@@ -2555,13 +2555,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/composer-draft.spec.ts": {
-    "mtime": 1791286555.4798918,
-    "ast_hash": "3c1b296352e409f7d3243da91939f65f",
+    "mtime": 1791333647.4049373,
+    "ast_hash": "0437315386b728b6715c2f2ecae9f2e8",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/composer-draft.ts": {
-    "mtime": 1791286424.3101873,
-    "ast_hash": "6f49b85ffa044dd7c7a6d15158889694",
+    "mtime": 1791333630.161926,
+    "ast_hash": "f50ab2b7ccf95af49c5d6f72c60bd689",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useWatchPhotoUploads.spec.ts": {

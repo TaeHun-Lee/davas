@@ -2260,8 +2260,8 @@
     "semantic_hash": ""
   },
   "docs/development.md": {
-    "mtime": 1791303423.7553675,
-    "ast_hash": "fb9508363d75c885667cff44e1001b5c",
+    "mtime": 1791304430.533218,
+    "ast_hash": "dee71daac9aed43a7690f9959938e733",
     "semantic_hash": ""
   },
   "docs/operations.md": {
@@ -2290,18 +2290,18 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceWatchCard.tsx": {
-    "mtime": 1791303059.6386442,
-    "ast_hash": "3af36c4a9b0934bc5de2a06bd5fe8595",
+    "mtime": 1791304318.2725325,
+    "ast_hash": "348f09a9c178476d028ec001b428e459",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/space-watch-model.spec.ts": {
-    "mtime": 1791287740.7235482,
-    "ast_hash": "6c1cb0ae35c2119fa1144a3a533f0fe3",
+    "mtime": 1791304181.9171822,
+    "ast_hash": "a4162f52faa2f155eb919b181017c607",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/space-watch-model.ts": {
-    "mtime": 1791287740.7453628,
-    "ast_hash": "e7991cc1ac6190679c923c03b161b904",
+    "mtime": 1791304139.527189,
+    "ast_hash": "f69a6d2acc852427df00863a2a9d393b",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useSpaceTimeline.ts": {
@@ -2390,8 +2390,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/record-experience-design.spec.ts": {
-    "mtime": 1791303190.5610845,
-    "ast_hash": "c474c9fa88397789a9ce7a82019abbfc",
+    "mtime": 1791304176.7281475,
+    "ast_hash": "06453dcafd7734f586a3726a7e32003e",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useWatchPhotoUploads.ts": {
