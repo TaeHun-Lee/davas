@@ -128,34 +128,37 @@ function SpaceWatchGroupCard({ events, myAccountId, returnTo, actions }: CardPro
           <b>{groupByline(events)}</b> 기록을 남겼어요{when ? ` · ${when}` : ''}
         </p>
       </div>
-      <Link href={detailOf(lead.id)} className="space-watch-media">
-        <Poster url={lead.media.posterUrl} title={lead.media.title} />
-        <span className="min-w-0">
-          <strong id={titleId}>{lead.media.title}</strong>
-          {source.lines.map((line) => (
-            <span key={line}>{line}</span>
-          ))}
-          {source.place ? <span className="space-watch-place">{source.place}</span> : null}
-        </span>
-      </Link>
-      {photos.length ? (
-        <Link
-          href={detailOf(photos[0].eventId)}
-          className="space-watch-photos"
-          aria-label={`${lead.media.title} 사진 ${photos.length}장 보기`}
-        >
-          {photos.slice(0, STRIP_SIZE).map(({ photo }, index) => (
-            <span key={photo.id} className="space-watch-photo">
-              <WatchPhoto photo={photo} variant="thumb" alt="" />
-              {index === STRIP_SIZE - 1 && extraPhotos > 0 ? (
-                <span className="space-watch-photo-more" aria-hidden="true">
-                  +{extraPhotos}
-                </span>
-              ) : null}
-            </span>
-          ))}
+      {/* On a computer the title and the photos sit side by side. */}
+      <div className="space-watch-body">
+        <Link href={detailOf(lead.id)} className="space-watch-media">
+          <Poster url={lead.media.posterUrl} title={lead.media.title} />
+          <span className="min-w-0">
+            <strong id={titleId}>{lead.media.title}</strong>
+            {source.lines.map((line) => (
+              <span key={line}>{line}</span>
+            ))}
+            {source.place ? <span className="space-watch-place">{source.place}</span> : null}
+          </span>
         </Link>
-      ) : null}
+        {photos.length ? (
+          <Link
+            href={detailOf(photos[0].eventId)}
+            className="space-watch-photos"
+            aria-label={`${lead.media.title} 사진 ${photos.length}장 보기`}
+          >
+            {photos.slice(0, STRIP_SIZE).map(({ photo }, index) => (
+              <span key={photo.id} className="space-watch-photo">
+                <WatchPhoto photo={photo} variant="thumb" alt="" />
+                {index === STRIP_SIZE - 1 && extraPhotos > 0 ? (
+                  <span className="space-watch-photo-more" aria-hidden="true">
+                    +{extraPhotos}
+                  </span>
+                ) : null}
+              </span>
+            ))}
+          </Link>
+        ) : null}
+      </div>
       {opened ? (
         <div className="space-watch-opened">
           <p>

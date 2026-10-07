@@ -355,7 +355,7 @@ export function MediaDetailModal({
           </div>
         </section>
 
-        <div className="mt-5 grid grid-cols-1 gap-2.5 min-[375px]:grid-cols-[1.25fr_0.75fr]">
+        <div className="media-sheet-actions mt-5 grid grid-cols-1 gap-2.5 min-[375px]:grid-cols-[1.25fr_0.75fr]">
           <button
             type="button"
             onClick={() => (onRecord ? onRecord() : router.push(recordUrl))}

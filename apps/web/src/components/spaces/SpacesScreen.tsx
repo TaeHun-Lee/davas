@@ -192,6 +192,7 @@ function SpaceOverview({ active }: { active: ActiveSpace }) {
   const members = activeSpace ? activeMembers(activeSpace) : [];
   const full = Boolean(activeSpace && members.length >= activeSpace.maxMembers);
   const ownershipCandidates = members.filter((member) => member.accountId !== myAccountId);
+  const ownerName = members.find((member) => member.role === 'OWNER')?.nickname;
   const inviteUrl =
     invite && typeof window !== 'undefined'
       ? `${window.location.origin}/spaces/invite/${encodeURIComponent(invite.token)}`
@@ -339,7 +340,15 @@ function SpaceOverview({ active }: { active: ActiveSpace }) {
 
   return (
     <CoreAppShell headerLead={<SpaceSwitcher state={state} onSelect={switchSpace} />}>
-      <h1 className="sr-only">공간</h1>
+      {/* The header names the space on a phone; the desktop board puts it in the page. */}
+      <div className="space-overview-head">
+        <h1>{activeSpace ? activeSpace.name : '공간'}</h1>
+        {activeSpace ? (
+          <p>
+            공간 · {members.length}명{ownerName ? ` · ${ownerName}님이 만든 공간` : ''}
+          </p>
+        ) : null}
+      </div>
       <div aria-busy={state.status === 'loading' || busy} className="space-overview">
         {error ? (
           <p role="alert" className="space-banner" data-tone="error">
@@ -505,7 +514,10 @@ function SpaceOverview({ active }: { active: ActiveSpace }) {
                     공간 정원이 모두 차서 지금은 초대할 수 없어요.
                   </p>
                 ) : (
-                  <>
+                  <div className="space-invite-row">
+                    <span className="space-invite-label" aria-hidden="true">
+                      초대 링크 기간
+                    </span>
                     <div className="space-expiry" role="group" aria-label="초대 링크 만료 시간">
                       {INVITE_EXPIRY_OPTIONS.map((option) => (
                         <button
@@ -529,7 +541,7 @@ function SpaceOverview({ active }: { active: ActiveSpace }) {
                       </svg>
                       초대 링크 만들기
                     </button>
-                  </>
+                  </div>
                 )
               ) : null}
             </section>

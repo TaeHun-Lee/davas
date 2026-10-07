@@ -26,9 +26,10 @@ const tabs = [
 type Tab = (typeof tabs)[number];
 
 function isActive(tab: Tab, pathname: string) {
-  return tab.href === '/'
-    ? pathname === '/'
-    : [tab.href, ...tab.activeOn].some((prefix) => pathname.startsWith(prefix));
+  // A record opened from the timeline still belongs to home, as on the desktop board.
+  if (tab.href === '/')
+    return pathname === '/' || (pathname.startsWith('/records/') && pathname !== '/records/new');
+  return [tab.href, ...tab.activeOn].some((prefix) => pathname.startsWith(prefix));
 }
 
 function CoreNavIcon({ icon }: { icon: (typeof tabs)[number]['icon'] }) {

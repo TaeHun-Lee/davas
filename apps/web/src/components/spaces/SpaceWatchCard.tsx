@@ -124,32 +124,35 @@ export function SpaceWatchCard({
           <b>{author}</b> 기록을 남겼어요{when ? ` · ${when}` : ''}
         </p>
       </div>
-      <Link href={detail} className="space-watch-media">
-        <Poster url={event.media.posterUrl} title={event.media.title} />
-        <span className="min-w-0">
-          <strong id={titleId}>{event.media.title}</strong>
-          <span>{source.line}</span>
-          {source.place ? <span className="space-watch-place">{source.place}</span> : null}
-        </span>
-      </Link>
-      {photos.length ? (
-        <Link
-          href={detail}
-          className="space-watch-photos"
-          aria-label={`${event.media.title} 사진 ${photos.length}장 보기`}
-        >
-          {photos.slice(0, STRIP_SIZE).map((photo, index) => (
-            <span key={photo.id} className="space-watch-photo">
-              <WatchPhoto photo={photo} variant="thumb" alt="" />
-              {index === STRIP_SIZE - 1 && extraPhotos > 0 ? (
-                <span className="space-watch-photo-more" aria-hidden="true">
-                  +{extraPhotos}
-                </span>
-              ) : null}
-            </span>
-          ))}
+      {/* On a computer the title and the photos sit side by side. */}
+      <div className="space-watch-body">
+        <Link href={detail} className="space-watch-media">
+          <Poster url={event.media.posterUrl} title={event.media.title} />
+          <span className="min-w-0">
+            <strong id={titleId}>{event.media.title}</strong>
+            <span>{source.line}</span>
+            {source.place ? <span className="space-watch-place">{source.place}</span> : null}
+          </span>
         </Link>
-      ) : null}
+        {photos.length ? (
+          <Link
+            href={detail}
+            className="space-watch-photos"
+            aria-label={`${event.media.title} 사진 ${photos.length}장 보기`}
+          >
+            {photos.slice(0, STRIP_SIZE).map((photo, index) => (
+              <span key={photo.id} className="space-watch-photo">
+                <WatchPhoto photo={photo} variant="thumb" alt="" />
+                {index === STRIP_SIZE - 1 && extraPhotos > 0 ? (
+                  <span className="space-watch-photo-more" aria-hidden="true">
+                    +{extraPhotos}
+                  </span>
+                ) : null}
+              </span>
+            ))}
+          </Link>
+        ) : null}
+      </div>
       {opened ? (
         <div className="space-watch-opened">
           <p>

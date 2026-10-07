@@ -26,11 +26,11 @@ export const EXPLORE_MOODS = [
   {
     preset: 'immersive-thriller',
     title: '푹 빠져서 몰입',
-    detail: '스릴러 · 미스터리',
+    detail: '스릴러·미스터리',
     tone: 'focus',
   },
-  { preset: 'good-cry', title: '실컷 울고 싶어요', detail: '드라마 · 가족', tone: 'cry' },
-  { preset: 'chills', title: '오싹하게 보고 싶어요', detail: '공포', tone: 'chills' },
+  { preset: 'good-cry', title: '실컷 울고 싶어요', detail: '드라마·가족', tone: 'cry' },
+  { preset: 'chills', title: '오싹하게', detail: '공포', tone: 'chills' },
 ] as const;
 
 const KINDS: Array<{ value: Kind; label: string }> = [
@@ -167,8 +167,9 @@ export function ExploreScreen() {
 
       {searching ? (
         <section className="explore-section" aria-labelledby="explore-search-title">
-          <h2 id="explore-search-title" className="section-title">
-            찾은 작품
+          <h2 id="explore-search-title" className="section-title explore-count-title">
+            검색 결과
+            {search.status === 'results' ? <span>{search.items.length}</span> : null}
           </h2>
           {search.status === 'searching' ? (
             <AsyncState kind="loading" />
@@ -183,24 +184,24 @@ export function ExploreScreen() {
               description="띄어쓰기나 원제로도 찾아보세요."
             />
           ) : (
-            <ResultList
-              label="찾은 작품"
-              items={search.items}
-              opening={opening}
-              onOpen={(item) => void open(item)}
-            />
+            <>
+              <ResultList
+                label="검색 결과"
+                items={search.items}
+                opening={opening}
+                onOpen={(item) => void open(item)}
+              />
+              <p className="explore-hint">작품을 누르면 작품 정보가 열려요.</p>
+            </>
           )}
         </section>
       ) : (
         <>
           <section className="explore-section" aria-labelledby="explore-popular-title">
             <div className="explore-section-head">
-              <div>
-                <h2 id="explore-popular-title" className="section-title">
-                  지금 화제작
-                </h2>
-                <p>요즘 많이 보는 영화와 드라마예요.</p>
-              </div>
+              <h2 id="explore-popular-title" className="section-title">
+                지금 화제작
+              </h2>
               <div className="explore-kinds" role="group" aria-label="화제작 종류">
                 {KINDS.map((option) => (
                   <button
@@ -258,7 +259,6 @@ export function ExploreScreen() {
             <h2 id="explore-mood-title" className="section-title">
               오늘은 어떤 기분이에요?
             </h2>
-            <p className="explore-hint">기분을 고르면 어울리는 작품을 골라 드려요.</p>
             <div className="explore-moods">
               {EXPLORE_MOODS.map((item) => (
                 <button
@@ -268,6 +268,13 @@ export function ExploreScreen() {
                   aria-pressed={mood === item.preset}
                   onClick={() => setMood(mood === item.preset ? null : item.preset)}
                 >
+                  {mood === item.preset ? (
+                    <span className="explore-mood-check" aria-hidden="true">
+                      <svg viewBox="0 0 24 24">
+                        <path d="m5 12 5 5 9-10" />
+                      </svg>
+                    </span>
+                  ) : null}
                   <strong>{item.title}</strong>
                   <span>{item.detail}</span>
                 </button>
@@ -275,6 +282,7 @@ export function ExploreScreen() {
             </div>
             {moodCard ? (
               <div className="explore-mood-picks" aria-live="polite">
+                <p className="explore-picks-caption">‘{moodCard.title}’에 어울리는 작품</p>
                 {moodPicks.status === 'loading' ? (
                   <AsyncState kind="loading" />
                 ) : moodPicks.status === 'error' || !moodPicks.items.length ? (
@@ -293,12 +301,8 @@ export function ExploreScreen() {
             ) : null}
           </section>
 
-          <Link href="/spaces?view=recommend" className="wish-pick-empty explore-together">
-            <span>
-              <strong>둘이 같이 고르기</strong>
-              <span>참여자와 조건을 정하면 모두 볼 수 있는 후보를 찾아요.</span>
-            </span>
-            <span aria-hidden="true">›</span>
+          <Link href="/spaces?view=recommend" className="secondary-button explore-together">
+            둘이 같이 고르기 ›
           </Link>
         </>
       )}

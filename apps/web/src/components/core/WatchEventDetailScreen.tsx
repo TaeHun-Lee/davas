@@ -659,7 +659,11 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
         </section>
       ) : null}
 
-      <section className="mt-6" aria-labelledby="reviews-title">
+      <section
+        className="mt-6 record-reviews"
+        data-opened={openedBlind || undefined}
+        aria-labelledby="reviews-title"
+      >
         <h2 id="reviews-title" className="section-title">
           {watchEvent.visibility === 'SPACES' ? '우리 리뷰' : '내 리뷰'}
         </h2>
@@ -669,7 +673,7 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
             {watchers.length === 2 ? '둘 다' : '모두'} 리뷰를 남겨서 블라인드 리뷰가 열렸어요
           </p>
         ) : null}
-        <div className="mt-3 space-y-3">
+        <div className="mt-3 record-reviews-list">
           {watchEvent.reactions.map((reaction) =>
             reaction.accountId === myAccountId && editingReview ? (
               <div key={reaction.accountId}>{reviewEditor}</div>

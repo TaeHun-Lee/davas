@@ -204,6 +204,13 @@ export function FeedScreen() {
           ? `${active.state.space.name}의 홈`
           : '홈'}
       </h1>
+      <div className="home-desktop-intro">
+        <p>함께 본 작품, 서로의 리뷰, 데이트 사진을 한곳에 모아요.</p>
+        <Link href="/explore" className="home-explore-link">
+          <SearchIcon className="search-field-icon" />
+          작품 찾아보기
+        </Link>
+      </div>
       <SpaceHome active={active} />
       <HomeRecommendations />
     </CoreAppShell>

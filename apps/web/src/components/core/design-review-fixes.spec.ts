@@ -130,3 +130,44 @@ describe('design decisions: five tabs, the desktop layout and the title sheet', 
     assert.match(css, /\.media-sheet \{\n    width: min\(100%, 560px\);/);
   });
 });
+
+describe('the explore and desktop boards', () => {
+  it('lists explore results as cards with a count and a check on the chosen mood', () => {
+    const screen = source('components/core/ExploreScreen.tsx');
+    assert.match(screen, /className="section-title explore-count-title"/);
+    assert.match(screen, /className="explore-mood-check"/);
+    assert.match(screen, /className="secondary-button explore-together"/);
+  });
+
+  it('puts the timeline photos beside the title and the reviews side by side on a computer', () => {
+    for (const path of [
+      'components/spaces/SpaceWatchCard.tsx',
+      'components/spaces/SpaceWatchGroupCard.tsx',
+    ]) {
+      const card = source(path);
+      assert.ok(card.indexOf('className="space-watch-body"') < card.indexOf('space-watch-media'));
+      assert.ok(card.indexOf('space-watch-photos') < card.indexOf('space-watch-reactions'));
+    }
+    const css = source('app/globals.css');
+    const desktop = css.slice(css.indexOf('@media (min-width: 1024px) {\n  .core-shell'));
+    assert.match(desktop, /\.space-watch-body \{\n    display: flex;/);
+    assert.match(desktop, /\.record-reviews-list \{\n    display: grid;/);
+    assert.match(desktop, /\.task-main\[data-wide\]:not\(:has\(> \.watch-gallery\)\)/);
+    assert.match(desktop, /\.home-recommendations \{\n    display: none;/);
+  });
+
+  it('titles home and the space tab in the page and keeps a record under 홈', () => {
+    assert.match(source('components/core/RecordScreens.tsx'), /className="home-explore-link"/);
+    const spaces = source('components/spaces/SpacesScreen.tsx');
+    assert.match(spaces, /className="space-overview-head"/);
+    assert.match(spaces, /className="space-invite-row"/);
+    assert.match(
+      source('components/core/CoreUi.tsx'),
+      /pathname\.startsWith\('\/records\/'\) && pathname !== '\/records\/new'/,
+    );
+    assert.match(
+      source('components/media/MediaDetailModal.tsx'),
+      /className="media-sheet-actions /,
+    );
+  });
+});
