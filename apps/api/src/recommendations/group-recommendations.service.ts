@@ -42,6 +42,7 @@ import {
   RecommendationCandidate,
   RatingSignal,
   scoreParticipant,
+  tagMatchesGenres,
 } from './group-recommendation.algorithm';
 
 const response = (statusCode: number, code: string, message: string) => ({
@@ -540,9 +541,7 @@ export class GroupRecommendationsService {
       scoreParticipant(accountId, item.candidate, ratings.get(accountId) ?? [], request.moodTags),
     );
     const group = calculateGroupBase(participantScores.map(({ score }) => score));
-    const contextFit = request.moodTags.some((tag) =>
-      item.candidate.genres.some((genre) => normalized(genre) === tag),
-    )
+    const contextFit = request.moodTags.some((tag) => tagMatchesGenres(tag, item.candidate.genres))
       ? 0.04
       : 0;
     const qualityBonus = qualityPrior(item.candidate) * 0.06;
@@ -618,9 +617,7 @@ export class GroupRecommendationsService {
     if (item.ranked.channels.includes('CONTENT_AFFINITY')) codes.push('GROUP_CONTENT_AFFINITY');
     if (item.ranked.channels.includes('QUALITY_POPULAR')) codes.push('QUALITY_COLD_START');
     if (item.ranked.channels.includes('FRESH_RELEASE')) codes.push('RECENT_RELEASE');
-    if (
-      request.moodTags.some((tag) => item.media.genres.some((genre) => normalized(genre) === tag))
-    )
+    if (request.moodTags.some((tag) => tagMatchesGenres(tag, item.media.genres)))
       codes.push('MATCHES_REQUESTED_MOOD');
     if ((item.ranked.diversityPenalty ?? 0) > 0) codes.push('DIVERSITY_RERANKED');
     return {

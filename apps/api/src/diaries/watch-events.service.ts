@@ -321,15 +321,29 @@ export class WatchEventsService {
 
       if (dto.spaceIds !== undefined) {
         const spaceIds = [...new Set(dto.spaceIds)];
-        const participants = await manager
-          .getRepository(WatchParticipantEntity)
-          .find({ where: { diaryId } });
-        await this.spaceAccess.assertAccountsInEverySpace(
-          spaceIds,
-          participants.map((participant) => participant.accountId),
-          manager.getRepository(SpaceMembershipEntity),
+        const shares = manager.getRepository(WatchShareEntity);
+        const sharedNow = new Set(
+          (await shares.find({ where: { diaryId } }))
+            .filter((share) => !share.revokedAt)
+            .map((share) => share.spaceId),
         );
-        await this.replaceShares(manager.getRepository(WatchShareEntity), diaryId, spaceIds);
+        // Only a space the record newly goes to is checked, and only for people still on it:
+        // a space it already sits in stays as it is even after a companion left that space,
+        // and someone who said they were not there does not hold the author's edit back.
+        const added = spaceIds.filter((spaceId) => !sharedNow.has(spaceId));
+        if (added.length) {
+          const participants = await manager
+            .getRepository(WatchParticipantEntity)
+            .find({ where: { diaryId } });
+          await this.spaceAccess.assertAccountsInEverySpace(
+            added,
+            participants
+              .filter((participant) => participant.status !== 'DECLINED')
+              .map((participant) => participant.accountId),
+            manager.getRepository(SpaceMembershipEntity),
+          );
+        }
+        await this.replaceShares(shares, diaryId, spaceIds);
       }
 
       if (dto.source !== undefined) {

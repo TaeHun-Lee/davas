@@ -1,6 +1,11 @@
 'use client';
 
-import { OTT_SERVICES, ottProviderNames, type SpaceView } from '@davas/shared';
+import {
+  OTT_SERVICES,
+  ottProviderNames,
+  RECOMMENDATION_MOODS,
+  type SpaceView,
+} from '@davas/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { useGroupRecommendations } from '../../hooks/useGroupRecommendations';
 import {
@@ -12,7 +17,6 @@ import {
 } from './group-recommendation-model';
 
 const ottLabel = (key: string) => OTT_SERVICES.find((service) => service.key === key)?.label ?? key;
-const MOODS = ['가벼운', '따뜻한', '긴장감', '웃긴', '몰입감', '잔잔한'];
 
 function toggleValue(values: string[], value: string, checked: boolean) {
   return checked ? [...new Set([...values, value])] : values.filter((item) => item !== value);
@@ -292,7 +296,7 @@ export function GroupRecommendationPanel({
         <fieldset>
           <legend className="text-[12px] font-extrabold text-[#263b59]">오늘의 분위기</legend>
           <div className="mt-2 flex flex-wrap gap-2">
-            {MOODS.map((mood) => {
+            {RECOMMENDATION_MOODS.map((mood) => {
               const selected = moodTags.includes(mood);
               return (
                 <button
@@ -319,7 +323,7 @@ export function GroupRecommendationPanel({
           <input
             value={avoidTagsText}
             onChange={(event) => setAvoidTagsText(event.target.value)}
-            placeholder="예: 공포, 잔인한, 슬픈"
+            placeholder="장르나 분위기, 예: 공포, 전쟁, 긴장감"
             className="mt-2 min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[#172947]"
           />
         </label>

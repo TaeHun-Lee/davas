@@ -529,6 +529,44 @@ describe('WatchEventsService', () => {
     assert.equal((await service.detail('owner', memberEvent.id)).source, null);
   });
 
+  it('still lets the author edit a record after a companion left its space', async () => {
+    const { database, service } = setup();
+    database.addMember('space-1', 'owner');
+    database.addMember('space-2', 'owner');
+    const membership = database.addMember('space-1', 'member');
+    database.addMember('space-1', 'decliner');
+    const created = await service.create('owner', {
+      mediaId: 'media-1',
+      watchedDate: '2026-08-05',
+      spaceIds: ['space-1'],
+      participantAccountIds: ['member', 'decliner'],
+    });
+    await service.respondToParticipation(created.id, 'decliner', 'DECLINED');
+    membership.status = 'LEFT';
+    membership.leftAt = new Date();
+
+    // The web always sends the spaces back with an edit; the space it already sits in stays.
+    await service.update('owner', created.id, {
+      memoryNote: '다시 봐도 좋다',
+      spaceIds: ['space-1'],
+    });
+    assert.equal(
+      database.diaries.find((diary) => diary.id === created.id)?.memoryNote,
+      '다시 봐도 좋다',
+    );
+
+    // A new space still needs everyone who is on the record, but not the one who declined.
+    await assert.rejects(
+      () => service.update('owner', created.id, { spaceIds: ['space-1', 'space-2'] }),
+      (error) => exceptionCode(error) === 'SPACE_NOT_FOUND',
+    );
+    database.addMember('space-2', 'member');
+    await service.update('owner', created.id, { spaceIds: ['space-1', 'space-2'] });
+    assert.ok(
+      database.shares.some((share) => share.diaryId === created.id && share.spaceId === 'space-2'),
+    );
+  });
+
   it('stops showing the personal parts of a record once its author leaves', async () => {
     const { access, database, service } = setup();
     database.addMember('space-1', 'owner');

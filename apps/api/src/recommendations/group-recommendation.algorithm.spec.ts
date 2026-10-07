@@ -7,12 +7,11 @@ import {
   qualityPrior,
   RecommendationCandidate,
   scoreParticipant,
+  tagMatchesGenres,
 } from './group-recommendation.algorithm';
 
 const now = new Date('2026-08-13T00:00:00.000Z');
-const candidate = (
-  overrides: Partial<RecommendationCandidate> = {},
-): RecommendationCandidate => ({
+const candidate = (overrides: Partial<RecommendationCandidate> = {}): RecommendationCandidate => ({
   id: 'content-a',
   mediaType: 'MOVIE',
   title: 'Balanced Film',
@@ -52,8 +51,7 @@ describe('deterministic group recommendation algorithm', () => {
       const mean = scores.reduce((sum, score) => sum + score, 0) / scores.length;
       const floor = Math.min(...scores);
       const deviation = Math.sqrt(
-        scores.reduce((sum, score) => sum + (score - mean) ** 2, 0) /
-          scores.length,
+        scores.reduce((sum, score) => sum + (score - mean) ** 2, 0) / scores.length,
       );
       assert.equal(
         actual.groupBase,
@@ -71,10 +69,7 @@ describe('deterministic group recommendation algorithm', () => {
 
   it('allows zero hard-filter violations and never softens explicit rejection or rewatch exclusion', () => {
     const valid = candidate();
-    assert.equal(
-      passesHardFilters(valid, request, now, new Set(), new Set()),
-      true,
-    );
+    assert.equal(passesHardFilters(valid, request, now, new Set(), new Set()), true);
     for (const invalid of [
       candidate({ mediaType: 'TV' }),
       candidate({ runtime: 170 }),
@@ -100,19 +95,10 @@ describe('deterministic group recommendation algorithm', () => {
         },
       }),
     ]) {
-      assert.equal(
-        passesHardFilters(invalid, request, now, new Set(), new Set()),
-        false,
-      );
+      assert.equal(passesHardFilters(invalid, request, now, new Set(), new Set()), false);
     }
-    assert.equal(
-      passesHardFilters(valid, request, now, new Set([valid.id]), new Set()),
-      false,
-    );
-    assert.equal(
-      passesHardFilters(valid, request, now, new Set(), new Set([valid.id])),
-      false,
-    );
+    assert.equal(passesHardFilters(valid, request, now, new Set([valid.id]), new Set()), false);
+    assert.equal(passesHardFilters(valid, request, now, new Set(), new Set([valid.id])), false);
   });
 
   it('treats an unknown participant as uncertain rather than disliked', () => {
@@ -122,6 +108,22 @@ describe('deterministic group recommendation algorithm', () => {
     assert.equal(prediction.uncertainty, 0.9);
     assert.ok(prediction.score >= 0.5);
     assert.ok(qualityPrior(content) > 0.5);
+  });
+
+  it('reads the moods the web offers through the genres that carry them', () => {
+    const comedy = candidate({ genres: ['코미디', '가족'] });
+    const thriller = candidate({ id: 'content-b', genres: ['스릴러'] });
+    assert.equal(tagMatchesGenres('웃긴', comedy.genres), true);
+    assert.equal(tagMatchesGenres('웃긴', thriller.genres), false);
+    // A tag that is not one of the moods is still a plain genre name.
+    assert.equal(tagMatchesGenres('스릴러', thriller.genres), true);
+    assert.ok(
+      scoreParticipant('new-user', comedy, [], ['웃긴']).score >
+        scoreParticipant('new-user', comedy, [], ['긴장감']).score,
+    );
+    const avoidTense = { ...request, moodTags: [], avoidTags: ['긴장감'] };
+    assert.equal(passesHardFilters(thriller, avoidTense, now, new Set(), new Set()), false);
+    assert.equal(passesHardFilters(comedy, avoidTense, now, new Set(), new Set()), true);
   });
 
   it('reranks similar high-score candidates to protect list diversity deterministically', () => {

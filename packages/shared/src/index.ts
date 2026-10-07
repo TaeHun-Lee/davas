@@ -317,6 +317,21 @@ export function ottProviderNames(keys: readonly string[]): string[] {
 export const WISH_MOODS = ['LIGHT', 'IMMERSIVE', 'TEARS', 'CHILLS'] as const;
 export type WishMood = (typeof WISH_MOODS)[number];
 
+/**
+ * The moods a group recommendation offers, each standing for the TMDB genres (Korean names)
+ * that carry it. The server matches a mood tag through these genres; any other tag, such as
+ * one typed into "제외 조건", is read as a genre name.
+ */
+export const RECOMMENDATION_MOOD_GENRES: Record<string, readonly string[]> = {
+  가벼운: ['코미디', '애니메이션', '가족', '음악'],
+  따뜻한: ['가족', '로맨스', '드라마', '애니메이션'],
+  긴장감: ['스릴러', '미스터리', '범죄', '공포'],
+  웃긴: ['코미디'],
+  몰입감: ['액션', '모험', '액션 & 어드벤처', 'SF', 'SF & 판타지', '판타지', '미스터리'],
+  잔잔한: ['드라마', '다큐멘터리', '로맨스'],
+};
+export const RECOMMENDATION_MOODS = Object.keys(RECOMMENDATION_MOOD_GENRES);
+
 export type SpaceWishItem = {
   media: {
     id: string;

@@ -1,13 +1,18 @@
 import assert from 'node:assert/strict';
 import { ForbiddenException } from '@nestjs/common';
 import type { ExecutionContext } from '@nestjs/common';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it } from 'node:test';
 import {
+  CORS_METHODS,
   OriginGuard,
   resolveAllowedOrigins,
   resolveTrustProxy,
   validateProductionConfiguration,
 } from './app-security';
+
+const webApiDir = join(__dirname, '..', '..', '..', 'web', 'src', 'lib', 'api');
 
 function context(method: string, origin?: string) {
   return {
@@ -116,6 +121,19 @@ describe('application security configuration', () => {
       if (previousOrigins === undefined) delete process.env.CORS_ORIGINS;
       else process.env.CORS_ORIGINS = previousOrigins;
     }
+  });
+
+  it('lets a cross-origin browser send every method the web client uses', () => {
+    const webSource = readdirSync(webApiDir)
+      .filter((file) => file.endsWith('.ts') && !file.endsWith('.spec.ts'))
+      .map((file) => readFileSync(join(webApiDir, file), 'utf8'))
+      .join('\n');
+    // Also catches a method picked by a condition, such as `liked ? 'PUT' : 'DELETE'`.
+    const used = new Set(
+      [...webSource.matchAll(/'(GET|HEAD|POST|PUT|PATCH|DELETE)'/g)].map((match) => match[1]),
+    );
+    assert.ok(used.has('PUT'));
+    for (const method of used) assert.ok(CORS_METHODS.includes(method), method);
   });
 
   it('trusts exactly one proxy hop in production so rate limits see the client IP', () => {

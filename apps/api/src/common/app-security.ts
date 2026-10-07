@@ -103,6 +103,13 @@ export function resolveTrustProxy(environment: SecurityEnvironment = process.env
   return environment.NODE_ENV === 'production' ? 1 : false;
 }
 
+/**
+ * Methods a browser on another origin may use. In development the web (:3000) calls the API
+ * (:4000) cross-origin, so every method the web client sends must be here; PUT saves wishes,
+ * reviews, likes and notification settings.
+ */
+export const CORS_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
+
 export function configureHttpSecurity(
   app: INestApplication,
   environment: SecurityEnvironment = process.env,
@@ -121,7 +128,7 @@ export function configureHttpSecurity(
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
-    methods: ['GET', 'HEAD', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    methods: CORS_METHODS,
     allowedHeaders: ['Accept', 'Content-Type'],
     maxAge: 600,
   });

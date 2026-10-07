@@ -1,5 +1,6 @@
-export const GROUP_RECOMMENDATION_ALGORITHM_VERSION =
-  'group-content-v1-deterministic';
+import { RECOMMENDATION_MOOD_GENRES } from '@davas/shared';
+
+export const GROUP_RECOMMENDATION_ALGORITHM_VERSION = 'group-content-v1-deterministic';
 export const DEFAULT_GROUP_LAMBDA = 0.6;
 export const DEFAULT_GROUP_GAMMA = 0.1;
 
@@ -60,13 +61,20 @@ const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
 const normalized = (value: string) => value.trim().toLocaleLowerCase('en-US');
 const round = (value: number) => Number(value.toFixed(5));
 
+/**
+ * Whether a mood or avoid tag fits a title's genres. A mood the web offers ("웃긴") stands for
+ * the genres that carry it; any other tag is compared as a genre name ("공포").
+ */
+export function tagMatchesGenres(tag: string, genres: readonly string[]) {
+  const titleGenres = new Set(genres.map(normalized));
+  const tagGenres = RECOMMENDATION_MOOD_GENRES[tag.trim()] ?? [tag];
+  return tagGenres.some((genre) => titleGenres.has(normalized(genre)));
+}
+
 export function standardDeviation(values: number[]) {
   if (values.length === 0) return 0;
   const mean = values.reduce((total, value) => total + value, 0) / values.length;
-  return Math.sqrt(
-    values.reduce((total, value) => total + (value - mean) ** 2, 0) /
-      values.length,
-  );
+  return Math.sqrt(values.reduce((total, value) => total + (value - mean) ** 2, 0) / values.length);
 }
 
 export function calculateGroupBase(
@@ -84,9 +92,7 @@ export function calculateGroupBase(
     mean: round(mean),
     floor: round(floor),
     dispersion: round(dispersion),
-    groupBase: round(
-      clamp01(lambda * floor + (1 - lambda) * mean - gamma * dispersion),
-    ),
+    groupBase: round(clamp01(lambda * floor + (1 - lambda) * mean - gamma * dispersion)),
   };
 }
 
@@ -107,8 +113,7 @@ export function scoreParticipant(
     signal.genres.some((genre) => genres.has(normalized(genre))),
   );
   const moodFit = moodTags.length
-    ? moodTags.filter((tag) => genres.has(normalized(tag))).length /
-      moodTags.length
+    ? moodTags.filter((tag) => tagMatchesGenres(tag, candidate.genres)).length / moodTags.length
     : 0;
   const quality = qualityPrior(candidate);
 
@@ -122,8 +127,7 @@ export function scoreParticipant(
   }
 
   const affinity =
-    matching.reduce((total, signal) => total + signal.ratingScale / 10, 0) /
-    matching.length;
+    matching.reduce((total, signal) => total + signal.ratingScale / 10, 0) / matching.length;
   return {
     accountId,
     score: round(clamp01(0.25 + 0.5 * affinity + 0.2 * quality + 0.05 * moodFit)),
@@ -142,35 +146,21 @@ export function passesHardFilters(
   if (!request.contentTypes.includes(candidate.mediaType)) return false;
   if (candidate.availability.status !== 'AVAILABLE') return false;
   if (candidate.availability.expiresAt.getTime() <= now.getTime()) return false;
-  if (
-    candidate.releaseDate &&
-    candidate.releaseDate > now.toISOString().slice(0, 10)
-  )
-    return false;
+  if (candidate.releaseDate && candidate.releaseDate > now.toISOString().slice(0, 10)) return false;
   const allowedServices = new Set(request.services.map(normalized));
   if (
-    !candidate.availability.offers.some((offer) =>
-      allowedServices.has(normalized(offer.provider)),
-    )
+    !candidate.availability.offers.some((offer) => allowedServices.has(normalized(offer.provider)))
   )
     return false;
   if (request.runtimeMin !== null) {
-    if (candidate.runtime === null || candidate.runtime < request.runtimeMin)
-      return false;
+    if (candidate.runtime === null || candidate.runtime < request.runtimeMin) return false;
   }
   if (request.runtimeMax !== null) {
-    if (candidate.runtime === null || candidate.runtime > request.runtimeMax)
-      return false;
+    if (candidate.runtime === null || candidate.runtime > request.runtimeMax) return false;
   }
-  const candidateTags = new Set(candidate.genres.map(normalized));
-  if (request.avoidTags.some((tag) => candidateTags.has(normalized(tag))))
-    return false;
+  if (request.avoidTags.some((tag) => tagMatchesGenres(tag, candidate.genres))) return false;
   if (explicitlyRejectedContentIds.has(candidate.id)) return false;
-  if (
-    request.rewatchPolicy === 'EXCLUDE' &&
-    watchedContentIds.has(candidate.id)
-  )
-    return false;
+  if (request.rewatchPolicy === 'EXCLUDE' && watchedContentIds.has(candidate.id)) return false;
   return true;
 }
 
@@ -206,9 +196,7 @@ export function assignCandidateChannels(
     .forEach((candidate) => add(candidate, 'QUALITY_POPULAR'));
 
   candidates
-    .filter((candidate) =>
-      candidate.genres.some((genre) => positiveGenres.has(normalized(genre))),
-    )
+    .filter((candidate) => candidate.genres.some((genre) => positiveGenres.has(normalized(genre))))
     .slice(0, 60)
     .forEach((candidate) => add(candidate, 'CONTENT_AFFINITY'));
 
@@ -225,8 +213,8 @@ export function assignCandidateChannels(
   [...candidates]
     .sort(
       (left, right) =>
-        stableFraction(`${seed}:${right.id}`) -
-          stableFraction(`${seed}:${left.id}`) || left.id.localeCompare(right.id),
+        stableFraction(`${seed}:${right.id}`) - stableFraction(`${seed}:${left.id}`) ||
+        left.id.localeCompare(right.id),
     )
     .slice(0, 30)
     .forEach((candidate) => add(candidate, 'SAFE_EXPLORATION'));
@@ -242,29 +230,21 @@ export function assignCandidateChannels(
 function similarity(left: RecommendationCandidate, right: RecommendationCandidate) {
   const leftGenres = new Set(left.genres.map(normalized));
   const rightGenres = new Set(right.genres.map(normalized));
-  const intersection = [...leftGenres].filter((genre) => rightGenres.has(genre))
-    .length;
+  const intersection = [...leftGenres].filter((genre) => rightGenres.has(genre)).length;
   const union = new Set([...leftGenres, ...rightGenres]).size || 1;
   const genreSimilarity = intersection / union;
-  const sameDirector =
-    left.director && right.director && left.director === right.director ? 1 : 0;
+  const sameDirector = left.director && right.director && left.director === right.director ? 1 : 0;
   return Math.min(1, genreSimilarity * 0.8 + sameDirector * 0.2);
 }
 
-export function diversityRerank(
-  candidates: RankedCandidate[],
-  limit = 10,
-): RankedCandidate[] {
+export function diversityRerank(candidates: RankedCandidate[], limit = 10): RankedCandidate[] {
   const remaining = [...candidates];
   const selected: RankedCandidate[] = [];
   while (remaining.length && selected.length < limit) {
     const scored = remaining.map((candidate) => {
       const penalty = selected.length
-        ? Math.max(
-            ...selected.map((chosen) =>
-              similarity(candidate.candidate, chosen.candidate),
-            ),
-          ) * 0.12
+        ? Math.max(...selected.map((chosen) => similarity(candidate.candidate, chosen.candidate))) *
+          0.12
         : 0;
       return { candidate, penalty, adjusted: candidate.finalScore - penalty };
     });
