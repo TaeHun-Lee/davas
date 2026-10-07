@@ -895,8 +895,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/CoreUi.tsx": {
-    "mtime": 1791363658.1917884,
-    "ast_hash": "7ee7356c27227b80b309f94de56864f3",
+    "mtime": 1791382738.7247503,
+    "ast_hash": "26ce39677f77ab63cf01957e4ea40525",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/RecordComposer.tsx": {
@@ -905,8 +905,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/RecordScreens.tsx": {
-    "mtime": 1791363852.1473289,
-    "ast_hash": "b000af72890bc49d9f97b7223d8cbbba",
+    "mtime": 1791382738.725751,
+    "ast_hash": "6614d8ee60f3b10f0f6b2da0a033721d",
     "semantic_hash": ""
   },
   "apps/web/src/components/diary/DiaryComposeHeader.tsx": {
@@ -1160,8 +1160,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/media/MediaDetailModal.tsx": {
-    "mtime": 1791364111.5792086,
-    "ast_hash": "e1d5b4b57066848f618e888a119f8a48",
+    "mtime": 1791382966.0068629,
+    "ast_hash": "9009278c76d2919683c62c9761756fc4",
     "semantic_hash": ""
   },
   "apps/web/src/components/media/MediaHeroCarousel.tsx": {
@@ -1740,8 +1740,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpacesScreen.tsx": {
-    "mtime": 1791360702.2316377,
-    "ast_hash": "b4b747236896b3102c2a67bb94ebf485",
+    "mtime": 1791383379.2210062,
+    "ast_hash": "95497daa2dd825e63073175a6227a1ad",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/space-ui.spec.ts": {
@@ -1835,8 +1835,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchEventDetailScreen.tsx": {
-    "mtime": 1791363759.559079,
-    "ast_hash": "8c6e14945e343befcfc3471c7d56c0e4",
+    "mtime": 1791382966.0053596,
+    "ast_hash": "98974f39395a530fbad5b6325c6f8793",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchRatingControl.tsx": {
@@ -2260,8 +2260,8 @@
     "semantic_hash": ""
   },
   "docs/development.md": {
-    "mtime": 1791364240.3639562,
-    "ast_hash": "a7fa1530f10f61cdc79fb917b78b6bad",
+    "mtime": 1791383239.260462,
+    "ast_hash": "103d2cc322a37f56539ea6845498f751",
     "semantic_hash": ""
   },
   "docs/operations.md": {
@@ -2290,8 +2290,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceWatchCard.tsx": {
-    "mtime": 1791354719.3504276,
-    "ast_hash": "e9beb0610ce9c377968679cf8ecbdbf6",
+    "mtime": 1791382738.7217503,
+    "ast_hash": "b8ea6ed7c3d160e1e58790a5907abc08",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/space-watch-model.spec.ts": {
@@ -2715,8 +2715,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceWatchGroupCard.tsx": {
-    "mtime": 1791354704.0807822,
-    "ast_hash": "ed6ddbab305c57f47381b1db21f82867",
+    "mtime": 1791382738.7227497,
+    "ast_hash": "b1559f8a5cf992d1c12321c9edfa6761",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/timeline-cards-design.spec.ts": {
@@ -2725,8 +2725,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/design-review-fixes.spec.ts": {
-    "mtime": 1791363951.3264725,
-    "ast_hash": "e2f018fb419714fe019569eaa973d33c",
+    "mtime": 1791383008.8640172,
+    "ast_hash": "3b0e1e842b7e1ce836c9faeca80b06af",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceSwitcher.tsx": {
@@ -2735,8 +2735,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/ExploreScreen.tsx": {
-    "mtime": 1791363852.05204,
-    "ast_hash": "805d234fe86ce2b6b0d65c38c7100375",
+    "mtime": 1791382441.0775056,
+    "ast_hash": "b98d29cc3cbaeb0ee97d4e59cb58d725",
     "semantic_hash": ""
   }
 }
