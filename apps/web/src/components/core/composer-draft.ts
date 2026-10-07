@@ -136,6 +136,23 @@ export async function continueSeries(
 }
 
 /**
+ * The line under the episode stepper, as on the C안 board: where this record leaves the
+ * series and where the next one will pick up (`continueSeries` fills in the next episode).
+ */
+export function seriesProgressSummary(
+  watched: number | null,
+  total: number | null,
+  completed: boolean,
+) {
+  if (completed) return total ? `전체 ${total}화를 끝까지 다 봤어요.` : '끝까지 다 봤어요.';
+  if (!watched) return null;
+  const where = total ? `전체 ${total}화 중 ${watched}화` : `${watched}화까지`;
+  return total && watched >= total
+    ? where
+    : `${where} · 다음 기록 때 ${watched + 1}화부터 이어서 적을 수 있어요.`;
+}
+
+/**
  * The tab keeps one unsaved create draft. It comes back only for the same title, or when it is
  * still waiting for one (작품 바꾸기 keeps what was written); a different title starts clean so
  * photos and notes never move to the wrong record.

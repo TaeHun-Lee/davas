@@ -30,7 +30,7 @@ import { blindViewerRole, lockedReviewHint, waitingWatchers } from '../spaces/sp
 const sourceLabels: Record<WatchSourceKind, string> = {
   THEATER: '극장',
   OTT: 'OTT',
-  TV_OWNED: 'TV/소장',
+  TV_OWNED: 'TV·소장',
   OTHER: '기타',
 };
 
@@ -394,6 +394,16 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
   const fallback = safeReturn(params.get('returnTo'), watchEvent.isMine);
   const nameOf = (accountId: string, nickname?: string) =>
     accountId === myAccountId ? '나' : nickname || '공간 멤버';
+  // Under each photo in the viewer: "내가 올림", "민호님이 올림".
+  const uploaderLabel = (accountId: string) => {
+    if (accountId === myAccountId) return '내가 올림';
+    const nickname =
+      accountId === watchEvent.author.accountId
+        ? watchEvent.author.nickname
+        : watchEvent.participants.find((participant) => participant.accountId === accountId)
+            ?.nickname;
+    return `${nickname || '공간 멤버'}님이 올림`;
+  };
   const watchers = watchEvent.participants.filter(
     (participant) => participant.status === 'CONFIRMED',
   );
@@ -555,7 +565,12 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
         </p>
       ) : null}
 
-      <WatchPhotoGallery photos={watchEvent.photos} title={watchEvent.media.title} />
+      <WatchPhotoGallery
+        photos={watchEvent.photos}
+        title={watchEvent.media.title}
+        watchedDate={watchEvent.watchedDate}
+        uploaderLabel={uploaderLabel}
+      />
 
       <section className="record-detail-head" aria-labelledby="record-detail-title">
         <div className="flex gap-3">

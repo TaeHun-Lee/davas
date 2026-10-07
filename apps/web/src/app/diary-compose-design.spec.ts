@@ -22,7 +22,8 @@ describe('core record compose', () => {
     assert.match(findBranch, /MediaTypeControl/);
     assert.match(findBranch, /MediaDetailModal/);
     assert.doesNotMatch(chooseBranch, /draft!\.sourceKind|viewingRef/);
-    assert.match(composer, /어디서 봤나요\? \*/);
+    // Required fields go unmarked, as on the C안 board; optional ones say "(선택)".
+    assert.match(composer, /어디서 봤나요\?<\/span>/);
     assert.match(composer, /SourceKindControl/);
     assert.match(hook, /searchMedia\(\{ query: trimmedQuery, type/);
   });

@@ -3,7 +3,13 @@ import { describe, it } from 'node:test';
 import type { SpaceView } from '@davas/shared';
 import type { MediaDetail, SelectedMedia } from '../../lib/api/media';
 import type { WatchProgress } from '../../lib/api/memories';
-import { canResumeDraft, continueSeries, draftWithDefaults, freshDraft } from './composer-draft';
+import {
+  canResumeDraft,
+  continueSeries,
+  draftWithDefaults,
+  freshDraft,
+  seriesProgressSummary,
+} from './composer-draft';
 
 const selected = (id: string) => ({ id }) as SelectedMedia;
 const series = (id: string, numberOfEpisodes: number | null = 16) =>
@@ -81,5 +87,20 @@ describe('record composer drafts', () => {
     await continueSeries(draft, movie('movie-c'), async () => null);
     assert.deepEqual([draft.episodeWatched, draft.episodeTotal], [null, null]);
     assert.equal(draft.seriesPrefilledFor, 'movie-c');
+  });
+
+  it('says where a series record leaves off and where the next one picks up', () => {
+    assert.equal(
+      seriesProgressSummary(8, 16, false),
+      '전체 16화 중 8화 · 다음 기록 때 9화부터 이어서 적을 수 있어요.',
+    );
+    assert.equal(
+      seriesProgressSummary(3, null, false),
+      '3화까지 · 다음 기록 때 4화부터 이어서 적을 수 있어요.',
+    );
+    // The last episode, or a finished series, has no next episode to promise.
+    assert.equal(seriesProgressSummary(16, 16, false), '전체 16화 중 16화');
+    assert.equal(seriesProgressSummary(16, 16, true), '전체 16화를 끝까지 다 봤어요.');
+    assert.equal(seriesProgressSummary(null, 16, false), null);
   });
 });

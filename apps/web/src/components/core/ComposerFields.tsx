@@ -1,8 +1,9 @@
 'use client';
 
-import { useId, type ReactNode } from 'react';
+import { useId, type CSSProperties, type ReactNode } from 'react';
 import { OTT_SERVICES as SUBSCRIPTION_SERVICES } from '@davas/shared';
 import type { TheaterFormat } from '../../lib/api/watch-events';
+import { seriesProgressSummary } from './composer-draft';
 
 export const THEATER_FORMAT_LABELS: Record<TheaterFormat, string> = {
   STANDARD: '일반',
@@ -20,19 +21,27 @@ export function ToggleSwitch({
   description,
   checked,
   onChange,
+  icon,
   children,
 }: {
   label: string;
   description: string;
   checked: boolean;
   onChange: (value: boolean) => void;
+  /** A small picture in front of the label, such as the blind switch's lock. */
+  icon?: ReactNode;
   children?: ReactNode;
 }) {
   const id = useId();
   return (
-    <div className="composer-switch">
+    <div className="composer-switch" data-checked={checked || undefined}>
       <div className="composer-switch-row">
-        <div className="min-w-0">
+        {icon ? (
+          <span className="composer-switch-icon" aria-hidden="true">
+            {icon}
+          </span>
+        ) : null}
+        <div className="min-w-0 flex-1">
           <p id={`${id}-label`} className="composer-switch-label">
             {label}
           </p>
@@ -57,7 +66,7 @@ export function ToggleSwitch({
   );
 }
 
-/** A text field with a live "n/max" counter, for 한줄평 and 소감. */
+/** A text field with a live "n/max" counter, for 한줄평, 소감 and 추억 메모. */
 export function CountedField({
   label,
   value,
@@ -66,6 +75,8 @@ export function CountedField({
   placeholder,
   multiline = false,
   rows = 5,
+  badge,
+  tone,
 }: {
   label: string;
   value: string;
@@ -74,6 +85,10 @@ export function CountedField({
   placeholder?: string;
   multiline?: boolean;
   rows?: number;
+  /** A short note beside the label, such as who can read the field. */
+  badge?: ReactNode;
+  /** `memo` gives the 추억 메모 box its warm paper colour. */
+  tone?: 'memo';
 }) {
   const id = useId();
   return (
@@ -82,7 +97,10 @@ export function CountedField({
         <label htmlFor={id} className="field-label">
           {label}
         </label>
-        <span aria-hidden="true">
+        {badge ? <span className="composer-field-badge">{badge}</span> : null}
+        {/* Read after the field itself, so the count is found without being announced per key. */}
+        <span id={`${id}-count`} className="composer-field-count">
+          <span className="sr-only">글자 수 </span>
           {value.length}/{max}
         </span>
       </div>
@@ -90,6 +108,8 @@ export function CountedField({
         <textarea
           id={id}
           className="text-area"
+          data-tone={tone}
+          aria-describedby={`${id}-count`}
           rows={rows}
           maxLength={max}
           placeholder={placeholder}
@@ -100,6 +120,7 @@ export function CountedField({
         <input
           id={id}
           className="date-input"
+          aria-describedby={`${id}-count`}
           maxLength={max}
           placeholder={placeholder}
           value={value}
@@ -115,14 +136,21 @@ export function ChoiceChips<T extends string>({
   options,
   value,
   onChange,
+  columns,
 }: {
   legend: string;
   options: Array<{ value: T; label: string }>;
   value: T | null;
   onChange: (value: T | null) => void;
+  /** Lays the chips out as an even grid of this many columns instead of wrapping pills. */
+  columns?: number;
 }) {
   return (
-    <fieldset className="composer-chips">
+    <fieldset
+      className="composer-chips"
+      data-grid={columns ? true : undefined}
+      style={columns ? ({ '--chip-columns': columns } as CSSProperties) : undefined}
+    >
       <legend className="field-label">{legend}</legend>
       <div>
         {options.map((option) => (
@@ -157,9 +185,10 @@ export function SeriesProgress({
   const watchedId = useId();
   const clamp = (value: number) => Math.max(1, Math.min(total ?? 2000, value));
   const current = watched ?? 0;
+  const summary = seriesProgressSummary(watched, total, completed);
   return (
     <fieldset className="series-progress">
-      <legend className="field-label">어디까지 봤나요? (선택)</legend>
+      <legend className="field-label">본 회차 (선택)</legend>
       <div className="series-progress-row">
         {/* From 1화 the minus clears the episode, so a prefilled episode can be taken back. */}
         <button
@@ -209,15 +238,13 @@ export function SeriesProgress({
           <span aria-hidden="true">＋</span>
         </button>
       </div>
+      {/* The summary below says the same in words, so the bar itself stays silent. */}
       {total && watched ? (
-        <span
-          className="series-progress-bar"
-          role="img"
-          aria-label={`전체 ${total}화 중 ${watched}화까지 봤어요`}
-        >
+        <span className="series-progress-bar" aria-hidden="true">
           <span style={{ width: `${Math.round((watched / total) * 100)}%` }} />
         </span>
       ) : null}
+      {summary ? <p className="series-progress-summary">{summary}</p> : null}
       <label htmlFor={totalId} className="series-progress-total">
         <span>전체 회차</span>
         <input
@@ -255,7 +282,7 @@ export function SeriesProgress({
             })
           }
         />
-        끝까지 다 봤어요
+        이번에 끝까지 다 봤어요
       </label>
     </fieldset>
   );

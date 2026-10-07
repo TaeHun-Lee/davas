@@ -2013,53 +2013,58 @@ a {
   inset: 0;
   display: flex;
   flex-direction: column;
-  background: #0b111c;
+  background: #0b1220;
   color: white;
 }
 .photo-viewer[hidden] {
   display: none;
 }
 .photo-viewer-bar {
-  display: flex;
-  min-height: 60px;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: max(8px, env(safe-area-inset-top)) 12px 8px;
-  font-size: 14px;
+  gap: 8px;
+  padding: max(12px, env(safe-area-inset-top)) 12px 0;
+  font-size: 15px;
   font-weight: 850;
+  text-align: center;
 }
 .photo-viewer-bar button,
-.photo-viewer-nav button {
+.photo-viewer-save {
   display: inline-flex;
-  width: 44px;
+  min-width: 44px;
   height: 44px;
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 14px;
+  border-radius: 13px;
   background: rgba(255, 255, 255, 0.12);
   color: white;
-  font-size: 26px;
 }
-.photo-viewer-save {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  border-radius: 14px;
-  background: white;
-  padding: 0 14px;
-  color: #0b111c;
+.photo-viewer-bar > button {
+  background: transparent;
+}
+.photo-viewer-tools {
+  display: flex;
+  gap: 4px;
+}
+.photo-viewer-original {
+  padding: 0 12px;
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 850;
 }
+.photo-viewer-original[aria-pressed='true'] {
+  background: white;
+  color: #0b1220;
+}
+/* The photo fills the middle; the arrows sit on it, halfway down. */
 .photo-viewer-stage {
+  position: relative;
   display: flex;
   min-height: 0;
   flex: 1 1 auto;
   align-items: center;
   justify-content: center;
-  padding: 0 8px;
 }
 .photo-viewer-stage .watch-photo {
   max-height: 100%;
@@ -2067,10 +2072,114 @@ a {
   background-size: contain;
   background-repeat: no-repeat;
 }
-.photo-viewer-nav {
+.photo-viewer-arrow {
+  position: absolute;
+  top: 50%;
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 50%;
+  background: rgba(11, 18, 32, 0.6);
+  color: white;
+}
+.photo-viewer-arrow[data-side='prev'] {
+  left: 8px;
+}
+.photo-viewer-arrow[data-side='next'] {
+  right: 8px;
+}
+.photo-viewer-caption {
+  padding: 0 20px max(20px, env(safe-area-inset-bottom));
+}
+.photo-viewer-title {
+  font-size: 15px;
+  line-height: 21px;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+.photo-viewer-meta {
+  margin-top: 2px;
+  color: #b8c4d6;
+  font-size: 12px;
+  line-height: 17px;
+  font-weight: 700;
+}
+.photo-viewer-thumbs {
   display: flex;
-  justify-content: space-between;
-  padding: 12px 16px max(16px, env(safe-area-inset-bottom));
+  gap: 6px;
+  margin-top: 14px;
+  overflow-x: auto;
+  padding: 3px;
+}
+.photo-viewer-thumbs button {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  overflow: hidden;
+  border: 0;
+  border-radius: 10px;
+  background: #1c2538;
+  padding: 0;
+  opacity: 0.6;
+}
+.photo-viewer-thumbs button[aria-current='true'] {
+  opacity: 1;
+  box-shadow: 0 0 0 3px white;
+}
+.photo-viewer-thumbs .watch-photo {
+  height: 100%;
+  aspect-ratio: auto !important;
+  background-color: #1c2538;
+}
+/* While the sharp image loads over its blurred preview. */
+.watch-photo-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background: rgba(11, 18, 32, 0.72);
+  padding: 9px 14px;
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  /* A photo that is already cached never flashes the pill. */
+  animation: watch-photo-loading-in 0.2s ease 0.3s both;
+}
+.watch-photo-spinner {
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: watch-photo-spin 0.9s linear infinite;
+}
+@keyframes watch-photo-loading-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes watch-photo-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* On the dark gallery and viewer, the failure text needs a light colour to be read. */
+.watch-gallery-hero .watch-photo-failed,
+.photo-viewer .watch-photo-failed {
+  color: #c9d3e0;
 }
 
 /* A result message pinned above the bottom edge, so it is seen wherever the action was. */
@@ -2142,6 +2251,51 @@ label:has(> input.sr-only:focus-visible) {
   color: var(--muted);
   font-size: 13px;
   font-weight: 800;
+}
+.photo-picker-count[data-full] {
+  border-radius: 999px;
+  background: #fff1d9;
+  padding: 3px 10px;
+  color: #7a4b00;
+  font-size: 12px;
+  font-weight: 900;
+}
+/* Some picked photos were left out (over ten, or not a supported format). */
+.photo-picker-notice {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  border: 1px solid #f1dcb8;
+  border-radius: 14px;
+  background: #fff8ec;
+  padding: 10px 12px;
+  color: #5d4a2a;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 700;
+}
+.photo-picker-notice svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 1px;
+  fill: none;
+  stroke: #8a5a12;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.photo-picker-full {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 10px;
+  border: 1.5px dashed #c9d3df;
+  border-radius: 14px;
+  background: #f3f6fa;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: not-allowed;
 }
 .photo-picker-grid {
   display: grid;
@@ -2296,11 +2450,6 @@ label:has(> input.sr-only:focus-visible) {
 .photo-tile-add label span:first-child {
   font-size: 22px;
 }
-.photo-tile-add label[data-disabled] {
-  cursor: not-allowed;
-  color: var(--muted);
-  opacity: 0.7;
-}
 .photo-tile-add:focus-within label {
   outline: 3px solid var(--blue);
   outline-offset: 2px;
@@ -2319,16 +2468,67 @@ label:has(> input.sr-only:focus-visible) {
   justify-content: space-between;
   gap: 8px;
 }
-.composer-field-head span {
+.composer-field-count {
+  flex: none;
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
+}
+/* Sits right after the label; the counter keeps the far end. */
+.composer-field-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: auto;
+  border-radius: 999px;
+  background: #eef2f8;
+  padding: 4px 9px;
+  color: #4a5a70;
+  font-size: 11px;
+  font-weight: 850;
+}
+.composer-field-badge svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.text-area[data-tone='memo'] {
+  min-height: 88px;
+  background: #fffdf8;
 }
 .composer-switch-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+.composer-switch-icon {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #eef2f8;
+  color: #4a5a70;
+}
+.composer-switch[data-checked] .composer-switch-icon {
+  background: white;
+  color: var(--blue-ink);
+}
+.composer-switch-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .composer-switch-label {
   color: var(--heading);
@@ -2396,6 +2596,15 @@ label:has(> input.sr-only:focus-visible) {
   font-size: 13px;
   font-weight: 750;
 }
+.composer-chips[data-grid] div {
+  display: grid;
+  grid-template-columns: repeat(var(--chip-columns), minmax(0, 1fr));
+  gap: 6px;
+}
+.composer-chips[data-grid] button {
+  border-radius: 12px;
+  padding: 0 6px;
+}
 .composer-chips button[aria-pressed='true'] {
   border-color: var(--blue);
   background: var(--blue);
@@ -2404,12 +2613,12 @@ label:has(> input.sr-only:focus-visible) {
 }
 .series-progress-row {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  grid-template-columns: 52px minmax(0, 1fr) 52px;
   align-items: center;
   gap: 8px;
 }
 .series-progress-row button {
-  height: 44px;
+  height: 52px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: white;
@@ -2422,7 +2631,7 @@ label:has(> input.sr-only:focus-visible) {
 }
 .series-progress-value {
   display: flex;
-  min-height: 44px;
+  min-height: 52px;
   align-items: center;
   justify-content: center;
   gap: 4px;
@@ -2454,7 +2663,7 @@ label:has(> input.sr-only:focus-visible) {
 }
 .series-progress-bar {
   display: block;
-  height: 6px;
+  height: 8px;
   margin-top: 10px;
   overflow: hidden;
   border-radius: 999px;
@@ -2464,6 +2673,13 @@ label:has(> input.sr-only:focus-visible) {
   display: block;
   height: 100%;
   background: var(--blue);
+}
+.series-progress-summary {
+  margin-top: 6px;
+  color: #56667b;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 650;
 }
 .series-progress-total {
   display: grid;
@@ -3363,48 +3579,252 @@ label:has(> input.sr-only:focus-visible) {
   font-size: 13px;
   font-weight: 700;
 }
+/* The record composer, as on the C안 board: sections sit on the page, details in white cards. */
 .record-compose-media {
-  border-radius: 21px;
-  box-shadow: 0 8px 22px rgba(31, 65, 114, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e1e9f3;
+  border-radius: 20px;
+  background: white;
+  padding: 12px;
 }
 .record-compose-media .poster {
-  width: 74px;
-  height: 111px;
-  border-radius: 13px;
+  width: 50px;
+  height: 75px;
+  flex: none;
+  border-radius: 11px;
 }
-.record-compose-media-type {
-  display: inline-flex;
-  margin-top: 7px;
-  border-radius: 999px;
-  background: var(--soft-card);
-  padding: 4px 9px;
+.record-compose-media h1 {
+  color: var(--heading);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+.record-compose-media p {
+  margin-top: 2px;
   color: var(--muted);
   font-size: 12px;
-  line-height: 18px;
-  font-weight: 750;
+  line-height: 17px;
+  font-weight: 700;
 }
-.record-compose-media .secondary-button {
+.record-compose-change {
   min-height: 44px;
-  margin-top: 10px;
+  flex: none;
+  border: 0;
   border-radius: 13px;
-  padding: 0 14px;
+  background: #f1f5fb;
+  padding: 0 12px;
+  color: var(--blue-ink);
+  font-size: 12px;
+  font-weight: 850;
 }
-.record-compose-panel {
-  border: 1px solid rgba(220, 229, 239, 0.82);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.88);
+/* 공유할 곳: one line under the title that opens the choices. */
+.record-compose-share {
+  display: flex;
+  width: 100%;
+  min-height: 52px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  border: 1px solid #e1e9f3;
+  border-radius: 16px;
+  background: white;
+  padding: 0 14px;
+  color: var(--heading);
+  text-align: left;
+}
+.record-compose-share-label {
+  flex: none;
+  color: #4a5a70;
+  font-size: 13px;
+  font-weight: 800;
+}
+.record-compose-share-faces {
+  display: flex;
+  flex: none;
+  margin-left: auto;
+}
+.record-compose-share-faces span {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #2f5450;
+  box-shadow: 0 0 0 2px white;
+  color: white;
+  font-size: 10px;
+  font-weight: 900;
+}
+.record-compose-share-faces span + span {
+  margin-left: -5px;
+}
+.record-compose-share-faces span[data-me] {
+  background: var(--blue);
+}
+.record-compose-share strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.record-compose-share svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.2s ease;
+}
+.record-compose-share[aria-expanded='true'] svg {
+  transform: rotate(90deg);
+}
+.record-compose-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: 1px solid #e1e9f3;
+  border-radius: 20px;
+  background: white;
   padding: 16px;
-  box-shadow: 0 7px 20px rgba(31, 65, 114, 0.045);
+}
+.record-compose-card .field-label {
+  font-weight: 850;
+}
+.record-compose-card .record-compose-helper {
+  margin-top: 0;
+}
+.record-compose-card .record-compose-continued {
+  margin-bottom: 10px;
+}
+.record-compose-space,
+.record-compose-private {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e1e9f3;
+  border-radius: 14px;
+  background: white;
+  padding: 0 14px;
+  color: var(--heading);
+  font-size: 14px;
+  font-weight: 800;
+  text-align: left;
+}
+.record-compose-space small {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.record-compose-private[aria-pressed='true'] {
+  border-color: #b9cff2;
+  background: var(--blue-soft);
+  color: var(--blue-ink);
+}
+.record-compose-section {
+  min-width: 0;
+  margin-top: 24px;
+  border: 0;
+  padding: 0;
+}
+.record-compose-title,
+.record-compose-section > .composer-field .field-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--heading);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 900;
 }
 .record-compose-helper {
-  margin-top: 10px;
-  color: var(--muted);
+  margin-top: 8px;
+  color: #56667b;
   font-size: 12px;
   line-height: 18px;
   font-weight: 650;
 }
-.record-compose-review {
-  min-height: 112px;
+/* 함께 본 사람: a pill per member, checked ones filled and ticked. */
+.companion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.companion-chip {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #dce5ef;
+  border-radius: 999px;
+  background: white;
+  padding: 0 14px 0 6px;
+  color: #4a5a70;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.companion-chip:has(input:checked) {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+  color: var(--blue-ink);
+  font-weight: 900;
+}
+.companion-chip-avatar {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #2f5450;
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+}
+.companion-chip svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* 스포일러 and 블라인드: switches in their own cards; blind turns blue while it is on. */
+.record-compose-switch .composer-switch {
+  border: 1px solid #e1e9f3;
+  border-radius: 18px;
+  background: white;
+  padding: 10px 10px 10px 16px;
+}
+.record-compose-blind .composer-switch {
+  border-radius: 20px;
+  padding: 12px 10px 14px 16px;
+}
+.record-compose-blind .composer-switch[data-checked] {
+  border: 1.5px solid var(--blue);
+  background: var(--blue-soft);
+}
+.record-compose-blind .composer-switch-description {
+  color: #33445c;
+  font-size: 13px;
+  line-height: 19px;
+}
+.record-compose-blind .composer-switch-preview {
+  background: white;
+  color: #4a5a70;
+  font-weight: 700;
 }
 .record-compose-note {
   border-radius: 14px;
@@ -3548,14 +3968,17 @@ label:has(> input.sr-only:focus-visible) {
   .skeleton-card,
   .home-recommendation-skeleton,
   .home-feed-loading span,
-  .wish-pick-loading {
+  .wish-pick-loading,
+  .watch-photo-loading,
+  .watch-photo-spinner {
     animation: none;
   }
   .core-icon-button,
   .home-recommendation-poster img,
   .watch-photo img,
   .photo-tile-progress span,
-  .composer-switch-control span {
+  .composer-switch-control span,
+  .record-compose-share svg {
     transition: none;
   }
   .home-recommendation-row {

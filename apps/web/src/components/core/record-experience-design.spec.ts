@@ -15,7 +15,7 @@ describe('record experience screens', () => {
     // Optional photos come after the memory note, under a plain "attach photos" heading.
     assert.ok(
       composer.indexOf('<PhotoPicker uploads={photoUploads} />') >
-        composer.indexOf('추억 메모 · 공간 사람만 봐요'),
+        composer.indexOf('label="추억 메모"'),
     );
     assert.match(picker, /<span>사진 첨부 \(선택\)<\/span>/);
     assert.doesNotMatch(picker, /데이트 사진/);
@@ -29,6 +29,11 @@ describe('record experience screens', () => {
     assert.match(uploads, /MAX_PARALLEL_UPLOADS = 2/);
     assert.match(picker, /role="progressbar"/);
     assert.match(picker, /다시 시도/);
+    // Over ten: an amber notice that counts every picked file, gone once the list changes.
+    assert.match(picker, /사진은 기록 하나에 \$\{WATCH_PHOTO_MAX_COUNT\}장까지예요/);
+    assert.match(picker, /result\.added \+ result\.overLimit \+ result\.unsupported/);
+    assert.match(picker, /notice\.forCount === items\.length/);
+    assert.match(picker, /사진 추가 \(\{WATCH_PHOTO_MAX_COUNT\}장을 모두 채웠어요\)/);
     assert.match(client, /new XMLHttpRequest\(\)/);
     assert.match(client, /withCredentials = true/);
   });
@@ -86,11 +91,35 @@ describe('record experience screens', () => {
     assert.match(gallery, /useFocusTrap\(open, dialogRef, close\)/);
     assert.match(gallery, /aria-modal="true"/);
     assert.match(gallery, /event\.key === 'ArrowLeft'/);
-    assert.match(gallery, /photo\.originalUrl \? '원본 저장' : '저장'/);
+    assert.match(gallery, /photo\.originalUrl \? '원본 사진 저장' : '사진 저장'/);
     assert.match(photo, /aspectRatio: `\$\{photo\.width\} \/ \$\{photo\.height\}`/);
     assert.match(photo, /photo\.placeholder/);
     assert.match(photo, /loading=\{variant === 'thumb' \? 'lazy' : 'eager'\}/);
     assert.match(css, /\.watch-photo\[data-loaded\] img/);
+  });
+
+  it('lays the photo viewer out like C안: caption, uploader, thumbnails, centred arrows', () => {
+    const gallery = source('components/core/WatchPhotoGallery.tsx');
+    const photo = source('components/core/WatchPhoto.tsx');
+    const detail = source('components/core/WatchEventDetailScreen.tsx');
+    const css = source('app/globals.css');
+    assert.match(gallery, /watchedDayLabel\(watchedDate\)/);
+    assert.match(gallery, /좌우로 넘겨 보세요/);
+    assert.match(detail, /uploaderLabel=\{uploaderLabel\}/);
+    assert.match(detail, /'내가 올림'/);
+    assert.match(gallery, /className="photo-viewer-thumbs"/);
+    // Swiping the strip scrolls it instead of changing the photo.
+    assert.match(gallery, /closest\('\.photo-viewer-thumbs'\)/);
+    // The original stays the uploader's alone and is opened per photo.
+    assert.match(gallery, /photo\.originalUrl \? \(\s*<button/);
+    assert.match(
+      gallery,
+      /loadingLabel=\{showOriginal \? '원본 사진 불러오는 중' : '선명한 사진 불러오는 중'\}/,
+    );
+    assert.match(photo, /aria-busy=\{loadingLabel \? loading : undefined\}/);
+    assert.match(css, /\.photo-viewer \{[^}]*background: #0b1220;/);
+    assert.match(css, /\.photo-viewer-arrow \{\s*position: absolute;\s*top: 50%;/);
+    assert.match(css, /\.photo-viewer \.watch-photo-failed \{\s*color: #c9d3e0;/);
   });
 
   it('offers "나도 기록하기" only on someone else\'s record', () => {
@@ -156,6 +185,49 @@ describe('record experience screens', () => {
     assert.match(detail, /꺼져 있으면 저장하는 즉시 \$\{companionNames\}님에게 보여요\./);
     assert.match(reviews, /블라인드로 남김/);
     assert.match(reviews, /리뷰가 열리면 좋아요를 누를 수 있어요/);
+  });
+
+  it('lays the composer out like C안, from where it goes to the photos', () => {
+    const composer = source('components/core/RecordComposer.tsx');
+    const fields = source('components/core/ComposerFields.tsx');
+    assert.match(composer, /title=\{editId \? '기록 수정' : '기록 남기기'\}/);
+    // Where it goes is one line under the title that opens the choices.
+    assert.match(composer, /className="record-compose-share"\s+aria-expanded=\{shareOpen\}/);
+    const order = [
+      'className="record-compose-share"',
+      '본 날짜</span>',
+      '어디서 봤나요?</span>',
+      '함께 본 사람 (선택)',
+      '별점 (선택)',
+      'label="한줄평 (선택)"',
+      'label="소감 (선택)"',
+      'label="스포일러 포함"',
+      'label="상대가 리뷰를 쓰면 공개(블라인드)"',
+      'label="추억 메모"',
+      '<PhotoPicker uploads={photoUploads} />',
+    ].map((marker) => composer.indexOf(marker));
+    assert.ok(order.every((at) => at > 0));
+    assert.deepEqual(
+      order,
+      [...order].sort((a, b) => a - b),
+    );
+    // At the theater: name, then format, then seat.
+    const theater = composer.slice(composer.indexOf('{theater ? ('));
+    assert.ok(
+      theater.indexOf('{placeField}') < theater.indexOf('legend="상영 형식 (선택)"') &&
+        theater.indexOf('legend="상영 형식 (선택)"') < theater.indexOf('좌석 (선택)'),
+    );
+    // The blind switch says who it waits for, on and off.
+    assert.match(composer, /꺼져 있으면 저장하는 즉시 \$\{companionNames\}님에게 보여요\./);
+    assert.match(composer, /\$\{companionNames\}님이 이 기록에 리뷰를 남기기 전까지/);
+    // A series: where the next record picks up, rate later, and a review for this episode.
+    assert.match(fields, /seriesProgressSummary\(watched, total, completed\)/);
+    assert.match(fields, /이번에 끝까지 다 봤어요/);
+    assert.match(composer, /드라마는 다 본 뒤에 매겨도 돼요\./);
+    assert.match(composer, /화까지 보고 느낀 점을 적어 보세요/);
+    assert.match(composer, /\{editId \? null : \(\s*<p className="record-compose-note/);
+    // Counters are reachable from their field instead of hidden from screen readers.
+    assert.match(fields, /aria-describedby=\{`\$\{id\}-count`\}/);
   });
 
   it('saves only what the composer shows and keeps its controls reachable', () => {

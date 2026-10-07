@@ -60,7 +60,7 @@ import {
 const sourceLabels: Record<WatchSourceKind, string> = {
   THEATER: '극장',
   OTT: 'OTT',
-  TV_OWNED: 'TV/소장',
+  TV_OWNED: 'TV·소장',
   OTHER: '기타',
 };
 
@@ -111,6 +111,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
   const [detailPreview, setDetailPreview] = useState<MediaDetail | null>(null);
   const [waitingForPhotos, setWaitingForPhotos] = useState(false);
   const [continuedFrom, setContinuedFrom] = useState<WatchProgress | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const photoUploads = useWatchPhotoUploads();
   const { reset: resetPhotos } = photoUploads;
   const searchType = mediaType === 'MOVIE' ? 'movie' : mediaType === 'TV' ? 'tv' : 'multi';
@@ -160,7 +161,8 @@ export function RecordComposer({ editId }: { editId?: string }) {
               overview: '',
               posterUrl: record.media.posterUrl,
               backdropUrl: null,
-              releaseDate: null,
+              // Only its year is shown, on the title card.
+              releaseDate: record.media.releaseYear ?? null,
               genreIds: [],
               country: null,
             },
@@ -248,7 +250,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
   if (!draft)
     return (
       <TaskShell
-        title={editId ? '기록 수정' : '기록 작성'}
+        title={editId ? '기록 수정' : '기록 남기기'}
         fallback={editId ? `/records/${editId}` : '/'}
       >
         {error ? <p className="form-error">{error}</p> : <AsyncState kind="loading" />}
@@ -449,322 +451,417 @@ export function RecordComposer({ editId }: { editId?: string }) {
       </CoreAppShell>
     );
 
+  const sharedSpaces = spaces.filter((space) => draft.spaceIds.includes(space.id));
+  const shareSummary = !draft.spaceIds.length
+    ? '나만 보기'
+    : draft.spaceIds.length === 1 && sharedSpaces.length === 1
+      ? sharedSpaces[0].name
+      : `공간 ${draft.spaceIds.length}곳`;
+  const memberNames = new Map(
+    spaces.flatMap((space) => space.members).map((member) => [member.accountId, member.nickname]),
+  );
+  const myName = memberNames.get(userId) || '';
+  // Me first, then up to two of the people the record is shared with.
+  const shareFaces = [
+    { accountId: userId, initial: (myName || '나').slice(0, 1), me: true },
+    ...participantOptions.slice(0, 2).map((member) => ({
+      accountId: member.accountId,
+      initial: (member.nickname || '공').slice(0, 1),
+      me: false,
+    })),
+  ];
+  const companionNames = draft.participantAccountIds
+    .map((id) => memberNames.get(id) || '공간 멤버')
+    .join(', ');
+  const series = draft.selected?.mediaType === 'TV';
+  const mediaFacts = [
+    series ? '드라마' : '영화',
+    draft.selected?.releaseDate?.slice(0, 4),
+    series && draft.episodeTotal ? `전체 ${draft.episodeTotal}화` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const theater = draft.sourceKind === 'THEATER';
+  const placeField = draft.sourceKind ? (
+    <label className="block">
+      <span className="field-label">{theater ? '극장 이름 (선택)' : '장소 (선택)'}</span>
+      <input
+        className="date-input"
+        maxLength={160}
+        placeholder={theater ? '예: 대한극장 3관' : '예: 우리 집 거실'}
+        value={draft.placeText}
+        onChange={(event) => setDraft({ ...draft, placeText: event.target.value })}
+      />
+    </label>
+  ) : null;
+
   return (
     <TaskShell
-      title={editId ? '기록 수정' : '기록 작성'}
+      title={editId ? '기록 수정' : '기록 남기기'}
       fallback={editId ? `/records/${editId}` : '/'}
     >
       <div className="record-compose-flow">
-        <section className="record-compose-media core-card p-3">
-          <div className="flex gap-3">
-            <Poster
-              url={draft.selected?.posterUrl ?? null}
-              title={draft.selected?.title ?? '선택 작품'}
-            />
-            <div className="min-w-0 flex-1">
-              <h1 className="text-[17px] font-black text-[var(--heading)]">
-                {draft.selected?.title ?? '작품을 선택해 주세요'}
-              </h1>
-              <p className="record-compose-media-type">
-                {draft.selected?.mediaType === 'TV' ? '드라마' : '영화'}
-              </p>
-              {!editId ? (
-                <button
-                  className="secondary-button mt-3"
-                  onClick={() => {
-                    setStep('find');
-                    setDraft({ ...draft, selected: null });
-                    router.replace('/records/new?step=find');
-                  }}
-                >
-                  작품 바꾸기
-                </button>
-              ) : null}
-            </div>
+        <section className="record-compose-media">
+          <Poster
+            url={draft.selected?.posterUrl ?? null}
+            title={draft.selected?.title ?? '선택 작품'}
+          />
+          <div className="min-w-0 flex-1">
+            <h1>{draft.selected?.title ?? '작품을 선택해 주세요'}</h1>
+            <p>{mediaFacts}</p>
           </div>
+          {!editId ? (
+            <button
+              type="button"
+              className="record-compose-change"
+              onClick={() => {
+                setStep('find');
+                setDraft({ ...draft, selected: null });
+                router.replace('/records/new?step=find');
+              }}
+            >
+              작품 바꾸기
+            </button>
+          ) : null}
         </section>
-        <section className="record-compose-panel mt-4">
-          <div>
-            <span className="field-label">어디서 봤나요? *</span>
-            <SourceKindControl
-              value={draft.sourceKind}
-              onChange={(value) => setDraft({ ...draft, sourceKind: value })}
-            />
-            {draft.sourceKind === null && editId ? (
-              <p className="form-error mt-2">
-                이전 기록에는 감상 경로가 없어요. 수정하려면 선택해 주세요.
+
+        {/* Where it goes, as one line under the title; the choices open from it. */}
+        <button
+          type="button"
+          className="record-compose-share"
+          aria-expanded={shareOpen}
+          aria-controls="share-options"
+          onClick={() => setShareOpen((value) => !value)}
+        >
+          <span className="record-compose-share-label">공유할 곳</span>
+          <span className="record-compose-share-faces" aria-hidden="true">
+            {(draft.spaceIds.length ? shareFaces : shareFaces.slice(0, 1)).map((face) => (
+              <span key={face.accountId} data-me={face.me || undefined}>
+                {face.initial}
+              </span>
+            ))}
+          </span>
+          <strong>{shareSummary}</strong>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m9 5 7 7-7 7" />
+          </svg>
+        </button>
+        {shareOpen ? (
+          <div id="share-options" className="record-compose-card mt-2">
+            <p className="record-compose-helper">
+              지금 보고 있는 공간이 기본으로 선택돼요. 새 공간에 가입해도 과거 기록은 자동으로
+              공유되지 않아요.
+            </p>
+            {spaces.length ? (
+              <fieldset>
+                <legend className="field-label">공간에 공유</legend>
+                <div className="space-y-2">
+                  {spaces.map((space) => (
+                    <label key={space.id} className="record-compose-space">
+                      <input
+                        type="checkbox"
+                        className="h-5 w-5 accent-[var(--blue)]"
+                        checked={draft.spaceIds.includes(space.id)}
+                        onChange={(event) => {
+                          const spaceIds = event.target.checked
+                            ? [...new Set([...draft.spaceIds, space.id])]
+                            : draft.spaceIds.filter((id) => id !== space.id);
+                          const allowedAccounts = new Set(
+                            spaces
+                              .filter((item) => spaceIds.includes(item.id))
+                              .flatMap((item) => item.members)
+                              .map((member) => member.accountId),
+                          );
+                          setDraft({
+                            ...draft,
+                            spaceIds,
+                            participantAccountIds: draft.participantAccountIds.filter((id) =>
+                              allowedAccounts.has(id),
+                            ),
+                          });
+                        }}
+                      />
+                      <span>{space.name}</span>
+                      <small>{space.members.length}명</small>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ) : (
+              <p className="record-compose-helper">
+                {spacesError
+                  ? '공간 목록을 불러오지 못했어요. 개인 기록으로는 저장할 수 있어요.'
+                  : '참여 중인 공간이 없어요. 개인 기록으로 저장돼요.'}
               </p>
-            ) : null}
+            )}
+            <button
+              type="button"
+              aria-pressed={draft.spaceIds.length === 0}
+              className="record-compose-private"
+              onClick={() =>
+                setDraft({
+                  ...draft,
+                  spaceIds: [],
+                  participantAccountIds: [],
+                })
+              }
+            >
+              개인 기록 · 나만 보기
+            </button>
           </div>
-          {draft.sourceKind === 'OTT' ? (
-            <div className="mt-4">
-              <ChoiceChips
-                legend="OTT 서비스 (선택)"
-                options={OTT_SERVICES.map((service) => ({ value: service, label: service }))}
-                value={OTT_SERVICES.includes(draft.providerName) ? draft.providerName : null}
-                onChange={(value) => setDraft({ ...draft, providerName: value ?? '' })}
-              />
-              <label className="mt-2 block">
-                <span className="sr-only">다른 OTT 서비스 이름</span>
-                <input
-                  className="date-input"
-                  maxLength={80}
-                  placeholder="목록에 없으면 직접 입력"
-                  value={OTT_SERVICES.includes(draft.providerName) ? '' : draft.providerName}
-                  onChange={(event) => setDraft({ ...draft, providerName: event.target.value })}
-                />
-              </label>
-            </div>
-          ) : null}
-          {draft.sourceKind === 'THEATER' ? (
-            <div className="mt-4 space-y-4">
-              <ChoiceChips
-                legend="상영 형식 (선택)"
-                options={(Object.keys(THEATER_FORMAT_LABELS) as TheaterFormat[]).map((format) => ({
-                  value: format,
-                  label: THEATER_FORMAT_LABELS[format],
-                }))}
-                value={draft.theaterFormat}
-                onChange={(value) => setDraft({ ...draft, theaterFormat: value })}
-              />
-              <label className="block">
-                <span className="field-label">좌석 (선택)</span>
-                <input
-                  className="date-input"
-                  maxLength={40}
-                  placeholder="예: H열 12, 13"
-                  value={draft.seatText}
-                  onChange={(event) => setDraft({ ...draft, seatText: event.target.value })}
-                />
-              </label>
-            </div>
-          ) : null}
-          {draft.sourceKind &&
-          draft.sourceKind !== 'THEATER' &&
-          draft.selected?.mediaType === 'TV' ? (
-            <div className="mt-4">
-              {continuedFrom?.episodeWatched && !editId ? (
-                <p className="record-compose-helper" role="status">
-                  지난 기록에서 {continuedFrom.episodeWatched}화까지 봐서{' '}
-                  {continuedFrom.completed ? '끝까지 본 상태예요.' : '다음 화부터 이어서 적었어요.'}
-                </p>
-              ) : null}
-              <SeriesProgress
-                watched={draft.episodeWatched}
-                total={draft.episodeTotal}
-                completed={draft.completed}
-                onChange={(value) =>
-                  setDraft({
-                    ...draft,
-                    episodeWatched: value.watched,
-                    episodeTotal: value.total,
-                    completed: value.completed,
-                  })
-                }
-              />
-            </div>
+        ) : null}
+
+        <label className="record-compose-section block">
+          <span className="record-compose-title">본 날짜</span>
+          <input
+            className="date-input"
+            type="date"
+            max={today()}
+            value={draft.watchedDate}
+            onChange={(event) => setDraft({ ...draft, watchedDate: event.target.value })}
+          />
+        </label>
+
+        <div className="record-compose-section">
+          <span className="record-compose-title">어디서 봤나요?</span>
+          <SourceKindControl
+            value={draft.sourceKind}
+            onChange={(value) => setDraft({ ...draft, sourceKind: value })}
+          />
+          {draft.sourceKind === null && editId ? (
+            <p className="form-error mt-2">
+              이전 기록에는 감상 경로가 없어요. 수정하려면 선택해 주세요.
+            </p>
           ) : null}
           {draft.sourceKind ? (
-            <label className="mt-4 block">
-              <span className="field-label">
-                {draft.sourceKind === 'THEATER' ? '극장 이름 (선택)' : '장소 (선택)'}
-              </span>
-              <input
-                className="date-input"
-                maxLength={160}
-                placeholder={
-                  draft.sourceKind === 'THEATER' ? '예: 대한극장 3관' : '예: 우리 집 거실'
-                }
-                value={draft.placeText}
-                onChange={(event) => setDraft({ ...draft, placeText: event.target.value })}
-              />
-            </label>
+            <div className="record-compose-card mt-3">
+              {theater ? (
+                <>
+                  {placeField}
+                  <ChoiceChips
+                    legend="상영 형식 (선택)"
+                    columns={4}
+                    options={(Object.keys(THEATER_FORMAT_LABELS) as TheaterFormat[]).map(
+                      (format) => ({
+                        value: format,
+                        label: THEATER_FORMAT_LABELS[format],
+                      }),
+                    )}
+                    value={draft.theaterFormat}
+                    onChange={(value) => setDraft({ ...draft, theaterFormat: value })}
+                  />
+                  <label className="block">
+                    <span className="field-label">좌석 (선택)</span>
+                    <input
+                      className="date-input"
+                      maxLength={40}
+                      placeholder="예: H열 12, 13"
+                      value={draft.seatText}
+                      onChange={(event) => setDraft({ ...draft, seatText: event.target.value })}
+                    />
+                  </label>
+                </>
+              ) : (
+                <>
+                  {draft.sourceKind === 'OTT' ? (
+                    <div>
+                      <ChoiceChips
+                        legend="서비스 (선택)"
+                        columns={3}
+                        options={OTT_SERVICES.map((service) => ({
+                          value: service,
+                          label: service,
+                        }))}
+                        value={
+                          OTT_SERVICES.includes(draft.providerName) ? draft.providerName : null
+                        }
+                        onChange={(value) => setDraft({ ...draft, providerName: value ?? '' })}
+                      />
+                      <label className="mt-2 block">
+                        <span className="sr-only">다른 OTT 서비스 이름</span>
+                        <input
+                          className="date-input"
+                          maxLength={80}
+                          placeholder="목록에 없으면 직접 입력"
+                          value={
+                            OTT_SERVICES.includes(draft.providerName) ? '' : draft.providerName
+                          }
+                          onChange={(event) =>
+                            setDraft({ ...draft, providerName: event.target.value })
+                          }
+                        />
+                      </label>
+                    </div>
+                  ) : null}
+                  {series ? (
+                    <div>
+                      {continuedFrom?.episodeWatched && !editId ? (
+                        <p className="record-compose-helper record-compose-continued" role="status">
+                          지난 기록에서 {continuedFrom.episodeWatched}화까지 봐서{' '}
+                          {continuedFrom.completed
+                            ? '끝까지 본 상태예요.'
+                            : '다음 화부터 이어서 적었어요.'}
+                        </p>
+                      ) : null}
+                      <SeriesProgress
+                        watched={draft.episodeWatched}
+                        total={draft.episodeTotal}
+                        completed={draft.completed}
+                        onChange={(value) =>
+                          setDraft({
+                            ...draft,
+                            episodeWatched: value.watched,
+                            episodeTotal: value.total,
+                            completed: value.completed,
+                          })
+                        }
+                      />
+                    </div>
+                  ) : null}
+                  {placeField}
+                </>
+              )}
+            </div>
           ) : (
             <p className="record-compose-helper">
               경로를 선택하면 서비스와 장소를 더 입력할 수 있어요.
             </p>
           )}
-          <label className="mt-4 block">
-            <span className="field-label">본 날짜 *</span>
-            <input
-              className="date-input"
-              type="date"
-              max={today()}
-              value={draft.watchedDate}
-              onChange={(event) => setDraft({ ...draft, watchedDate: event.target.value })}
-            />
-          </label>
-        </section>
-        <section className="record-compose-panel mt-4">
-          <fieldset>
-            <legend className="field-label">별점 (선택)</legend>
-            <WatchRatingControl
-              value={draft.rating}
-              onChange={(rating) => setDraft({ ...draft, rating })}
-              name="record-rating"
-            />
-          </fieldset>
-          <div className="mt-4">
-            <CountedField
-              label="한줄평 (선택)"
-              max={WATCH_HEADLINE_MAX_LENGTH}
-              placeholder="한 문장으로 남겨 보세요"
-              value={draft.headline}
-              onChange={(headline) => setDraft({ ...draft, headline })}
-            />
-          </div>
-          <div className="mt-4">
-            <CountedField
-              label="소감 (선택)"
-              multiline
-              max={WATCH_REVIEW_MAX_LENGTH}
-              placeholder="기억하고 싶은 장면이나 느낌을 자유롭게 남겨 보세요."
-              value={draft.content}
-              onChange={(content) => setDraft({ ...draft, content })}
-            />
-          </div>
-          <div className="mt-4">
-            <ToggleSwitch
-              label="스포일러 포함"
-              description="켜면 목록에서 내용이 가려지고, 눌러야 보여요."
-              checked={draft.hasSpoiler}
-              onChange={(hasSpoiler) => setDraft({ ...draft, hasSpoiler })}
-            />
-          </div>
-        </section>
-        <section className="core-card mt-5 p-4" aria-labelledby="share-scope-title">
-          <h2 id="share-scope-title" className="section-title">
-            어디에 남길까요? *
-          </h2>
-          <p className="page-description">
-            지금 보고 있는 공간이 기본으로 선택돼요. 나만 보려면 개인 기록을 고르세요. 새 공간에
-            가입해도 과거 기록은 자동으로 공유되지 않아요.
-          </p>
-          {spaces.length ? (
-            <fieldset className="mt-3">
-              <legend className="field-label">공간에 공유</legend>
-              <div className="space-y-2">
-                {spaces.map((space) => (
-                  <label
-                    key={space.id}
-                    className="flex min-h-12 items-center gap-3 rounded-2xl bg-white px-4 text-sm font-bold shadow-sm"
-                  >
-                    <input
-                      type="checkbox"
-                      className="h-5 w-5 accent-[var(--blue)]"
-                      checked={draft.spaceIds.includes(space.id)}
-                      onChange={(event) => {
-                        const spaceIds = event.target.checked
-                          ? [...new Set([...draft.spaceIds, space.id])]
-                          : draft.spaceIds.filter((id) => id !== space.id);
-                        const allowedAccounts = new Set(
-                          spaces
-                            .filter((item) => spaceIds.includes(item.id))
-                            .flatMap((item) => item.members)
-                            .map((member) => member.accountId),
-                        );
-                        setDraft({
-                          ...draft,
-                          spaceIds,
-                          participantAccountIds: draft.participantAccountIds.filter((id) =>
-                            allowedAccounts.has(id),
-                          ),
-                        });
-                      }}
-                    />
-                    <span>{space.name}</span>
-                    <small className="ml-auto text-xs text-[var(--muted)]">
-                      {space.members.length}명
-                    </small>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          ) : (
-            <p className="page-description mt-3">
-              {spacesError
-                ? '공간 목록을 불러오지 못했어요. 개인 기록으로는 저장할 수 있어요.'
-                : '참여 중인 공간이 없어요. 개인 기록으로 저장돼요.'}
-            </p>
-          )}
-          <button
-            type="button"
-            aria-pressed={draft.spaceIds.length === 0}
-            className={`mt-3 min-h-12 w-full rounded-2xl px-4 text-left text-sm font-black ${draft.spaceIds.length === 0 ? 'bg-[var(--blue-soft)] text-[var(--blue-ink)]' : 'bg-white text-[var(--text)] shadow-sm'}`}
-            onClick={() =>
-              setDraft({
-                ...draft,
-                spaceIds: [],
-                participantAccountIds: [],
-              })
-            }
-          >
-            개인 기록 · 나만 보기
-          </button>
-          {draft.spaceIds.length > 0 && draft.participantAccountIds.length > 0 ? (
-            <div className="mt-4">
-              <ToggleSwitch
-                label="상대가 리뷰를 쓰면 공개(블라인드)"
-                description="함께 본 사람이 이 기록에 리뷰를 남기기 전까지 내 별점·한줄평·소감이 가려져요."
-                checked={draft.isBlind}
-                onChange={(isBlind) => setDraft({ ...draft, isBlind })}
-              >
-                {draft.isBlind ? (
-                  <p className="composer-switch-preview">
-                    상대에게는 &lsquo;리뷰 잠김 · 내 리뷰를 남기면 열려요&rsquo;로 보여요.
-                  </p>
-                ) : null}
-              </ToggleSwitch>
-            </div>
-          ) : draft.spaceIds.length > 0 && !editId ? (
-            <p className="record-compose-helper mt-4">
-              아래에서 함께 본 사람을 고르면 블라인드 공개를 켤 수 있어요.
-            </p>
-          ) : null}
-        </section>
+        </div>
+
         {draft.spaceIds.length > 0 && !editId ? (
-          <fieldset className="core-card mt-4 p-4">
-            <legend className="section-title px-1">함께 본 사람</legend>
-            <p className="page-description">
-              선택한 사람에게 &lsquo;함께 봤어요&rsquo; 확인 요청이 가요. 상대가 확인하면 각자
-              별점과 리뷰를 남길 수 있어요.
-            </p>
-            {participantOptions.length === 1 ? (
-              <p className="record-compose-helper">
-                둘이 쓰는 공간이라 상대를 미리 골라 뒀어요. 혼자 봤다면 선택을 풀어 주세요.
-              </p>
-            ) : null}
+          <fieldset className="record-compose-section">
+            <legend className="record-compose-title">함께 본 사람 (선택)</legend>
             {participantOptions.length ? (
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                {participantOptions.map((member) => (
-                  <label
-                    key={member.accountId}
-                    className="flex min-h-11 items-center gap-2 rounded-xl bg-white px-3 text-sm font-bold shadow-sm"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={draft.participantAccountIds.includes(member.accountId)}
-                      onChange={(event) =>
-                        setDraft({
-                          ...draft,
-                          participantAccountIds: event.target.checked
-                            ? [...new Set([...draft.participantAccountIds, member.accountId])]
-                            : draft.participantAccountIds.filter((id) => id !== member.accountId),
-                        })
-                      }
-                    />
-                    {member.nickname || '공간 멤버'}
-                  </label>
-                ))}
+              <div className="companion-chips">
+                {participantOptions.map((member) => {
+                  const picked = draft.participantAccountIds.includes(member.accountId);
+                  return (
+                    <label key={member.accountId} className="companion-chip">
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={picked}
+                        onChange={(event) =>
+                          setDraft({
+                            ...draft,
+                            participantAccountIds: event.target.checked
+                              ? [...new Set([...draft.participantAccountIds, member.accountId])]
+                              : draft.participantAccountIds.filter((id) => id !== member.accountId),
+                          })
+                        }
+                      />
+                      <span className="companion-chip-avatar" aria-hidden="true">
+                        {(member.nickname || '공').slice(0, 1)}
+                      </span>
+                      {member.nickname || '공간 멤버'}
+                      {picked ? (
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="m5 12 5 5 9-10" />
+                        </svg>
+                      ) : null}
+                    </label>
+                  );
+                })}
               </div>
             ) : (
-              <p className="page-description mt-3">요청할 다른 공간 멤버가 없어요.</p>
+              <p className="record-compose-helper">요청할 다른 공간 멤버가 없어요.</p>
             )}
+            {participantOptions.length ? (
+              <p className="record-compose-helper">
+                {draft.participantAccountIds.length
+                  ? `저장하면 ${companionNames}님에게 함께 봤는지 확인을 요청해요. 혼자 봤다면 선택을 풀어 주세요.`
+                  : '고른 사람에게 함께 봤는지 확인을 요청해요. 상대가 확인하면 각자 별점과 리뷰를 남길 수 있어요.'}
+              </p>
+            ) : null}
           </fieldset>
         ) : null}
-        <section className="record-compose-panel mt-4">
+
+        <fieldset className="record-compose-section">
+          <legend className="record-compose-title">별점 (선택)</legend>
+          <WatchRatingControl
+            value={draft.rating}
+            onChange={(rating) => setDraft({ ...draft, rating })}
+            name="record-rating"
+          />
+          {series && !draft.completed ? (
+            <p className="record-compose-helper">드라마는 다 본 뒤에 매겨도 돼요.</p>
+          ) : null}
+        </fieldset>
+        <div className="record-compose-section">
           <CountedField
-            label={draft.spaceIds.length ? '추억 메모 · 공간 사람만 봐요' : '추억 메모 · 나만 봐요'}
+            label="한줄평 (선택)"
+            max={WATCH_HEADLINE_MAX_LENGTH}
+            placeholder="한 문장으로 남겨 보세요"
+            value={draft.headline}
+            onChange={(headline) => setDraft({ ...draft, headline })}
+          />
+        </div>
+        <div className="record-compose-section">
+          <CountedField
+            label="소감 (선택)"
+            multiline
+            max={WATCH_REVIEW_MAX_LENGTH}
+            placeholder={
+              series && draft.episodeWatched && !draft.completed
+                ? `${draft.episodeWatched}화까지 보고 느낀 점을 적어 보세요`
+                : '기억하고 싶은 장면이나 느낌을 자유롭게 남겨 보세요.'
+            }
+            value={draft.content}
+            onChange={(content) => setDraft({ ...draft, content })}
+          />
+        </div>
+        <div className="record-compose-section record-compose-switch">
+          <ToggleSwitch
+            label="스포일러 포함"
+            description="켜면 목록에서 내용이 가려지고, 눌러야 보여요."
+            checked={draft.hasSpoiler}
+            onChange={(hasSpoiler) => setDraft({ ...draft, hasSpoiler })}
+          />
+        </div>
+        {draft.spaceIds.length > 0 && draft.participantAccountIds.length > 0 ? (
+          <div className="record-compose-switch record-compose-blind mt-3">
+            <ToggleSwitch
+              label="상대가 리뷰를 쓰면 공개(블라인드)"
+              description={
+                draft.isBlind
+                  ? `${companionNames}님이 이 기록에 리뷰를 남기기 전까지 내 별점·한줄평·소감이 가려져요.`
+                  : `꺼져 있으면 저장하는 즉시 ${companionNames}님에게 보여요.`
+              }
+              checked={draft.isBlind}
+              onChange={(isBlind) => setDraft({ ...draft, isBlind })}
+              icon={
+                <svg viewBox="0 0 24 24">
+                  <path d="M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5Z" />
+                </svg>
+              }
+            >
+              {draft.isBlind ? (
+                <p className="composer-switch-preview">
+                  {companionNames}님에게는 &lsquo;
+                  {myName ? `${myName}님 리뷰가 잠겨 있어요` : '리뷰가 잠겨 있어요'}&rsquo;로
+                  보여요.
+                </p>
+              ) : null}
+            </ToggleSwitch>
+          </div>
+        ) : draft.spaceIds.length > 0 && !editId ? (
+          <p className="record-compose-helper">
+            위에서 함께 본 사람을 고르면 블라인드 공개를 켤 수 있어요.
+          </p>
+        ) : null}
+        <div className="record-compose-section">
+          <CountedField
+            label="추억 메모"
+            badge={
+              <>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5Z" />
+                </svg>
+                {draft.spaceIds.length ? '공간 사람만 봐요' : '나만 봐요'}
+              </>
+            }
+            tone="memo"
             multiline
             rows={3}
             max={WATCH_MEMORY_NOTE_MAX_LENGTH}
@@ -772,19 +869,21 @@ export function RecordComposer({ editId }: { editId?: string }) {
             value={draft.memoryNote}
             onChange={(memoryNote) => setDraft({ ...draft, memoryNote })}
           />
-        </section>
+        </div>
         {/* Optional, so it comes after everything about the viewing itself. */}
-        <section className="record-compose-panel mt-4">
+        <div className="record-compose-section">
           <PhotoPicker uploads={photoUploads} />
-        </section>
+        </div>
         {error ? (
           <p className="form-error mt-4" role="alert">
             {error}
           </p>
         ) : null}
-        <p className="record-compose-note mt-4">
-          같은 작품을 다시 봤다면 날짜와 감상 경로가 같은 경우에도 새 감상으로 저장돼요.
-        </p>
+        {editId ? null : (
+          <p className="record-compose-note mt-6">
+            같은 작품을 다시 봤다면 날짜와 감상 경로가 같은 경우에도 새 감상으로 저장돼요.
+          </p>
+        )}
         <div className="sticky-commit-bar">
           {photoUploads.uploadingCount > 0 ? (
             <p className="sticky-commit-status" role="status">
