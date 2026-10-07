@@ -10,6 +10,7 @@ import {
   type WatchReaction,
 } from '../../lib/api/watch-events';
 import { TimelineCard } from './SpaceWatchGroupCard';
+import { watchedDayLabel } from './space-watch-model';
 
 /** One person's reaction in the comparison panel, with the same blind and spoiler rules as the cards. */
 function ComparedReaction({ reaction, isMe }: { reaction: WatchReaction; isMe: boolean }) {
@@ -42,7 +43,7 @@ function ComparedReaction({ reaction, isMe }: { reaction: WatchReaction; isMe: b
       ) : hidden ? (
         <button
           type="button"
-          className="mt-1 block font-black text-[#607eae]"
+          className="mt-1 block font-black text-[var(--blue-ink)]"
           onClick={() => setSpoilerOpen(true)}
         >
           스포일러가 있어요 · 눌러서 보기
@@ -50,7 +51,7 @@ function ComparedReaction({ reaction, isMe }: { reaction: WatchReaction; isMe: b
       ) : (
         <>
           {reaction.headline ? (
-            <p className="mt-1 font-black text-[#284778]">{reaction.headline}</p>
+            <p className="mt-1 font-black text-[var(--heading)]">{reaction.headline}</p>
           ) : null}
           {reaction.review ? (
             <p className="mt-1 whitespace-pre-wrap font-semibold">{reaction.review}</p>
@@ -97,16 +98,19 @@ export function SpaceTimeline({
     <section className="mt-4 core-card p-5" aria-labelledby="active-space-timeline-title">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 id="active-space-timeline-title" className="text-[17px] font-black text-[#284778]">
+          <h2
+            id="active-space-timeline-title"
+            className="text-[17px] font-black text-[var(--heading)]"
+          >
             활성 공간 타임라인
           </h2>
-          <p className="mt-1 text-[12px] font-bold text-[#8190a5]">
+          <p className="mt-1 text-[12px] font-bold text-[var(--muted)]">
             {spaceName}에 명시적으로 공유된 감상만 보여요.
           </p>
         </div>
         <Link
           href="/records/new"
-          className="inline-flex min-h-11 items-center rounded-xl bg-[#456ca8] px-3 text-[12px] font-black text-white"
+          className="inline-flex min-h-11 items-center rounded-xl bg-[var(--blue)] px-3 text-[12px] font-black text-white"
         >
           감상 기록
         </Link>
@@ -124,8 +128,8 @@ export function SpaceTimeline({
       ) : null}
       {status === 'empty' ? (
         <div data-state="empty" className="mt-4 rounded-2xl bg-[#f7f9fd] p-5 text-center">
-          <p className="text-[14px] font-black text-[#344866]">아직 공유된 감상이 없어요.</p>
-          <p className="mt-2 text-[12px] font-bold leading-5 text-[#7b8799]">
+          <p className="text-[14px] font-black text-[var(--heading)]">아직 공유된 감상이 없어요.</p>
+          <p className="mt-2 text-[12px] font-bold leading-5 text-[var(--muted)]">
             기록 작성에서 이 공간을 선택하면 그 기록만 여기에 나타나요.
           </p>
         </div>
@@ -201,10 +205,10 @@ export function SpaceTimeline({
           aria-label="작품별 구성원 반응 비교"
         >
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-[14px] font-black text-[#284778]">작품별 구성원 반응</h3>
+            <h3 className="text-[14px] font-black text-[var(--heading)]">작품별 구성원 반응</h3>
             <button
               type="button"
-              className="text-[12px] font-black text-[#607eae]"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center px-2 text-[13px] font-black text-[var(--blue-ink)]"
               onClick={() => setComparison(null)}
             >
               닫기
@@ -214,7 +218,9 @@ export function SpaceTimeline({
             <div className="mt-3 space-y-3">
               {comparison.events.map((event) => (
                 <article key={event.watchEventId} className="rounded-xl bg-[#f7f9fd] p-3">
-                  <p className="text-[12px] font-black text-[#607eae]">{event.watchedDate} 감상</p>
+                  <p className="text-[12px] font-black text-[var(--blue-ink)]">
+                    {watchedDayLabel(event.watchedDate)} 감상
+                  </p>
                   {event.reactions.length ? (
                     <ul className="mt-2 space-y-2">
                       {event.reactions.map((reaction) => (
@@ -226,7 +232,7 @@ export function SpaceTimeline({
                       ))}
                     </ul>
                   ) : (
-                    <p className="mt-2 text-[12px] font-bold text-[#8190a5]">
+                    <p className="mt-2 text-[12px] font-bold text-[var(--muted)]">
                       확인된 참여자의 반응이 아직 없어요.
                     </p>
                   )}
@@ -234,7 +240,9 @@ export function SpaceTimeline({
               ))}
             </div>
           ) : (
-            <p className="mt-3 text-[12px] font-bold text-[#8190a5]">비교할 공유 감상이 없어요.</p>
+            <p className="mt-3 text-[12px] font-bold text-[var(--muted)]">
+              비교할 공유 감상이 없어요.
+            </p>
           )}
         </section>
       ) : null}

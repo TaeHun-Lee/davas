@@ -26,6 +26,24 @@ export function rememberActiveSpace(spaceId: string | null) {
   }
 }
 
+/** "10월 13일 오전 9시", Korean time; the minutes only when they are not on the hour. */
+export function inviteDeadlineLabel(expiresAt: string) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('ko-KR', {
+      timeZone: 'Asia/Seoul',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    })
+      .formatToParts(new Date(expiresAt))
+      .map((part) => [part.type, part.value]),
+  );
+  const minute = Number(parts.minute) ? ` ${Number(parts.minute)}분` : '';
+  return `${parts.month}월 ${parts.day}일 ${parts.dayPeriod} ${parts.hour}시${minute}`;
+}
+
 export function activeMembers(space: SpaceView) {
   return space.members.filter((member) => member.status === 'ACTIVE');
 }

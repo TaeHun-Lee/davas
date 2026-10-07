@@ -36,7 +36,7 @@ function IconButton({
       aria-label={label}
       aria-pressed={pressed}
       onClick={onClick}
-      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_8px_18px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8] transition ${pressed ? 'text-[#ff5a52]' : 'text-[#1f4e82]'}`}
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_8px_18px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8] transition ${pressed ? 'text-[#8f2620]' : 'text-[var(--heading)]'}`}
     >
       {children}
     </button>
@@ -71,7 +71,7 @@ function GenreTags({ media }: { media: MediaDetail }) {
       {fallbackTags.map((tag) => (
         <span
           key={tag}
-          className="rounded-full bg-[#eef6ff] px-2.5 py-1 text-[10px] font-extrabold text-[#2a5b8a]"
+          className="rounded-full bg-[#eef6ff] px-2.5 py-1 text-[12px] font-extrabold text-[#2a5b8a]"
         >
           {tag}
         </span>
@@ -81,7 +81,7 @@ function GenreTags({ media }: { media: MediaDetail }) {
 }
 
 function StarIcon() {
-  return <span className="text-[17px] leading-none text-[#ff5a52]">★</span>;
+  return <span className="text-[17px] leading-none text-[#b63b36]">★</span>;
 }
 
 function BookmarkIcon({ filled = false }: { filled?: boolean }) {
@@ -120,8 +120,7 @@ function ShareIcon() {
 
 function fallbackOverview(media: MediaDetail) {
   return (
-    media.overview ||
-    '작품 소개가 아직 준비되지 않았어요. 다이어리를 작성하며 나만의 감상을 남겨보세요.'
+    media.overview || '작품 소개가 아직 준비되지 않았어요. 보고 나서 우리만의 감상을 남겨 보세요.'
   );
 }
 
@@ -308,7 +307,7 @@ export function MediaDetailModal({
               />
             </svg>
           </IconButton>
-          <h2 className="absolute left-1/2 -translate-x-1/2 text-[16px] font-black leading-[22px] tracking-[-0.025em] text-[#1f4e82]">
+          <h2 className="absolute left-1/2 -translate-x-1/2 text-[16px] font-black leading-[22px] tracking-[-0.025em] text-[var(--heading)]">
             {detailTitle}
           </h2>
           <div className="flex gap-2">
@@ -328,22 +327,22 @@ export function MediaDetailModal({
         <section className="relative z-[1] mt-4 flex gap-3 min-[390px]:gap-4">
           <Poster media={media} />
           <div className="min-w-0 flex-1 pt-1">
-            <h1 className="line-clamp-2 text-[24px] font-black leading-[29px] tracking-[-0.045em] text-[#1f4e82]">
+            <h1 className="line-clamp-2 text-[24px] font-black leading-[29px] tracking-[-0.045em] text-[var(--heading)]">
               {media.title}
             </h1>
-            <p className="mt-1 truncate text-[13px] font-bold leading-[18px] text-[#8a94a6]">
+            <p className="mt-1 truncate text-[13px] font-bold leading-[18px] text-[var(--muted)]">
               {media.originalTitle || media.title}
             </p>
-            <p className="mt-2 text-[12px] font-extrabold leading-[17px] text-[#6e7889]">
+            <p className="mt-2 text-[12px] font-extrabold leading-[17px] text-[var(--muted)]">
               {year} · {runtimeText}
             </p>
             <GenreTags media={media} />
             <div className="mt-3 flex items-center gap-1.5">
               <StarIcon />
-              <strong className="text-[20px] font-black leading-none text-[#1f4e82]">
+              <strong className="text-[20px] font-black leading-none text-[var(--heading)]">
                 {tmdbRating ?? '-'}
               </strong>
-              <span className="text-[11px] font-bold text-[#9aa6b8]">
+              <span className="text-[12px] font-bold text-[var(--muted)]">
                 (TMDB{media.tmdbVoteCount ? ` · ${media.tmdbVoteCount.toLocaleString()}명` : ''})
               </span>
             </div>
@@ -354,32 +353,26 @@ export function MediaDetailModal({
           <button
             type="button"
             onClick={() => (onRecord ? onRecord() : router.push(recordUrl))}
-            className="flex h-[50px] items-center justify-center gap-2 rounded-[16px] bg-[#ff5a52] text-[13px] font-black text-white shadow-[0_12px_22px_rgba(255,90,82,0.28)]"
+            className="flex h-[52px] items-center justify-center rounded-[16px] bg-[var(--blue)] text-[15px] font-black text-white shadow-[0_12px_24px_rgba(33,107,216,0.22)]"
           >
-            <span aria-hidden="true">✎</span> {recordLabel}
+            {recordLabel}
           </button>
           <button
             type="button"
             aria-pressed={wanted}
             disabled={wishPending}
             onClick={() => void toggleWish()}
-            className={`flex h-[50px] items-center justify-center gap-1.5 rounded-[16px] bg-white text-[13px] font-black shadow-[0_10px_22px_rgba(31,65,114,0.08)] ring-1 ring-[#edf2f8] transition ${wanted ? 'text-[#ff5a52]' : 'text-[#1f4e82]'}`}
+            className={`flex h-[52px] items-center justify-center gap-1.5 rounded-[16px] text-[14px] font-black shadow-[0_10px_22px_rgba(31,65,114,0.08)] ring-1 transition ${wanted ? 'bg-[#ffe7e5] text-[#8f2620] ring-[#f6c9c5]' : 'bg-white text-[var(--heading)] ring-[#edf2f8]'}`}
           >
             {wanted ? `♥ ${wishLabel}` : `♡ ${wishLabel}`}
           </button>
         </div>
 
         <div className="mt-5 space-y-3">
-          <DetailInfoCard title="시놉시스">{overview}</DetailInfoCard>
           <WatchableNowCard
             status={watchable.status}
             availability={watchable.availability}
             myServices={together.myServices}
-          />
-          <BasicInfoGrid media={media} />
-          <MyRatingCard
-            diaries={media.myDiaries ?? (media.myDiary ? [media.myDiary] : [])}
-            averageRating={media.myAverageRating ?? media.myDiary?.rating ?? null}
           />
           {/* With a space, its members' reactions; without one, the older friends' records. */}
           {together.status === 'ready' && !together.space ? (
@@ -401,6 +394,12 @@ export function MediaDetailModal({
               returnTo={detailReturnTo}
             />
           )}
+          <DetailInfoCard title="시놉시스">{overview}</DetailInfoCard>
+          <BasicInfoGrid media={media} />
+          <MyRatingCard
+            diaries={media.myDiaries ?? (media.myDiary ? [media.myDiary] : [])}
+            averageRating={media.myAverageRating ?? media.myDiary?.rating ?? null}
+          />
         </div>
 
         <StillCutStrip media={media} />

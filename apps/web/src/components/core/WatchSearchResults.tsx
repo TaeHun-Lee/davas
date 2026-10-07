@@ -26,12 +26,15 @@ export function WatchSearchResults({
   mediaType,
   sourceKind,
   returnTo,
+  onCount,
 }: {
   scope: WatchSearchScope;
   q: string;
   mediaType: MediaType | null;
   sourceKind: WatchSourceKind | null;
   returnTo: string;
+  /** "2개", or "20개 이상" while more pages wait; null while nothing is shown. */
+  onCount?: (label: string | null) => void;
 }) {
   const { state } = useActiveSpace();
   const spaceId = state.status === 'ready' ? (state.space?.id ?? null) : null;
@@ -76,6 +79,10 @@ export function WatchSearchResults({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    onCount?.(status === 'ready' ? `${items.length}개${cursor ? ' 이상' : ''}` : null);
+  }, [onCount, status, items.length, cursor]);
 
   if (noSpace)
     return (

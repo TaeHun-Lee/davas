@@ -17,7 +17,10 @@ describe('record experience screens', () => {
       composer.indexOf('<PhotoPicker uploads={photoUploads} />') >
         composer.indexOf('label="추억 메모"'),
     );
-    assert.match(picker, /<span>사진 첨부 \(선택\)<\/span>/);
+    assert.match(picker, /label = '사진 첨부 \(선택\)'/);
+    assert.match(picker, /<span>\{label\}<\/span>/);
+    // Adding my photos to someone's record says what it is for, not the composer's help.
+    assert.match(source('components/core/MyPhotosPanel.tsx'), /label="올릴 사진"/);
     assert.doesNotMatch(picker, /데이트 사진/);
     // Optional fields all say "(선택)", and the memo hint fits a friends' space too.
     assert.doesNotMatch(picker + composer, /\(옵션\)/);

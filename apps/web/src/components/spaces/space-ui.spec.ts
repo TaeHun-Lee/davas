@@ -5,6 +5,7 @@ import type { SpaceView } from '../../lib/api/spaces';
 import {
   chooseActiveSpace,
   defaultWatchPartners,
+  inviteDeadlineLabel,
   inviteStatusMessage,
   spaceErrorMessage,
 } from './space-ui';
@@ -69,5 +70,10 @@ describe('space UI state policy', () => {
     assert.match(inviteStatusMessage('INVALID'), /유효하지/);
     assert.match(inviteStatusMessage('DECLINED'), /거절한 초대/);
     assert.match(inviteStatusMessage('FULL'), /정원이 모두 차서/);
+  });
+
+  it('writes the invite deadline the way people say it, in Korean time', () => {
+    assert.equal(inviteDeadlineLabel('2026-10-13T00:00:00.000Z'), '10월 13일 오전 9시');
+    assert.equal(inviteDeadlineLabel('2026-10-13T06:30:00.000Z'), '10월 13일 오후 3시 30분');
   });
 });

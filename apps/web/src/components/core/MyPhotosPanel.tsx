@@ -75,7 +75,14 @@ export function MyPhotosPanel({
           : `기록 하나에 ${WATCH_PHOTO_MAX_COUNT}장까지 올릴 수 있어요.`}
       </p>
       <div className="mt-3">
-        <PhotoPicker uploads={uploads} />
+        <PhotoPicker
+          uploads={uploads}
+          label="올릴 사진"
+          help="‹ › 버튼으로 순서를 바꿀 수 있어요. 원본은 그대로 보관돼요."
+          // The author's photos lead the record, so my first is its cover only when I wrote
+          // it or nobody else has added any.
+          coverBadge={watchEvent.author.accountId === myAccountId || others === 0}
+        />
       </div>
       {error ? (
         <p className="form-error mt-3" role="alert">

@@ -243,6 +243,9 @@ export function SearchScreen() {
   const viewingMethod = (params.get('viewingMethod') as ViewingMethod | null) || null;
   const sourceKind = (params.get('sourceKind') as WatchSourceKind | null) || null;
   const hasFilters = Boolean(q || mediaType || (scope === 'friends' ? viewingMethod : sourceKind));
+  // Words alone are not a filter; the chips are.
+  const filterOn = Boolean(mediaType || (scope === 'friends' ? viewingMethod : sourceKind));
+  const [countLabel, setCountLabel] = useState<string | null>(null);
   const returnParams = new URLSearchParams(params.toString());
   returnParams.set('scope', scope);
   const returnTo = `/search?${returnParams.toString()}`;
@@ -350,7 +353,11 @@ export function SearchScreen() {
       </section>
       <div className="record-search-summary">
         <h2>검색 결과</h2>
-        <span>{hasFilters ? '필터 적용 중' : '최신순'}</span>
+        {scope === 'friends' ? (
+          <span>{filterOn ? '필터 적용 중' : '최신순'}</span>
+        ) : countLabel ? (
+          <span>{countLabel}</span>
+        ) : null}
       </div>
       {scope === 'friends' ? (
         <RecordList
@@ -369,6 +376,7 @@ export function SearchScreen() {
           mediaType={mediaType}
           sourceKind={sourceKind}
           returnTo={returnTo}
+          onCount={setCountLabel}
         />
       )}
     </TaskShell>

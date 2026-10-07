@@ -396,11 +396,12 @@ a {
 }
 .home-recommendation-tabs button {
   min-width: 76px;
-  min-height: 36px;
+  min-height: 44px;
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: var(--muted);
+  /* --muted is just under 4.5:1 on this grey track. */
+  color: #4a5a70;
   font-size: 13px;
   font-weight: 800;
 }
@@ -482,7 +483,7 @@ a {
   overflow: hidden;
   margin-top: 3px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 16px;
   font-weight: 700;
   text-overflow: ellipsis;
@@ -535,7 +536,7 @@ a {
   justify-content: center;
   background: rgba(10, 25, 48, 0.62);
   color: white;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 850;
   backdrop-filter: blur(2px);
 }
@@ -992,7 +993,7 @@ a {
   background: #fff1d9;
   padding: 4px 9px;
   color: #7a4b00;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 850;
 }
 .space-watch-badge svg {
@@ -1402,7 +1403,7 @@ a {
   background: rgba(255, 255, 255, 0.28);
 }
 .recap-months small {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 750;
   opacity: 0.85;
 }
@@ -1417,7 +1418,7 @@ a {
   padding: 8px 12px;
 }
 .recap-lines dt {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 750;
   opacity: 0.8;
 }
@@ -1491,7 +1492,7 @@ a {
 .calendar-weekdays {
   margin-top: 12px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   text-align: center;
 }
@@ -1516,7 +1517,7 @@ a {
 }
 .calendar-day:disabled {
   background: transparent;
-  color: #9aa6b8;
+  color: var(--muted);
 }
 .calendar-day[data-today] {
   border-color: var(--blue);
@@ -1919,7 +1920,7 @@ a {
   background: rgba(255, 255, 255, 0.12);
   padding: 4px 9px;
   color: #e6edf7;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
 }
 .wish-pick-reasons li[data-tone='match'] {
@@ -2157,7 +2158,7 @@ a {
 .wishes-badges > span[data-tone] {
   border-radius: 999px;
   padding: 3px 8px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 900;
 }
 .wishes-badges > span[data-tone='everyone'] {
@@ -2195,7 +2196,7 @@ a {
 .wishes-source {
   margin-top: 14px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 16px;
   font-weight: 650;
   text-align: center;
@@ -2603,13 +2604,14 @@ label:has(> input.sr-only:focus-visible) {
   cursor: not-allowed;
 }
 /* On a record: my own photos, next to what others added. */
+/* Below the title and its chips, as on the C안 board. */
 .record-photos-add {
   width: 100%;
   min-height: 44px;
-  margin-bottom: 16px;
+  margin-top: 16px;
 }
 .record-photos-panel {
-  margin-bottom: 16px;
+  margin-top: 16px;
   padding: 16px;
 }
 .photo-picker-grid {
@@ -2643,7 +2645,7 @@ label:has(> input.sr-only:focus-visible) {
   background: var(--blue);
   padding: 3px 8px;
   color: white;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 900;
 }
 .photo-tile-overlay {
@@ -2655,7 +2657,7 @@ label:has(> input.sr-only:focus-visible) {
   background: linear-gradient(transparent, rgba(10, 20, 38, 0.82));
   padding: 18px 8px 8px;
   color: white;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 850;
 }
 /* The message and retry sit at the bottom so the delete button keeps the top corner. */
@@ -2799,7 +2801,7 @@ label:has(> input.sr-only:focus-visible) {
   background: #eef2f8;
   padding: 4px 9px;
   color: #4a5a70;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 850;
 }
 .composer-field-badge svg {
@@ -2928,6 +2930,11 @@ label:has(> input.sr-only:focus-visible) {
   border-radius: 18px;
   background: var(--blue-soft);
   padding: 16px;
+}
+/* The soft button would vanish on the box's own soft blue. */
+.recovery-code-box .secondary-button {
+  border: 1px solid #c9daf5;
+  background: white;
 }
 .recovery-code {
   color: var(--heading);
@@ -3267,6 +3274,7 @@ label:has(> input.sr-only:focus-visible) {
   font-weight: 900;
 }
 .review-card[data-me] .review-avatar,
+.my-review-prompt .review-avatar,
 .comments-list li[data-me] .review-avatar {
   background: var(--blue);
 }
@@ -3293,7 +3301,7 @@ label:has(> input.sr-only:focus-visible) {
   background: var(--blue-soft);
   padding: 3px 9px;
   color: var(--blue-ink);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 850;
 }
 .review-lock {
@@ -3450,7 +3458,7 @@ label:has(> input.sr-only:focus-visible) {
   background: #f6eedd;
   padding: 4px 9px;
   color: #6b5126;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 850;
 }
 .memory-note-head svg {
@@ -3580,6 +3588,10 @@ label:has(> input.sr-only:focus-visible) {
   background: white;
   padding-left: 14px;
   box-shadow: 0 6px 18px rgba(31, 65, 114, 0.05);
+}
+.search-field:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue);
 }
 .search-field-icon {
   width: 18px;
@@ -3771,12 +3783,12 @@ label:has(> input.sr-only:focus-visible) {
 .record-search-filter-heading p {
   margin-top: 3px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 17px;
   font-weight: 650;
 }
 .record-search-filter-heading button {
-  min-height: 36px;
+  min-height: 44px;
   flex: none;
   border: 0;
   border-radius: 11px;
@@ -3809,7 +3821,7 @@ label:has(> input.sr-only:focus-visible) {
   background: var(--soft-card);
   padding: 5px 9px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 750;
 }
 .record-card {
@@ -4282,7 +4294,7 @@ label:has(> input.sr-only:focus-visible) {
   top: 0;
   left: 0;
   overflow: hidden;
-  color: #ffb324;
+  color: #f2a516;
   white-space: nowrap;
 }
 .watch-rating-value {
@@ -4309,7 +4321,7 @@ label:has(> input.sr-only:focus-visible) {
 .watch-rating-range::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #ffb324, #ffd880);
+  background: linear-gradient(90deg, #f2a516, #f8d58a);
 }
 .watch-rating-range::-webkit-slider-thumb {
   width: 24px;
@@ -4325,7 +4337,7 @@ label:has(> input.sr-only:focus-visible) {
   height: 6px;
   border: 0;
   border-radius: 999px;
-  background: linear-gradient(90deg, #ffb324, #ffd880);
+  background: linear-gradient(90deg, #f2a516, #f8d58a);
 }
 .watch-rating-range::-moz-range-thumb {
   width: 18px;
@@ -4342,7 +4354,7 @@ label:has(> input.sr-only:focus-visible) {
   justify-content: space-between;
   gap: 10px;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 16px;
   font-weight: 650;
 }

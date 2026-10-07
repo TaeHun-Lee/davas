@@ -572,11 +572,6 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
         watchedDate={watchEvent.watchedDate}
         uploaderLabel={uploaderLabel}
       />
-      {/* The author and anyone who confirmed being there can add their own photos. */}
-      {canReact && myAccountId ? (
-        <MyPhotosPanel watchEvent={watchEvent} myAccountId={myAccountId} onSaved={setWatchEvent} />
-      ) : null}
-
       <section className="record-detail-head" aria-labelledby="record-detail-title">
         <div className="flex gap-3">
           <Poster url={watchEvent.media.posterUrl} title={watchEvent.media.title} />
@@ -628,6 +623,11 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
           ))}
         </ul>
       </section>
+
+      {/* The author and anyone who confirmed being there can add their own photos. */}
+      {canReact && myAccountId ? (
+        <MyPhotosPanel watchEvent={watchEvent} myAccountId={myAccountId} onSaved={setWatchEvent} />
+      ) : null}
 
       {currentParticipant?.status === 'PENDING' ? (
         <section className="space-confirm-card mt-5" aria-labelledby="record-confirm-title">

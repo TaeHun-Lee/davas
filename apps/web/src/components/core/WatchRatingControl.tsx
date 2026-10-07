@@ -1,16 +1,10 @@
-export const WATCH_RATINGS = Array.from(
-  { length: 10 },
-  (_, index) => (index + 1) / 2,
-);
+export const WATCH_RATINGS = Array.from({ length: 10 }, (_, index) => (index + 1) / 2);
 
 function RatingStar({ fillPercent }: { fillPercent: number }) {
   return (
     <span className="watch-rating-star" aria-hidden="true">
       <span>★</span>
-      <span
-        className="watch-rating-star-fill"
-        style={{ width: `${fillPercent}%` }}
-      >
+      <span className="watch-rating-star-fill" style={{ width: `${fillPercent}%` }}>
         ★
       </span>
     </span>
@@ -41,10 +35,7 @@ export function WatchRatingControl({
           {Array.from({ length: 5 }).map((_, index) => (
             <RatingStar
               key={index}
-              fillPercent={Math.min(
-                100,
-                Math.max(0, (sliderValue - index) * 100),
-              )}
+              fillPercent={Math.min(100, Math.max(0, (sliderValue - index) * 100))}
             />
           ))}
         </div>
@@ -62,9 +53,7 @@ export function WatchRatingControl({
         step={0.5}
         value={sliderValue}
         aria-label="별점 슬라이더"
-        aria-valuetext={
-          value === null ? '별점 안 남김' : `5점 만점에 ${value.toFixed(1)}점`
-        }
+        aria-valuetext={value === null ? '별점 안 남김' : `5점 만점에 ${value.toFixed(1)}점`}
         onChange={(event) => updateValue(Number(event.target.value))}
       />
       <div className="watch-rating-help">

@@ -220,7 +220,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
           </p>
           <Link
             href="/friends"
-            className="mt-3 inline-flex min-h-11 items-center text-[13px] font-black text-[#5575a6] underline underline-offset-4"
+            className="mt-3 inline-flex min-h-11 items-center text-[13px] font-black text-[var(--blue-ink)] underline underline-offset-4"
           >
             기존 친구 관리로 이동
           </Link>
@@ -229,7 +229,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
         {error ? (
           <p
             role="alert"
-            className="mt-4 rounded-2xl bg-[#fff1f0] px-4 py-3 text-[13px] font-bold leading-5 text-[#c4453c]"
+            className="mt-4 rounded-2xl bg-[#fff1f0] px-4 py-3 text-[13px] font-bold leading-5 text-[var(--danger)]"
           >
             {error}
           </p>
@@ -245,12 +245,12 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
 
         {loading ? (
           <section data-state="loading" className="mt-5 core-card p-6 text-center">
-            <p className="text-[14px] font-bold text-[#738096]">공간을 불러오는 중이에요…</p>
+            <p className="text-[14px] font-bold text-[var(--muted)]">공간을 불러오는 중이에요…</p>
           </section>
         ) : (
           <>
             <section className="mt-5 core-card p-5">
-              <h2 className="text-[17px] font-black text-[#284778]">내 공간</h2>
+              <h2 className="text-[17px] font-black text-[var(--heading)]">내 공간</h2>
               {spaces.length > 0 ? (
                 <label className="mt-4 block text-[13px] font-black text-[#53637b]">
                   활성 공간 선택
@@ -258,7 +258,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                     aria-label="활성 공간 선택"
                     value={activeSpaceId ?? ''}
                     onChange={(event) => selectSpace(event.target.value)}
-                    className="mt-2 min-h-12 w-full rounded-2xl border border-[#dce4ef] bg-[#f8faff] px-4 text-[15px] font-bold text-[#253552]"
+                    className="mt-2 min-h-12 w-full rounded-2xl border border-[#dce4ef] bg-[#f8faff] px-4 text-[15px] font-bold text-[var(--heading)]"
                   >
                     {spaces.map((space) => (
                       <option key={space.id} value={space.id}>
@@ -269,14 +269,14 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                 </label>
               ) : (
                 <div data-state="empty" className="py-5 text-center">
-                  <p className="text-[15px] font-black text-[#344866]">
+                  <p className="text-[15px] font-black text-[var(--heading)]">
                     아직 참여 중인 공간이 없어요.
                   </p>
-                  <p className="mt-2 text-[13px] font-semibold leading-5 text-[#7b8799]">
+                  <p className="mt-2 text-[13px] font-semibold leading-5 text-[var(--muted)]">
                     새 공간은 소유자 한 명으로 시작해요. 초대로 2~5명이 함께할 수 있어요.
                   </p>
                   {view === 'recommend' ? (
-                    <p className="mt-2 text-[13px] font-bold leading-5 text-[#456ca8]">
+                    <p className="mt-2 text-[13px] font-bold leading-5 text-[var(--blue-ink)]">
                       함께 고르기는 공간을 만들고 멤버를 초대한 뒤 쓸 수 있어요.
                     </p>
                   ) : null}
@@ -285,7 +285,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
             </section>
 
             <form onSubmit={handleCreate} className="mt-4 core-card p-5">
-              <h2 className="text-[17px] font-black text-[#284778]">새 공간 만들기</h2>
+              <h2 className="text-[17px] font-black text-[var(--heading)]">새 공간 만들기</h2>
               <label className="mt-4 block text-[13px] font-black text-[#53637b]">
                 공간 이름
                 <input
@@ -316,7 +316,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
               <button
                 type="submit"
                 disabled={busy || !name.trim()}
-                className="mt-4 min-h-12 w-full rounded-2xl bg-[#456ca8] px-4 text-[14px] font-black text-white disabled:opacity-50"
+                className="mt-4 min-h-12 w-full rounded-2xl bg-[var(--blue)] px-4 text-[14px] font-black text-white disabled:opacity-50"
               >
                 공간 만들기
               </button>
@@ -352,8 +352,8 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                       onClick={() => changeView(option.value)}
                       className={`min-h-11 rounded-xl text-[13px] font-black ${
                         view === option.value
-                          ? 'bg-white text-[#284778] shadow-[0_4px_12px_rgba(31,65,114,0.10)]'
-                          : 'text-[#6f7f96]'
+                          ? 'bg-white text-[var(--heading)] shadow-[0_4px_12px_rgba(31,65,114,0.10)]'
+                          : 'text-[var(--muted)]'
                       }`}
                     >
                       {option.label}
@@ -380,12 +380,14 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                 <section className="mt-4 core-card p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h2 className="text-[18px] font-black text-[#284778]">{activeSpace.name}</h2>
-                      <p className="mt-1 text-[12px] font-bold text-[#8190a5]">
+                      <h2 className="text-[18px] font-black text-[var(--heading)]">
+                        {activeSpace.name}
+                      </h2>
+                      <p className="mt-1 text-[12px] font-bold text-[var(--muted)]">
                         멤버 {activeSpace.members.length}/{activeSpace.maxMembers}명 · 최대 5명
                       </p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-[#edf3fb] px-3 py-1 text-[11px] font-black text-[#5575a6]">
+                    <span className="shrink-0 rounded-full bg-[#edf3fb] px-3 py-1 text-[12px] font-black text-[var(--blue-ink)]">
                       {isOwner ? '소유자' : '멤버'}
                     </span>
                   </div>
@@ -416,7 +418,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                           disabled={
                             busy || !spaceName.trim() || spaceName.trim() === activeSpace.name
                           }
-                          className="min-h-11 rounded-xl bg-[#456ca8] text-[13px] font-black text-white disabled:opacity-50"
+                          className="min-h-11 rounded-xl bg-[var(--blue)] text-[13px] font-black text-white disabled:opacity-50"
                         >
                           이름 저장
                         </button>
@@ -429,7 +431,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                         setSpaceName(activeSpace.name);
                         setRenaming(true);
                       }}
-                      className="mt-3 min-h-11 rounded-xl bg-[#f1f5fb] px-4 text-[13px] font-black text-[#456ca8]"
+                      className="mt-3 min-h-11 rounded-xl bg-[#f1f5fb] px-4 text-[13px] font-black text-[var(--blue-ink)]"
                     >
                       공간 이름 바꾸기
                     </button>
@@ -441,11 +443,11 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                         key={member.accountId}
                         className="flex min-h-12 items-center justify-between rounded-2xl bg-[#f7f9fd] px-4"
                       >
-                        <span className="text-[14px] font-bold text-[#344866]">
+                        <span className="text-[14px] font-bold text-[var(--heading)]">
                           {member.nickname || '이름 없는 멤버'}
                           {member.accountId === myAccountId ? ' (나)' : ''}
                         </span>
-                        <span className="text-[11px] font-black text-[#7587a2]">
+                        <span className="text-[12px] font-black text-[var(--muted)]">
                           {member.role === 'OWNER' ? '소유자' : '멤버'}
                         </span>
                       </li>
@@ -455,8 +457,8 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
 
                 {isOwner ? (
                   <section className="mt-4 core-card p-5">
-                    <h2 className="text-[17px] font-black text-[#284778]">초대 관리</h2>
-                    <p className="mt-2 text-[13px] font-semibold leading-5 text-[#7b8799]">
+                    <h2 className="text-[17px] font-black text-[var(--heading)]">초대 관리</h2>
+                    <p className="mt-2 text-[13px] font-semibold leading-5 text-[var(--muted)]">
                       링크 하나는 한 명만 수락할 수 있어요. 정원은 최대 5명이에요.
                     </p>
                     <label className="mt-4 block text-[13px] font-black text-[#53637b]">
@@ -476,7 +478,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                       type="button"
                       disabled={busy || activeSpace.members.length >= activeSpace.maxMembers}
                       onClick={handleCreateInvite}
-                      className="mt-3 min-h-12 w-full rounded-2xl bg-[#456ca8] px-4 text-[14px] font-black text-white disabled:opacity-50"
+                      className="mt-3 min-h-12 w-full rounded-2xl bg-[var(--blue)] px-4 text-[14px] font-black text-white disabled:opacity-50"
                     >
                       초대 링크 만들기
                     </button>
@@ -496,7 +498,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                             className="mt-2 min-h-12 w-full rounded-xl border border-[#dce4ef] bg-white px-3 text-[12px] text-[#53637b]"
                           />
                         </label>
-                        <p className="mt-2 text-[11px] font-bold text-[#8190a5]">
+                        <p className="mt-2 text-[12px] font-bold text-[var(--muted)]">
                           {new Date(invite.expiresAt).toLocaleString('ko-KR')} 만료
                         </p>
                         <div className="mt-3 grid grid-cols-2 gap-2">
@@ -504,7 +506,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                             type="button"
                             aria-label="초대 링크 복사"
                             onClick={handleCopyInvite}
-                            className="min-h-11 rounded-xl bg-[#e9f0fa] text-[13px] font-black text-[#456ca8]"
+                            className="min-h-11 rounded-xl bg-[#e9f0fa] text-[13px] font-black text-[var(--blue-ink)]"
                           >
                             링크 복사
                           </button>
@@ -513,7 +515,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                             aria-label="초대 취소"
                             onClick={handleCancelInvite}
                             disabled={busy}
-                            className="min-h-11 rounded-xl bg-[#fff1f0] text-[13px] font-black text-[#c4453c]"
+                            className="min-h-11 rounded-xl bg-[#fff1f0] text-[13px] font-black text-[var(--danger)]"
                           >
                             초대 취소
                           </button>
@@ -524,7 +526,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                 ) : null}
 
                 <section className="mt-4 core-card p-5">
-                  <h2 className="text-[17px] font-black text-[#284778]">멤버십 관리</h2>
+                  <h2 className="text-[17px] font-black text-[var(--heading)]">멤버십 관리</h2>
                   {isOwner && ownershipCandidates.length > 0 ? (
                     <div className="mt-4">
                       <label className="block text-[13px] font-black text-[#53637b]">
@@ -548,7 +550,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                         aria-label="공간 소유권 이전"
                         disabled={busy || !newOwnerId}
                         onClick={handleTransferOwnership}
-                        className="mt-3 min-h-12 w-full rounded-2xl bg-[#e9f0fa] text-[13px] font-black text-[#456ca8] disabled:opacity-50"
+                        className="mt-3 min-h-12 w-full rounded-2xl bg-[#e9f0fa] text-[13px] font-black text-[var(--blue-ink)] disabled:opacity-50"
                       >
                         소유권 이전
                       </button>
@@ -559,7 +561,7 @@ export function SpacesScreen({ initialView = 'timeline' }: { initialView?: Space
                     type="button"
                     aria-label={isOwner ? '공간 종료 시작' : '공간 탈퇴 시작'}
                     onClick={() => setDangerAction(isOwner ? 'close' : 'leave')}
-                    className="mt-4 min-h-12 w-full rounded-2xl bg-[#fff1f0] text-[13px] font-black text-[#c4453c]"
+                    className="mt-4 min-h-12 w-full rounded-2xl bg-[#fff1f0] text-[13px] font-black text-[var(--danger)]"
                   >
                     {isOwner ? '공간 종료' : '공간 탈퇴'}
                   </button>

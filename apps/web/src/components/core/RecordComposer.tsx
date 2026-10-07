@@ -115,6 +115,8 @@ export function RecordComposer({ editId }: { editId?: string }) {
   const [shareOpen, setShareOpen] = useState(false);
   // Companions may have added photos to the record being edited; they count toward its ten.
   const [otherPhotoCount, setOtherPhotoCount] = useState(0);
+  // Bumped by "다시 시도" to run the first load again after it failed.
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const photoUploads = useWatchPhotoUploads(WATCH_PHOTO_MAX_COUNT - otherPhotoCount);
   const { reset: resetPhotos } = photoUploads;
   const searchType = mediaType === 'MOVIE' ? 'movie' : mediaType === 'TV' ? 'tv' : 'multi';
@@ -226,7 +228,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
     return () => {
       active = false;
     };
-  }, [detailMediaId, editId, mediaId, resetPhotos]);
+  }, [detailMediaId, editId, mediaId, resetPhotos, loadAttempt]);
   const uploadedPhotos = photoUploads.items.flatMap((item) =>
     item.status === 'done' && item.photo ? [item.photo] : [],
   );
@@ -261,7 +263,25 @@ export function RecordComposer({ editId }: { editId?: string }) {
         title={editId ? '기록 수정' : '기록 남기기'}
         fallback={editId ? `/records/${editId}` : '/'}
       >
-        {error ? <p className="form-error">{error}</p> : <AsyncState kind="loading" />}
+        {error ? (
+          <>
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+            <button
+              type="button"
+              className="primary-button mt-3 w-full"
+              onClick={() => {
+                setError('');
+                setLoadAttempt((value) => value + 1);
+              }}
+            >
+              다시 시도
+            </button>
+          </>
+        ) : (
+          <AsyncState kind="loading" />
+        )}
       </TaskShell>
     );
 

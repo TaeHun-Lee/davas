@@ -6,7 +6,25 @@ import { PHOTO_ACCEPT, type WatchPhotoUploads } from '../../hooks/useWatchPhotoU
 
 type Notice = { text: string; forCount: number };
 
-export function PhotoPicker({ uploads }: { uploads: WatchPhotoUploads }) {
+const COMPOSER_HELP =
+  '사진 없이도 저장할 수 있어요. 최대 10장까지 첨부할 수 있고, 첫 번째 사진이 대표 사진으로 보여요. 원본은 그대로 보관돼요.';
+
+/**
+ * Picks, uploads and orders photos. The composer uses the defaults; the panel for adding my
+ * photos to someone's record passes its own label and help, and drops the cover badge when
+ * my first photo is not the record's first.
+ */
+export function PhotoPicker({
+  uploads,
+  label = '사진 첨부 (선택)',
+  help = COMPOSER_HELP,
+  coverBadge = true,
+}: {
+  uploads: WatchPhotoUploads;
+  label?: string;
+  help?: string;
+  coverBadge?: boolean;
+}) {
   const inputId = useId();
   const [notice, setNotice] = useState<Notice | null>(null);
   const { items, limit } = uploads;
@@ -36,7 +54,7 @@ export function PhotoPicker({ uploads }: { uploads: WatchPhotoUploads }) {
   return (
     <fieldset className="photo-picker">
       <legend>
-        <span>사진 첨부 (선택)</span>
+        <span>{label}</span>
         <span className="photo-picker-count" data-full={full || undefined}>
           {items.length}/{limit}
         </span>
@@ -53,7 +71,7 @@ export function PhotoPicker({ uploads }: { uploads: WatchPhotoUploads }) {
         {items.map((item, index) => (
           <li key={item.key} className="photo-tile" data-status={item.status}>
             <img src={item.previewUrl} alt={`사진 ${index + 1}`} />
-            {index === 0 && item.status === 'done' ? (
+            {coverBadge && index === 0 && item.status === 'done' ? (
               <span className="photo-tile-badge">대표</span>
             ) : null}
             {item.status === 'queued' ? (
@@ -154,10 +172,7 @@ export function PhotoPicker({ uploads }: { uploads: WatchPhotoUploads }) {
           사진 추가 ({limit}장을 모두 채웠어요)
         </button>
       ) : null}
-      <p className="photo-picker-help">
-        사진 없이도 저장할 수 있어요. 최대 10장까지 첨부할 수 있고, 첫 번째 사진이 대표 사진으로
-        보여요. 원본은 그대로 보관돼요.
-      </p>
+      <p className="photo-picker-help">{help}</p>
     </fieldset>
   );
 }

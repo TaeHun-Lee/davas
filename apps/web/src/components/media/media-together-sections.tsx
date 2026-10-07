@@ -8,7 +8,7 @@ import { ourReactions, watchableGroups, type ReactionPerson } from './media-toge
 
 const card =
   'rounded-[20px] bg-white p-4 shadow-[0_10px_24px_rgba(31,65,114,0.07)] ring-1 ring-[#edf2f8]';
-const title = 'text-[15px] font-black leading-[20px] tracking-[-0.025em] text-[#1f4e82]';
+const title = 'text-[15px] font-black leading-[20px] tracking-[-0.025em] text-[var(--heading)]';
 const quiet = 'mt-2 text-[12px] font-semibold leading-[19px] text-[#5f6b7a]';
 
 function PersonRow({ person, returnTo }: { person: ReactionPerson; returnTo: string }) {
@@ -27,23 +27,20 @@ function PersonRow({ person, returnTo }: { person: ReactionPerson; returnTo: str
         <b className="min-w-0 flex-1 truncate text-[13px] font-extrabold text-[#1f2a44]">
           {person.name}
           {person.watchCount > 1 ? (
-            <span className="ml-1 text-[11px] font-bold text-[#6e7889]">
+            <span className="ml-1 text-[12px] font-bold text-[var(--muted)]">
               · {person.watchCount}번 봤어요
             </span>
           ) : null}
         </b>
-        <span className="shrink-0 text-[13px] font-black text-[#1f2a44]">
+        <span className="shrink-0 text-[13px] font-black">
           {person.locked ? (
-            <span aria-label="별점 가려짐">★ ?.?</span>
+            <span role="img" aria-label="별점 가려짐" className="text-[#4a5a70]">
+              ★ ?.?
+            </span>
           ) : person.rating !== null ? (
-            <>
-              <span aria-hidden="true" className="text-[#f2a516]">
-                ★
-              </span>{' '}
-              {person.rating.toFixed(1)}
-            </>
+            <span className="text-[#b63b36]">★ {person.rating.toFixed(1)}</span>
           ) : (
-            <span className="text-[11px] font-bold text-[#6e7889]">별점 없음</span>
+            <span className="text-[12px] font-bold text-[var(--muted)]">별점 없음</span>
           )}
         </span>
       </div>
@@ -96,8 +93,8 @@ export function OurReactionsCard({
           우리 반응
         </h3>
         {summary?.average != null ? (
-          <span className="text-[12px] font-extrabold text-[#1f2a44]">
-            우리 평균 <span className="text-[#f2a516]">★</span> {summary.average.toFixed(1)}
+          <span className="shrink-0 rounded-full bg-[#fdf0ee] px-2.5 py-1 text-[12px] font-black text-[#b63b36]">
+            우리 평균 ★ {summary.average.toFixed(1)}
           </span>
         ) : null}
       </div>
@@ -172,14 +169,14 @@ export function WatchableNowCard({
           <dl className="mt-3 space-y-2">
             {groups.map((group) => (
               <div key={group.label} className="flex gap-3">
-                <dt className="w-12 shrink-0 pt-1 text-[11px] font-extrabold text-[#2f4d73]">
+                <dt className="w-12 shrink-0 pt-1 text-[12px] font-extrabold text-[#2f4d73]">
                   {group.label}
                 </dt>
                 <dd className="flex min-w-0 flex-wrap gap-1.5">
                   {group.providers.map((provider) => (
                     <span
                       key={provider.name}
-                      className={`rounded-full px-2.5 py-1 text-[11px] font-extrabold ${provider.subscribed ? 'bg-[#216bd8] text-white' : 'bg-[#f1f5fb] text-[#3c4a5e]'}`}
+                      className={`rounded-full px-2.5 py-1 text-[12px] font-extrabold ${provider.subscribed ? 'bg-[#216bd8] text-white' : 'bg-[#f1f5fb] text-[#3c4a5e]'}`}
                     >
                       {provider.name}
                       {provider.subscribed ? ' · 구독 중' : ''}
@@ -191,7 +188,7 @@ export function WatchableNowCard({
           </dl>
         </>
       )}
-      <p className="mt-3 text-[11px] font-semibold leading-[16px] text-[#6e7889]">
+      <p className="mt-3 text-[12px] font-semibold leading-[17px] text-[var(--muted)]">
         TMDB(JustWatch 제공){checkedAt ? ` · ${checkedAt} 확인` : ''}. 서비스 사정에 따라 실제와
         다를 수 있어요.
       </p>

@@ -133,12 +133,12 @@ export function GroupRecommendationPanel({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.14em] text-[#2f7eea]">
+          <p className="text-[12px] font-black uppercase tracking-[0.14em] text-[var(--blue-ink)]">
             오늘, 함께 볼 작품
           </p>
           <h2
             id="group-recommendation-title"
-            className="mt-1 text-[22px] font-black text-[#172947]"
+            className="mt-1 text-[22px] font-black text-[var(--heading)]"
           >
             함께 고르기
           </h2>
@@ -147,7 +147,7 @@ export function GroupRecommendationPanel({
             개인 점수와 숨은 선호는 공개하지 않아요.
           </p>
         </div>
-        <span className="rounded-full bg-[#e7f1ff] px-3 py-1.5 text-[11px] font-extrabold text-[#2f7eea]">
+        <span className="rounded-full bg-[#e7f1ff] px-3 py-1.5 text-[12px] font-extrabold text-[var(--blue-ink)]">
           2~5명 전용
         </span>
       </div>
@@ -158,7 +158,7 @@ export function GroupRecommendationPanel({
           role="group"
           aria-labelledby="group-sessions-title"
         >
-          <h3 id="group-sessions-title" className="text-[15px] font-black text-[#172947]">
+          <h3 id="group-sessions-title" className="text-[15px] font-black text-[var(--heading)]">
             최근 함께 고르기
           </h3>
           <ul className="mt-2 space-y-2">
@@ -181,7 +181,7 @@ export function GroupRecommendationPanel({
                   className="flex min-h-12 items-center gap-3 rounded-2xl bg-[#f7f9fd] px-3 py-2"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[13px] font-black text-[#284778]">
+                    <span className="block text-[13px] font-black text-[var(--heading)]">
                       {starter} 시작
                       {item.createdAt ? ` · ${relativeTime(item.createdAt)}` : ''}
                     </span>
@@ -192,7 +192,7 @@ export function GroupRecommendationPanel({
                     disabled={viewing || group.requestStatus === 'loading'}
                     aria-label={`${starter} 시작한 함께 고르기 ${viewing ? '보는 중' : '열기'}`}
                     onClick={() => void openSession(item.id)}
-                    className="min-h-11 shrink-0 rounded-xl bg-white px-3 text-[12px] font-black text-[#456ca8] disabled:opacity-60"
+                    className="min-h-11 shrink-0 rounded-xl bg-white px-3 text-[12px] font-black text-[var(--blue-ink)] disabled:opacity-60"
                   >
                     {viewing ? '보는 중' : waitingForMe ? '답하기' : '열기'}
                   </button>
@@ -206,17 +206,17 @@ export function GroupRecommendationPanel({
       <form onSubmit={handleSubmit} className="mt-5 space-y-5">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <span className="text-[12px] font-extrabold text-[#263b59]">공간</span>
-            <p className="mt-2 flex min-h-11 items-center rounded-2xl border border-[#d8e4f2] bg-[#f7f9fd] px-3 text-[14px] font-bold text-[#172947]">
+            <span className="text-[12px] font-extrabold text-[var(--heading)]">공간</span>
+            <p className="mt-2 flex min-h-11 items-center rounded-2xl border border-[#d8e4f2] bg-[#f7f9fd] px-3 text-[14px] font-bold text-[var(--heading)]">
               {space.name}
             </p>
           </div>
           <label className="block">
-            <span className="text-[12px] font-extrabold text-[#263b59]">지역</span>
+            <span className="text-[12px] font-extrabold text-[var(--heading)]">지역</span>
             <select
               value={region}
               onChange={(event) => setRegion(event.target.value)}
-              className="mt-2 min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[14px] font-bold text-[#172947]"
+              className="mt-2 min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[14px] font-bold text-[var(--heading)]"
             >
               <option value="KR">대한민국 (KR)</option>
             </select>
@@ -224,7 +224,7 @@ export function GroupRecommendationPanel({
         </div>
 
         <fieldset>
-          <legend className="text-[12px] font-extrabold text-[#263b59]">
+          <legend className="text-[12px] font-extrabold text-[var(--heading)]">
             추천 참여자 · {participants.length}명 선택
           </legend>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -235,7 +235,7 @@ export function GroupRecommendationPanel({
               return (
                 <label
                   key={member.accountId}
-                  className="flex min-h-11 cursor-pointer items-center gap-3 rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[#263b59]"
+                  className="flex min-h-11 cursor-pointer items-center gap-3 rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[var(--heading)]"
                 >
                   <input
                     type="checkbox"
@@ -246,12 +246,12 @@ export function GroupRecommendationPanel({
                         toggleValue(current, member.accountId, event.target.checked),
                       )
                     }
-                    className="h-5 w-5 accent-[#2f7eea]"
+                    className="h-5 w-5 accent-[var(--blue)]"
                   />
                   <span>
                     {isMe ? `${member.nickname || '내 계정'} (나)` : member.nickname || '공간 멤버'}
                     {isMe ? (
-                      <span className="ml-1 text-[10px] font-semibold text-[#8b96a8]">
+                      <span className="ml-1 text-[12px] font-semibold text-[var(--muted)]">
                         요청자 필수
                       </span>
                     ) : null}
@@ -269,14 +269,14 @@ export function GroupRecommendationPanel({
 
         <div className="grid gap-5 md:grid-cols-2">
           <fieldset>
-            <legend className="text-[12px] font-extrabold text-[#263b59]">
+            <legend className="text-[12px] font-extrabold text-[var(--heading)]">
               시청 경로 · 하나 이상
             </legend>
             <div className="mt-2 flex flex-wrap gap-2">
               {OTT_SERVICES.map((service) => (
                 <label
                   key={service.key}
-                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-[#d8e4f2] bg-white px-3 text-[12px] font-bold text-[#263b59]"
+                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-[#d8e4f2] bg-white px-3 text-[12px] font-bold text-[var(--heading)]"
                 >
                   <input
                     type="checkbox"
@@ -286,7 +286,7 @@ export function GroupRecommendationPanel({
                         toggleValue(current, service.key, event.target.checked),
                       )
                     }
-                    className="h-4 w-4 accent-[#2f7eea]"
+                    className="h-4 w-4 accent-[var(--blue)]"
                   />
                   {service.label}
                 </label>
@@ -295,7 +295,7 @@ export function GroupRecommendationPanel({
           </fieldset>
 
           <fieldset>
-            <legend className="text-[12px] font-extrabold text-[#263b59]">작품 유형</legend>
+            <legend className="text-[12px] font-extrabold text-[var(--heading)]">작품 유형</legend>
             <div className="mt-2 grid grid-cols-2 gap-2">
               {(
                 [
@@ -305,7 +305,7 @@ export function GroupRecommendationPanel({
               ).map(([value, label]) => (
                 <label
                   key={value}
-                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[#263b59]"
+                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[var(--heading)]"
                 >
                   <input
                     type="checkbox"
@@ -318,7 +318,7 @@ export function GroupRecommendationPanel({
                           >,
                       )
                     }
-                    className="h-5 w-5 accent-[#2f7eea]"
+                    className="h-5 w-5 accent-[var(--blue)]"
                   />
                   {label}
                 </label>
@@ -328,7 +328,7 @@ export function GroupRecommendationPanel({
         </div>
 
         <fieldset>
-          <legend className="text-[12px] font-extrabold text-[#263b59]">러닝타임</legend>
+          <legend className="text-[12px] font-extrabold text-[var(--heading)]">러닝타임</legend>
           <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
             <label>
               <span className="sr-only">최소 러닝타임</span>
@@ -340,10 +340,10 @@ export function GroupRecommendationPanel({
                 value={runtimeMin}
                 onChange={(event) => setRuntimeMin(event.target.value)}
                 placeholder="최소 분"
-                className="min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[#172947]"
+                className="min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[var(--heading)]"
               />
             </label>
-            <span className="text-[12px] font-bold text-[#8b96a8]">~</span>
+            <span className="text-[12px] font-bold text-[var(--muted)]">~</span>
             <label>
               <span className="sr-only">최대 러닝타임</span>
               <input
@@ -354,14 +354,16 @@ export function GroupRecommendationPanel({
                 value={runtimeMax}
                 onChange={(event) => setRuntimeMax(event.target.value)}
                 placeholder="최대 분"
-                className="min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[#172947]"
+                className="min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[var(--heading)]"
               />
             </label>
           </div>
         </fieldset>
 
         <fieldset>
-          <legend className="text-[12px] font-extrabold text-[#263b59]">오늘의 분위기</legend>
+          <legend className="text-[12px] font-extrabold text-[var(--heading)]">
+            오늘의 분위기
+          </legend>
           <div className="mt-2 flex flex-wrap gap-2">
             {RECOMMENDATION_MOODS.map((mood) => {
               const selected = moodTags.includes(mood);
@@ -373,7 +375,7 @@ export function GroupRecommendationPanel({
                   onClick={() => setMoodTags((current) => toggleValue(current, mood, !selected))}
                   className={`min-h-11 rounded-full border px-4 text-[12px] font-extrabold ${
                     selected
-                      ? 'border-[#2f7eea] bg-[#2f7eea] text-white'
+                      ? 'border-[var(--blue)] bg-[var(--blue)] text-white'
                       : 'border-[#d8e4f2] bg-white text-[#52677e]'
                   }`}
                 >
@@ -385,19 +387,21 @@ export function GroupRecommendationPanel({
         </fieldset>
 
         <label className="block">
-          <span className="text-[12px] font-extrabold text-[#263b59]">제외 조건</span>
-          <span className="ml-2 text-[11px] font-semibold text-[#8b96a8]">쉼표로 구분</span>
+          <span className="text-[12px] font-extrabold text-[var(--heading)]">제외 조건</span>
+          <span className="ml-2 text-[12px] font-semibold text-[var(--muted)]">쉼표로 구분</span>
           <input
             value={avoidTagsText}
             onChange={(event) => setAvoidTagsText(event.target.value)}
             placeholder="장르나 분위기, 예: 공포, 전쟁, 긴장감"
-            className="mt-2 min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[#172947]"
+            className="mt-2 min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[var(--heading)]"
           />
         </label>
 
         <div className="grid gap-5 md:grid-cols-2">
           <fieldset>
-            <legend className="text-[12px] font-extrabold text-[#263b59]">재감상 정책</legend>
+            <legend className="text-[12px] font-extrabold text-[var(--heading)]">
+              재감상 정책
+            </legend>
             <div className="mt-2 space-y-2">
               {(
                 [
@@ -407,7 +411,7 @@ export function GroupRecommendationPanel({
               ).map(([value, label]) => (
                 <label
                   key={value}
-                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl bg-white px-3 text-[12px] font-bold text-[#263b59]"
+                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl bg-white px-3 text-[12px] font-bold text-[var(--heading)]"
                 >
                   <input
                     type="radio"
@@ -415,7 +419,7 @@ export function GroupRecommendationPanel({
                     value={value}
                     checked={rewatchPolicy === value}
                     onChange={() => setRewatchPolicy(value)}
-                    className="h-5 w-5 accent-[#2f7eea]"
+                    className="h-5 w-5 accent-[var(--blue)]"
                   />
                   {label}
                 </label>
@@ -424,7 +428,7 @@ export function GroupRecommendationPanel({
           </fieldset>
 
           <fieldset>
-            <legend className="text-[12px] font-extrabold text-[#263b59]">합의 규칙</legend>
+            <legend className="text-[12px] font-extrabold text-[var(--heading)]">합의 규칙</legend>
             <div className="mt-2 space-y-2">
               {(
                 [
@@ -434,7 +438,7 @@ export function GroupRecommendationPanel({
               ).map(([value, label]) => (
                 <label
                   key={value}
-                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl bg-white px-3 text-[12px] font-bold text-[#263b59]"
+                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl bg-white px-3 text-[12px] font-bold text-[var(--heading)]"
                 >
                   <input
                     type="radio"
@@ -442,7 +446,7 @@ export function GroupRecommendationPanel({
                     value={value}
                     checked={decisionRule === value}
                     onChange={() => setDecisionRule(value)}
-                    className="h-5 w-5 accent-[#2f7eea]"
+                    className="h-5 w-5 accent-[var(--blue)]"
                   />
                   {label}
                 </label>
@@ -454,7 +458,7 @@ export function GroupRecommendationPanel({
                 <select
                   value={Math.min(minimumApprovals, participants.length || 1)}
                   onChange={(event) => setMinimumApprovals(Number(event.target.value))}
-                  className="min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[#172947]"
+                  className="min-h-11 w-full rounded-2xl border border-[#d8e4f2] bg-white px-3 text-[13px] font-bold text-[var(--heading)]"
                 >
                   {Array.from(
                     { length: Math.max(1, participants.length) },
@@ -471,13 +475,13 @@ export function GroupRecommendationPanel({
         </div>
 
         <div className="rounded-2xl border border-[#cfe0f5] bg-white/80 p-4">
-          <p className="text-[12px] font-extrabold text-[#172947]">요청 전 확인</p>
+          <p className="text-[12px] font-extrabold text-[var(--heading)]">요청 전 확인</p>
           <p className="mt-1 text-[12px] font-semibold leading-5 text-[#65758a]">
             {participantNames.join(', ') || '참여자 미선택'} · {region} ·{' '}
             {services.map(ottLabel).join(', ') || '시청 경로 미선택'} ·{' '}
             {decisionRule === 'ALL' ? '전원 동의' : `${minimumApprovals}명 이상 동의`}
           </p>
-          <p className="mt-1 text-[11px] font-semibold text-[#8b96a8]">
+          <p className="mt-1 text-[12px] font-semibold text-[var(--muted)]">
             이 조건은 자동으로 완화되지 않으며, 새 요청을 만들기 전까지 그대로 유지돼요.
           </p>
         </div>
@@ -490,7 +494,7 @@ export function GroupRecommendationPanel({
         <button
           type="submit"
           disabled={group.requestStatus === 'loading' || activeMembers.length < 2}
-          className="min-h-12 w-full rounded-2xl bg-[#172947] px-5 text-[14px] font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-12 w-full rounded-2xl bg-[var(--blue)] px-5 text-[14px] font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {group.requestStatus === 'loading'
             ? '조건을 확인하고 있어요…'
@@ -520,8 +524,8 @@ export function GroupRecommendationPanel({
         <div ref={resultsRef} className="mt-7 scroll-mt-4" aria-live="polite">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 className="text-[18px] font-black text-[#172947]">함께 볼 후보</h3>
-              <p className="mt-1 text-[11px] font-semibold text-[#8b96a8]">
+              <h3 className="text-[18px] font-black text-[var(--heading)]">함께 볼 후보</h3>
+              <p className="mt-1 text-[12px] font-semibold text-[var(--muted)]">
                 {group.session.session.createdAt
                   ? `${new Date(group.session.session.createdAt).toLocaleString('ko-KR')} 요청`
                   : '방금 요청'}
@@ -529,18 +533,18 @@ export function GroupRecommendationPanel({
               </p>
             </div>
             {group.session.session.status === 'MATCHED' ? (
-              <span className="rounded-full bg-[#dff7eb] px-3 py-1.5 text-[11px] font-extrabold text-[#17714a]">
+              <span className="rounded-full bg-[#dff7eb] px-3 py-1.5 text-[12px] font-extrabold text-[#17714a]">
                 최종 합의 완료
               </span>
             ) : group.session.session.status === 'CLOSED' ? (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-[#f2f4f7] px-3 py-1.5 text-[11px] font-extrabold text-[#65758a]">
+                <span className="rounded-full bg-[#f2f4f7] px-3 py-1.5 text-[12px] font-extrabold text-[#65758a]">
                   세션 만료
                 </span>
                 <button
                   type="button"
                   onClick={() => void group.retryLastRequest()}
-                  className="min-h-11 rounded-full border border-[#d8e4f2] bg-white px-4 text-[11px] font-extrabold text-[#52677e]"
+                  className="min-h-11 rounded-full border border-[#d8e4f2] bg-white px-4 text-[12px] font-extrabold text-[#52677e]"
                 >
                   같은 조건으로 새 추천
                 </button>
@@ -609,22 +613,22 @@ export function GroupRecommendationPanel({
                     className="rounded-[22px] border border-[#dce7f4] bg-white p-4"
                   >
                     <div className="flex items-start gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e8f2ff] text-[14px] font-black text-[#2f7eea]">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e8f2ff] text-[14px] font-black text-[var(--blue-ink)]">
                         {item.rank}
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div>
-                            <h4 className="text-[16px] font-black text-[#172947]">
+                            <h4 className="text-[16px] font-black text-[var(--heading)]">
                               {item.content.title || '제목 정보 없음'}
                             </h4>
-                            <p className="mt-1 text-[11px] font-bold text-[#8b96a8]">
+                            <p className="mt-1 text-[12px] font-bold text-[var(--muted)]">
                               {item.content.mediaType === 'TV' ? '드라마' : '영화'}
                               {item.content.runtime ? ` · ${item.content.runtime}분` : ''}
                             </p>
                           </div>
                           <span
-                            className={`rounded-full px-3 py-1.5 text-[11px] font-extrabold ${
+                            className={`rounded-full px-3 py-1.5 text-[12px] font-extrabold ${
                               item.consensus.status === 'MATCHED'
                                 ? 'bg-[#dff7eb] text-[#17714a]'
                                 : item.consensus.status === 'REJECTED'
@@ -644,14 +648,14 @@ export function GroupRecommendationPanel({
                           }`}
                         >
                           <p className="text-[12px] font-extrabold">{availability.title}</p>
-                          <p className="mt-1 text-[11px] font-semibold leading-5">
+                          <p className="mt-1 text-[12px] font-semibold leading-5">
                             {availability.detail}
                           </p>
                           {availability.state === 'EXPIRED' ? (
                             <button
                               type="button"
                               onClick={() => void group.retryLastRequest()}
-                              className="mt-2 min-h-11 rounded-full border border-current px-3 text-[11px] font-extrabold"
+                              className="mt-2 min-h-11 rounded-full border border-current px-3 text-[12px] font-extrabold"
                             >
                               조건 그대로 다시 확인
                             </button>
@@ -659,14 +663,16 @@ export function GroupRecommendationPanel({
                         </div>
 
                         <div className="mt-3">
-                          <p className="text-[12px] font-extrabold text-[#263b59]">추천 이유</p>
+                          <p className="text-[12px] font-extrabold text-[var(--heading)]">
+                            추천 이유
+                          </p>
                           <ul className="mt-2 space-y-2">
                             {item.reasons.map((reason, index) => (
                               <li
                                 key={`${reason.reasonCode}-${index}`}
-                                className="rounded-xl bg-[#f6f9fd] px-3 py-2 text-[11px] font-semibold leading-5 text-[#52677e]"
+                                className="rounded-xl bg-[#f6f9fd] px-3 py-2 text-[12px] font-semibold leading-5 text-[#52677e]"
                               >
-                                <code className="mr-2 rounded bg-[#e6eef8] px-1.5 py-0.5 text-[10px] font-bold text-[#345b89]">
+                                <code className="mr-2 rounded bg-[#e6eef8] px-1.5 py-0.5 text-[12px] font-bold text-[#345b89]">
                                   {reason.reasonCode}
                                 </code>
                                 {recommendationReasonText(reason.reasonCode)}
@@ -677,10 +683,10 @@ export function GroupRecommendationPanel({
 
                         <div className="mt-4 rounded-2xl border border-[#e1e9f3] p-3">
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <p className="text-[12px] font-extrabold text-[#263b59]">
+                            <p className="text-[12px] font-extrabold text-[var(--heading)]">
                               {consensus.label}
                             </p>
-                            <p className="text-[11px] font-bold text-[#65758a]">
+                            <p className="text-[12px] font-bold text-[#65758a]">
                               {consensus.progress}
                             </p>
                           </div>
@@ -696,7 +702,7 @@ export function GroupRecommendationPanel({
                             )}
                           >
                             <span
-                              className="block h-full rounded-full bg-[#2f7eea]"
+                              className="block h-full rounded-full bg-[var(--blue)]"
                               style={{
                                 width: `${Math.min(
                                   100,
@@ -707,13 +713,13 @@ export function GroupRecommendationPanel({
                               }}
                             />
                           </div>
-                          <p className="mt-2 text-[11px] font-semibold text-[#8b96a8]">
+                          <p className="mt-2 text-[12px] font-semibold text-[var(--muted)]">
                             개인별 선택과 내부 추천 점수는 공개하지 않고 집계만 보여요.
                           </p>
                         </div>
 
                         <fieldset className="mt-4" disabled={closed}>
-                          <legend className="text-[12px] font-extrabold text-[#263b59]">
+                          <legend className="text-[12px] font-extrabold text-[var(--heading)]">
                             내 의견
                           </legend>
                           <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -726,9 +732,9 @@ export function GroupRecommendationPanel({
                                 onClick={() =>
                                   void group.submitFeedback(item.exposureId, option.kind)
                                 }
-                                className={`min-h-11 rounded-xl px-2 text-[11px] font-extrabold disabled:opacity-50 ${
+                                className={`min-h-11 rounded-xl px-2 text-[12px] font-extrabold disabled:opacity-50 ${
                                   selectedFeedback === option.kind
-                                    ? 'bg-[#172947] text-white'
+                                    ? 'bg-[var(--blue)] text-white'
                                     : 'border border-[#dce7f4] bg-white text-[#52677e]'
                                 }`}
                               >
@@ -743,7 +749,7 @@ export function GroupRecommendationPanel({
                 );
               })}
               {/* TMDB's watch-provider data comes from JustWatch, which asks to be credited. */}
-              <p className="text-[11px] font-semibold text-[#8b96a8]">
+              <p className="text-[12px] font-semibold text-[var(--muted)]">
                 볼 수 있는 곳 정보: TMDB(JustWatch 제공). 서비스 사정에 따라 실제와 다를 수 있어요.
               </p>
             </div>
