@@ -838,6 +838,16 @@ a {
 .space-watch-avatar[data-me] {
   background: var(--blue);
 }
+.space-watch-avatars {
+  display: inline-flex;
+  flex: none;
+}
+.space-watch-avatars .space-watch-avatar {
+  box-shadow: 0 0 0 2px var(--card);
+}
+.space-watch-avatars .space-watch-avatar + .space-watch-avatar {
+  margin-left: -10px;
+}
 .space-watch-media {
   display: flex;
   align-items: center;
@@ -1152,7 +1162,17 @@ a {
   font-size: 13px;
 }
 .space-watch-counts {
+  /* The button lays out as flex, which drops the leading space before "·". */
+  margin-left: 0.25em;
   font-weight: 700;
+}
+/* A shared card has a way into each person's record: two to a row. */
+.space-watch-card[data-grouped] .space-watch-actions {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.space-watch-card[data-grouped] .space-watch-actions > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 
 .core-header-actions {

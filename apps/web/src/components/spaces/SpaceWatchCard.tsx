@@ -18,7 +18,7 @@ import {
 
 const STRIP_SIZE = 3;
 
-type LikeState = Record<string, { liked: boolean; count: number }>;
+export type LikeState = Record<string, { liked: boolean; count: number }>;
 
 function ThumbIcon({ filled = false }: { filled?: boolean }) {
   return (
@@ -193,7 +193,7 @@ export function SpaceWatchCard({
   );
 }
 
-function ReactionBlock({
+export function ReactionBlock({
   row,
   like,
   likeBusy,

@@ -15,6 +15,7 @@ import type {
   WatchSearchScope,
   WatchSourceKind,
   WatchSourceView,
+  WatchTimelineGroup,
   WatchTimelinePage,
 } from '@davas/shared';
 import { getApiBaseUrl } from './base-url';
@@ -27,6 +28,7 @@ export type {
   WatchParticipantStatus,
   WatchPhotoView,
   WatchSourceKind,
+  WatchTimelineGroup,
 };
 export type WatchSource = WatchSourceView;
 export type WatchParticipant = WatchParticipantView;

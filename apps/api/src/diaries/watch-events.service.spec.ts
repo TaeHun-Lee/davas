@@ -615,6 +615,52 @@ describe('WatchEventsService', () => {
     assert.equal(counts.get(quiet.id), 0);
   });
 
+  it('shows each member’s record of the same title on one timeline card', async () => {
+    const { database, service } = setup();
+    database.addMedia('media-2');
+    database.addMember('space-1', 'jiwoo');
+    database.addMember('space-1', 'minho');
+    const mine = await service.create('jiwoo', {
+      mediaId: 'media-1',
+      watchedDate: '2026-08-05',
+      spaceIds: ['space-1'],
+    });
+    const other = await service.create('jiwoo', {
+      mediaId: 'media-2',
+      watchedDate: '2026-08-06',
+      spaceIds: ['space-1'],
+    });
+    const theirs = await service.create('minho', {
+      mediaId: 'media-1',
+      watchedDate: '2026-08-05',
+      spaceIds: ['space-1'],
+    });
+    // Minho wrote last, which brings the shared title's card back to the top.
+    for (const [diaryId, at] of [
+      [mine.id, '10:00'],
+      [other.id, '11:00'],
+      [theirs.id, '12:00'],
+    ]) {
+      database.shares.find((share) => share.diaryId === diaryId)!.sharedAt = new Date(
+        `2026-08-06T${at}:00Z`,
+      );
+    }
+    const timeline = await service.timeline('space-1', 'jiwoo', { limit: 1 });
+    assert.deepEqual(timeline.groups, [
+      { id: mine.id, mediaId: 'media-1', watchEventIds: [mine.id, theirs.id] },
+    ]);
+    assert.deepEqual(
+      timeline.items.map((item) => item.id),
+      [mine.id, theirs.id],
+    );
+    assert.equal(timeline.hasMore, true);
+    const next = await service.timeline('space-1', 'jiwoo', { cursor: timeline.nextCursor! });
+    assert.deepEqual(
+      next.groups.map((group) => group.watchEventIds),
+      [[other.id]],
+    );
+  });
+
   it('lets a companion who was there add photos and tells the others', async () => {
     const { attachedPhotoIds, created, database, notified, service } = await coupleRecord(false);
     await assert.rejects(

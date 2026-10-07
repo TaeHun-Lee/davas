@@ -3,10 +3,15 @@ import { describe, it } from 'node:test';
 import type { WatchEvent, WatchReaction } from '../../lib/api/watch-events';
 import {
   blindViewerRole,
+  groupByline,
+  groupCardSource,
+  groupReactionRows,
   lockedReviewHint,
   openedTogether,
   pendingConfirmations,
   reactionRows,
+  timelineCards,
+  unlocksByWriting,
   waitingWatchers,
   watchCardSource,
   watchedDayLabel,
@@ -221,5 +226,84 @@ describe('space timeline card model', () => {
     const answered = withMyParticipation(waiting, 'me', 'CONFIRMED');
     assert.deepEqual(pendingConfirmations([answered], 'me'), []);
     assert.equal(answered.participants[0].status, 'CONFIRMED');
+  });
+});
+
+describe('shared title cards', () => {
+  // 주인 and 강생 each recorded the same film on the same day, with nobody else listed.
+  const mine = event({
+    id: 'mine',
+    author: { accountId: 'me', nickname: '주인', profileImageUrl: null },
+    participants: [{ accountId: 'me', status: 'CONFIRMED', nickname: '주인' }],
+    reactions: [reaction({ accountId: 'me', rating: 4 })],
+    isMine: true,
+  });
+  const theirs = event({
+    id: 'theirs',
+    author: { accountId: 'kang', nickname: '강생', profileImageUrl: null },
+    participants: [{ accountId: 'kang', status: 'CONFIRMED', nickname: '강생' }],
+    reactions: [reaction({ accountId: 'kang', rating: 4.5, headline: '또 보고 싶어요' })],
+    source: { kind: 'THEATER', providerName: null, placeText: 'CGV 용산 IMAX' },
+  });
+
+  it('builds cards from the page groups, or one per record without them', () => {
+    const groups = [
+      { id: 'mine', mediaId: 'media-1', watchEventIds: ['mine', 'theirs'] },
+      { id: 'gone', mediaId: 'media-2', watchEventIds: ['gone'] },
+    ];
+    assert.deepEqual(
+      timelineCards([mine, theirs], groups).map((card) => card.map((item) => item.id)),
+      [['mine', 'theirs']],
+    );
+    assert.deepEqual(
+      timelineCards([mine, theirs], undefined).map((card) => card.map((item) => item.id)),
+      [['mine'], ['theirs']],
+    );
+    // A record regrouped between two page loads shows only once.
+    const twice = [...groups, { id: 'theirs', mediaId: 'media-1', watchEventIds: ['theirs'] }];
+    assert.equal(timelineCards([mine, theirs], twice).length, 1);
+  });
+
+  it('names everyone who wrote, in writing order', () => {
+    assert.equal(groupByline([mine, theirs]), '주인님, 강생님이');
+    assert.equal(groupByline([theirs, mine]), '강생님, 주인님이');
+  });
+
+  it('shows one source line when the records agree and each one when they differ', () => {
+    assert.deepEqual(groupCardSource([mine, theirs]), {
+      lines: ['10월 4일 · 극장'],
+      place: 'CGV 용산 IMAX',
+    });
+    const later = { ...theirs, watchedDate: '2026-10-06', source: null };
+    assert.deepEqual(groupCardSource([mine, later]).lines, ['10월 4일 · 극장', '10월 6일']);
+  });
+
+  it('keeps one review per person, taken from their own record', () => {
+    // 강생 is also listed on my record, without a review there.
+    const withCompanion = {
+      ...mine,
+      participants: [...mine.participants, { accountId: 'kang', status: 'CONFIRMED' as const }],
+    };
+    const rows = groupReactionRows([withCompanion, theirs], 'me');
+    assert.deepEqual(
+      rows.map((row) => [row.name, row.rating, row.eventId]),
+      [
+        ['나', 4, 'mine'],
+        ['강생', 4.5, 'theirs'],
+      ],
+    );
+  });
+
+  it('offers writing to open a blind review that is locked for me', () => {
+    const blind = {
+      ...theirs,
+      participants: [
+        { accountId: 'kang', status: 'CONFIRMED' as const, nickname: '강생' },
+        { accountId: 'me', status: 'CONFIRMED' as const, nickname: '주인' },
+      ],
+      reactions: [reaction({ accountId: 'kang', isBlind: true, locked: true })],
+    };
+    assert.equal(unlocksByWriting(blind, 'me'), true);
+    assert.equal(unlocksByWriting(mine, 'me'), false);
   });
 });

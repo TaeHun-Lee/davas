@@ -188,8 +188,20 @@ export type WatchCommentView = {
   isMine: boolean;
 };
 export const WATCH_COMMENT_MAX_LENGTH = 500;
+/**
+ * One timeline card: the records space members left of the same title, oldest first. A
+ * member recording the title again (a rewatch) starts the next card.
+ */
+export type WatchTimelineGroup = {
+  id: string;
+  mediaId: string;
+  watchEventIds: string[];
+};
 export type WatchTimelinePage = {
+  /** Every record on the page, card by card. */
   items: WatchEventView[];
+  /** The page's cards, newest first; `limit` counts these. */
+  groups: WatchTimelineGroup[];
   hasMore: boolean;
   nextCursor: string | null;
 };

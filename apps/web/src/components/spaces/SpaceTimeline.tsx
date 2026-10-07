@@ -9,7 +9,7 @@ import {
   type SpaceReactionComparison,
   type WatchReaction,
 } from '../../lib/api/watch-events';
-import { SpaceWatchCard } from './SpaceWatchCard';
+import { TimelineCard } from './SpaceWatchGroupCard';
 
 /** One person's reaction in the comparison panel, with the same blind and spoiler rules as the cards. */
 function ComparedReaction({ reaction, isMe }: { reaction: WatchReaction; isMe: boolean }) {
@@ -71,7 +71,7 @@ export function SpaceTimeline({
   myAccountId: string;
 }) {
   const timeline = useSpaceTimeline(spaceId);
-  const { items, status, cursor, hasMore, moreBusy, moreError } = timeline;
+  const { cards, status, cursor, hasMore, moreBusy, moreError } = timeline;
   const [comparison, setComparison] = useState<SpaceReactionComparison | null>(null);
   const [comparisonBusy, setComparisonBusy] = useState(false);
   const [comparisonError, setComparisonError] = useState('');
@@ -151,10 +151,10 @@ export function SpaceTimeline({
 
       {status === 'ready' ? (
         <div className="mt-4 space-y-3">
-          {items.map((item) => (
-            <SpaceWatchCard
-              key={item.id}
-              event={item}
+          {cards.map((events) => (
+            <TimelineCard
+              key={events[0].id}
+              events={events}
               myAccountId={myAccountId}
               returnTo="/spaces"
               actions={
@@ -162,7 +162,7 @@ export function SpaceTimeline({
                   type="button"
                   className="secondary-button"
                   disabled={comparisonBusy}
-                  onClick={() => showComparison(item.media.id)}
+                  onClick={() => showComparison(events[0].media.id)}
                 >
                   구성원 반응 비교
                 </button>

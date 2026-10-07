@@ -3,6 +3,7 @@ import type {
   WatchEvent,
   WatchParticipantStatus,
   WatchReaction,
+  WatchTimelineGroup,
 } from '../../lib/api/watch-events';
 
 const SOURCE_LABELS = {
@@ -188,6 +189,89 @@ export function reactionRows(event: WatchEvent, myAccountId: string): WatchReact
       Number(b.accountId === event.author.accountId) -
       Number(a.accountId === event.author.accountId),
   );
+}
+
+/**
+ * A watcher who has not written opens the locked reviews by writing: the card offers it once
+ * instead of the viewer's own "not yet" line.
+ */
+export function unlocksByWriting(event: WatchEvent, myAccountId: string) {
+  const rows = reactionRows(event, myAccountId);
+  return (
+    blindViewerRole(event, myAccountId) === 'watcher' &&
+    rows.some((row) => row.locked) &&
+    !rows.some((row) => row.isMe && row.written)
+  );
+}
+
+/**
+ * The timeline's cards, each holding its records oldest first. Records already on an earlier
+ * card are skipped, in case a new record regrouped a title between two page loads. A page
+ * without groups (an older server) shows one card per record.
+ */
+export function timelineCards(
+  items: WatchEvent[],
+  groups: WatchTimelineGroup[] | undefined,
+): WatchEvent[][] {
+  if (!groups?.length) return items.map((item) => [item]);
+  const byId = new Map(items.map((item) => [item.id, item]));
+  const seen = new Set<string>();
+  return groups
+    .map((group) =>
+      group.watchEventIds.flatMap((id) => {
+        const event = byId.get(id);
+        if (!event || seen.has(id)) return [];
+        seen.add(id);
+        return [event];
+      }),
+    )
+    .filter((card) => card.length > 0);
+}
+
+/** "주인님, 강생님이": everyone who left a record on the card, first writer first. */
+export function groupByline(events: WatchEvent[]) {
+  const names = new Map<string, string>();
+  for (const event of events) {
+    if (!names.has(event.author.accountId)) {
+      names.set(event.author.accountId, event.author.nickname || '공간 멤버');
+    }
+  }
+  return `${[...names.values()].map((name) => `${name}님`).join(', ')}이`;
+}
+
+/** The card's lines under the title: one when every record agrees, otherwise each record's. */
+export function groupCardSource(events: WatchEvent[]) {
+  const sources = events.map(watchCardSource);
+  return {
+    lines: [...new Set(sources.map((source) => source.line))],
+    place: [...new Set(sources.map((source) => source.place).filter(Boolean))].join(' · ') || null,
+  };
+}
+
+export type GroupReactionRow = WatchReactionRow & {
+  /** The record this row comes from: likes and "별점 남기기" go there. */
+  eventId: string;
+  lockedHint: string;
+};
+
+/**
+ * One row per person across the card's records. A person's own record speaks for them, and a
+ * row where they wrote something beats an empty one, so someone listed as a companion on the
+ * other record still shows the review they wrote on their own.
+ */
+export function groupReactionRows(events: WatchEvent[], myAccountId: string): GroupReactionRow[] {
+  const rows = new Map<string, { row: GroupReactionRow; score: number }>();
+  for (const event of events) {
+    const lockedHint = lockedReviewHint(blindViewerRole(event, myAccountId));
+    for (const row of reactionRows(event, myAccountId)) {
+      const score = (row.written ? 2 : 0) + (row.accountId === event.author.accountId ? 1 : 0);
+      const current = rows.get(row.accountId);
+      if (!current || score > current.score) {
+        rows.set(row.accountId, { row: { ...row, eventId: event.id, lockedHint }, score });
+      }
+    }
+  }
+  return [...rows.values()].map(({ row }) => row);
 }
 
 /** Records someone else logged with the viewer as a companion, still waiting for a yes/no. */

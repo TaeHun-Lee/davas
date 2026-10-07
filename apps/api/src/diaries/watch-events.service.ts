@@ -9,16 +9,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  DataSource,
-  Equal,
-  EntityManager,
-  FindOptionsWhere,
-  In,
-  IsNull,
-  LessThan,
-  Repository,
-} from 'typeorm';
+import { DataSource, EntityManager, In, IsNull, Repository } from 'typeorm';
 import {
   CommentEntity,
   DiaryEntity,
@@ -37,6 +28,7 @@ import { SpaceAccessService } from '../spaces/space-access.service';
 import type { WatchProgress, WatchSearchMatchField, WatchSearchResponse } from '@davas/shared';
 import { hiddenReviewAccountIds } from './blind-review';
 import { DiaryAccessService } from './diary-access.service';
+import { groupTimeline, timelinePage } from './timeline-groups';
 import { WatchPhotosService } from './watch-photos.service';
 import {
   CreateWatchEventDto,
@@ -663,46 +655,65 @@ export class WatchEventsService {
   async timeline(spaceId: string, accountId: string, query: WatchTimelineQueryDto) {
     await this.access.assertActiveSpaceMember(spaceId, accountId);
     const limit = Math.min(50, Math.max(1, query.limit ?? 20));
-    const base: FindOptionsWhere<WatchShareEntity> = {
-      spaceId,
-      revokedAt: IsNull(),
-      diary: { deletedAt: IsNull() },
-    };
-    let where: FindOptionsWhere<WatchShareEntity>[] | FindOptionsWhere<WatchShareEntity> = base;
-    if (query.cursor) {
-      const cursor = this.decodeCursor(query.cursor);
-      where = [
-        { ...base, sharedAt: LessThan(new Date(cursor.sharedAt)) },
-        {
-          ...base,
-          sharedAt: Equal(new Date(cursor.sharedAt)),
-          id: LessThan(cursor.id),
-        },
-      ];
-    }
-    const rows = await this.spaceShares.find({
-      where,
-      relations: { diary: WATCH_VIEW_RELATIONS },
-      relationLoadStrategy: 'query',
-      order: { sharedAt: 'DESC', id: 'DESC' },
-      take: limit + 1,
+    const cursor = query.cursor ? this.decodeCursor(query.cursor) : null;
+    // A card gathers every record of its title in the space, so grouping reads all the
+    // space's shares with just the fields it needs; full records load for one page of cards.
+    const shares = await this.spaceShares.find({
+      where: { spaceId, revokedAt: IsNull(), diary: { deletedAt: IsNull() } },
+      relations: { diary: true },
+      select: {
+        id: true,
+        sharedAt: true,
+        diaryId: true,
+        diary: { id: true, mediaId: true, userId: true, watchedDate: true },
+      },
     });
-    const hasMore = rows.length > limit;
-    const page = rows.slice(0, limit);
+    const { page, hasMore } = timelinePage(
+      groupTimeline(
+        shares.map((share) => ({
+          shareId: share.id,
+          sharedAt: share.sharedAt,
+          diaryId: share.diaryId,
+          mediaId: share.diary.mediaId,
+          authorId: share.diary.userId,
+          watchedDate: share.diary.watchedDate,
+        })),
+      ),
+      cursor,
+      limit,
+    );
+    const shareIds = page.flatMap((group) => group.shares.map((share) => share.shareId));
+    const rows = shareIds.length
+      ? await this.spaceShares.find({
+          where: { id: In(shareIds), revokedAt: IsNull(), diary: { deletedAt: IsNull() } },
+          relations: { diary: WATCH_VIEW_RELATIONS },
+          relationLoadStrategy: 'query',
+        })
+      : [];
+    const diaryOf = new Map(rows.map((share) => [share.id, share.diary]));
+    // A record deleted between the two reads simply drops out of its card.
+    const groups = page
+      .map((group) => group.shares.filter((share) => diaryOf.has(share.shareId)))
+      .filter((group) => group.length > 0);
     const items = await this.toViews(
-      page.map((share) => share.diary),
+      groups.flatMap((group) => group.map((share) => diaryOf.get(share.shareId)!)),
       accountId,
     );
-    const last = page.at(-1);
+    const last = page.at(-1)?.latest;
     return {
       items,
+      groups: groups.map((group) => ({
+        id: group[0].diaryId,
+        mediaId: group[0].mediaId,
+        watchEventIds: group.map((share) => share.diaryId),
+      })),
       hasMore,
       nextCursor:
         hasMore && last
           ? Buffer.from(
               JSON.stringify({
                 sharedAt: last.sharedAt.toISOString(),
-                id: last.id,
+                id: last.shareId,
               }),
             ).toString('base64url')
           : null,

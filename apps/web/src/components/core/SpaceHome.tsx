@@ -11,7 +11,7 @@ import {
   respondToWatchParticipation,
   type WatchEvent,
 } from '../../lib/api/watch-events';
-import { SpaceWatchCard } from '../spaces/SpaceWatchCard';
+import { TimelineCard } from '../spaces/SpaceWatchGroupCard';
 import { WishPickCard } from '../spaces/WishPickCard';
 import {
   activeMembers,
@@ -220,8 +220,13 @@ function SpaceHomeTimeline({ space, myAccountId }: { space: SpaceView; myAccount
           </section>
         ) : (
           <div className="space-y-3">
-            {timeline.items.map((event) => (
-              <SpaceWatchCard key={event.id} event={event} myAccountId={myAccountId} returnTo="/" />
+            {timeline.cards.map((events) => (
+              <TimelineCard
+                key={events[0].id}
+                events={events}
+                myAccountId={myAccountId}
+                returnTo="/"
+              />
             ))}
             {timeline.hasMore ? (
               <Link href="/spaces" className="secondary-button w-full">
