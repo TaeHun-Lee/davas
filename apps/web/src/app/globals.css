@@ -2835,9 +2835,33 @@ label:has(> input.sr-only:focus-visible) {
 /* On a record: my own photos, next to what others added. */
 /* Below the title and its chips, as on the C안 board. */
 .record-photos-add {
+  display: flex;
   width: 100%;
-  min-height: 44px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   margin-top: 16px;
+  border: 1px solid #dce5ef;
+  border-radius: 14px;
+  background: white;
+  color: var(--heading);
+  font-size: 14px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.record-photos-add[data-empty] {
+  border: 1.5px dashed #90b5eb;
+  border-radius: 15px;
+  color: var(--blue-ink);
+}
+.record-photos-add svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
 }
 .record-photos-panel {
   margin-top: 16px;
@@ -3806,6 +3830,9 @@ label:has(> input.sr-only:focus-visible) {
 }
 .comments-form button:disabled {
   opacity: 0.5;
+}
+.comments-send-label {
+  display: none;
 }
 .search-field {
   display: grid;
@@ -6243,9 +6270,23 @@ label:has(> input.sr-only:focus-visible) {
   .core-bottom-nav {
     display: none;
   }
+  /* The back row lines up with the content below it, with a thin line under it. */
   .back-header {
+    box-sizing: border-box;
+    width: calc(100% - 80px);
+    max-width: 680px;
     grid-column: 2;
     grid-row: 1;
+    margin: 0 auto;
+    border-bottom: 1px solid #e3eaf3;
+    padding: 0;
+  }
+  /* A record without photos reads as one 760px column; with photos, as two columns. */
+  .core-shell:has(> .task-main[data-wide]) > .back-header {
+    max-width: 760px;
+  }
+  .core-shell:has(> .task-main[data-wide] > .watch-gallery) > .back-header {
+    max-width: 1120px;
   }
   .core-main,
   .task-main {
@@ -6415,8 +6456,29 @@ label:has(> input.sr-only:focus-visible) {
     position: static;
     width: auto;
     margin-top: 12px;
+    border-top: 0;
+    background: transparent;
+    padding: 0;
     transform: none;
     box-shadow: none;
+  }
+  .comments-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .comments-form input {
+    min-height: 52px;
+    background: white;
+  }
+  .comments-form button {
+    width: auto;
+    height: 52px;
+    gap: 6px;
+    padding: 0 20px;
+    font-size: 14px;
+    font-weight: 900;
+  }
+  .comments-send-label {
+    display: inline;
   }
   /* The sidebar already shows the logo above the space switcher. */
   .core-sidebar-space .core-logo-link {
@@ -6515,7 +6577,7 @@ label:has(> input.sr-only:focus-visible) {
   /* Without photos there is no left column, so the record reads as one column. */
   .task-main[data-wide]:not(:has(> .watch-gallery)) {
     display: block;
-    max-width: 760px;
+    max-width: 840px;
   }
   .record-reviews-list {
     display: grid;

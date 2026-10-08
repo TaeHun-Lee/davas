@@ -59,8 +59,22 @@ export function MyPhotosPanel({
 
   if (!open)
     return (
-      <button type="button" className="secondary-button record-photos-add" onClick={start}>
-        {mine.length ? `내 사진 관리 (${mine.length}장)` : '＋ 내 사진 더하기'}
+      <button
+        type="button"
+        className="record-photos-add"
+        data-empty={mine.length ? undefined : true}
+        onClick={start}
+      >
+        {mine.length ? (
+          `내 사진 관리 (${mine.length}장)`
+        ) : (
+          <>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            내 사진 더하기
+          </>
+        )}
       </button>
     );
 

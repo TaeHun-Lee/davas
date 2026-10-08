@@ -197,3 +197,39 @@ describe('the space tab, matched to both space boards', () => {
     assert.match(screen, /<ManageIcon tone="danger" path=\{MANAGE_ICONS\.exit\} \/>/);
   });
 });
+
+describe('a record, matched to the record boards', () => {
+  it('lines the desktop back row up with the content and dashes the first-photo button', () => {
+    const css = source('app/globals.css');
+    const desktop = css.slice(css.indexOf('@media (min-width: 1024px) {\n  .core-shell'));
+    assert.match(
+      desktop,
+      /\.back-header \{[^}]*max-width: 680px;[^}]*border-bottom: 1px solid #e3eaf3;/,
+    );
+    assert.match(
+      desktop,
+      /:has\(> \.task-main\[data-wide\]\) > \.back-header \{\n    max-width: 760px;/,
+    );
+    // Browsers drop a :has() nested in another, so the photo case is a plain descendant test.
+    assert.match(
+      desktop,
+      /:has\(> \.task-main\[data-wide\] > \.watch-gallery\) > \.back-header \{\n    max-width: 1120px;/,
+    );
+    assert.doesNotMatch(css, /:has\([^)]*:has\(/);
+    assert.match(css, /\.record-photos-add\[data-empty\] \{\n  border: 1\.5px dashed #90b5eb;/);
+    assert.match(
+      source('components/core/MyPhotosPanel.tsx'),
+      /data-empty=\{mine\.length \? undefined : true\}/,
+    );
+  });
+
+  it('labels the send button 보내기 on a computer only', () => {
+    assert.match(
+      source('components/core/WatchReviews.tsx'),
+      /<span className="comments-send-label" aria-hidden="true">\s*보내기/,
+    );
+    const css = source('app/globals.css');
+    assert.match(css, /\.comments-send-label \{\n  display: none;/);
+    assert.match(css, /\.comments-send-label \{\n    display: inline;/);
+  });
+});

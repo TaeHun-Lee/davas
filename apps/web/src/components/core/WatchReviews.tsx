@@ -315,6 +315,9 @@ export function CommentsSection({
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 12l16-8-6 16-3-7Z" />
             </svg>
+            <span className="comments-send-label" aria-hidden="true">
+              보내기
+            </span>
           </button>
         </form>
       </div>
