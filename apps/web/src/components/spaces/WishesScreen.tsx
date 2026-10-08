@@ -9,7 +9,7 @@ import { mediaTypeLabel } from '../../lib/api/core';
 import { selectMedia, type MediaSearchResult } from '../../lib/api/media';
 import { listWishes, setWish, type SpaceWishItem } from '../../lib/api/wishes';
 import { AsyncState, EmptyState, Poster, SearchField, TaskShell } from '../core/CoreUi';
-import { activeMembers } from './space-ui';
+import { activeMembers, wantedByLabel } from './space-ui';
 import { WishPickCard } from './WishPickCard';
 
 type Filter = 'all' | 'everyone' | 'watchable';
@@ -181,11 +181,12 @@ export function WishesScreen() {
                   <span
                     className="wishes-who"
                     role="img"
-                    aria-label={`${item.wantedBy
-                      .map((person) =>
-                        person.accountId === state.myAccountId ? '나' : person.nickname || '멤버',
-                      )
-                      .join(', ')} 담음`}
+                    aria-label={wantedByLabel(
+                      item.wantedBy.map((person) => ({
+                        isMe: person.accountId === state.myAccountId,
+                        nickname: person.nickname,
+                      })),
+                    )}
                   >
                     {item.wantedBy.map((person) => (
                       <span

@@ -105,3 +105,28 @@ export function inviteStatusMessage(status: Exclude<SpaceInviteInspection['statu
       return '공간 정원이 모두 차서 지금은 참여할 수 없어요.';
   }
 }
+
+/**
+ * Who put a title on the shared list, read the way people say it: "내가 담음",
+ * "민호님이 담음", "나와 민호님 둘 다 담음", "나, 민호님, 서연님 모두 담음". I come first.
+ * Others always end in 님, so their particles are 이 and 과.
+ */
+type WishPerson = { isMe: boolean; nickname?: string | null };
+
+export function wantedByLabel(people: WishPerson[]) {
+  const ordered = [
+    ...people.filter((person) => person.isMe),
+    ...people.filter((person) => !person.isMe),
+  ];
+  const name = (person: WishPerson) =>
+    person.isMe ? '나' : `${person.nickname?.trim() || '공간 멤버'}님`;
+  if (ordered.length === 0) return '';
+  if (ordered.length === 1) {
+    return ordered[0].isMe ? '내가 담음' : `${name(ordered[0])}이 담음`;
+  }
+  if (ordered.length === 2) {
+    const first = ordered[0].isMe ? '나와' : `${name(ordered[0])}과`;
+    return `${first} ${name(ordered[1])} 둘 다 담음`;
+  }
+  return `${ordered.map(name).join(', ')} 모두 담음`;
+}

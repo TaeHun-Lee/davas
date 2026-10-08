@@ -8,6 +8,7 @@ import {
   inviteDeadlineLabel,
   inviteStatusMessage,
   spaceErrorMessage,
+  wantedByLabel,
 } from './space-ui';
 
 const space = (id: string): SpaceView => ({
@@ -75,5 +76,18 @@ describe('space UI state policy', () => {
   it('writes the invite deadline the way people say it, in Korean time', () => {
     assert.equal(inviteDeadlineLabel('2026-10-13T00:00:00.000Z'), '10월 13일 오전 9시');
     assert.equal(inviteDeadlineLabel('2026-10-13T06:30:00.000Z'), '10월 13일 오후 3시 30분');
+  });
+
+  it('says who put a title on the shared list in a natural sentence, me first', () => {
+    const me = { isMe: true, nickname: '지우' };
+    const minho = { isMe: false, nickname: '민호' };
+    const seoyeon = { isMe: false, nickname: '서연' };
+    assert.equal(wantedByLabel([me]), '내가 담음');
+    assert.equal(wantedByLabel([minho]), '민호님이 담음');
+    assert.equal(wantedByLabel([minho, me]), '나와 민호님 둘 다 담음');
+    assert.equal(wantedByLabel([minho, seoyeon]), '민호님과 서연님 둘 다 담음');
+    assert.equal(wantedByLabel([minho, me, seoyeon]), '나, 민호님, 서연님 모두 담음');
+    assert.equal(wantedByLabel([{ isMe: false, nickname: ' ' }]), '공간 멤버님이 담음');
+    assert.equal(wantedByLabel([]), '');
   });
 });
