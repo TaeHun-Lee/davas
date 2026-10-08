@@ -273,6 +273,12 @@ const calls: Array<[string, () => Promise<unknown>]> = [
   ['open group choosing', () => recommendations.getGroupRecommendationSession(SESSION)],
   ["a space's group choosing", () => recommendations.listGroupRecommendationSessions(SPACE)],
   [
+    'settle on an agreed title',
+    () => recommendations.decideGroupRecommendation(SESSION, { exposureId: EXPOSURE }),
+  ],
+  ['stop choosing', () => recommendations.closeGroupRecommendationSession(SESSION)],
+  ["home's settled title", () => recommendations.getDecidedGroupRecommendation(SPACE)],
+  [
     'react to a candidate',
     () => recommendations.submitGroupRecommendationFeedback(EXPOSURE, { kind: 'INTERESTED' }),
   ],

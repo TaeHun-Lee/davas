@@ -97,7 +97,7 @@ graphify-out/      Graphify 코드 그래프 (도구가 생성, 손으로 수정
 | `/explore` | 탐색: 영화·드라마 제목 검색, 지금 화제작(영화/드라마), 기분 카드 4개(장르 추천 `light-comedy`, `immersive-thriller`, `good-cry`, `chills`), 함께 고르기 링크. 작품을 누르면 작품 상세 시트가 열린다 |
 | `/me` | 내 기록: 내가 쓰거나 함께 봤다고 확인한 기록을 최신순으로, 기록 검색과 같은 카드로 보인다(`/v1/watch-events/search?scope=mine`을 검색어 없이 부른다). 검색 칸 모양 버튼은 `/search?scope=mine`으로 간다 |
 | `/friends`, `/friends/invite/:token` | 친구 목록·요청·초대 |
-| `/spaces`, `?view=timeline`, `?view=recommend`, `/spaces/invite/:token` | 공간 탭은 멤버 카드(제목 옆 인원, 정원이 차면 주황색과 안내, 소유자의 "공간 이름 바꾸기"와 초대 링크 기간·만들기), 공간 기능 4줄(같이 보고 싶어요, 함께 고르기, 우리 기록 모아보기, 기록 검색), 공간 관리(새 공간, 소유권 넘기기, 나가기·종료가 눌러야 펼쳐지는 줄로 접혀 있음) 순서다. `?view=timeline`은 공간 타임라인 전체, `?view=recommend`는 함께 고르기 화면(그룹 추천, 내가 시작했거나 초대된 "최근 함께 고르기"를 열어 답함)이다. 공간 초대는 카드 하나로 누가 어느 공간에 초대했는지, 인원, 만료 시각을 보이고 참여하기와 확인 창을 거치는 초대 거절을 둔다. 정원이 차면 같은 카드에 안내와 꺼진 참여하기를 보인다 |
+| `/spaces`, `?view=timeline`, `?view=recommend`, `/spaces/invite/:token` | 공간 탭은 멤버 카드(제목 옆 인원, 정원이 차면 주황색과 안내, 소유자의 "공간 이름 바꾸기"와 초대 링크 기간·만들기), 공간 기능 4줄(같이 보고 싶어요, 함께 고르기, 우리 기록 모아보기, 기록 검색), 공간 관리(새 공간, 소유권 넘기기, 나가기·종료가 눌러야 펼쳐지는 줄로 접혀 있음) 순서다. `?view=timeline`은 공간 타임라인 전체, `?view=recommend`는 함께 고르기 화면(그룹 추천, 내가 시작했거나 초대된 "최근 함께 고르기"를 열어 답함)이다. 모두 동의한 후보에는 "이걸로 볼게요"가 나오고, 누르면 그 함께 고르기가 끝나며 정한 작품이 홈의 "오늘 밤 후보"(같이 보고 싶어요 빠른 추천보다 먼저)에 3일 동안, 또는 참여자 누군가 그 작품을 기록할 때까지 보인다. 시작한 사람은 "그만 고르기"로 끝낼 수 있고, 시작한 지 7일이 지난 함께 고르기는 끝난 것으로 보고 답을 받지 않는다. 목록에서 연 함께 고르기도 저장된 조건으로 "같은 조건으로 새 추천"을 할 수 있다. 공간 초대는 카드 하나로 누가 어느 공간에 초대했는지, 인원, 만료 시각을 보이고 참여하기와 확인 창을 거치는 초대 거절을 둔다. 정원이 차면 같은 카드에 안내와 꺼진 참여하기를 보인다 |
 | `/spaces/memories`, `?view=calendar` | 우리 기록 모아보기: 한 해 돌아보기(연말 결산 카드와 이미지 저장, 장르·극장 vs OTT, 1년 전 오늘, 보고 있는 드라마)와 달력(달마다 본 날에 첫 기록, 날을 누르면 그날 기록) |
 | `/notifications` | 알림 센터: 새 기록, 함께 봤는지 확인 요청, 열린 블라인드 리뷰, 좋아요·댓글, 같이 보고 싶어요 겹침. 모두 읽음 |
 | `/spaces/wishes` | 활성 공간의 같이 보고 싶어요 목록: 누가 담았는지, 모두 담았는지, 구독 OTT에서 볼 수 있는지, 빠른 추천(기분 선택·다른 후보) |
@@ -129,7 +129,7 @@ graphify-out/      Graphify 코드 그래프 (도구가 생성, 손으로 수정
 | `spaces` | 2~5명 공유 공간, 이름 변경, 공간 초대(수락·거절), 소유권 이전·탈퇴·종료 (`/v1/spaces`, `/v1/invites`). 공개된 초대 확인(`GET /v1/invites/:token`)은 쓸 수 있거나 정원이 찬 초대에 공간 이름, 초대한 사람, 만료 시각과 구성원 수·정원·닉네임 첫 글자만 담는다 |
 | `diaries` | 감상 기록(`/diaries`)과 감상 사건·참여자·개인 반응(`/v1/watch-events`), 기록 검색(`/v1/watch-events/search`), 내 사진(`PUT /v1/watch-events/:id/photos`), 공간 타임라인·모아보기·달력(`/v1/spaces/:spaceId/calendar?month=`) |
 | `media` | TMDB 검색·상세·인물 검색, 작품 선택(서버가 TMDB 원본 저장), 시청 가능성(`/media/:id/availability`) |
-| `recommendations` | 오늘의 추천·장르 추천, 그룹 추천 세션과 피드백(`/v1/recommendation-sessions`, 공간의 최근 세션 `/v1/spaces/:spaceId/recommendation-sessions`), 공간의 같이 보고 싶어요 목록과 빠른 추천(`/v1/spaces/:spaceId/wishes`) |
+| `recommendations` | 오늘의 추천·장르 추천, 그룹 추천 세션과 피드백(`/v1/recommendation-sessions`, 공간의 최근 세션 `/v1/spaces/:spaceId/recommendation-sessions`, 정하기 `POST .../:sessionId/decision`, 끝내기 `POST .../:sessionId/close`, 홈의 정한 작품 `GET /v1/spaces/:spaceId/recommendation-sessions/decided`), 공간의 같이 보고 싶어요 목록과 빠른 추천(`/v1/spaces/:spaceId/wishes`) |
 | `notifications` | 알림 목록과 알림 설정 |
 | `outbox` | 트랜잭션 아웃박스 저장 (소비 워커는 아직 없음) |
 | `watchlist`, `reactions`, `comments`, `community` | 예전 기능. 데이터·API 호환을 위해 유지 |

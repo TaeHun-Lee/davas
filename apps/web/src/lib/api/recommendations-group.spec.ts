@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import type { GroupRecommendationSessionRequest } from '@davas/shared';
 import {
+  closeGroupRecommendationSession,
   createGroupRecommendationSession,
+  decideGroupRecommendation,
+  getDecidedGroupRecommendation,
   getGroupRecommendationSession,
   submitGroupRecommendationFeedback,
 } from './recommendations';
@@ -72,10 +75,7 @@ describe('group recommendation API wrapper', () => {
 
     await createGroupRecommendationSession(request);
 
-    assert.equal(
-      calls[0].url,
-      'https://api.example.test/api/v1/recommendation-sessions',
-    );
+    assert.equal(calls[0].url, 'https://api.example.test/api/v1/recommendation-sessions');
     assert.equal(calls[0].init.method, 'POST');
     assert.deepEqual(JSON.parse(String(calls[0].init.body)), request);
     assert.equal(calls[0].init.credentials, 'include');
@@ -84,18 +84,14 @@ describe('group recommendation API wrapper', () => {
 
   it('loads a session and submits availability-error feedback', async () => {
     await getGroupRecommendationSession('session / one');
-    const response = await submitGroupRecommendationFeedback(
-      'exposure / one',
-      { kind: 'AVAILABILITY_ERROR' },
-    );
+    const response = await submitGroupRecommendationFeedback('exposure / one', {
+      kind: 'AVAILABILITY_ERROR',
+    });
 
     assert.deepEqual(
       calls.map(({ url, init }) => [url, init.method ?? 'GET']),
       [
-        [
-          'https://api.example.test/api/v1/recommendation-sessions/session%20%2F%20one',
-          'GET',
-        ],
+        ['https://api.example.test/api/v1/recommendation-sessions/session%20%2F%20one', 'GET'],
         [
           'https://api.example.test/api/v1/recommendation-exposures/exposure%20%2F%20one/feedback',
           'POST',
@@ -107,5 +103,29 @@ describe('group recommendation API wrapper', () => {
     });
     assert.equal(response.feedback.kind, 'AVAILABILITY_ERROR');
     assert.equal(response.consensus.respondedCount, 1);
+  });
+
+  it('settles a pick, stops one, and reads the settled title for home', async () => {
+    await decideGroupRecommendation('session / one', { exposureId: 'exposure-1' });
+    await closeGroupRecommendationSession('session / one');
+    await getDecidedGroupRecommendation('space / one');
+    assert.deepEqual(
+      calls.map(({ url, init }) => [url, init.method ?? 'GET']),
+      [
+        [
+          'https://api.example.test/api/v1/recommendation-sessions/session%20%2F%20one/decision',
+          'POST',
+        ],
+        [
+          'https://api.example.test/api/v1/recommendation-sessions/session%20%2F%20one/close',
+          'POST',
+        ],
+        [
+          'https://api.example.test/api/v1/spaces/space%20%2F%20one/recommendation-sessions/decided',
+          'GET',
+        ],
+      ],
+    );
+    assert.deepEqual(JSON.parse(String(calls[0].init.body)), { exposureId: 'exposure-1' });
   });
 });

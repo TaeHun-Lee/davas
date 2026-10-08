@@ -101,29 +101,34 @@ export class MediaSelectionService {
     };
   }
 
+  // One link per title and provider. Looking it up by the title (not the provider's number)
+  // keeps a series from reusing the link of a movie that shares its TMDB id.
   private async recordExternalRef(contentId: string, selection: MediaSelectionDto) {
     if (!this.externalRefRepository) {
       return;
     }
     const existing = await this.externalRefRepository.findOne({
-      where: {
-        provider: selection.externalProvider,
-        externalId: selection.externalId,
-      },
+      where: { contentId, provider: selection.externalProvider },
     });
     if (existing) {
       existing.lastSyncedAt = new Date();
       await this.externalRefRepository.save(existing);
       return;
     }
-    await this.externalRefRepository.save(
-      this.externalRefRepository.create({
-        contentId,
-        provider: selection.externalProvider,
-        externalId: selection.externalId,
-        source: selection.externalProvider,
-        lastSyncedAt: new Date(),
-      }),
-    );
+    try {
+      await this.externalRefRepository.save(
+        this.externalRefRepository.create({
+          contentId,
+          provider: selection.externalProvider,
+          mediaType: selection.mediaType,
+          externalId: selection.externalId,
+          source: selection.externalProvider,
+          lastSyncedAt: new Date(),
+        }),
+      );
+    } catch (error) {
+      // Two people choosing the same title at once both try to add the link; one is enough.
+      if ((error as { code?: string }).code !== '23505') throw error;
+    }
   }
 }

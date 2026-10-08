@@ -245,3 +245,21 @@ describe('a record, matched to the record boards', () => {
     assert.match(source('app/globals.css'), /\.comments-empty \{[^}]*border: 1px dashed #c9d6e6;/);
   });
 });
+
+describe('small fixes and a finished choose-together', () => {
+  it('puts a settled pick on home before the quick pick', () => {
+    const card = source('components/spaces/WishPickCard.tsx');
+    assert.match(card, /getDecidedGroupRecommendation\(spaceId\)/);
+    assert.match(card, /함께 고르기에서 정했어요/);
+    assert.ok(card.indexOf("variant === 'home' && decided") < card.indexOf('wish-pick-empty'));
+  });
+
+  it('shows a shared invite link as good news, not as an error', () => {
+    const friends = source('components/friends/FriendsScreen.tsx');
+    assert.match(
+      friends,
+      /say\(canShare \? '초대 링크를 공유했어요\.' : '초대 링크를 복사했어요\.', 'done'\)/,
+    );
+    assert.match(friends, /messageTone === 'done' \? 'friends-notice mt-3' : 'form-error mt-3'/);
+  });
+});

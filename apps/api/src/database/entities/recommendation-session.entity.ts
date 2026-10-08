@@ -90,10 +90,14 @@ export class RecommendationSessionEntity {
   @Column({ type: 'varchar', length: 20, default: 'OPEN' })
   status!: RecommendationSessionStatus;
 
-  @OneToMany(
-    () => RecommendationExposureEntity,
-    (exposure) => exposure.session,
-  )
+  /** The agreed title someone settled on ("이걸로 볼게요"); null when it ended otherwise. */
+  @Column({ name: 'decided_exposure_id', type: 'uuid', nullable: true })
+  decidedExposureId!: string | null;
+
+  @Column({ name: 'closed_at', type: 'timestamptz', nullable: true })
+  closedAt!: Date | null;
+
+  @OneToMany(() => RecommendationExposureEntity, (exposure) => exposure.session)
   exposures!: RecommendationExposureEntity[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })

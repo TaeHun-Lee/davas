@@ -26,6 +26,12 @@ export function FriendsScreen() {
   const [results, setResults] = useState<FriendUser[]>([]);
   const [busy, setBusy] = useState('');
   const [message, setMessage] = useState('');
+  // Only a shared or copied invite link is good news; everything else here is a failure.
+  const [messageTone, setMessageTone] = useState<'error' | 'done'>('error');
+  const say = (text: string, tone: 'error' | 'done' = 'error') => {
+    setMessageTone(tone);
+    setMessage(text);
+  };
   const [removeTarget, setRemoveTarget] = useState<FriendRow | null>(null);
   const receivedRef = useRef<HTMLElement>(null);
 
@@ -54,7 +60,7 @@ export function FriendsScreen() {
         setResults((await searchFriends(q)).items);
       }
     } catch {
-      setMessage('요청을 처리하지 못했어요. 다시 시도해 주세요.');
+      say('요청을 처리하지 못했어요. 다시 시도해 주세요.');
     } finally {
       setBusy('');
     }
@@ -62,7 +68,7 @@ export function FriendsScreen() {
 
   const search = async () => {
     if (q.trim().length < 2) {
-      setMessage('두 글자 이상 입력해 주세요.');
+      say('두 글자 이상 입력해 주세요.');
       return;
     }
     setBusy('search');
@@ -70,7 +76,7 @@ export function FriendsScreen() {
     try {
       setResults((await searchFriends(q)).items);
     } catch {
-      setMessage('친구를 찾지 못했어요.');
+      say('친구를 찾지 못했어요.');
     } finally {
       setBusy('');
     }
@@ -91,9 +97,9 @@ export function FriendsScreen() {
       } else {
         await navigator.clipboard.writeText(url);
       }
-      setMessage(canShare ? '초대 링크를 공유했어요.' : '초대 링크를 복사했어요.');
+      say(canShare ? '초대 링크를 공유했어요.' : '초대 링크를 복사했어요.', 'done');
     } catch {
-      setMessage('초대 링크를 만들지 못했어요.');
+      say('초대 링크를 만들지 못했어요.');
     } finally {
       setBusy('');
     }
@@ -163,7 +169,10 @@ export function FriendsScreen() {
       </button>
 
       {message ? (
-        <p className="form-error mt-3" role="status">
+        <p
+          className={messageTone === 'done' ? 'friends-notice mt-3' : 'form-error mt-3'}
+          role={messageTone === 'done' ? 'status' : 'alert'}
+        >
           {message}
         </p>
       ) : null}

@@ -8,6 +8,7 @@ import {
   buildGroupRecommendationRequest,
   consensusPresentation,
   recommendationReasonText,
+  requestFromSession,
 } from './group-recommendation-model';
 
 function draft(
@@ -134,5 +135,63 @@ describe('group recommendation presentation privacy and states', () => {
     assert.match(panel, /러닝타임 제한 해제/);
     assert.match(panel, /제외 조건 비우기/);
     assert.match(panel, /재감상 허용 검토/);
+  });
+
+  it('reads a pick back into its request, so a pick opened from the list can ask again', () => {
+    const session = {
+      id: 'session-1',
+      spaceId: 'space-1',
+      requesterAccountId: 'u1',
+      participantAccountIds: ['u1', 'u2'],
+      algorithmVersion: 'v1',
+      status: 'CLOSED' as const,
+      constraints: {
+        region: 'KR',
+        services: ['Netflix'],
+        contentTypes: ['MOVIE', 'TV'],
+        runtime: { minMinutes: null, maxMinutes: 140 },
+        moodTags: ['따뜻한'],
+        avoidTags: [],
+        rewatchPolicy: 'EXCLUDE',
+        decisionRule: 'MINIMUM',
+        minimumApprovals: 1,
+      },
+    };
+    assert.deepEqual(requestFromSession(session), {
+      spaceId: 'space-1',
+      participantAccountIds: ['u1', 'u2'],
+      region: 'KR',
+      services: ['Netflix'],
+      contentTypes: ['MOVIE', 'TV'],
+      runtime: { minMinutes: undefined, maxMinutes: 140 },
+      moodTags: ['따뜻한'],
+      avoidTags: [],
+      rewatchPolicy: 'EXCLUDE',
+      decisionRule: 'MINIMUM',
+      minimumApprovals: 1,
+    });
+    const all = requestFromSession({
+      ...session,
+      constraints: { ...session.constraints, decisionRule: 'ALL', runtime: {} },
+    });
+    assert.equal(all?.minimumApprovals, undefined);
+    assert.equal(all?.runtime, undefined);
+    assert.equal(requestFromSession({ ...session, constraints: {} }), null);
+  });
+
+  it('settles on an agreed title, lets the starter stop, and shows how a pick ended', () => {
+    const panel = readFileSync(
+      join(process.cwd(), 'src/components/spaces/GroupRecommendationPanel.tsx'),
+      'utf8',
+    );
+    assert.match(panel, />\s*이걸로 볼게요\s*</);
+    assert.match(panel, />\s*그만 고르기\s*</);
+    assert.match(panel, /이걸로 정했어요 · \$\{item\.decidedTitle\}/);
+    assert.match(panel, /끝난 함께 고르기/);
+    assert.match(panel, /group\.session\.session\.requesterAccountId === myAccountId/);
+    assert.match(panel, /item\.consensus\.status === 'MATCHED'/);
+    assert.doesNotMatch(panel, /세션 만료|최종 합의 완료/);
+    const hook = readFileSync(join(process.cwd(), 'src/hooks/useGroupRecommendations.ts'), 'utf8');
+    assert.match(hook, /setLastRequest\(requestFromSession\(next\.session\)\)/);
   });
 });

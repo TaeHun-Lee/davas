@@ -80,4 +80,62 @@ describe('canonical media selection', () => {
     );
     assert.ok(refRecords[0].lastSyncedAt instanceof Date);
   });
+
+  it('gives a series its own provider link when a movie already uses the same TMDB id', async () => {
+    const refs: Array<Record<string, unknown>> = [
+      {
+        id: 'ref-movie',
+        contentId: 'movie-1',
+        provider: 'TMDB',
+        mediaType: 'MOVIE',
+        externalId: '157336',
+      },
+    ];
+    const refRepository = {
+      findOne: async ({ where }: { where: Record<string, unknown> }) =>
+        refs.find((ref) => Object.entries(where).every(([key, value]) => ref[key] === value)) ??
+        null,
+      create: (input: Record<string, unknown>) => ({ id: `ref-${refs.length + 1}`, ...input }),
+      save: async (input: Record<string, unknown>) => {
+        if (!refs.includes(input)) refs.push(input);
+        return input;
+      },
+    };
+    const series = { ...selection, mediaType: 'TV' as const };
+    const service = new MediaSelectionService(
+      {
+        findOne: async () => null,
+        create: (input: Record<string, unknown>) => ({ id: 'series-1', ...input }),
+        save: async (input: Record<string, unknown>) => input,
+      } as never,
+      {
+        detail: async () => ({
+          ...series,
+          tagline: null,
+          genres: [],
+          countries: [],
+          runtime: null,
+          tmdbRating: null,
+          tmdbVoteCount: null,
+          director: null,
+          creators: [],
+          cast: [],
+          certification: null,
+        }),
+      } as never,
+      refRepository as never,
+    );
+
+    await service.select(series);
+    assert.equal(refs.length, 2);
+    assert.deepEqual(
+      {
+        contentId: refs[1].contentId,
+        mediaType: refs[1].mediaType,
+        externalId: refs[1].externalId,
+      },
+      { contentId: 'series-1', mediaType: 'TV', externalId: '157336' },
+    );
+    assert.equal(refs[0].contentId, 'movie-1');
+  });
 });

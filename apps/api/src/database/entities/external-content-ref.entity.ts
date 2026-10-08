@@ -8,10 +8,12 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import type { MediaType } from '@davas/shared';
 import { MediaEntity } from './media.entity';
 
 @Entity({ name: 'external_content_refs' })
-@Index(['provider', 'externalId'], { unique: true })
+// TMDB numbers movies and series separately, so the type is part of the identity.
+@Index(['provider', 'mediaType', 'externalId'], { unique: true })
 @Index(['contentId', 'provider'], { unique: true })
 export class ExternalContentRefEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -28,6 +30,9 @@ export class ExternalContentRefEntity {
 
   @Column({ type: 'varchar', length: 40 })
   provider!: string;
+
+  @Column({ name: 'media_type', type: 'varchar', length: 20 })
+  mediaType!: MediaType;
 
   @Column({ name: 'external_id', type: 'varchar', length: 120 })
   externalId!: string;

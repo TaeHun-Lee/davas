@@ -8,8 +8,11 @@ import type {
   SpaceView,
 } from '@davas/shared';
 import { useCallback, useEffect, useState } from 'react';
+import { requestFromSession } from '../components/spaces/group-recommendation-model';
 import {
+  closeGroupRecommendationSession,
   createGroupRecommendationSession,
+  decideGroupRecommendation,
   getGroupRecommendationSession,
   listGroupRecommendationSessions,
   RecommendationRequestError,
@@ -33,6 +36,7 @@ export function useGroupRecommendations(space: SpaceView) {
   const [feedbackBusy, setFeedbackBusy] = useState('');
   const [feedbackError, setFeedbackError] = useState('');
   const [myFeedback, setMyFeedback] = useState<Record<string, RecommendationFeedbackKind>>({});
+  const [decisionBusy, setDecisionBusy] = useState(false);
   // Picks in this space I started or was asked into, so anyone in one can come back and answer.
   const [sessions, setSessions] = useState<GroupRecommendationSessionSummary[]>([]);
 
@@ -62,6 +66,8 @@ export function useGroupRecommendations(space: SpaceView) {
     try {
       const next = await getGroupRecommendationSession(sessionId);
       setSession(next);
+      // A pick opened from the list keeps its conditions, so "같은 조건으로" works here too.
+      setLastRequest(requestFromSession(next.session));
       setMyFeedback(answersOf(next));
       setRequestStatus('ready');
       return next;
@@ -150,6 +156,44 @@ export function useGroupRecommendations(space: SpaceView) {
     [refreshSessions],
   );
 
+  // "이걸로 볼게요" and "그만 고르기" both end the pick; the list then shows how it ended.
+  const finish = useCallback(
+    async (work: () => Promise<GroupRecommendationSessionResponse>, failure: string) => {
+      setDecisionBusy(true);
+      setFeedbackError('');
+      try {
+        const next = await work();
+        setSession(next);
+        setMyFeedback(answersOf(next));
+        void refreshSessions();
+      } catch (caught) {
+        setFeedbackError(caught instanceof Error && caught.message ? caught.message : failure);
+      } finally {
+        setDecisionBusy(false);
+      }
+    },
+    [refreshSessions],
+  );
+
+  const settle = useCallback(
+    async (exposureId: string) => {
+      if (!session) return;
+      await finish(
+        () => decideGroupRecommendation(session.session.id, { exposureId }),
+        '이 작품으로 정하지 못했어요. 다시 시도해 주세요.',
+      );
+    },
+    [finish, session],
+  );
+
+  const closeSession = useCallback(async () => {
+    if (!session) return;
+    await finish(
+      () => closeGroupRecommendationSession(session.session.id),
+      '함께 고르기를 끝내지 못했어요. 다시 시도해 주세요.',
+    );
+  }, [finish, session]);
+
   return {
     requestStatus,
     requestError,
@@ -158,9 +202,13 @@ export function useGroupRecommendations(space: SpaceView) {
     feedbackError,
     myFeedback,
     sessions,
+    decisionBusy,
+    canRetry: lastRequest !== null,
     openSession,
     requestRecommendations,
     retryLastRequest,
     submitFeedback,
+    settle,
+    closeSession,
   };
 }

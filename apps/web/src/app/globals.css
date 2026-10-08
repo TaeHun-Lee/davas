@@ -2181,6 +2181,11 @@ a {
   color: var(--blue);
   font-weight: 900;
 }
+.wish-pick-actions > a[data-tone='quiet'] {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  font-weight: 850;
+}
 .wish-pick-loading {
   height: 96px;
   margin-top: 14px;
@@ -4687,6 +4692,15 @@ label:has(> input.sr-only:focus-visible) {
   background: #eaf6ef;
   color: #1d6b4a;
 }
+.friends-notice {
+  border-radius: 14px;
+  background: #eaf6ef;
+  padding: 10px 12px;
+  color: #1d6b4a;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 750;
+}
 .space-panel {
   border: 1px solid #e1e9f3;
   border-radius: 22px;
@@ -5199,6 +5213,65 @@ label:has(> input.sr-only:focus-visible) {
 .choose-session-button[data-tone='viewing'] {
   background: var(--blue-soft);
   cursor: default;
+}
+/* How a pick ended: settled on a title ("이걸로 정했어요"), or ended without one. */
+.choose-session-pill {
+  border-radius: 999px;
+  background: #f2f4f7;
+  padding: 6px 12px;
+  color: #56667b;
+  font-size: 12px;
+  font-weight: 850;
+}
+.choose-session-pill[data-tone='decided'] {
+  background: #dff7eb;
+  color: #17714a;
+}
+.choose-stop {
+  min-height: 44px;
+  border: 1px solid #d8e4f2;
+  border-radius: 999px;
+  background: white;
+  padding: 0 16px;
+  color: #52677e;
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.choose-stop:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.choose-settle {
+  width: 100%;
+  margin-top: 12px;
+}
+.choose-decided {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  border: 1px solid #bfe3cf;
+  border-radius: 16px;
+  background: #eaf6ef;
+  padding: 12px 14px;
+}
+.choose-decided p {
+  color: #1d6b4a;
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 800;
+}
+.choose-decided a {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: var(--blue);
+  color: white;
+  font-size: 14px;
+  font-weight: 850;
 }
 .choose-form {
   border: 1px solid #e1e9f3;

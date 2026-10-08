@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import {
   OTT_SERVICES,
   ottProviderNames,
@@ -140,12 +141,15 @@ export function GroupRecommendationPanel({
             {group.sessions.map((item) => {
               const mine = item.requesterAccountId === myAccountId;
               const starter = mine ? '내가' : `${memberName(item.requesterAccountId)}님이`;
-              const status =
-                item.status === 'MATCHED'
-                  ? `정해졌어요${item.matchedTitle ? ` · ${item.matchedTitle}` : ''}`
-                  : item.itemCount
-                    ? `후보 ${item.itemCount}개 중 ${item.answeredByMe}개에 답했어요`
-                    : '조건에 맞는 후보가 없었어요';
+              const status = item.decidedTitle
+                ? `이걸로 정했어요 · ${item.decidedTitle}`
+                : item.status === 'CLOSED'
+                  ? '끝난 함께 고르기예요'
+                  : item.status === 'MATCHED'
+                    ? `모두 동의했어요${item.matchedTitle ? ` · ${item.matchedTitle}` : ''}`
+                    : item.itemCount
+                      ? `후보 ${item.itemCount}개 중 ${item.answeredByMe}개에 답했어요`
+                      : '조건에 맞는 후보가 없었어요';
               const viewing = group.session?.session.id === item.id;
               const waitingForMe = item.status === 'OPEN' && item.answeredByMe < item.itemCount;
               return (
@@ -158,7 +162,13 @@ export function GroupRecommendationPanel({
                       {starter} 시작
                       {item.createdAt ? ` · ${relativeTime(item.createdAt)}` : ''}
                     </span>
-                    <strong data-decided={item.status === 'MATCHED' || undefined}>{status}</strong>
+                    <strong
+                      data-decided={
+                        Boolean(item.decidedTitle) || item.status === 'MATCHED' || undefined
+                      }
+                    >
+                      {status}
+                    </strong>
                   </span>
                   {viewing ? (
                     <button
@@ -418,24 +428,43 @@ export function GroupRecommendationPanel({
                 {' · '}조건과 이유 코드는 이 세션에 고정돼요.
               </p>
             </div>
-            {group.session.session.status === 'MATCHED' ? (
-              <span className="rounded-full bg-[#dff7eb] px-3 py-1.5 text-[12px] font-extrabold text-[#17714a]">
-                최종 합의 완료
+            {group.session.session.decidedExposureId ? (
+              <span className="choose-session-pill" data-tone="decided">
+                이걸로 정했어요
               </span>
             ) : group.session.session.status === 'CLOSED' ? (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-[#f2f4f7] px-3 py-1.5 text-[12px] font-extrabold text-[#65758a]">
-                  세션 만료
-                </span>
-                <button
-                  type="button"
-                  onClick={() => void group.retryLastRequest()}
-                  className="min-h-11 rounded-full border border-[#d8e4f2] bg-white px-4 text-[12px] font-extrabold text-[#52677e]"
-                >
-                  같은 조건으로 새 추천
-                </button>
+                <span className="choose-session-pill">끝난 함께 고르기</span>
+                {group.canRetry ? (
+                  <button
+                    type="button"
+                    onClick={() => void group.retryLastRequest()}
+                    className="min-h-11 rounded-full border border-[#d8e4f2] bg-white px-4 text-[12px] font-extrabold text-[#52677e]"
+                  >
+                    같은 조건으로 새 추천
+                  </button>
+                ) : null}
               </div>
-            ) : null}
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                {group.session.session.status === 'MATCHED' ? (
+                  <span className="choose-session-pill" data-tone="decided">
+                    합의 완료
+                  </span>
+                ) : null}
+                {/* Only the starter ends a pick without a title; the server checks it too. */}
+                {group.session.session.requesterAccountId === myAccountId ? (
+                  <button
+                    type="button"
+                    disabled={group.decisionBusy}
+                    onClick={() => void group.closeSession()}
+                    className="choose-stop"
+                  >
+                    그만 고르기
+                  </button>
+                ) : null}
+              </div>
+            )}
           </div>
 
           {group.session.items.length === 0 ? (
@@ -479,8 +508,9 @@ export function GroupRecommendationPanel({
                 ) : null}
                 <button
                   type="button"
+                  disabled={!group.canRetry}
                   onClick={() => void group.retryLastRequest()}
-                  className="min-h-11 rounded-full bg-[#875c10] px-4 text-[12px] font-extrabold text-white"
+                  className="min-h-11 rounded-full bg-[#875c10] px-4 text-[12px] font-extrabold text-white disabled:opacity-50"
                 >
                   조건 그대로 다시 조회
                 </button>
@@ -493,6 +523,9 @@ export function GroupRecommendationPanel({
                 const consensus = consensusPresentation(item.consensus);
                 const selectedFeedback = group.myFeedback[item.exposureId];
                 const closed = group.session?.session.status !== 'OPEN';
+                const decided = group.session?.session.decidedExposureId === item.exposureId;
+                const canSettle =
+                  group.session?.session.status !== 'CLOSED' && item.consensus.status === 'MATCHED';
                 return (
                   <article
                     key={item.exposureId}
@@ -600,6 +633,26 @@ export function GroupRecommendationPanel({
                             개인별 선택과 내부 추천 점수는 공개하지 않고 집계만 보여요.
                           </p>
                         </div>
+
+                        {decided ? (
+                          <div className="choose-decided" role="status">
+                            <p>이걸로 정했어요. 보고 나서 각자 기록을 남겨 보세요.</p>
+                            <Link
+                              href={`/records/new?mediaId=${encodeURIComponent(item.content.id)}`}
+                            >
+                              보고 나서 기록하기
+                            </Link>
+                          </div>
+                        ) : canSettle ? (
+                          <button
+                            type="button"
+                            disabled={group.decisionBusy}
+                            onClick={() => void group.settle(item.exposureId)}
+                            className="primary-button choose-settle"
+                          >
+                            이걸로 볼게요
+                          </button>
+                        ) : null}
 
                         <fieldset className="mt-4" disabled={closed}>
                           <legend className="text-[12px] font-extrabold text-[var(--heading)]">

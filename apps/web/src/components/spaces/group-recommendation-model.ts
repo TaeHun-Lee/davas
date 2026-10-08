@@ -2,6 +2,7 @@ import type {
   GroupRecommendationConsensus,
   GroupRecommendationSessionRequest,
   GroupRecommendationSessionResponse,
+  MediaType,
   RecommendationFeedbackKind,
 } from '@davas/shared';
 
@@ -92,6 +93,54 @@ export function buildGroupRecommendationRequest(
     rewatchPolicy: draft.rewatchPolicy,
     decisionRule: draft.decisionRule,
     ...(draft.decisionRule === 'MINIMUM' ? { minimumApprovals: draft.minimumApprovals } : {}),
+  };
+}
+
+const textList = (value: unknown) =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+const positive = (value: unknown) =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
+
+/**
+ * The request a pick was made with, read back from the conditions the session kept, so
+ * "같은 조건으로 새 추천" works on a pick opened from the list too. Null when they are incomplete.
+ */
+export function requestFromSession(
+  session: GroupRecommendationSessionResponse['session'],
+): GroupRecommendationSessionRequest | null {
+  const constraints = session.constraints as Record<string, unknown>;
+  const services = textList(constraints.services);
+  const contentTypes = textList(constraints.contentTypes).filter(
+    (type): type is MediaType => type === 'MOVIE' || type === 'TV',
+  );
+  const rewatchPolicy = constraints.rewatchPolicy;
+  const decisionRule = constraints.decisionRule;
+  if (
+    !services.length ||
+    !contentTypes.length ||
+    (rewatchPolicy !== 'EXCLUDE' && rewatchPolicy !== 'ALLOW') ||
+    (decisionRule !== 'ALL' && decisionRule !== 'MINIMUM')
+  ) {
+    return null;
+  }
+  const runtime = (constraints.runtime ?? {}) as Record<string, unknown>;
+  const minMinutes = positive(runtime.minMinutes);
+  const maxMinutes = positive(runtime.maxMinutes);
+  const minimumApprovals = positive(constraints.minimumApprovals);
+  return {
+    spaceId: session.spaceId,
+    participantAccountIds: session.participantAccountIds,
+    region: typeof constraints.region === 'string' ? constraints.region : 'KR',
+    services,
+    contentTypes,
+    ...(minMinutes !== undefined || maxMinutes !== undefined
+      ? { runtime: { minMinutes, maxMinutes } }
+      : {}),
+    moodTags: textList(constraints.moodTags),
+    avoidTags: textList(constraints.avoidTags),
+    rewatchPolicy,
+    decisionRule,
+    ...(decisionRule === 'MINIMUM' && minimumApprovals ? { minimumApprovals } : {}),
   };
 }
 

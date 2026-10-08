@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { GroupRecommendationDecidedPick } from '@davas/shared';
 import { mediaTypeLabel } from '../../lib/api/core';
+import { getDecidedGroupRecommendation } from '../../lib/api/recommendations';
 import { pickWish, type SpaceWishPick, type WishMood } from '../../lib/api/wishes';
 import { Poster } from '../core/CoreUi';
 
@@ -29,6 +31,8 @@ export function WishPickCard({
   const [mood, setMood] = useState<WishMood | undefined>();
   const [pick, setPick] = useState<SpaceWishPick | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  // On home, a title a pick settled on ("이걸로 볼게요") comes before the quick pick.
+  const [decided, setDecided] = useState<GroupRecommendationDecidedPick | null>(null);
   const shown = useRef<string[]>([]);
   // Changing the mood twice quickly must not let the slower, older answer win.
   const latestRequest = useRef(0);
@@ -64,6 +68,63 @@ export function WishPickCard({
     // A changed mood starts a fresh round; refreshKey reloads after the list changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load, refreshKey]);
+
+  useEffect(() => {
+    if (variant !== 'home') return;
+    let active = true;
+    getDecidedGroupRecommendation(spaceId)
+      .then((response) => {
+        if (active) setDecided(response.pick);
+      })
+      .catch(() => {
+        // Without it, home falls back to the quick pick from the list.
+        if (active) setDecided(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [spaceId, variant, refreshKey]);
+
+  if (variant === 'home' && decided) {
+    return (
+      <section className="wish-pick" aria-labelledby="wish-pick-home">
+        <div className="wish-pick-head">
+          <h2 id="wish-pick-home" className="wish-pick-eyebrow">
+            오늘 밤 후보
+          </h2>
+          <Link href="/spaces?view=recommend" className="wish-pick-link">
+            함께 고르기 <span aria-hidden="true">›</span>
+          </Link>
+        </div>
+        <div className="wish-pick-body">
+          <Poster url={decided.media.posterUrl} title={decided.media.title} />
+          <div className="min-w-0">
+            <h3>{decided.media.title}</h3>
+            <p>
+              {[
+                mediaTypeLabel(decided.media.mediaType),
+                decided.media.releaseYear,
+                decided.media.genres[0],
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </p>
+            <ul className="wish-pick-reasons">
+              <li data-tone="match">함께 고르기에서 정했어요</li>
+            </ul>
+          </div>
+        </div>
+        <div className="wish-pick-actions">
+          <Link href="/spaces/wishes" data-tone="quiet">
+            다른 후보 보기
+          </Link>
+          <Link href={`/records/new?mediaId=${encodeURIComponent(decided.media.id)}`}>
+            보고 나서 기록하기
+          </Link>
+        </div>
+      </section>
+    );
+  }
 
   // A failed lookup says so; only a list that really has nothing to pick invites adding titles.
   if (variant === 'home' && status === 'error') {

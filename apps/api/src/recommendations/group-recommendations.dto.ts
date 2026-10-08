@@ -4,6 +4,7 @@ import {
   RECOMMENDATION_DECISION_RULES,
   RECOMMENDATION_FEEDBACK_KINDS,
   RECOMMENDATION_REWATCH_POLICIES,
+  type GroupRecommendationDecisionRequest,
   type GroupRecommendationFeedbackRequest,
   type GroupRecommendationSessionRequest,
 } from '@davas/shared';
@@ -31,15 +32,9 @@ import type {
 } from '../database/entities';
 
 const CONTENT_TYPES = [...MEDIA_TYPES];
-const REWATCH_POLICIES: RecommendationRewatchPolicy[] = [
-  ...RECOMMENDATION_REWATCH_POLICIES,
-];
-const DECISION_RULES: RecommendationDecisionRule[] = [
-  ...RECOMMENDATION_DECISION_RULES,
-];
-const FEEDBACK_KINDS: RecommendationFeedbackKind[] = [
-  ...RECOMMENDATION_FEEDBACK_KINDS,
-];
+const REWATCH_POLICIES: RecommendationRewatchPolicy[] = [...RECOMMENDATION_REWATCH_POLICIES];
+const DECISION_RULES: RecommendationDecisionRule[] = [...RECOMMENDATION_DECISION_RULES];
+const FEEDBACK_KINDS: RecommendationFeedbackKind[] = [...RECOMMENDATION_FEEDBACK_KINDS];
 
 export class RecommendationRuntimeDto {
   @IsOptional()
@@ -55,9 +50,7 @@ export class RecommendationRuntimeDto {
   maxMinutes?: number;
 }
 
-export class CreateRecommendationSessionDto
-  implements GroupRecommendationSessionRequest
-{
+export class CreateRecommendationSessionDto implements GroupRecommendationSessionRequest {
   @IsUUID()
   spaceId!: string;
 
@@ -113,22 +106,24 @@ export class CreateRecommendationSessionDto
   @IsIn(DECISION_RULES)
   decisionRule!: RecommendationDecisionRule;
 
-  @ValidateIf((value: CreateRecommendationSessionDto) =>
-    value.decisionRule === 'MINIMUM',
-  )
+  @ValidateIf((value: CreateRecommendationSessionDto) => value.decisionRule === 'MINIMUM')
   @IsInt()
   @Min(1)
   @Max(5)
   minimumApprovals?: number;
 }
 
-export class RecommendationFeedbackDto
-  implements GroupRecommendationFeedbackRequest
-{
+export class RecommendationFeedbackDto implements GroupRecommendationFeedbackRequest {
   @IsIn(FEEDBACK_KINDS)
   kind!: RecommendationFeedbackKind;
 
   @ValidateIf((value: RecommendationFeedbackDto) => value.kind === 'WATCHED')
   @IsUUID()
   watchEventId?: string;
+}
+
+/** "이걸로 볼게요": the agreed title someone settles on. */
+export class DecideRecommendationDto implements GroupRecommendationDecisionRequest {
+  @IsUUID()
+  exposureId!: string;
 }

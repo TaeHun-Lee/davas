@@ -16,9 +16,12 @@ async function statements() {
 }
 
 describe('account recovery and invite decline migration', () => {
-  it('is the newest migration', () => {
-    const migrations = createTypeOrmOptions().migrations as Array<new () => { name: string }>;
-    assert.equal(migrations.at(-1)?.name, 'AccountRecoveryAndInviteDeclines1720671500000');
+  it('is registered right after the notification subjects', () => {
+    const names = (createTypeOrmOptions().migrations as Array<new () => { name: string }>).map(
+      (migration) => migration.name,
+    );
+    const index = names.indexOf('AccountRecoveryAndInviteDeclines1720671500000');
+    assert.equal(names[index - 1], 'NotificationSubjects1720671400000');
   });
 
   it('only adds columns, with existing accounts on session version 0 and no code', async () => {

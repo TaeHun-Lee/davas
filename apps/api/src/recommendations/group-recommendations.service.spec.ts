@@ -231,6 +231,8 @@ function setup(participantIds = ['u1', 'u2'], notifications?: object) {
     undefined,
     notifications as never,
   );
+  // The fixtures date every session 2026-08-13, a day before "now", inside the open week.
+  service.now = () => new Date('2026-08-14T00:00:00.000Z');
   return { database, service };
 }
 
@@ -454,5 +456,92 @@ describe('GroupRecommendationsService', () => {
       regenerated.items.some((item) => item.content.id === secondExposure.content.id),
       false,
     );
+  });
+
+  it('settles on an agreed title, closes the pick and stops taking answers', async () => {
+    const { database, service } = setup();
+    const created = await service.create('u1', request());
+    const first = created.items[0];
+    const second = created.items[1];
+
+    await assert.rejects(
+      () => service.decide(created.session.id, 'u1', first.exposureId),
+      (error) => exceptionCode(error) === 'RECOMMENDATION_NOT_AGREED',
+    );
+    await service.recordFeedback(first.exposureId, 'u1', { kind: 'INTERESTED' });
+    await service.recordFeedback(first.exposureId, 'u2', { kind: 'INTERESTED' });
+
+    const decided = await service.decide(created.session.id, 'u2', first.exposureId);
+    assert.equal(decided.session.status, 'CLOSED');
+    assert.equal(decided.session.decidedExposureId, first.exposureId);
+    assert.equal(decided.session.closedAt, '2026-08-14T00:00:00.000Z');
+    assert.equal(database.sessions[0].decidedExposureId, first.exposureId);
+
+    await assert.rejects(
+      () => service.recordFeedback(second.exposureId, 'u1', { kind: 'INTERESTED' }),
+      (error) => exceptionCode(error) === 'RECOMMENDATION_CLOSED',
+    );
+    await assert.rejects(
+      () => service.decide(created.session.id, 'u1', first.exposureId),
+      (error) => exceptionCode(error) === 'RECOMMENDATION_CLOSED',
+    );
+    const listed = await service.listForSpace('space-1', 'u1');
+    assert.equal(listed.items[0].status, 'CLOSED');
+    assert.equal(listed.items[0].decidedTitle, first.content.title);
+  });
+
+  it('lets only the starter end a pick, and ends picks left open for a week', async () => {
+    const { service } = setup();
+    const created = await service.create('u1', request());
+    await assert.rejects(
+      () => service.close(created.session.id, 'u2'),
+      (error) => exceptionCode(error) === 'RECOMMENDATION_CLOSE_FORBIDDEN',
+    );
+    const closed = await service.close(created.session.id, 'u1');
+    assert.equal(closed.session.status, 'CLOSED');
+    assert.equal(closed.session.decidedExposureId, null);
+    // Closing again is harmless.
+    assert.equal((await service.close(created.session.id, 'u1')).session.status, 'CLOSED');
+
+    const other = setup();
+    const stale = await other.service.create('u1', request());
+    other.service.now = () => new Date('2026-08-21T00:00:01.000Z');
+    const view = await other.service.get(stale.session.id, 'u2');
+    assert.equal(view.session.status, 'CLOSED');
+    assert.equal(view.session.closedAt, '2026-08-20T00:00:00.000Z');
+    await assert.rejects(
+      () => other.service.recordFeedback(stale.items[0].exposureId, 'u2', { kind: 'HOLD' }),
+      (error) => exceptionCode(error) === 'RECOMMENDATION_CLOSED',
+    );
+  });
+
+  it('shows the settled title on home for a few days until someone in the pick records it', async () => {
+    const { database, service } = setup();
+    assert.deepEqual(await service.decidedPick('space-1', 'u1'), { pick: null });
+    const created = await service.create('u1', request());
+    const first = created.items[0];
+    await service.recordFeedback(first.exposureId, 'u1', { kind: 'INTERESTED' });
+    await service.recordFeedback(first.exposureId, 'u2', { kind: 'INTERESTED' });
+    await service.decide(created.session.id, 'u1', first.exposureId);
+
+    const shown = await service.decidedPick('space-1', 'u2');
+    assert.equal(shown.pick?.sessionId, created.session.id);
+    assert.equal(shown.pick?.media.id, first.content.id);
+    assert.equal(shown.pick?.decidedAt, '2026-08-14T00:00:00.000Z');
+
+    service.now = () => new Date('2026-08-18T00:00:00.000Z');
+    assert.equal((await service.decidedPick('space-1', 'u2')).pick, null);
+
+    service.now = () => new Date('2026-08-15T00:00:00.000Z');
+    database.diaries.push(
+      Object.assign(new DiaryEntity(), {
+        id: 'diary-after',
+        userId: 'u2',
+        mediaId: first.content.id,
+        createdAt: new Date('2026-08-14T12:00:00.000Z'),
+        deletedAt: null,
+      }),
+    );
+    assert.equal((await service.decidedPick('space-1', 'u1')).pick, null);
   });
 });

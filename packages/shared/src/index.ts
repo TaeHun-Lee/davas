@@ -264,8 +264,12 @@ export type GroupRecommendationSessionResponse = {
     participantAccountIds: string[];
     constraints: Record<string, unknown>;
     algorithmVersion: string;
+    /** CLOSED once someone settled on a title or ended it, or a week after it started. */
     status: 'OPEN' | 'MATCHED' | 'CLOSED';
     createdAt?: string;
+    closedAt?: string | null;
+    /** The agreed title someone settled on ("이걸로 볼게요"). */
+    decidedExposureId?: string | null;
   };
   items: Array<{
     exposureId: string;
@@ -309,10 +313,32 @@ export type GroupRecommendationSessionSummary = {
   answeredByMe: number;
   /** The first title everyone needed agreed on, once there is one. */
   matchedTitle: string | null;
+  /** The title someone settled on, once the pick is decided. */
+  decidedTitle: string | null;
 };
 
 export type GroupRecommendationSessionListResponse = {
   items: GroupRecommendationSessionSummary[];
+};
+
+export type GroupRecommendationDecisionRequest = { exposureId: string };
+
+/** The title a recent pick settled on, shown on home as "오늘 밤 후보". */
+export type GroupRecommendationDecidedPick = {
+  sessionId: string;
+  decidedAt: string;
+  media: {
+    id: string;
+    title: string;
+    mediaType: MediaType;
+    posterUrl: string | null;
+    releaseYear: string | null;
+    genres: string[];
+  };
+};
+
+export type GroupRecommendationDecidedPickResponse = {
+  pick: GroupRecommendationDecidedPick | null;
 };
 
 export type GroupRecommendationFeedbackRequest = {

@@ -55,6 +55,8 @@ import { RecordExperience1720671200000 } from './migrations/1720671200000-Record
 import { SpaceWishesAndSubscriptions1720671300000 } from './migrations/1720671300000-SpaceWishesAndSubscriptions';
 import { NotificationSubjects1720671400000 } from './migrations/1720671400000-NotificationSubjects';
 import { AccountRecoveryAndInviteDeclines1720671500000 } from './migrations/1720671500000-AccountRecoveryAndInviteDeclines';
+import { ExternalContentRefMediaType1720671600000 } from './migrations/1720671600000-ExternalContentRefMediaType';
+import { RecommendationSessionDecision1720671700000 } from './migrations/1720671700000-RecommendationSessionDecision';
 
 export function createTypeOrmOptions(): TypeOrmModuleOptions {
   return {
@@ -126,6 +128,8 @@ export function createTypeOrmOptions(): TypeOrmModuleOptions {
       SpaceWishesAndSubscriptions1720671300000,
       NotificationSubjects1720671400000,
       AccountRecoveryAndInviteDeclines1720671500000,
+      ExternalContentRefMediaType1720671600000,
+      RecommendationSessionDecision1720671700000,
     ],
     synchronize: process.env.TYPEORM_SYNC === 'true',
     logging: process.env.TYPEORM_LOGGING === 'true',

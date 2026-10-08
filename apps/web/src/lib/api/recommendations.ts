@@ -1,4 +1,6 @@
 import type {
+  GroupRecommendationDecidedPickResponse,
+  GroupRecommendationDecisionRequest,
   GroupRecommendationFeedbackRequest,
   GroupRecommendationFeedbackResponse,
   GroupRecommendationSessionRequest,
@@ -161,6 +163,32 @@ export function listGroupRecommendationSessions(spaceId: string) {
 export function getGroupRecommendationSession(sessionId: string) {
   return fetchRecommendation<GroupRecommendationSessionResponse>(
     `/v1/recommendation-sessions/${encodeURIComponent(sessionId)}`,
+  );
+}
+
+/** "이걸로 볼게요": settle a pick on a title everyone needed agreed on. */
+export function decideGroupRecommendation(
+  sessionId: string,
+  request: GroupRecommendationDecisionRequest,
+) {
+  return fetchRecommendation<GroupRecommendationSessionResponse>(
+    `/v1/recommendation-sessions/${encodeURIComponent(sessionId)}/decision`,
+    { method: 'POST', body: JSON.stringify(request) },
+  );
+}
+
+/** "그만 고르기": the person who started a pick ends it without a title. */
+export function closeGroupRecommendationSession(sessionId: string) {
+  return fetchRecommendation<GroupRecommendationSessionResponse>(
+    `/v1/recommendation-sessions/${encodeURIComponent(sessionId)}/close`,
+    { method: 'POST' },
+  );
+}
+
+/** The title my latest pick in the space settled on, for home's "오늘 밤 후보". */
+export function getDecidedGroupRecommendation(spaceId: string) {
+  return fetchRecommendation<GroupRecommendationDecidedPickResponse>(
+    `/v1/spaces/${encodeURIComponent(spaceId)}/recommendation-sessions/decided`,
   );
 }
 

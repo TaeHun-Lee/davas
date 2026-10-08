@@ -1,12 +1,20 @@
 import { createHash } from 'node:crypto';
 import type {
   GroupRecommendationConsensus,
+  GroupRecommendationDecidedPickResponse,
   GroupRecommendationFeedbackResponse,
   GroupRecommendationSessionListResponse,
   GroupRecommendationSessionResponse,
   GroupRecommendationSessionSummary,
 } from '@davas/shared';
-import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, MoreThan, Repository } from 'typeorm';
 import { mapWithConcurrency } from '../common/concurrency';
@@ -62,6 +70,11 @@ const POOL_IMPORT_PAGES = 3;
 // Availability is refreshed for at most this many of the most-voted stale titles per session.
 const AVAILABILITY_WARM_POOL = 60;
 const AVAILABILITY_REFRESH_LIMIT = 24;
+// A pick nobody settled stops taking answers after a week, as if its starter had ended it.
+const SESSION_OPEN_DAYS = 7;
+// What a pick settled on stays home's "오늘 밤 후보" for a few days, or until someone records it.
+const DECIDED_PICK_DAYS = 3;
+const DAY_MS = 24 * 60 * 60 * 1000;
 const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
 const round = (value: number) => Number(value.toFixed(5));
 
@@ -104,6 +117,9 @@ export class GroupRecommendationsService {
     @Optional() private readonly tmdb?: TmdbClient,
     @Optional() private readonly notifications?: NotificationsService,
   ) {}
+
+  /** The service's clock; tests set it to keep fixed dates inside the open week. */
+  now: () => Date = () => new Date();
 
   /**
    * Candidates only come from titles stored locally, and only titles with a fresh "where can
@@ -307,12 +323,7 @@ export class GroupRecommendationsService {
   }
 
   async get(sessionId: string, accountId: string): Promise<GroupRecommendationSessionResponse> {
-    const session = await this.sessions.findOne({
-      where: { id: sessionId },
-      relations: { exposures: { content: true, feedback: true } },
-    });
-    if (!session) throw this.notFound();
-    await this.assertSessionAudience(session, accountId);
+    const session = await this.loadSession(sessionId, accountId);
     return this.sessionView(session, accountId);
   }
 
@@ -330,6 +341,7 @@ export class GroupRecommendationsService {
       throw this.notFound();
     }
     await this.assertSpaceMembers(exposure.session.spaceId, [accountId]);
+    if (this.status(exposure.session) === 'CLOSED') throw this.closed();
     const watchEventId = await this.validateWatchLink(exposure, accountId, dto);
     const matchedBefore = exposure.session.status === 'MATCHED';
 
@@ -380,6 +392,126 @@ export class GroupRecommendationsService {
       },
       consensus: saved.consensus,
     };
+  }
+
+  /**
+   * "이걸로 볼게요": anyone in a pick settles on a title everyone needed agreed on. The pick
+   * closes, and the title becomes home's "오늘 밤 후보" for the people in it.
+   */
+  async decide(
+    sessionId: string,
+    accountId: string,
+    exposureId: string,
+  ): Promise<GroupRecommendationSessionResponse> {
+    const session = await this.loadSession(sessionId, accountId);
+    if (this.status(session) === 'CLOSED') throw this.closed();
+    const exposure = session.exposures?.find((item) => item.id === exposureId);
+    if (!exposure) throw this.notFound();
+    if (this.consensus(session, exposure.feedback ?? []).status !== 'MATCHED') {
+      throw this.badRequest('RECOMMENDATION_NOT_AGREED', '모두 동의한 작품만 고를 수 있어요.');
+    }
+    Object.assign(session, {
+      status: 'CLOSED' as const,
+      decidedExposureId: exposure.id,
+      closedAt: this.now(),
+    });
+    await this.sessions.save(session);
+    return this.sessionView(session, accountId);
+  }
+
+  /** "그만 고르기": only the person who started a pick ends it without a title. */
+  async close(sessionId: string, accountId: string): Promise<GroupRecommendationSessionResponse> {
+    const session = await this.loadSession(sessionId, accountId);
+    if (session.status !== 'CLOSED') {
+      if (session.requesterAccountId !== accountId) {
+        throw new ForbiddenException(
+          response(
+            403,
+            'RECOMMENDATION_CLOSE_FORBIDDEN',
+            '함께 고르기를 시작한 사람만 끝낼 수 있어요.',
+          ),
+        );
+      }
+      Object.assign(session, { status: 'CLOSED' as const, closedAt: this.now() });
+      await this.sessions.save(session);
+    }
+    return this.sessionView(session, accountId);
+  }
+
+  /**
+   * The title the viewer's latest pick in this space settled on, for home's "오늘 밤 후보".
+   * It stays for a few days and goes as soon as someone in the pick records that title.
+   */
+  async decidedPick(
+    spaceId: string,
+    accountId: string,
+  ): Promise<GroupRecommendationDecidedPickResponse> {
+    await this.assertSpaceMembers(spaceId, [accountId]);
+    const since = this.now().getTime() - DECIDED_PICK_DAYS * DAY_MS;
+    const sessions = await this.sessions.find({
+      where: { spaceId },
+      order: { createdAt: 'DESC' },
+      take: 30,
+      relations: { exposures: { content: true } },
+    });
+    const decided = sessions
+      .filter(
+        (session) =>
+          session.decidedExposureId &&
+          session.closedAt &&
+          session.closedAt.getTime() >= since &&
+          (session.requesterAccountId === accountId ||
+            session.participantAccountIds.includes(accountId)),
+      )
+      .sort((left, right) => right.closedAt!.getTime() - left.closedAt!.getTime())[0];
+    const exposure = decided?.exposures?.find((item) => item.id === decided.decidedExposureId);
+    if (!decided || !exposure?.content) return { pick: null };
+    const people = [...new Set([decided.requesterAccountId, ...decided.participantAccountIds])];
+    const records = await this.diaries.find({
+      where: { mediaId: exposure.contentId, userId: In(people) },
+    });
+    const recorded = records.some(
+      (diary) => !diary.deletedAt && diary.createdAt.getTime() >= decided.closedAt!.getTime(),
+    );
+    if (recorded) return { pick: null };
+    const media = exposure.content;
+    return {
+      pick: {
+        sessionId: decided.id,
+        decidedAt: decided.closedAt!.toISOString(),
+        media: {
+          id: media.id,
+          title: media.title,
+          mediaType: media.mediaType,
+          posterUrl: media.posterUrl ?? null,
+          releaseYear: media.releaseDate?.slice(0, 4) ?? null,
+          genres: media.genres ?? [],
+        },
+      },
+    };
+  }
+
+  private async loadSession(sessionId: string, accountId: string) {
+    const session = await this.sessions.findOne({
+      where: { id: sessionId },
+      relations: { exposures: { content: true, feedback: true } },
+    });
+    if (!session) throw this.notFound();
+    await this.assertSessionAudience(session, accountId);
+    return session;
+  }
+
+  /** CLOSED once someone ended it, or once it has been open for a week. */
+  private status(session: RecommendationSessionEntity) {
+    if (session.status === 'CLOSED') return 'CLOSED' as const;
+    const age = this.now().getTime() - (session.createdAt?.getTime() ?? this.now().getTime());
+    return age > SESSION_OPEN_DAYS * DAY_MS ? ('CLOSED' as const) : session.status;
+  }
+
+  private closedAt(session: RecommendationSessionEntity) {
+    if (session.closedAt) return session.closedAt.toISOString();
+    if (this.status(session) !== 'CLOSED' || !session.createdAt) return null;
+    return new Date(session.createdAt.getTime() + SESSION_OPEN_DAYS * DAY_MS).toISOString();
   }
 
   private normalizeRequest(dto: CreateRecommendationSessionDto): SessionRequest {
@@ -809,11 +941,13 @@ export class GroupRecommendationsService {
     const matched = exposures.find(
       (exposure) => this.consensus(session, exposure.feedback ?? []).status === 'MATCHED',
     );
+    const decided = exposures.find((exposure) => exposure.id === session.decidedExposureId);
     return {
       id: session.id,
       requesterAccountId: session.requesterAccountId,
       participantAccountIds: session.participantAccountIds,
-      status: session.status,
+      status: this.status(session),
+      decidedTitle: decided?.content?.title ?? null,
       createdAt: session.createdAt?.toISOString(),
       itemCount: exposures.length,
       answeredByMe: exposures.filter((exposure) =>
@@ -858,8 +992,10 @@ export class GroupRecommendationsService {
         participantAccountIds: session.participantAccountIds,
         constraints: session.constraintsSnapshot,
         algorithmVersion: session.algorithmVersion,
-        status: session.status,
+        status: this.status(session),
         createdAt: session.createdAt?.toISOString(),
+        closedAt: this.closedAt(session),
+        decidedExposureId: session.decidedExposureId ?? null,
       },
       items,
       emptyReason: items.length === 0 ? 'NO_HARD_FILTER_MATCHES' : null,
@@ -868,6 +1004,12 @@ export class GroupRecommendationsService {
 
   private badRequest(code: string, message: string) {
     return new BadRequestException(response(400, code, message));
+  }
+
+  private closed() {
+    return new ConflictException(
+      response(409, 'RECOMMENDATION_CLOSED', '이미 끝난 함께 고르기예요.'),
+    );
   }
 
   private notFound() {
