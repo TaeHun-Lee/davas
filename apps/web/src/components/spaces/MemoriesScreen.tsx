@@ -7,6 +7,7 @@ import { getSpaceMemories, type SpaceMemories } from '../../lib/api/memories';
 import { AsyncState, EmptyState, Poster, TaskShell } from '../core/CoreUi';
 import { WatchPhoto } from '../core/WatchPhoto';
 import { SpaceCalendarView } from './SpaceCalendarView';
+import { watchedFullDayLabel, watchSourceLabel } from './space-watch-model';
 import { YearRecapCard } from './YearRecapCard';
 
 const percent = (part: number, whole: number) => (whole ? Math.round((part / whole) * 100) : 0);
@@ -208,8 +209,8 @@ function MemoriesBody({ data, spaceName }: { data: SpaceMemories; spaceName: str
             <strong>&lsquo;{item.title}&rsquo; 함께 봤어요</strong>
             <span>
               {[
-                item.watchedDate.replaceAll('-', '.'),
-                item.sourceKind === 'THEATER' ? '극장' : item.sourceKind === 'OTT' ? 'OTT' : null,
+                watchedFullDayLabel(item.watchedDate),
+                item.sourceKind ? watchSourceLabel(item.sourceKind) : null,
                 item.photoCount ? `사진 ${item.photoCount}장` : null,
               ]
                 .filter(Boolean)

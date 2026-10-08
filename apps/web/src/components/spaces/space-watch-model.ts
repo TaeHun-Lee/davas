@@ -100,6 +100,17 @@ export function watchedDayLabel(date: string) {
   return match ? `${Number(match[1])}월 ${Number(match[2])}일` : date;
 }
 
+/** `2025-10-06` → `2025년 10월 6일`, for a day in another year. */
+export function watchedFullDayLabel(date: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  return match ? `${match[1]}년 ${Number(match[2])}월 ${Number(match[3])}일` : date;
+}
+
+/** How a record was watched, in the words every record line uses. */
+export function watchSourceLabel(kind: keyof typeof SOURCE_LABELS) {
+  return SOURCE_LABELS[kind];
+}
+
 export function watchSourceSummary(event: WatchEvent) {
   const source = event.source;
   if (!source) return null;
@@ -121,7 +132,8 @@ export function watchCardSource(event: WatchEvent) {
         ? source.providerName
         : SOURCE_LABELS[source.kind],
     );
-    if (source.kind === 'THEATER' && source.theaterFormat) {
+    // Only a special screen says so; a standard one stays quiet, as on the record's chips.
+    if (source.kind === 'THEATER' && source.theaterFormat && source.theaterFormat !== 'STANDARD') {
       parts.push(FORMAT_LABELS[source.theaterFormat]);
     }
     if (source.completed) parts.push('끝까지 다 봤어요');

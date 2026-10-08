@@ -14,6 +14,8 @@ import {
   unlocksByWriting,
   waitingWatchers,
   watchCardSource,
+  watchedFullDayLabel,
+  watchSourceLabel,
   watchedDayLabel,
   watchSourceSummary,
   withMyParticipation,
@@ -172,6 +174,27 @@ describe('space timeline card model', () => {
       { line: '10월 4일 · 넷플릭스 · 8화까지', place: null },
     );
     assert.deepEqual(watchCardSource(event({ source: null })), { line: '10월 4일', place: null });
+    // A standard screen adds nothing, as on the record's chips.
+    assert.deepEqual(
+      watchCardSource(
+        event({
+          source: {
+            kind: 'THEATER',
+            providerName: null,
+            placeText: '메가박스 코엑스',
+            theaterFormat: 'STANDARD',
+          },
+        }),
+      ),
+      { line: '10월 4일 · 극장', place: '메가박스 코엑스' },
+    );
+  });
+
+  it("names another year's day and every way of watching in the same words", () => {
+    assert.equal(watchedFullDayLabel('2025-10-06'), '2025년 10월 6일');
+    assert.equal(watchedFullDayLabel('someday'), 'someday');
+    assert.equal(watchSourceLabel('TV_OWNED'), 'TV·소장');
+    assert.equal(watchSourceLabel('OTHER'), '기타');
   });
 
   it('names who my blind review waits for, and groups reviews once everyone wrote', () => {
