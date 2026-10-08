@@ -2260,8 +2260,8 @@
     "semantic_hash": ""
   },
   "docs/development.md": {
-    "mtime": 1791389945.306487,
-    "ast_hash": "ce63864a80ae0978ca723e8d8c1315f9",
+    "mtime": 1791419192.182674,
+    "ast_hash": "dfe10b03c46854686a5ea1b5d292ed72",
     "semantic_hash": ""
   },
   "docs/operations.md": {
@@ -2385,8 +2385,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchReviews.tsx": {
-    "mtime": 1791302992.8563783,
-    "ast_hash": "5abfd65d3fa5e6f89d000c094f4265db",
+    "mtime": 1791418809.5862348,
+    "ast_hash": "b28f1e01c0143be1514191d0af0ff1b4",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/record-experience-design.spec.ts": {
@@ -2635,8 +2635,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/MyPhotosPanel.tsx": {
-    "mtime": 1791359224.9612603,
-    "ast_hash": "6b1d54857c18fd3960cbd5432f1426e6",
+    "mtime": 1791418809.5862348,
+    "ast_hash": "9b2d4ae07f3c0d11f1a0cefca39e8ce2",
     "semantic_hash": ""
   },
   "apps/web/src/components/core/WatchSearchResults.tsx": {
@@ -2725,8 +2725,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/design-review-fixes.spec.ts": {
-    "mtime": 1791389712.6023698,
-    "ast_hash": "6a588386cc56d65a3dbbf7072a652f84",
+    "mtime": 1791419093.8147688,
+    "ast_hash": "e9b13d97ec7a0936b11b730688e0c0b1",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/SpaceSwitcher.tsx": {
