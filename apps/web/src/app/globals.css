@@ -3741,6 +3741,46 @@ label:has(> input.sr-only:focus-visible) {
 .comments-section {
   margin-top: 24px;
 }
+/* No comments yet, drawn like the "my review is not written yet" card. */
+.comments-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  border: 1px dashed #c9d6e6;
+  border-radius: 20px;
+  background: white;
+  padding: 28px 20px;
+  text-align: center;
+}
+.comments-empty-icon {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  background: #eef2f8;
+  color: #4a5a70;
+}
+.comments-section .comments-empty-icon svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 1.8;
+}
+.comments-empty strong {
+  margin-top: 4px;
+  color: var(--heading);
+  font-size: 15px;
+  font-weight: 900;
+}
+.comments-empty > span:last-child {
+  color: #56667b;
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 650;
+}
 .comments-list {
   display: flex;
   flex-direction: column;

@@ -232,4 +232,16 @@ describe('a record, matched to the record boards', () => {
     assert.match(css, /\.comments-send-label \{\n  display: none;/);
     assert.match(css, /\.comments-send-label \{\n    display: inline;/);
   });
+
+  it('shows an empty comment card whose wording fits every record', () => {
+    const reviews = source('components/core/WatchReviews.tsx');
+    assert.match(reviews, /<div className="comments-empty">/);
+    assert.match(
+      reviews,
+      /<strong>아직 댓글이 없어요<\/strong>\s*<span>그날 이야기를 나눠 보세요\.<\/span>/,
+    );
+    // The board's "두 사람의 리뷰가 열렸어요" only fits opened reviews, so it stays out.
+    assert.doesNotMatch(reviews, /첫 댓글을 남겨 보세요/);
+    assert.match(source('app/globals.css'), /\.comments-empty \{[^}]*border: 1px dashed #c9d6e6;/);
+  });
 });

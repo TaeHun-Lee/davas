@@ -291,7 +291,15 @@ export function CommentsSection({
           })}
         </ul>
       ) : (
-        <p className="page-description">아직 댓글이 없어요. 그날 이야기를 나눠 보세요.</p>
+        <div className="comments-empty">
+          <span className="comments-empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 5h16v11H9l-5 4Z" />
+            </svg>
+          </span>
+          <strong>아직 댓글이 없어요</strong>
+          <span>그날 이야기를 나눠 보세요.</span>
+        </div>
       )}
       {/* Pinned to the bottom of the screen, so a comment can be written from anywhere. */}
       <div className="comments-bar">
