@@ -2295,13 +2295,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/space-watch-model.spec.ts": {
-    "mtime": 1791354719.351427,
-    "ast_hash": "ca632df37295c9e2d4516f754f76f042",
+    "mtime": 1791424717.9955354,
+    "ast_hash": "fa6b49c6f46fd595298cceb070702078",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/space-watch-model.ts": {
-    "mtime": 1791354773.920857,
-    "ast_hash": "4eed81ec45d4a9e19e918f936f2ea94d",
+    "mtime": 1791424715.849964,
+    "ast_hash": "2754bb3b852989500519416c8904447b",
     "semantic_hash": ""
   },
   "apps/web/src/hooks/useSpaceTimeline.ts": {
@@ -2530,8 +2530,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/MemoriesScreen.tsx": {
-    "mtime": 1791350439.3663256,
-    "ast_hash": "4335498b0a07fdf951e11454b5f7154e",
+    "mtime": 1791424715.849964,
+    "ast_hash": "ab42dcea13cd019ea1a7af6505cb26b5",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/memories-design.spec.ts": {

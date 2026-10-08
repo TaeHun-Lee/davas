@@ -1745,13 +1745,13 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/space-ui.spec.ts": {
-    "mtime": 1791359121.4880414,
-    "ast_hash": "2be0d8032003a4c59edb7f66604a83b4",
+    "mtime": 1791435210.0016272,
+    "ast_hash": "6ce13932e2822a956c67e520caa151a2",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/space-ui.ts": {
-    "mtime": 1791359010.7619495,
-    "ast_hash": "01b35c926e673d504bd76dd3e980152a",
+    "mtime": 1791435246.7108953,
+    "ast_hash": "1d2104d49cc2ef15afcac8c460a74d16",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/spaces-design.spec.ts": {
@@ -2460,8 +2460,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/WishesScreen.tsx": {
-    "mtime": 1791291984.090224,
-    "ast_hash": "00fd8ed1f928160409164df776d5b28c",
+    "mtime": 1791435210.0011141,
+    "ast_hash": "c79bee65eb7cfcae2889573acb2ed68c",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/wishes-design.spec.ts": {
