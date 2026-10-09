@@ -56,7 +56,9 @@ describe('notification copy', () => {
     const agreed = describeNotification(
       item({ type: 'RECOMMENDATION_MATCHED', diary: null, media: { id: 'm-1', title: '파묘' } }),
     );
-    assert.equal(agreed.title, '함께 볼 작품이 정해졌어요');
-    assert.equal(agreed.about, '파묘');
+    assert.equal(agreed.title, '모두 동의한 작품이 생겼어요');
+    assert.equal(agreed.about, '파묘 · 이걸로 볼지 정해 보세요');
+    const untitled = describeNotification(item({ type: 'RECOMMENDATION_MATCHED', diary: null }));
+    assert.equal(untitled.about, '이걸로 볼지 정해 보세요');
   });
 });

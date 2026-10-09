@@ -98,10 +98,13 @@ export function describeNotification(item: NotificationItem): NotificationText {
         href: '/spaces?view=recommend',
         icon: 'match',
       };
+    // Everyone agreeing is not settling yet: "이걸로 볼게요" still decides the title.
     case 'RECOMMENDATION_MATCHED':
       return {
-        title: '함께 볼 작품이 정해졌어요',
-        about: item.media?.title ?? '함께 고르기',
+        title: '모두 동의한 작품이 생겼어요',
+        about: item.media?.title
+          ? `${item.media.title} · 이걸로 볼지 정해 보세요`
+          : '이걸로 볼지 정해 보세요',
         href: '/spaces?view=recommend',
         icon: 'match',
       };
