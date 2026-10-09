@@ -246,10 +246,7 @@ const calls: Array<[string, () => Promise<unknown>]> = [
     () => users.updateMe({ nickname: '지우', bio: null, preferredGenres: ['드라마'] }),
   ],
   ['trending', () => recommendations.getTrendingRecommendations({ limit: 20 })],
-  ['genre presets', () => recommendations.getGenreRecommendationPresets()],
   ['genre picks', () => recommendations.getGenreRecommendations('romance', { limit: 4 })],
-  ['random genre picks', () => recommendations.getRandomGenreRecommendations({ seed: 'seed-1' })],
-  ['today pick', () => recommendations.getTodayRecommendation({ limit: 3 })],
   [
     'start group choosing',
     () =>

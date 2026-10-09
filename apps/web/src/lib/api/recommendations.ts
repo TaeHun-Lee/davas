@@ -29,16 +29,8 @@ export type GenreRecommendationPreset = {
   description: string;
 };
 
-export type GenreRecommendationPresetsResponse = {
-  items: GenreRecommendationPreset[];
-};
-
 export type GenreRecommendationsResponse = RecommendationListResponse & {
   preset: GenreRecommendationPreset;
-};
-
-export type TodayRecommendationResponse = {
-  items: MediaRecommendationItem[];
 };
 
 export class RecommendationRequestError extends Error {
@@ -92,10 +84,6 @@ export async function getTrendingRecommendations({
   );
 }
 
-export async function getGenreRecommendationPresets() {
-  return fetchRecommendation<GenreRecommendationPresetsResponse>('/recommendations/genres');
-}
-
 export async function getGenreRecommendations(
   presetId: string,
   {
@@ -111,38 +99,6 @@ export async function getGenreRecommendations(
 
   return fetchRecommendation<GenreRecommendationsResponse>(
     `/recommendations/genres/${presetId}?${params.toString()}`,
-  );
-}
-
-export async function getRandomGenreRecommendations({
-  seed,
-  limit = 4,
-  page = 1,
-  language = 'ko-KR',
-}: { seed?: string; limit?: number; page?: number; language?: string } = {}) {
-  const params = new URLSearchParams();
-  if (seed) {
-    params.set('seed', seed);
-  }
-  params.set('limit', String(limit));
-  params.set('page', String(page));
-  params.set('language', language);
-
-  return fetchRecommendation<GenreRecommendationsResponse>(
-    `/recommendations/genres/random?${params.toString()}`,
-  );
-}
-
-export async function getTodayRecommendation({
-  limit = 3,
-  language = 'ko-KR',
-}: { limit?: number; language?: string } = {}) {
-  const params = new URLSearchParams();
-  params.set('limit', String(limit));
-  params.set('language', language);
-
-  return fetchRecommendation<TodayRecommendationResponse>(
-    `/recommendations/today/carousel?${params.toString()}`,
   );
 }
 
