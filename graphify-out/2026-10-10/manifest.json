@@ -1039,6 +1039,36 @@
     "ast_hash": "5fd6b9796d8ed414b1b011b76b0fca94",
     "semantic_hash": ""
   },
+  "apps/web/src/components/explore/ExploreDashboard.tsx": {
+    "mtime": 1791271662.2660575,
+    "ast_hash": "ef22fd52e539e766b0cc2cb5df8b9793",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/explore/ExploreFilterChips.tsx": {
+    "mtime": 1791264715.4904184,
+    "ast_hash": "1d7e18115a922aa188532b6c00829923",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/explore/ExploreSearchBar.tsx": {
+    "mtime": 1791264715.490933,
+    "ast_hash": "ab29c9eff3b371e9a974bda387a49536",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/explore/ExploreShortcutGrid.tsx": {
+    "mtime": 1783786032.3957648,
+    "ast_hash": "79c6d5712c6614f0e5de5c837ac8c58b",
+    "semantic_hash": "79c6d5712c6614f0e5de5c837ac8c58b"
+  },
+  "apps/web/src/components/explore/GenreRecommendationSection.tsx": {
+    "mtime": 1791264715.4914436,
+    "ast_hash": "b429c6b948411b2dbed9300f771b1558",
+    "semantic_hash": ""
+  },
+  "apps/web/src/components/explore/TodayRecommendationSection.tsx": {
+    "mtime": 1791264715.4919577,
+    "ast_hash": "3d67168a86c116989d800915e4c5ecac",
+    "semantic_hash": ""
+  },
   "apps/web/src/components/friends/FriendInviteScreen.tsx": {
     "mtime": 1791264715.4929836,
     "ast_hash": "6a164243cb81c0af38cc7f3a169375ec",
@@ -1264,6 +1294,11 @@
     "ast_hash": "34e07f0f4cf405448779733d2f375cf6",
     "semantic_hash": ""
   },
+  "apps/web/src/hooks/useExploreRecommendations.ts": {
+    "mtime": 1791264715.520324,
+    "ast_hash": "b582307ed95a6d8aa6e3f38672853fb5",
+    "semantic_hash": ""
+  },
   "apps/web/src/hooks/useFocusTrap.ts": {
     "mtime": 1791289187.6161754,
     "ast_hash": "0947b3451e08955fe428b6e89e9d8469",
@@ -1325,8 +1360,8 @@
     "semantic_hash": "1e8befad97301a64f961b2f174c9696a"
   },
   "apps/web/src/lib/api/recommendations.ts": {
-    "mtime": 1791564794.5229483,
-    "ast_hash": "c69f5066d51779432c03e74ad1abb92a",
+    "mtime": 1791445545.6837718,
+    "ast_hash": "069278fb974bc93ac3c00418cd52c409",
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/users.ts": {
@@ -2160,8 +2195,8 @@
     "semantic_hash": ""
   },
   "scripts/prettier-baseline.json": {
-    "mtime": 1791564779.329481,
-    "ast_hash": "0fd6493c2379ac39a50d19b2cd03fa78",
+    "mtime": 1791445689.5407019,
+    "ast_hash": "1d9861ef5be9ce9eae7c8a81b7a9555d",
     "semantic_hash": ""
   },
   "scripts/run-tests.mjs": {
@@ -2545,8 +2580,8 @@
     "semantic_hash": ""
   },
   "scripts/verify-client-contracts.mts": {
-    "mtime": 1791564795.6065667,
-    "ast_hash": "15e714cb38891e2760da94b74c6bfdbb",
+    "mtime": 1791445545.6981163,
+    "ast_hash": "e323b32636aafd33221455eabba118cf",
     "semantic_hash": ""
   },
   "apps/api/src/auth/dto/password.dto.ts": {
