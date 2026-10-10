@@ -12,14 +12,17 @@ import {
 } from '../../lib/api/media';
 import {
   getGenreRecommendations,
+  getNowShowing,
   getTrendingRecommendations,
   type MediaRecommendationItem,
+  type NowShowingItem,
 } from '../../lib/api/recommendations';
 import { MediaDetailModal } from '../media/MediaDetailModal';
+import { showtimesReadLabel } from '../media/media-showtimes-model';
 import { AsyncState, CoreAppShell, EmptyState, Poster, SearchField } from './CoreUi';
 import { mediaTypeLabel } from '../../lib/api/core';
 
-type Kind = 'MOVIE' | 'TV';
+type Kind = 'THEATER' | 'MOVIE' | 'TV';
 type Loaded<T> = { status: 'loading' | 'ready' | 'error'; items: T[] };
 
 /** The four mood cards and the genre preset each one asks for. */
@@ -36,12 +39,21 @@ export const EXPLORE_MOODS = [
 ] as const;
 
 const KINDS: Array<{ value: Kind; label: string }> = [
+  { value: 'THEATER', label: '극장' },
   { value: 'MOVIE', label: '영화' },
   { value: 'TV', label: '드라마' },
 ];
 
-const meta = (item: MediaSearchResult) =>
-  [mediaTypeLabel(item.mediaType), item.releaseDate?.slice(0, 4)].filter(Boolean).join(' · ');
+const kindLabel = (kind: Kind) => (kind === 'THEATER' ? '극장 상영작' : mediaTypeLabel(kind));
+
+function meta(item: MediaSearchResult) {
+  if ('showing' in item) {
+    return `서울·경기 ${(item as NowShowingItem).showing.theaters}곳 상영`;
+  }
+  return [mediaTypeLabel(item.mediaType), item.releaseDate?.slice(0, 4)]
+    .filter(Boolean)
+    .join(' · ');
+}
 
 function ResultList({
   label,
@@ -86,11 +98,14 @@ export function ExploreScreen() {
   const [query, setQuery] = useState('');
   const search = useMediaSearch(query, 'multi');
   const searching = query.trim().length >= SEARCH_MIN_LENGTH;
-  const [kind, setKind] = useState<Kind>('MOVIE');
+  const [kind, setKind] = useState<Kind>('THEATER');
   const [trending, setTrending] = useState<Loaded<MediaRecommendationItem>>({
     status: 'loading',
     items: [],
   });
+  const [showing, setShowing] = useState<
+    Loaded<MediaRecommendationItem> & { updatedAt?: string | null }
+  >({ status: 'loading', items: [] });
   const [mood, setMood] = useState<(typeof EXPLORE_MOODS)[number]['preset'] | null>(null);
   const [moodPicks, setMoodPicks] = useState<Loaded<MediaRecommendationItem>>({
     status: 'loading',
@@ -110,6 +125,22 @@ export function ExploreScreen() {
       })
       .catch(() => {
         if (active) setTrending({ status: 'error', items: [] });
+      });
+    return () => {
+      active = false;
+    };
+  }, [trendingAttempt]);
+
+  useEffect(() => {
+    let active = true;
+    setShowing({ status: 'loading', items: [] });
+    getNowShowing({ limit: 20 })
+      .then((response) => {
+        if (active)
+          setShowing({ status: 'ready', items: response.items, updatedAt: response.updatedAt });
+      })
+      .catch(() => {
+        if (active) setShowing({ status: 'error', items: [] });
       });
     return () => {
       active = false;
@@ -145,7 +176,11 @@ export function ExploreScreen() {
     }
   }
 
-  const popular = trending.items.filter((item) => item.mediaType === kind).slice(0, 10);
+  const popularList = kind === 'THEATER' ? showing : trending;
+  const popular = (
+    kind === 'THEATER' ? showing.items : trending.items.filter((item) => item.mediaType === kind)
+  ).slice(0, 10);
+  const showingRead = showtimesReadLabel(showing.updatedAt ?? null);
   const moodCard = EXPLORE_MOODS.find((item) => item.preset === mood);
 
   return (
@@ -215,9 +250,9 @@ export function ExploreScreen() {
                 ))}
               </div>
             </div>
-            {trending.status === 'loading' ? (
+            {popularList.status === 'loading' ? (
               <AsyncState kind="loading" />
-            ) : trending.status === 'error' ? (
+            ) : popularList.status === 'error' ? (
               <EmptyState
                 title="화제작을 불러오지 못했어요"
                 description="검색은 그대로 쓸 수 있어요."
@@ -231,8 +266,12 @@ export function ExploreScreen() {
                   </button>
                 }
               />
+            ) : kind === 'THEATER' && !popular.length ? (
+              <p className="explore-hint">
+                극장 시간표를 준비하고 있어요. 시간표는 매일 정오에 새로 받아요.
+              </p>
             ) : (
-              <ul className="explore-rail" aria-label={`지금 화제작, ${mediaTypeLabel(kind)}`}>
+              <ul className="explore-rail" aria-label={`지금 화제작, ${kindLabel(kind)}`}>
                 {popular.map((item) => (
                   <li key={item.externalId}>
                     <button
@@ -250,6 +289,11 @@ export function ExploreScreen() {
                 ))}
               </ul>
             )}
+            {kind === 'THEATER' && popular.length ? (
+              <p className="explore-hint">
+                상영 정보: 영화진흥위원회 통합전산망(KOBIS){showingRead ? ` · ${showingRead}` : ''}
+              </p>
+            ) : null}
           </section>
 
           <section className="explore-section" aria-labelledby="explore-mood-title">

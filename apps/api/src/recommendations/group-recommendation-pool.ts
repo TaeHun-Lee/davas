@@ -9,7 +9,7 @@ import { MediaSelectionService } from '../media/media-selection.service';
 import { SUBSCRIPTION_OFFER_TYPES } from '../media/ports/availability-provider.port';
 import { TmdbClient, type TmdbCatalogEntry } from '../media/tmdb.client';
 import { tagGenreNames } from './group-recommendation.algorithm';
-import { DAY_MS } from '../common/time';
+import { DAY_MS, shiftDay } from '../common/time';
 
 export type PoolRequest = {
   region: string;
@@ -51,8 +51,6 @@ const KNOWN_WINDOW_MS = 30 * DAY_MS;
 const CATALOG_TTL_MS = DAY_MS;
 
 const normalized = (value: string) => value.trim().toLocaleLowerCase('en-US');
-const shiftDay = (day: string, days: number) =>
-  new Date(Date.parse(`${day}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
 const tmdbType = (type: ContentType) => (type === 'TV' ? 'tv' : 'movie');
 
 /** Groups observations (newest first) into each title's newest observation. */

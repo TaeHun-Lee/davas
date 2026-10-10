@@ -56,6 +56,9 @@ services:
       DAVAS_BOOTSTRAP_INVITE_MAX_USES: ${DAVAS_BOOTSTRAP_INVITE_MAX_USES:-1}
       DAVAS_BOOTSTRAP_INVITE_EXPIRES_AT: ${DAVAS_BOOTSTRAP_INVITE_EXPIRES_AT:-}
       TMDB_API_KEY: ${TMDB_API_KEY:-}
+      KOBIS_API_KEY: ${KOBIS_API_KEY:-}
+      # Empty runs the daily KOBIS showtime read in production; `off` stops it.
+      KOBIS_SHOWTIME_SYNC: ${KOBIS_SHOWTIME_SYNC:-}
       UPLOADS_DIR: /app/uploads
       # Empty trusts exactly the one Caddy hop; set it only with another proxy in front.
       TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-}

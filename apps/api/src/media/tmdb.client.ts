@@ -141,6 +141,19 @@ export class TmdbClient {
     };
   }
 
+  /** The first page of a movie search, with the vote and popularity fields lists rank by. */
+  async searchMovies(query: string, language = DEFAULT_LANGUAGE) {
+    const payload = await this.get<TmdbPage<TmdbSearchResult>>('search', '/search/movie', {
+      query,
+      page: '1',
+      language,
+      include_adult: 'false',
+    });
+    return (payload.results ?? []).map((result) =>
+      mapTmdbRecommendationResult(this.withMediaType(result, 'movie'), 'now-showing'),
+    );
+  }
+
   async trending({
     period,
     page,

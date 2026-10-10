@@ -16,6 +16,11 @@ export class RecommendationsController {
     return this.recommendationsService.trending(request.user.id, limit);
   }
 
+  @Get('now-showing')
+  nowShowing(@Req() request: AuthenticatedRequest, @Query('limit') limit?: number) {
+    return this.recommendationsService.nowShowing(request.user.id, limit);
+  }
+
   @Get('genres/:presetId')
   genreRecommendations(
     @Req() request: AuthenticatedRequest,

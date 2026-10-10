@@ -30,6 +30,8 @@ cp .env.production.example .env.production
 | `JWT_ACCESS_SECRET` | 32자 이상 무작위 값 |
 | `DAVAS_BOOTSTRAP_INVITE_CODE` | 첫 계정 가입에만 사용. `openssl rand -hex 16`으로 만들고 첫 초대 사용 후 비운다 |
 | `TMDB_API_KEY` | 작품 검색, 기록할 작품 고르기, 볼 수 있는 곳(OTT) 확인, 추천에 필요. 없으면 새 작품을 고를 수 없다 |
+| `KOBIS_API_KEY` | 영화진흥위원회 오픈API 키. 극장 시간표의 영화를 TMDB 작품과 잇는 데 쓴다. 없으면 시간표는 받지만 작품과 이어지지 않아 화면에 나오지 않는다 |
+| `KOBIS_SHOWTIME_SYNC` | 비워 두면 운영에서 매일 12:00(한국 시간) 극장 시간표를 받는다. `off`면 멈춘다 |
 | `TRUST_PROXY_HOPS` | 비워 둔다(기본: Caddy 1단계 신뢰). Caddy 앞에 프록시를 더 둘 때만 설정 |
 
 `TYPEORM_SYNC=false`, `COOKIE_SECURE=true`는 Compose 파일에 고정돼 있다. 운영 API는 `CORS_ORIGINS`가 없거나, `JWT_ACCESS_SECRET`이 짧거나 예시 값이거나, `COOKIE_SECURE`가 `true`가 아니면 시작을 거부한다.
@@ -41,7 +43,7 @@ cp .env.production.example .env.production
 - schema를 바꾸는 배포 전에는 반드시 DB와 업로드를 함께 백업한다. 업로드 볼륨에는 프로필 사진과 기록 사진(`watch-photos/`, 원본·화면용·썸네일)이 함께 있어 기록 사진이 늘수록 백업도 커진다.
 - 정확한 되돌리기는 배포 전 백업 복원뿐이다. `BaseSchema`의 `down`은 의도적으로 아무것도 하지 않는다.
 
-현재 등록된 migration (21개):
+현재 등록된 migration (22개):
 
 1. `BaseSchema1720670300000`
 2. `HighValueFlows1720670400000`
@@ -64,6 +66,7 @@ cp .env.production.example .env.production
 19. `ExternalContentRefMediaType1720671600000` (작품 외부 번호 연결에 영화·드라마 구분 `media_type`을 채워 넣고, 고유 조건을 `(provider, media_type, external_id)`로 바꿈)
 20. `RecommendationSessionDecision1720671700000` (함께 고르기가 정한 작품 `decided_exposure_id`와 끝난 시각 `closed_at`)
 21. `MediaTmdbPopularity1720671800000` (작품의 TMDB 인기도 `tmdb_popularity`, 함께 고르기 순위에 쓴다)
+22. `TheaterShowtimes1720671900000` (KOBIS 극장 시간표: `kobis_theaters`, `kobis_showtimes`, `kobis_movies`(TMDB 연결), `kobis_sync_runs`. 새 표만 만든다)
 
 목록 순서는 운영 DB에 적용된 순서(기록 id 1~14, 15부터는 앞으로 배포하는 순서)다. 5~9(보안 보강)와 10~14(TO-BE 기능)는 같은 timestamp를 공유하므로 빈 DB에서는 timestamp 순으로 섞여 실행되지만, 서로 독립이고 재실행에 안전하다. TypeORM은 class 이름으로 적용 여부를 판단하므로 이 이름들을 바꾸지 않는다. 새 migration을 등록하면 이 목록도 같은 변경에서 갱신한다(`npm run verify:deployment`가 검사).
 
@@ -192,6 +195,20 @@ select json_build_object(
 SQL
 ```
 
+### 극장 시간표 (KOBIS)
+
+API가 매일 12:00(한국 시간)에 KOBIS 웹사이트의 상영스케줄에서 서울·경기 극장(약 240곳)의 오늘부터 7일 치 시간표를 받는다. 요청은 하나씩 1초 간격으로 보내고(하루 약 1,600번, 35분 안팎. 2026-10-10에 243곳, 1,613번, 34분), 15곳이 잇달아 실패하면 그날은 멈춘다. 다 읽은 극장만 시간표를 바꾸므로 실패한 극장은 전날 시간표가 남는다. 12:00 실행을 놓쳤으면(재시작 등) API가 켜지고 2분 뒤 다시 받는다. 새로 보인 영화는 KOBIS 오픈API(`KOBIS_API_KEY`)와 TMDB 검색으로 작품에 잇는다.
+
+```bash
+$DC exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' </dev/null <<'SQL'
+select started_at, finished_at, status, theaters, failed_theaters, requests, showtimes, movies_matched, error
+  from kobis_sync_runs order by started_at desc limit 5;
+select match_status, count(*) from kobis_movies group by 1;
+SQL
+```
+
+KOBIS 상영스케줄은 공개 웹 화면이 쓰는 자료이고 오픈API가 아니다(오픈API에는 시간표가 없다). 화면 구조가 바뀌면 실행이 실패로 기록되고, 앱은 마지막으로 받은 시간표를 계속 보여 준다. 접속이 막히거나 문의가 오면 `KOBIS_SHOWTIME_SYNC=off`로 멈추고 API를 다시 만든다(`$DC up -d api`).
+
 ## 7. 복구 시험과 되돌리기
 
 복구 시험은 별도 DB에서 한다.
@@ -218,3 +235,4 @@ pg_restore --clean --if-exists --no-owner --dbname=davas_restore_test <backup>/d
 
 - 비밀값은 `.env.production`에만 두고 커밋하지 않는다.
 - Davas는 TMDB API를 사용하지만 TMDB가 보증하거나 인증한 서비스가 아니다.
+- 극장 시간표는 영화진흥위원회 영화관입장권통합전산망(KOBIS)의 자료다. KOBIS 오픈API 약관은 결과를 다른 정보와 섞지 말고 따로 보여 주며 출처를 밝히라고 하므로, 시간표 카드와 "지금 극장에서" 목록은 KOBIS 자료만 담고 출처와 받은 시각을 표시한다.

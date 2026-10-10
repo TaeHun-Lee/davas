@@ -722,6 +722,14 @@ a {
   font-size: 12px;
   font-weight: 850;
 }
+.home-recommendation-source {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+}
+
 .home-recommendation-error {
   margin-top: 8px;
   border-radius: 12px;

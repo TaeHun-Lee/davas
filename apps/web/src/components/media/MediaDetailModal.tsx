@@ -16,6 +16,7 @@ import {
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useMediaTogether } from '../../hooks/useMediaTogether';
 import { useSpaceWish } from '../../hooks/useSpaceWish';
+import { TheaterShowtimesCard } from './media-showtimes-section';
 import { OurReactionsCard, WatchableNowCard } from './media-together-sections';
 
 function IconButton({
@@ -374,6 +375,10 @@ export function MediaDetailModal({
             status={watchable.status}
             availability={watchable.availability}
             myServices={together.myServices}
+          />
+          <TheaterShowtimesCard
+            mediaId={media.id}
+            enabled={isOpen && media.mediaType === 'MOVIE'}
           />
           {/* With a space, its members' reactions; without one, the older friends' records. */}
           {together.status === 'ready' && !together.space ? (

@@ -26,6 +26,7 @@ const controllers = [
   dist('recommendations/space-wishes.controller.js').SpaceWishesController,
   dist('recommendations/group-recommendations.controller.js').GroupRecommendationsController,
   dist('recommendations/recommendations.controller.js').RecommendationsController,
+  dist('showtimes/showtimes.controller.js').ShowtimesController,
   dist('users/users.controller.js').UsersController,
   dist('notifications/notifications.controller.js').NotificationsController,
 ];
@@ -176,6 +177,7 @@ const calls: Array<[string, () => Promise<unknown>]> = [
   ['open a title', () => media.getMediaDetail(MEDIA)],
   ['where to watch a title', () => media.getMediaAvailability(MEDIA)],
   ['look up where to watch again', () => media.refreshMediaAvailability(MEDIA)],
+  ['where a film plays in theaters', () => media.getMediaShowtimes(MEDIA)],
   ['save a theater record', () => events.createWatchEvent(theaterRecord)],
   ['save a streaming record', () => events.createWatchEvent(streamingRecord)],
   ['edit a record', () => events.updateWatchEvent(EVENT, recordChanges)],
@@ -243,6 +245,7 @@ const calls: Array<[string, () => Promise<unknown>]> = [
   ['save subscriptions', () => users.updateMe({ ottServices: ['netflix', 'apple', 'prime'] })],
   ['save profile', () => users.updateMe({ nickname: '지우' })],
   ['trending', () => recommendations.getTrendingRecommendations({ limit: 20 })],
+  ['now showing', () => recommendations.getNowShowing({ limit: 20 })],
   ['genre picks', () => recommendations.getGenreRecommendations('romance', { limit: 4 })],
   [
     'start group choosing',

@@ -80,10 +80,37 @@ class FakeTasteHistory {
   }
 }
 
+/** Two films play this week: movie 1 (watched) and movie 7, at three theaters. */
+class FakeShowtimes {
+  async nowShowing() {
+    const tmdb = (externalId: string) => {
+      const { reason, ...summary } = item(externalId, 'MOVIE', 'now-showing');
+      void reason;
+      // A film TMDB dates later than today still shows when a theater plays it.
+      return { ...summary, releaseDate: '2026-12-01' };
+    };
+    return {
+      updatedAt: '2026-10-10T03:25:00.000Z',
+      films: [
+        { tmdb: tmdb('1'), theaterCodes: ['A'], firstDate: '2026-10-10' },
+        { tmdb: tmdb('7'), theaterCodes: ['A', 'B', 'C'], firstDate: '2026-10-11' },
+      ],
+    };
+  }
+
+  async theaterVisits() {
+    return new Map([['B', 4]]);
+  }
+}
+
 function setup() {
   const tmdb = new FakeTmdbClient();
   const history = new FakeTasteHistory();
-  const service = new RecommendationsService(tmdb as never, history as never);
+  const service = new RecommendationsService(
+    tmdb as never,
+    history as never,
+    new FakeShowtimes() as never,
+  );
   let now = NOW;
   service.now = () => now;
   return { tmdb, history, service, later: (ms: number) => (now = new Date(now.getTime() + ms)) };
@@ -131,6 +158,18 @@ describe('RecommendationsService', () => {
     const failing = setup();
     failing.tmdb.failingPages = new Set([1, 2, 3]);
     await assert.rejects(failing.service.trending('u1'), /TMDB down/);
+  });
+
+  it('lists films playing this week that the viewer has not seen, with where they play', async () => {
+    const { service } = setup();
+
+    const result = await service.nowShowing('u1', 20);
+
+    assert.equal(result.updatedAt, '2026-10-10T03:25:00.000Z');
+    assert.deepEqual(
+      result.items.map((entry) => [entry.externalId, entry.showing]),
+      [['7', { theaters: 3, myTheaters: 1, firstDate: '2026-10-11' }]],
+    );
   });
 
   it('has a preset for each of the 탐색 tab mood cards and rejects unknown ones', async () => {

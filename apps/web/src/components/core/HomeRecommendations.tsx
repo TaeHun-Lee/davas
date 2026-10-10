@@ -6,18 +6,41 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { selectMedia } from '../../lib/api/media';
 import {
+  getNowShowing,
   getTrendingRecommendations,
   type MediaRecommendationItem,
+  type NowShowingResponse,
 } from '../../lib/api/recommendations';
 import { mediaTypeLabel } from '../../lib/api/core';
+import { showtimesReadLabel } from '../media/media-showtimes-model';
 
-type RecommendationType = 'MOVIE' | 'TV';
+type RecommendationType = 'THEATER' | 'MOVIE' | 'TV';
 type RecommendationStatus = 'loading' | 'ready' | 'error';
 
+// 극장 first: the people using Davas watch almost everything in theaters.
 const recommendationTabs: Array<{ value: RecommendationType; label: string }> = [
+  { value: 'THEATER', label: '극장' },
   { value: 'MOVIE', label: '영화' },
   { value: 'TV', label: '드라마' },
 ];
+
+const kindLabel = (type: RecommendationType) =>
+  type === 'THEATER' ? '극장 상영작' : mediaTypeLabel(type);
+
+function cardLine(item: MediaRecommendationItem) {
+  if ('showing' in item) {
+    const { theaters, myTheaters } = item.showing as NowShowingResponse['items'][number]['showing'];
+    return myTheaters
+      ? `자주 가는 곳 ${myTheaters} · ${theaters}곳 상영`
+      : `서울·경기 ${theaters}곳 상영`;
+  }
+  const year = item.releaseDate?.slice(0, 4) ?? '연도 미상';
+  const rating =
+    item.voteAverage && item.voteAverage > 0
+      ? `★ ${(item.voteAverage / 2).toFixed(1)}`
+      : '평점 준비 중';
+  return `${year} · ${rating}`;
+}
 
 function RecommendationSkeleton() {
   return (
@@ -32,8 +55,9 @@ function RecommendationSkeleton() {
 export function HomeRecommendations() {
   const router = useRouter();
   const carouselRef = useRef<HTMLDivElement>(null);
-  const [activeType, setActiveType] = useState<RecommendationType>('MOVIE');
+  const [activeType, setActiveType] = useState<RecommendationType>('THEATER');
   const [items, setItems] = useState<MediaRecommendationItem[]>([]);
+  const [theater, setTheater] = useState<NowShowingResponse>({ updatedAt: null, items: [] });
   const [status, setStatus] = useState<RecommendationStatus>('loading');
   const [retryKey, setRetryKey] = useState(0);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -46,25 +70,32 @@ export function HomeRecommendations() {
     setStatus('loading');
     setSelectionError('');
 
-    getTrendingRecommendations({ limit: 20 })
-      .then((response) => {
-        if (!active) return;
-        setItems(response.items);
-        setStatus('ready');
-      })
-      .catch(() => {
-        if (active) setStatus('error');
-      });
+    void Promise.allSettled([
+      getTrendingRecommendations({ limit: 20 }),
+      getNowShowing({ limit: 20 }),
+    ]).then(([trending, showing]) => {
+      if (!active) return;
+      if (trending.status === 'fulfilled') setItems(trending.value.items);
+      if (showing.status === 'fulfilled') setTheater(showing.value);
+      setStatus(
+        trending.status === 'rejected' && showing.status === 'rejected' ? 'error' : 'ready',
+      );
+    });
 
     return () => {
       active = false;
     };
   }, [retryKey]);
 
-  const visibleItems = useMemo(
-    () => items.filter((item) => item.mediaType === activeType).slice(0, 8),
-    [activeType, items],
+  const visibleItems = useMemo<MediaRecommendationItem[]>(
+    () =>
+      (activeType === 'THEATER'
+        ? theater.items
+        : items.filter((item) => item.mediaType === activeType)
+      ).slice(0, 8),
+    [activeType, items, theater],
   );
+  const theaterRead = showtimesReadLabel(theater.updatedAt);
 
   const syncCarouselControls = useCallback(() => {
     const carousel = carouselRef.current;
@@ -114,7 +145,11 @@ export function HomeRecommendations() {
           <h2 id="home-recommendations-title" className="section-title">
             오늘 뭐 볼까요?
           </h2>
-          <p>요즘 인기작 중 아직 안 본 작품을 내 기록에 맞춰 골라봤어요.</p>
+          <p>
+            {activeType === 'THEATER'
+              ? '서울·경기 극장에서 상영 중인 작품 중 아직 안 본 작품이에요.'
+              : '요즘 인기작 중 아직 안 본 작품을 내 기록에 맞춰 골라봤어요.'}
+          </p>
         </div>
         <Link href="/spaces?view=recommend">
           함께 고르기 <span aria-hidden="true">›</span>
@@ -138,7 +173,7 @@ export function HomeRecommendations() {
           <div className="home-carousel-controls" aria-label="추천 캐러셀 이동">
             <button
               type="button"
-              aria-label={`이전 ${mediaTypeLabel(activeType)} 추천`}
+              aria-label={`이전 ${kindLabel(activeType)} 추천`}
               disabled={!canScrollBack}
               onClick={() => moveCarousel(-1)}
             >
@@ -146,7 +181,7 @@ export function HomeRecommendations() {
             </button>
             <button
               type="button"
-              aria-label={`다음 ${mediaTypeLabel(activeType)} 추천`}
+              aria-label={`다음 ${kindLabel(activeType)} 추천`}
               disabled={!canScrollForward}
               onClick={() => moveCarousel(1)}
             >
@@ -172,9 +207,11 @@ export function HomeRecommendations() {
       {status === 'ready' && visibleItems.length === 0 ? (
         <div className="home-recommendation-message">
           <p>
-            <strong>{mediaTypeLabel(activeType)} 추천을 준비하고 있어요.</strong>
+            <strong>{kindLabel(activeType)} 추천을 준비하고 있어요.</strong>
             <br />
-            공간 멤버와 조건을 정해 함께 골라 보세요.
+            {activeType === 'THEATER'
+              ? '극장 시간표는 매일 정오에 새로 받아요. 공간 멤버와 함께 골라 볼 수도 있어요.'
+              : '공간 멤버와 조건을 정해 함께 골라 보세요.'}
           </p>
           <Link href="/spaces?view=recommend">함께 볼 작품 고르기</Link>
         </div>
@@ -185,14 +222,9 @@ export function HomeRecommendations() {
           ref={carouselRef}
           className="home-recommendation-row"
           onScroll={syncCarouselControls}
-          aria-label={`${mediaTypeLabel(activeType)} 추천 목록`}
+          aria-label={`${kindLabel(activeType)} 추천 목록`}
         >
           {visibleItems.map((item) => {
-            const year = item.releaseDate?.slice(0, 4) ?? '연도 미상';
-            const rating =
-              item.voteAverage && item.voteAverage > 0
-                ? `★ ${(item.voteAverage / 2).toFixed(1)}`
-                : '평점 준비 중';
             const itemId = `${item.mediaType}-${item.externalId}`;
             return (
               <article className="home-recommendation-card" key={itemId}>
@@ -217,14 +249,17 @@ export function HomeRecommendations() {
                     ) : null}
                   </span>
                   <strong>{item.title}</strong>
-                  <span>
-                    {year} · {rating}
-                  </span>
+                  <span>{cardLine(item)}</span>
                 </button>
               </article>
             );
           })}
         </div>
+      ) : null}
+      {status === 'ready' && activeType === 'THEATER' && visibleItems.length > 0 ? (
+        <p className="home-recommendation-source">
+          상영 정보: 영화진흥위원회 통합전산망(KOBIS){theaterRead ? ` · ${theaterRead}` : ''}
+        </p>
       ) : null}
       {selectionError ? (
         <p className="home-recommendation-error" role="alert">

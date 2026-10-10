@@ -16,6 +16,7 @@ import { InvitesModule } from './invites/invites.module';
 import { MediaModule } from './media/media.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
+import { ShowtimesModule } from './showtimes/showtimes.module';
 import { SpacesModule } from './spaces/spaces.module';
 import { UsersModule } from './users/users.module';
 import { WatchlistModule } from './watchlist/watchlist.module';
@@ -32,6 +33,7 @@ import { WatchlistModule } from './watchlist/watchlist.module';
     UsersModule,
     MediaModule,
     RecommendationsModule,
+    ShowtimesModule,
     DiariesModule,
     CommentsModule,
     NotificationsModule,

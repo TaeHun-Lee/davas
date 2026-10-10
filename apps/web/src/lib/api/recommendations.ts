@@ -6,6 +6,7 @@ import type {
   GroupRecommendationSessionRequest,
   GroupRecommendationSessionListResponse,
   GroupRecommendationSessionResponse,
+  NowShowingSummary,
 } from '@davas/shared';
 import type { MediaSearchResult } from './media';
 import { coreFetch } from './core';
@@ -34,6 +35,19 @@ export type GenreRecommendationsResponse = RecommendationListResponse & {
 
 export async function getTrendingRecommendations({ limit = 10 }: { limit?: number } = {}) {
   return coreFetch<RecommendationListResponse>(`/recommendations/trending?limit=${limit}`);
+}
+
+export type NowShowingItem = MediaRecommendationItem & { showing: NowShowingSummary };
+
+/** Films playing in Seoul and Gyeonggi theaters this week that I have not seen (KOBIS). */
+export type NowShowingResponse = {
+  /** When the theater schedules were last read. */
+  updatedAt: string | null;
+  items: NowShowingItem[];
+};
+
+export async function getNowShowing({ limit = 20 }: { limit?: number } = {}) {
+  return coreFetch<NowShowingResponse>(`/recommendations/now-showing?limit=${limit}`);
 }
 
 export async function getGenreRecommendations(

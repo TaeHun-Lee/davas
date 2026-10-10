@@ -5,6 +5,7 @@ import type {
   MediaSearchResult,
   MediaSelectionInput,
   MediaSelectionResponse,
+  MediaShowtimesResponse,
   MyMediaDiary,
 } from '@davas/shared';
 import { getApiBaseUrl } from './base-url';
@@ -114,4 +115,9 @@ export function refreshMediaAvailability(id: string) {
   return coreFetch<MediaAvailability>(`/media/${encodeURIComponent(id)}/availability/refresh`, {
     method: 'POST',
   });
+}
+
+/** Where a stored film plays in Seoul and Gyeonggi this week (KOBIS, read daily at 12:00). */
+export function getMediaShowtimes(id: string) {
+  return coreFetch<MediaShowtimesResponse>(`/media/${encodeURIComponent(id)}/showtimes`);
 }

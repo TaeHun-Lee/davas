@@ -13,6 +13,10 @@ import {
   FriendshipEntity,
   InviteCodeEntity,
   InviteUseEntity,
+  KobisMovieEntity,
+  KobisShowtimeEntity,
+  KobisSyncRunEntity,
+  KobisTheaterEntity,
   MediaEntity,
   MediaFavoriteEntity,
   MediaImageEntity,
@@ -58,6 +62,7 @@ import { AccountRecoveryAndInviteDeclines1720671500000 } from './migrations/1720
 import { ExternalContentRefMediaType1720671600000 } from './migrations/1720671600000-ExternalContentRefMediaType';
 import { RecommendationSessionDecision1720671700000 } from './migrations/1720671700000-RecommendationSessionDecision';
 import { MediaTmdbPopularity1720671800000 } from './migrations/1720671800000-MediaTmdbPopularity';
+import { TheaterShowtimes1720671900000 } from './migrations/1720671900000-TheaterShowtimes';
 
 export function createTypeOrmOptions(): TypeOrmModuleOptions {
   return {
@@ -105,6 +110,10 @@ export function createTypeOrmOptions(): TypeOrmModuleOptions {
       WatchPhotoEntity,
       WatchReviewLikeEntity,
       TransactionOutboxEntity,
+      KobisTheaterEntity,
+      KobisMovieEntity,
+      KobisShowtimeEntity,
+      KobisSyncRunEntity,
     ],
     migrations: [
       BaseSchema1720670300000,
@@ -132,6 +141,7 @@ export function createTypeOrmOptions(): TypeOrmModuleOptions {
       ExternalContentRefMediaType1720671600000,
       RecommendationSessionDecision1720671700000,
       MediaTmdbPopularity1720671800000,
+      TheaterShowtimes1720671900000,
     ],
     synchronize: process.env.TYPEORM_SYNC === 'true',
     logging: process.env.TYPEORM_LOGGING === 'true',

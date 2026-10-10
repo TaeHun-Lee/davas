@@ -1,4 +1,10 @@
-import type { DiaryVisibility, FriendshipStatus, MediaType, ViewingMethod } from './index.js';
+import type {
+  DiaryVisibility,
+  FriendshipStatus,
+  MediaType,
+  TheaterFormat,
+  ViewingMethod,
+} from './index.js';
 
 export type ApiErrorBody = {
   statusCode: number;
@@ -213,4 +219,45 @@ export type FriendInviteState = {
   status: 'VALID' | 'EXPIRED' | 'SELF' | 'ALREADY_FRIENDS';
   inviter?: FriendUser;
   expiresAt?: string;
+};
+
+/** One screen's showings of a film on one day. */
+export type ShowtimeScreening = {
+  /** As the theater names it: "02관 (4DX)". */
+  screen: string;
+  format: TheaterFormat | null;
+  /** "19:30", in Korean time. */
+  times: string[];
+};
+
+export type TheaterShowtimes = {
+  code: string;
+  name: string;
+  /** "서울" or "경기". */
+  region: string;
+  /** "구로구". */
+  area: string;
+  homepageUrl: string | null;
+  /** How many of the viewer's records were at this theater. */
+  visits: number;
+  screenings: ShowtimeScreening[];
+};
+
+/**
+ * Where a film plays in Seoul and Gyeonggi, day by day, from KOFIC's integrated ticketing
+ * network (KOBIS), read once a day. Past showings of today are left out.
+ */
+export type MediaShowtimesResponse = {
+  /** When the schedules were last read; null before the first read. */
+  updatedAt: string | null;
+  dates: Array<{ date: string; theaters: TheaterShowtimes[] }>;
+};
+
+/** How widely a film in "지금 극장에서" is playing. */
+export type NowShowingSummary = {
+  theaters: number;
+  /** Theaters among them the viewer has records at. */
+  myTheaters: number;
+  /** The first day it plays, `YYYY-MM-DD`. */
+  firstDate: string;
 };

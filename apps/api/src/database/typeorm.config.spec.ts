@@ -37,10 +37,11 @@ describe('createTypeOrmOptions', () => {
       'ExternalContentRefMediaType1720671600000',
       'RecommendationSessionDecision1720671700000',
       'MediaTmdbPopularity1720671800000',
+      'TheaterShowtimes1720671900000',
     ]) {
       assert.ok(names.includes(name), name);
     }
-    assert.equal(names.length, 21);
+    assert.equal(names.length, 22);
   });
 
   it('keeps registration order non-decreasing by timestamp', () => {

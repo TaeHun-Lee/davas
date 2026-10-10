@@ -17,6 +17,7 @@ import {
 import { MediaModule } from '../media/media.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { TmdbClient } from '../media/tmdb.client';
+import { ShowtimesModule } from '../showtimes/showtimes.module';
 import { SpacesModule } from '../spaces/spaces.module';
 import { GroupRecommendationsController } from './group-recommendations.controller';
 import { GroupRecommendationPool } from './group-recommendation-pool';
@@ -32,6 +33,7 @@ import { TasteHistory } from './taste-history';
     AuthModule,
     MediaModule,
     NotificationsModule,
+    ShowtimesModule,
     SpacesModule,
     TypeOrmModule.forFeature([
       RecommendationSessionEntity,

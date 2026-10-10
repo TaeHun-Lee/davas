@@ -1,8 +1,9 @@
-import { DEFAULT_LANGUAGE, DEFAULT_REGION } from '@davas/shared';
+import { DEFAULT_LANGUAGE, DEFAULT_REGION, type NowShowingSummary } from '@davas/shared';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { TmdbClient } from '../media/tmdb.client';
 import type { MediaRecommendationItem } from '../media/tmdb.mapper';
 import { rankForViewer, titleKey } from './personal-ranking';
+import { ShowtimesService } from '../showtimes/showtimes.service';
 import { TasteHistory } from './taste-history';
 import { buildTasteProfile } from './taste-profile';
 
@@ -63,8 +64,9 @@ const LIST_PAGES = [1, 2, 3];
 const LIST_TTL_MS = 30 * 60 * 1000;
 
 /**
- * Home's "오늘 뭐 볼까요?" and 탐색's 화제작 and mood cards: TMDB's popular titles, reordered
- * for the person asking (see personal-ranking.ts).
+ * Home's "오늘 뭐 볼까요?" and 탐색's 화제작 and mood cards: TMDB's popular titles, and the films
+ * playing in Seoul and Gyeonggi theaters, reordered for the person asking (see
+ * personal-ranking.ts).
  */
 @Injectable()
 export class RecommendationsService {
@@ -76,6 +78,7 @@ export class RecommendationsService {
   constructor(
     private readonly tmdbClient: TmdbClient,
     private readonly tasteHistory: TasteHistory,
+    private readonly showtimes: ShowtimesService,
   ) {}
 
   /** The service's clock; tests move it to see kept lists expire. */
@@ -111,10 +114,38 @@ export class RecommendationsService {
     };
   }
 
+  /** Films playing in Seoul and Gyeonggi this week (KOBIS), the ones I have not seen. */
+  async nowShowing(accountId: string, limit?: number) {
+    const [{ updatedAt, films }, visits] = await Promise.all([
+      this.showtimes.nowShowing(),
+      this.showtimes.theaterVisits(accountId),
+    ]);
+    const byKey = new Map(films.map((film) => [titleKey(film.tmdb), film]));
+    const ranked = await this.forViewer(
+      accountId,
+      films.map((film) => ({ ...film.tmdb, reason: 'now-showing' })),
+      limit,
+      { keepUnreleased: true },
+    );
+    return {
+      updatedAt,
+      items: ranked.map((item) => {
+        const film = byKey.get(titleKey(item))!;
+        const showing: NowShowingSummary = {
+          theaters: film.theaterCodes.length,
+          myTheaters: film.theaterCodes.filter((code) => visits.has(code)).length,
+          firstDate: film.firstDate,
+        };
+        return { ...item, showing };
+      }),
+    };
+  }
+
   private async forViewer(
     accountId: string,
     items: readonly MediaRecommendationItem[],
     limit?: number,
+    options: { keepUnreleased?: boolean } = {},
   ) {
     const now = this.now();
     const history = await this.tasteHistory.read([accountId]);
@@ -135,6 +166,7 @@ export class RecommendationsService {
       },
       now,
       this.limit(limit),
+      options,
     );
   }
 

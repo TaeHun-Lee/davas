@@ -56,11 +56,16 @@ export function rankForViewer(
   viewer: Viewer,
   now: Date,
   limit: number,
+  // Titles a theater is showing are out here, whatever date TMDB gives.
+  options: { keepUnreleased?: boolean } = {},
 ) {
   const unique = new Map<string, MediaRecommendationItem>();
   for (const item of items) {
     const key = titleKey(item);
-    const unreleased = item.releaseDate !== null && isAfterSeoulToday(item.releaseDate, now);
+    const unreleased =
+      !options.keepUnreleased &&
+      item.releaseDate !== null &&
+      isAfterSeoulToday(item.releaseDate, now);
     if (!unique.has(key) && !viewer.seen.has(key) && !unreleased) unique.set(key, item);
   }
   const pool = [...unique.values()].map((item) => ({ item, candidate: toCandidate(item) }));

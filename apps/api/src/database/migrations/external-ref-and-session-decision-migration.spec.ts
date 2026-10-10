@@ -23,10 +23,16 @@ describe('external ref media type and recommendation decision migrations', () =>
     const names = (createTypeOrmOptions().migrations as Array<new () => { name: string }>).map(
       (migration) => migration.name,
     );
-    assert.deepEqual(names.slice(-3, -1), [
-      'ExternalContentRefMediaType1720671600000',
-      'RecommendationSessionDecision1720671700000',
-    ]);
+    const at = (name: string) => names.indexOf(name);
+    assert.ok(at('ExternalContentRefMediaType1720671600000') > 0);
+    assert.equal(
+      at('RecommendationSessionDecision1720671700000'),
+      at('ExternalContentRefMediaType1720671600000') + 1,
+    );
+    assert.equal(
+      at('MediaTmdbPopularity1720671800000'),
+      at('RecommendationSessionDecision1720671700000') + 1,
+    );
   });
 
   it('keys provider links by media type, filling it from the linked title first', async () => {

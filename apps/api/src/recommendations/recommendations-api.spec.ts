@@ -26,10 +26,11 @@ describe('Recommendations source retention policy', () => {
     assert.match(controllerSource, /@Controller\('recommendations'\)/);
   });
 
-  it('serves only the discovery routes the web calls: trending and a mood preset', () => {
+  it('serves only the discovery routes the web calls: trending, now showing and a mood preset', () => {
     const controllerSource = maybeSource('recommendations/recommendations.controller.ts');
 
     assert.match(controllerSource, /@Get\('trending'\)/);
+    assert.match(controllerSource, /@Get\('now-showing'\)/);
     assert.match(controllerSource, /@Get\('genres\/:presetId'\)/);
     // The old explore dashboard's routes went with it.
     assert.doesNotMatch(

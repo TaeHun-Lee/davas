@@ -5,11 +5,11 @@ import { createTypeOrmOptions } from '../typeorm.config';
 import { MediaTmdbPopularity1720671800000 } from './1720671800000-MediaTmdbPopularity';
 
 describe('media TMDB popularity migration', () => {
-  it('is the newest migration', () => {
+  it('is registered', () => {
     const names = (createTypeOrmOptions().migrations as Array<new () => { name: string }>).map(
       (migration) => migration.name,
     );
-    assert.equal(names.at(-1), 'MediaTmdbPopularity1720671800000');
+    assert.ok(names.includes('MediaTmdbPopularity1720671800000'));
   });
 
   it('only adds a nullable popularity column', async () => {
