@@ -42,6 +42,7 @@ const REASON_LABELS: Record<string, string> = {
   RECENT_RELEASE: '최근 공개된 작품을 찾는 조건에 맞아요.',
   MATCHES_REQUESTED_MOOD: '선택한 분위기와 작품 특성이 맞아요.',
   DIVERSITY_RERANKED: '비슷한 후보만 반복되지 않도록 목록의 다양성을 반영했어요.',
+  POPULAR_NOW: '요즘 많이 보는 작품이에요.',
 };
 
 function numberOrUndefined(value: string) {

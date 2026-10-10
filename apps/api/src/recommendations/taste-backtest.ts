@@ -31,6 +31,8 @@ export type BacktestDataset = {
     voteCount: number;
     releaseDate: string | null;
     runtime: number | null;
+    /** TMDB popularity, when the snapshot has it. */
+    popularity?: number | null;
   }>;
   watches: Array<{ accountId: string; contentId: string; watchedDate: string; createdAt?: string }>;
   ratings: Array<{ accountId: string; contentId: string; ratingScale: number }>;
@@ -115,6 +117,7 @@ export function runBacktest(
     releaseDate: title.releaseDate,
     rating: title.rating,
     voteCount: title.voteCount,
+    popularity: title.popularity ?? null,
     availability: {
       status: 'AVAILABLE',
       expiresAt: new Date(0),
@@ -220,6 +223,9 @@ export function runBacktest(
     return [{ event, pool, now, persons }];
   });
 
+  const mostPopular = (pool: Candidate[]) =>
+    Math.max(0, ...pool.map((candidate) => candidate.popularity ?? 0));
+
   return BACKTEST_MODELS.map((model) => {
     let hits = 0;
     let reciprocal = 0;
@@ -227,6 +233,7 @@ export function runBacktest(
     let uncertainty = 0;
     let poolSize = 0;
     replays.forEach(({ event, pool, now, persons }, index) => {
+      const top = mostPopular(pool);
       const scored = pool.map((candidate) => {
         if (model === 'random') {
           return { id: candidate.id, score: stableFraction(`${index}:${candidate.id}`), u: 0 };
@@ -239,7 +246,12 @@ export function runBacktest(
         const predictions = persons.map((person, i) =>
           scoreParticipant(event.accountIds[i], candidate, person.profile, universe, []),
         );
-        const ranked = rankCandidate(candidate, predictions, { moodTags: [], channels: [], now });
+        const ranked = rankCandidate(candidate, predictions, {
+          moodTags: [],
+          channels: [],
+          now,
+          mostPopular: top,
+        });
         return {
           id: candidate.id,
           score: ranked.finalScore,

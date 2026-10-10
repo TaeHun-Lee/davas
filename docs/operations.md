@@ -41,7 +41,7 @@ cp .env.production.example .env.production
 - schema를 바꾸는 배포 전에는 반드시 DB와 업로드를 함께 백업한다. 업로드 볼륨에는 프로필 사진과 기록 사진(`watch-photos/`, 원본·화면용·썸네일)이 함께 있어 기록 사진이 늘수록 백업도 커진다.
 - 정확한 되돌리기는 배포 전 백업 복원뿐이다. `BaseSchema`의 `down`은 의도적으로 아무것도 하지 않는다.
 
-현재 등록된 migration (20개):
+현재 등록된 migration (21개):
 
 1. `BaseSchema1720670300000`
 2. `HighValueFlows1720670400000`
@@ -63,6 +63,7 @@ cp .env.production.example .env.production
 18. `AccountRecoveryAndInviteDeclines1720671500000` (비밀번호 복구 코드와 로그인 세션 버전, 공간 초대 거절 기록)
 19. `ExternalContentRefMediaType1720671600000` (작품 외부 번호 연결에 영화·드라마 구분 `media_type`을 채워 넣고, 고유 조건을 `(provider, media_type, external_id)`로 바꿈)
 20. `RecommendationSessionDecision1720671700000` (함께 고르기가 정한 작품 `decided_exposure_id`와 끝난 시각 `closed_at`)
+21. `MediaTmdbPopularity1720671800000` (작품의 TMDB 인기도 `tmdb_popularity`, 함께 고르기 순위에 쓴다)
 
 목록 순서는 운영 DB에 적용된 순서(기록 id 1~14, 15부터는 앞으로 배포하는 순서)다. 5~9(보안 보강)와 10~14(TO-BE 기능)는 같은 timestamp를 공유하므로 빈 DB에서는 timestamp 순으로 섞여 실행되지만, 서로 독립이고 재실행에 안전하다. TypeORM은 class 이름으로 적용 여부를 판단하므로 이 이름들을 바꾸지 않는다. 새 migration을 등록하면 이 목록도 같은 변경에서 갱신한다(`npm run verify:deployment`가 검사).
 

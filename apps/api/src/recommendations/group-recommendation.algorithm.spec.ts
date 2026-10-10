@@ -8,6 +8,7 @@ import {
   RecommendationCandidate,
   freshness,
   rankCandidate,
+  relativePopularity,
   scoreParticipant,
   tagMatchesGenres,
 } from './group-recommendation.algorithm';
@@ -127,6 +128,22 @@ describe('deterministic group recommendation algorithm', () => {
         rankCandidate(old, person, context).finalScore,
     );
     assert.equal(rankCandidate(old, person, context).groupBase, 0.6);
+  });
+
+  it('ranks the more popular of two otherwise equal titles higher, and unknown popularity as none', () => {
+    const popular = candidate({ id: 'popular', popularity: 400 });
+    const quiet = candidate({ id: 'quiet', popularity: 20 });
+    const unknown = candidate({ id: 'unknown' });
+    assert.equal(relativePopularity(popular, 400), 1);
+    assert.ok(relativePopularity(quiet, 400) < 0.6);
+    assert.equal(relativePopularity(unknown, 400), 0);
+    const person = [{ accountId: 'u1', score: 0.6, uncertainty: 0.2 }];
+    const context = { moodTags: [], channels: [], now, mostPopular: 400 };
+    assert.ok(
+      rankCandidate(popular, person, context).finalScore >
+        rankCandidate(quiet, person, context).finalScore,
+    );
+    assert.equal(rankCandidate(unknown, person, context).scoreParts.popularityBonus, 0);
   });
 
   it('reads the moods the web offers through the genres that carry them', () => {

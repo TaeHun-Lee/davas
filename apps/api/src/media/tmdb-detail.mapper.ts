@@ -39,6 +39,7 @@ export type TmdbDetailPayload = {
   origin_country?: string[];
   vote_average?: number;
   vote_count?: number;
+  popularity?: number;
   tagline?: string;
   credits?: {
     cast?: TmdbCreditPerson[];
@@ -73,6 +74,7 @@ export type TmdbMediaDetail = {
   countries: string[];
   tmdbRating: number | null;
   tmdbVoteCount: number | null;
+  tmdbPopularity: number | null;
   director: string | null;
   creators: string[];
   numberOfEpisodes: number | null;
@@ -145,6 +147,7 @@ export function mapTmdbDetail(payload: TmdbDetailPayload, mediaType: MediaType):
     countries,
     tmdbRating: typeof payload.vote_average === 'number' ? payload.vote_average : null,
     tmdbVoteCount: typeof payload.vote_count === 'number' ? payload.vote_count : null,
+    tmdbPopularity: typeof payload.popularity === 'number' ? payload.popularity : null,
     director,
     creators,
     numberOfEpisodes: payload.number_of_episodes ?? null,

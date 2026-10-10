@@ -80,6 +80,10 @@ export class MediaEntity {
   @Column({ name: 'tmdb_vote_count', type: 'int', nullable: true })
   tmdbVoteCount!: number | null;
 
+  /** TMDB's popularity when the title was last stored or seen in a discover result. */
+  @Column({ name: 'tmdb_popularity', type: 'double precision', nullable: true })
+  tmdbPopularity!: number | null;
+
   @Column({ type: 'varchar', nullable: true })
   director!: string | null;
 

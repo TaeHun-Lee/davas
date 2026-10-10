@@ -34,6 +34,10 @@ export type LatestAvailability = {
 // it, titles those services stream are imported from TMDB before ranking.
 const READY_TARGET = 30;
 const IMPORT_LIMIT = 20;
+// People mostly watch titles within a year or so of release (in the production history, 60%
+// within three months and 87% within a year), so imports look at the last 18 months first and
+// at all-time popular titles only when that runs short.
+const RECENT_DAYS = 540;
 // Later discover pages are read only while the earlier ones hold titles already stored.
 const IMPORT_PAGES = 3;
 const DISCOVER_MIN_VOTES = 20;
@@ -47,6 +51,8 @@ const KNOWN_WINDOW_MS = 30 * DAY_MS;
 const CATALOG_TTL_MS = DAY_MS;
 
 const normalized = (value: string) => value.trim().toLocaleLowerCase('en-US');
+const shiftDay = (day: string, days: number) =>
+  new Date(Date.parse(`${day}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
 const tmdbType = (type: ContentType) => (type === 'TV' ? 'tv' : 'movie');
 
 /** Groups observations (newest first) into each title's newest observation. */
@@ -220,38 +226,62 @@ export class GroupRecommendationPool {
     const picked: Array<{ externalId: string; mediaType: ContentType }> = [];
     for (const type of request.contentTypes) {
       const forType: typeof picked = [];
-      for (let page = 1; page <= IMPORT_PAGES && forType.length < quota; page += 1) {
-        const source = await this.sourcePage(type, page, request);
-        const wanted = source.items.filter(
-          (item) =>
-            item.mediaType === type &&
-            !forType.some((picked) => picked.externalId === item.externalId),
-        );
-        const stored = wanted.length
-          ? await this.media.find({
-              where: {
-                externalProvider: 'TMDB',
-                mediaType: type,
-                externalId: In(wanted.map((item) => item.externalId)),
-              },
-              select: { id: true, externalId: true },
-            })
-          : [];
-        const storedIds = new Set(stored.map((item) => item.externalId));
-        forType.push(
-          ...wanted
-            .filter((item) => !storedIds.has(item.externalId))
-            .map((item) => ({ externalId: item.externalId, mediaType: type })),
-        );
-        if (page >= (source.totalPages ?? 1)) break;
+      for (const recent of [true, false]) {
+        for (let page = 1; page <= IMPORT_PAGES && forType.length < quota; page += 1) {
+          const source = await this.sourcePage(type, page, request, recent);
+          const wanted = source.items.filter(
+            (item) =>
+              item.mediaType === type &&
+              !forType.some((picked) => picked.externalId === item.externalId),
+          );
+          const stored = wanted.length
+            ? await this.media.find({
+                where: {
+                  externalProvider: 'TMDB',
+                  mediaType: type,
+                  externalId: In(wanted.map((item) => item.externalId)),
+                },
+                select: { id: true, externalId: true, tmdbPopularity: true },
+              })
+            : [];
+          await this.refreshPopularity(stored, wanted);
+          const storedIds = new Set(stored.map((item) => item.externalId));
+          forType.push(
+            ...wanted
+              .filter((item) => !storedIds.has(item.externalId))
+              .map((item) => ({ externalId: item.externalId, mediaType: type })),
+          );
+          if (page >= (source.totalPages ?? 1)) break;
+        }
       }
       picked.push(...forType.slice(0, quota));
     }
     return picked.slice(0, IMPORT_LIMIT);
   }
 
-  /** Titles the chosen services stream, fitting the moods; trending titles if that lookup fails. */
-  private async sourcePage(type: ContentType, page: number, request: PoolRequest) {
+  /**
+   * A stored title seen again in a discover or trending result takes its current popularity,
+   * which ranking reads; nothing else about the stored title changes.
+   */
+  private async refreshPopularity(
+    stored: Array<Pick<MediaEntity, 'id' | 'externalId' | 'tmdbPopularity'>>,
+    seen: Array<{ externalId: string; popularity: number | null }>,
+  ) {
+    const current = new Map(seen.map((item) => [item.externalId, item.popularity]));
+    const changed = stored.filter((item) => {
+      const popularity = current.get(item.externalId);
+      return typeof popularity === 'number' && popularity !== item.tmdbPopularity;
+    });
+    await mapWithConcurrency(changed, 4, async (item) => {
+      await this.media.update({ id: item.id }, { tmdbPopularity: current.get(item.externalId)! });
+    });
+  }
+
+  /**
+   * Popular titles the chosen services stream, fitting the requested moods, released in the
+   * last 18 months when `recent`; trending titles if the service lookup fails.
+   */
+  private async sourcePage(type: ContentType, page: number, request: PoolRequest, recent: boolean) {
     const providerIds = await this.catalogIds(
       `providers:${tmdbType(type)}:${request.region}`,
       () => this.tmdb!.watchProviderCatalog(tmdbType(type), request.region),
@@ -273,6 +303,8 @@ export class GroupRecommendationPool {
       watchProviderIds: providerIds,
       withAnyGenres,
       withoutGenres,
+      releasedAfter: recent ? shiftDay(seoulToday(this.now()), -RECENT_DAYS) : undefined,
+      releasedBefore: seoulToday(this.now()),
       sortBy: 'popularity.desc',
       voteCountGte: DISCOVER_MIN_VOTES,
       reason: 'group-pool',

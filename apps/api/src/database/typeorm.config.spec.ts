@@ -36,10 +36,11 @@ describe('createTypeOrmOptions', () => {
       'AccountRecoveryAndInviteDeclines1720671500000',
       'ExternalContentRefMediaType1720671600000',
       'RecommendationSessionDecision1720671700000',
+      'MediaTmdbPopularity1720671800000',
     ]) {
       assert.ok(names.includes(name), name);
     }
-    assert.equal(names.length, 20);
+    assert.equal(names.length, 21);
   });
 
   it('keeps registration order non-decreasing by timestamp', () => {

@@ -55,6 +55,9 @@ export type DiscoverRecommendationsInput = {
   withoutGenres?: number[];
   /** Titles a subscription (or a free or ad-supported plan) on one of these streams in `region`. */
   watchProviderIds?: number[];
+  /** First released on or after / on or before this day (`YYYY-MM-DD`). */
+  releasedAfter?: string;
+  releasedBefore?: string;
   sortBy: string;
   voteCountGte: number;
   reason: string;
@@ -166,10 +169,13 @@ export class TmdbClient {
     withAnyGenres,
     withoutGenres,
     watchProviderIds,
+    releasedAfter,
+    releasedBefore,
     sortBy,
     voteCountGte,
     reason,
   }: DiscoverRecommendationsInput): Promise<RecommendationResponse> {
+    const released = mediaType === 'tv' ? 'first_air_date' : 'primary_release_date';
     const genres = withGenres?.length
       ? withGenres.join(',')
       : withAnyGenres?.length
@@ -188,6 +194,8 @@ export class TmdbClient {
         watch_region: providers ? region : undefined,
         with_watch_providers: providers,
         with_watch_monetization_types: providers ? 'flatrate|free|ads' : undefined,
+        [`${released}.gte`]: releasedAfter,
+        [`${released}.lte`]: releasedBefore,
         sort_by: sortBy,
         'vote_count.gte': String(voteCountGte),
         include_adult: 'false',

@@ -57,6 +57,7 @@ import { NotificationSubjects1720671400000 } from './migrations/1720671400000-No
 import { AccountRecoveryAndInviteDeclines1720671500000 } from './migrations/1720671500000-AccountRecoveryAndInviteDeclines';
 import { ExternalContentRefMediaType1720671600000 } from './migrations/1720671600000-ExternalContentRefMediaType';
 import { RecommendationSessionDecision1720671700000 } from './migrations/1720671700000-RecommendationSessionDecision';
+import { MediaTmdbPopularity1720671800000 } from './migrations/1720671800000-MediaTmdbPopularity';
 
 export function createTypeOrmOptions(): TypeOrmModuleOptions {
   return {
@@ -130,6 +131,7 @@ export function createTypeOrmOptions(): TypeOrmModuleOptions {
       AccountRecoveryAndInviteDeclines1720671500000,
       ExternalContentRefMediaType1720671600000,
       RecommendationSessionDecision1720671700000,
+      MediaTmdbPopularity1720671800000,
     ],
     synchronize: process.env.TYPEORM_SYNC === 'true',
     logging: process.env.TYPEORM_LOGGING === 'true',

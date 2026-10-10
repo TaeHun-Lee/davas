@@ -19,11 +19,11 @@ async function statements(migration: {
 }
 
 describe('external ref media type and recommendation decision migrations', () => {
-  it('are the two newest migrations, in order', () => {
+  it('are registered in order, right before the popularity migration', () => {
     const names = (createTypeOrmOptions().migrations as Array<new () => { name: string }>).map(
       (migration) => migration.name,
     );
-    assert.deepEqual(names.slice(-2), [
+    assert.deepEqual(names.slice(-3, -1), [
       'ExternalContentRefMediaType1720671600000',
       'RecommendationSessionDecision1720671700000',
     ]);

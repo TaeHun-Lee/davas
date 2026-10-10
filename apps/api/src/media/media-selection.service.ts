@@ -95,6 +95,7 @@ export class MediaSelectionService {
       runtime: detail.runtime,
       tmdbRating: detail.tmdbRating == null ? null : String(detail.tmdbRating),
       tmdbVoteCount: detail.tmdbVoteCount,
+      tmdbPopularity: detail.tmdbPopularity,
       director: detail.director,
       creators: detail.creators,
       cast: detail.cast,

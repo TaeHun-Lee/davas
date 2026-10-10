@@ -44,6 +44,7 @@ import {
   GROUP_RECOMMENDATION_ALGORITHM_VERSION,
   NormalizedRecommendationRequest,
   passesHardFilters,
+  POPULAR_NOW_THRESHOLD,
   rankCandidate,
   RankedCandidate,
   RecommendationCandidate,
@@ -526,8 +527,9 @@ export class GroupRecommendationsService {
       media: mediaById.get(candidate.id)!,
       channels,
     }));
+    const mostPopular = Math.max(0, ...candidates.map((item) => item.candidate.popularity ?? 0));
     const scored = channels.map((item) =>
-      this.scoreCandidate(item, request, profiles, universe, now),
+      this.scoreCandidate(item, request, profiles, universe, now, mostPopular),
     );
     const reranked = diversityRerank(
       scored.map((item) => item.ranked),
@@ -672,6 +674,7 @@ export class GroupRecommendationsService {
           releaseDate: item.releaseDate,
           rating: item.tmdbRating === null ? null : Number(item.tmdbRating),
           voteCount: item.tmdbVoteCount ?? 0,
+          popularity: item.tmdbPopularity ?? null,
           availability: {
             status: latest?.status ?? 'UNKNOWN',
             observedAt: latest?.observedAt ?? new Date(0),
@@ -692,6 +695,7 @@ export class GroupRecommendationsService {
     profiles: ReadonlyMap<string, TasteProfile>,
     universe: ReadonlyMap<string, number>,
     now: Date,
+    mostPopular: number,
   ) {
     const participantScores = request.participantAccountIds.map((accountId) =>
       scoreParticipant(
@@ -706,6 +710,7 @@ export class GroupRecommendationsService {
       moodTags: request.moodTags,
       channels: item.channels,
       now,
+      mostPopular,
     });
     return { media: item.media, ranked };
   }
@@ -751,6 +756,10 @@ export class GroupRecommendationsService {
     if (item.ranked.channels.includes('FRESH_RELEASE')) codes.push('RECENT_RELEASE');
     if (request.moodTags.some((tag) => tagMatchesGenres(tag, item.media.genres)))
       codes.push('MATCHES_REQUESTED_MOOD');
+    // Popularity counts in the ranking, so it can be a reason when it really is high.
+    if ((item.ranked.scoreParts.popularityBonus ?? 0) >= 0.2 * POPULAR_NOW_THRESHOLD) {
+      codes.push('POPULAR_NOW');
+    }
     if ((item.ranked.diversityPenalty ?? 0) > 0) codes.push('DIVERSITY_RERANKED');
     return {
       codes,

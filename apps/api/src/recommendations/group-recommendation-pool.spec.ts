@@ -57,7 +57,7 @@ function seen(contentId: string, provider: string, expiresInHours: number, offer
   });
 }
 
-type Discovered = { externalId: string; mediaType: 'MOVIE' | 'TV' };
+type Discovered = { externalId: string; mediaType: 'MOVIE' | 'TV'; popularity?: number };
 
 function setup(
   options: {
@@ -77,6 +77,7 @@ function setup(
     trending: 0,
     imported: [] as string[],
     refreshed: [] as string[],
+    popularity: [] as Array<{ id: string; tmdbPopularity: number }>,
   };
   const mediaRepository = {
     find: async (query: { where: Record<string, unknown>; take?: number }) => {
@@ -84,6 +85,11 @@ function setup(
         (a, b) => (b.tmdbVoteCount ?? 0) - (a.tmdbVoteCount ?? 0),
       );
       return found.slice(0, query.take ?? found.length);
+    },
+    update: async (criteria: { id: string }, values: { tmdbPopularity: number }) => {
+      calls.popularity.push({ id: criteria.id, tmdbPopularity: values.tmdbPopularity });
+      const row = media.find((item) => item.id === criteria.id);
+      if (row) row.tmdbPopularity = values.tmdbPopularity;
     },
   };
   const observationRepository = {
@@ -244,7 +250,27 @@ describe('group recommendation candidate pool', () => {
     const failing = setup({ providerCatalogFails: true });
     await failing.pool.warm(request(), new Set());
     await failing.pool.warm(request(), new Set());
-    assert.equal(failing.calls.providerCatalog, 2);
+    // Each warm-up asks for the recent pass and again for the all-time pass: nothing is kept.
+    assert.equal(failing.calls.providerCatalog, 4);
+  });
+
+  it('looks at the last 18 months first, then all-time popular titles, keeping popularity fresh', async () => {
+    const { pool, calls } = setup({
+      media: [title('old', 100, { externalId: 'tmdb-old', tmdbPopularity: 5 })],
+      discover: [
+        [
+          { externalId: 'tmdb-old', mediaType: 'MOVIE', popularity: 42 },
+          { externalId: 'n1', mediaType: 'MOVIE', popularity: 10 },
+        ],
+      ],
+    });
+    await pool.warm(request(), new Set());
+
+    assert.match(String(calls.discover[0].releasedAfter), /^2025-04-1[78]$/);
+    assert.equal(calls.discover[0].releasedBefore, '2026-10-10');
+    assert.equal(calls.discover[1].releasedAfter, undefined, 'then all-time popular titles');
+    assert.deepEqual(calls.imported, ['n1']);
+    assert.deepEqual(calls.popularity, [{ id: 'old', tmdbPopularity: 42 }]);
   });
 
   it('reads the newest observation of each title and what it offered', () => {

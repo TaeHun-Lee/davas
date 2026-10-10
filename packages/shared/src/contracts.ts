@@ -126,6 +126,7 @@ export type MediaSelectionResponse = {
   runtime: number | null;
   tmdbRating: string | null;
   tmdbVoteCount: number | null;
+  tmdbPopularity: number | null;
   director: string | null;
   creators: string[];
   cast: string[];
