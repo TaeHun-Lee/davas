@@ -12,6 +12,7 @@ import { In, IsNull, Repository } from 'typeorm';
 import { mapWithConcurrency } from '../common/concurrency';
 import { MediaEntity, SpaceWishEntity, UserEntity, WatchShareEntity } from '../database/entities';
 import { AvailabilityService, type AvailabilityResponse } from '../media/availability.service';
+import { SUBSCRIPTION_OFFER_TYPES } from '../media/ports/availability-provider.port';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SpaceAccessService } from '../spaces/space-access.service';
 
@@ -20,7 +21,6 @@ const REGION = 'KR';
 // over a few visits instead of firing one request per title every time.
 const AVAILABILITY_REFRESH_BUDGET = 8;
 const MAX_WISHES_PER_SPACE = 200;
-const SUBSCRIPTION_OFFERS = new Set(['STREAM', 'FREE', 'ADS']);
 
 // Genre names come from TMDB's Korean detail payload.
 export const MOOD_GENRES: Record<WishMood, string[]> = {
@@ -261,7 +261,7 @@ export class SpaceWishesService {
       const services = [
         ...new Set(
           current.offers
-            .filter((offer) => SUBSCRIPTION_OFFERS.has(offer.offerType))
+            .filter((offer) => SUBSCRIPTION_OFFER_TYPES.has(offer.offerType))
             .map((offer) => ottServiceForProvider(offer.provider))
             .filter((key): key is OttServiceKey => key !== null),
         ),

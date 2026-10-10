@@ -42,7 +42,7 @@ export type MediaRecommendationItem = DavasMediaSearchItem & {
 
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 
-function imageUrl(size: 'w500' | 'w780', path?: string | null): string | null {
+export function tmdbImageUrl(size: 'w500' | 'w780', path?: string | null): string | null {
   return path ? `${TMDB_IMAGE_BASE_URL}/${size}${path}` : null;
 }
 
@@ -59,8 +59,8 @@ export function mapTmdbSearchResult(result: TmdbSearchResult): DavasMediaSearchI
     title: title ?? '',
     originalTitle: originalTitle ?? title ?? '',
     overview: result.overview ?? '',
-    posterUrl: imageUrl('w500', result.poster_path),
-    backdropUrl: imageUrl('w780', result.backdrop_path),
+    posterUrl: tmdbImageUrl('w500', result.poster_path),
+    backdropUrl: tmdbImageUrl('w780', result.backdrop_path),
     releaseDate: releaseDate || null,
     genreIds: result.genre_ids ?? [],
     country: result.origin_country?.[0] ?? null,

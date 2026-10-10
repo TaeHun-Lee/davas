@@ -16,11 +16,8 @@ import {
   Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, MoreThan, Repository } from 'typeorm';
-import { mapWithConcurrency } from '../common/concurrency';
-import { seoulToday } from '../common/seoul-date';
+import { DataSource, In, Repository } from 'typeorm';
 import {
-  AvailabilityObservationEntity,
   DiaryEntity,
   MediaEntity,
   RecommendationExposureEntity,
@@ -31,8 +28,6 @@ import {
   WatchReactionEntity,
 } from '../database/entities';
 import { AvailabilityService } from '../media/availability.service';
-import { MediaSelectionService } from '../media/media-selection.service';
-import { TmdbClient } from '../media/tmdb.client';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SpaceAccessService } from '../spaces/space-access.service';
 import {
@@ -55,6 +50,12 @@ import {
   scoreParticipant,
   tagMatchesGenres,
 } from './group-recommendation.algorithm';
+import {
+  GroupRecommendationPool,
+  type LatestAvailability,
+  onChosenService,
+} from './group-recommendation-pool';
+import { SUBSCRIPTION_OFFER_TYPES } from '../media/ports/availability-provider.port';
 
 const response = (statusCode: number, code: string, message: string) => ({
   statusCode,
@@ -62,14 +63,6 @@ const response = (statusCode: number, code: string, message: string) => ({
   message,
 });
 const normalized = (value: string) => value.trim().toLocaleLowerCase('en-US');
-// Below this many stored titles of the requested types, trending titles are imported first.
-const MIN_CANDIDATE_POOL = 60;
-const POOL_IMPORT_LIMIT = 20;
-// Later trending pages are read only while the earlier ones hold titles already stored.
-const POOL_IMPORT_PAGES = 3;
-// Availability is refreshed for at most this many of the most-voted stale titles per session.
-const AVAILABILITY_WARM_POOL = 60;
-const AVAILABILITY_REFRESH_LIMIT = 24;
 // A pick nobody settled stops taking answers after a week, as if its starter had ended it.
 const SESSION_OPEN_DAYS = 7;
 // What a pick settled on stays home's "오늘 밤 후보" for a few days, or until someone records it.
@@ -100,10 +93,6 @@ export class GroupRecommendationsService {
     private readonly exposures: Repository<RecommendationExposureEntity>,
     @InjectRepository(RecommendationFeedbackEntity)
     private readonly feedback: Repository<RecommendationFeedbackEntity>,
-    @InjectRepository(MediaEntity)
-    private readonly media: Repository<MediaEntity>,
-    @InjectRepository(AvailabilityObservationEntity)
-    private readonly observations: Repository<AvailabilityObservationEntity>,
     @InjectRepository(DiaryEntity)
     private readonly diaries: Repository<DiaryEntity>,
     @InjectRepository(WatchParticipantEntity)
@@ -113,100 +102,12 @@ export class GroupRecommendationsService {
     private readonly availability: AvailabilityService,
     private readonly spaceAccess: SpaceAccessService,
     private readonly dataSource: DataSource,
-    @Optional() private readonly mediaSelection?: MediaSelectionService,
-    @Optional() private readonly tmdb?: TmdbClient,
+    private readonly pool: GroupRecommendationPool,
     @Optional() private readonly notifications?: NotificationsService,
   ) {}
 
   /** The service's clock; tests set it to keep fixed dates inside the open week. */
   now: () => Date = () => new Date();
-
-  /**
-   * Candidates only come from titles stored locally, and only titles with a fresh "where can
-   * we watch it" observation pass the hard filters. Without this step a couple's database
-   * holds little more than what they already watched, and nothing ever has availability.
-   * It imports trending titles when the pool is small and refreshes availability for the
-   * most-voted titles that have none, within fixed budgets. Failures leave the pool as is.
-   */
-  private async warmCandidatePool(request: SessionRequest) {
-    try {
-      if (this.tmdb && this.mediaSelection) {
-        const poolSize = await this.media.count({
-          where: { mediaType: In(request.contentTypes) },
-        });
-        if (poolSize < MIN_CANDIDATE_POOL) {
-          const imports = await this.unstoredTrendingTitles(request.contentTypes);
-          await mapWithConcurrency(imports, 3, async (item) => {
-            try {
-              await this.mediaSelection!.select({
-                externalProvider: 'TMDB',
-                externalId: item.externalId,
-                mediaType: item.mediaType,
-              });
-            } catch {
-              // One title failing to import does not stop the others.
-            }
-          });
-        }
-      }
-      const today = seoulToday();
-      const pool = await this.media.find({
-        where: { mediaType: In(request.contentTypes) },
-        order: { tmdbVoteCount: 'DESC', id: 'ASC' },
-        take: AVAILABILITY_WARM_POOL,
-      });
-      if (!pool.length) return;
-      const fresh = await this.observations.find({
-        where: {
-          contentId: In(pool.map((item) => item.id)),
-          region: request.region,
-          expiresAt: MoreThan(new Date()),
-        },
-      });
-      const freshIds = new Set(fresh.map((observation) => observation.contentId));
-      const stale = pool
-        .filter(
-          (item) => !freshIds.has(item.id) && (!item.releaseDate || item.releaseDate <= today),
-        )
-        .slice(0, AVAILABILITY_REFRESH_LIMIT);
-      await mapWithConcurrency(stale, 4, async (item) => {
-        try {
-          await this.availability.refresh(item.id, request.region);
-        } catch {
-          // Recorded as a provider failure by the availability service when it can be.
-        }
-      });
-    } catch {
-      // Recommendations still run on whatever the pool already has.
-    }
-  }
-
-  /**
-   * Trending titles that are not stored yet. Importing a stored title again would only ask
-   * TMDB for its details once more, every time a session starts, without growing the pool.
-   */
-  private async unstoredTrendingTitles(contentTypes: SessionRequest['contentTypes']) {
-    const picked: Array<{ externalId: string; mediaType: 'MOVIE' | 'TV' }> = [];
-    for (let page = 1; page <= POOL_IMPORT_PAGES && picked.length < POOL_IMPORT_LIMIT; page += 1) {
-      const trending = await this.tmdb!.trending({ period: 'week', page, language: 'ko-KR' });
-      const wanted = trending.items.filter((item) => contentTypes.includes(item.mediaType));
-      const stored = wanted.length
-        ? await this.media.find({
-            where: {
-              externalProvider: 'TMDB',
-              externalId: In(wanted.map((item) => item.externalId)),
-            },
-            select: { id: true, externalId: true, mediaType: true },
-          })
-        : [];
-      const storedKeys = new Set(stored.map((item) => `${item.mediaType}:${item.externalId}`));
-      picked.push(
-        ...wanted.filter((item) => !storedKeys.has(`${item.mediaType}:${item.externalId}`)),
-      );
-      if (page >= (trending.totalPages ?? 1)) break;
-    }
-    return picked.slice(0, POOL_IMPORT_LIMIT);
-  }
 
   async create(
     accountId: string,
@@ -579,18 +480,62 @@ export class GroupRecommendationsService {
   }
 
   private async rankCandidates(request: SessionRequest, seed: string) {
-    await this.warmCandidatePool(request);
+    const history = await this.participantHistory(request);
+    const excluded = new Set([
+      ...history.rejected,
+      ...(request.rewatchPolicy === 'EXCLUDE' ? history.watched : []),
+    ]);
+    await this.pool.warm(request, excluded);
     const now = new Date();
-    const [media, observations, reactions, diaries, participations, feedback] = await Promise.all([
-      this.media.find({
-        order: { tmdbVoteCount: 'DESC', id: 'ASC' },
-        take: 250,
-      }),
-      this.observations.find({
-        where: { region: request.region },
-        order: { observedAt: 'DESC', provider: 'ASC' },
-        take: 5000,
-      }),
+    const media = await this.pool.unseen(request, excluded);
+    const fresh = await this.pool.freshFor(
+      media.map((item) => item.id),
+      request.region,
+    );
+
+    const candidates = this.toCandidates(media, fresh).filter(({ candidate }) =>
+      passesHardFilters(candidate, request, now, history.rejected, history.watched),
+    );
+    const mediaById = new Map(candidates.map((item) => [item.candidate.id, item.media]));
+    const channels = assignCandidateChannels(
+      candidates.map((item) => item.candidate),
+      history.positiveGenres,
+      seed,
+    ).map(({ candidate, channels }) => ({
+      candidate,
+      media: mediaById.get(candidate.id)!,
+      channels,
+    }));
+    const scored = channels.map((item) => this.scoreCandidate(item, request, history.ratings, now));
+    const reranked = diversityRerank(
+      scored.map((item) => item.ranked),
+      Math.min(scored.length, 30),
+    );
+    const scoredById = new Map(scored.map((item) => [item.media.id, item]));
+    const result = [];
+    for (const ranked of reranked) {
+      if (result.length >= 10) break;
+      const item = scoredById.get(ranked.candidate.id)!;
+      const finalAvailability = await this.finalAvailability(ranked.candidate.id, request);
+      if (!finalAvailability) continue;
+      const reasons = this.reasons(item, request, finalAvailability.providers);
+      result.push({
+        ...item,
+        ranked,
+        reasonCodes: reasons.codes,
+        reasonParams: reasons.params,
+        availabilitySnapshot: finalAvailability,
+      });
+    }
+    return result;
+  }
+
+  /**
+   * What the participants rated, watched and turned down: ratings feed their predicted
+   * scores, and watched or rejected titles never come back as candidates.
+   */
+  private async participantHistory(request: SessionRequest) {
+    const [reactions, diaries, participations, feedback] = await Promise.all([
       this.watchReactions.find({
         where: { accountId: In(request.participantAccountIds) },
         relations: { diary: { media: true } },
@@ -623,7 +568,7 @@ export class GroupRecommendationsService {
         }
       }
     }
-    const explicitlyRejected = new Set(
+    const rejected = new Set(
       feedback
         .filter((item) => item.kind === 'REJECTED')
         .map((item) => item.exposure?.contentId)
@@ -638,57 +583,12 @@ export class GroupRecommendationsService {
           .map((item) => item.exposure?.contentId),
       ].filter((contentId): contentId is string => Boolean(contentId)),
     );
-
-    const candidates = this.toCandidates(media, observations).filter(({ candidate }) =>
-      passesHardFilters(candidate, request, now, explicitlyRejected, watched),
-    );
-    const mediaById = new Map(candidates.map((item) => [item.candidate.id, item.media]));
-    const channels = assignCandidateChannels(
-      candidates.map((item) => item.candidate),
-      positiveGenres,
-      seed,
-    ).map(({ candidate, channels }) => ({
-      candidate,
-      media: mediaById.get(candidate.id)!,
-      channels,
-    }));
-    const scored = channels.map((item) => this.scoreCandidate(item, request, ratings, now));
-    const reranked = diversityRerank(
-      scored.map((item) => item.ranked),
-      Math.min(scored.length, 30),
-    );
-    const scoredById = new Map(scored.map((item) => [item.media.id, item]));
-    const result = [];
-    for (const ranked of reranked) {
-      if (result.length >= 10) break;
-      const item = scoredById.get(ranked.candidate.id)!;
-      const finalAvailability = await this.finalAvailability(ranked.candidate.id, request);
-      if (!finalAvailability) continue;
-      const reasons = this.reasons(item, request, finalAvailability.providers);
-      result.push({
-        ...item,
-        ranked,
-        reasonCodes: reasons.codes,
-        reasonParams: reasons.params,
-        availabilitySnapshot: finalAvailability,
-      });
-    }
-    return result;
+    return { ratings, positiveGenres, rejected, watched };
   }
 
-  private toCandidates(media: MediaEntity[], observations: AvailabilityObservationEntity[]) {
-    const latest = new Map<string, AvailabilityObservationEntity[]>();
-    for (const observation of observations) {
-      const current = latest.get(observation.contentId);
-      if (!current) {
-        latest.set(observation.contentId, [observation]);
-      } else if (current[0].observedAt.getTime() === observation.observedAt.getTime()) {
-        current.push(observation);
-      }
-    }
+  private toCandidates(media: MediaEntity[], fresh: ReadonlyMap<string, LatestAvailability>) {
     return media.map((item) => {
-      const contentObservations = latest.get(item.id) ?? [];
-      const first = contentObservations[0];
+      const latest = fresh.get(item.id);
       return {
         media: item,
         candidate: {
@@ -702,16 +602,13 @@ export class GroupRecommendationsService {
           rating: item.tmdbRating === null ? null : Number(item.tmdbRating),
           voteCount: item.tmdbVoteCount ?? 0,
           availability: {
-            status: first?.status ?? 'UNKNOWN',
-            observedAt: first?.observedAt ?? new Date(0),
-            expiresAt: first?.expiresAt ?? new Date(0),
-            offers: contentObservations
-              .filter((observation) => observation.status === 'AVAILABLE')
-              .map((observation) => ({
-                provider: observation.provider,
-                offerType: observation.offerType,
-                confidence: Number(observation.confidence),
-              })),
+            status: latest?.status ?? 'UNKNOWN',
+            observedAt: latest?.observedAt ?? new Date(0),
+            expiresAt: latest?.expiresAt ?? new Date(0),
+            // Renting or buying is not "on a service we subscribe to".
+            offers: (latest?.offers ?? []).filter((offer) =>
+              SUBSCRIPTION_OFFER_TYPES.has(offer.offerType),
+            ),
           },
         } satisfies RecommendationCandidate,
       };
@@ -787,8 +684,7 @@ export class GroupRecommendationsService {
   private async finalAvailability(contentId: string, request: SessionRequest) {
     try {
       const current = await this.availability.getCurrent(contentId, request.region);
-      const allowed = new Set(request.services);
-      const offers = current.offers.filter((offer) => allowed.has(normalized(offer.provider)));
+      const offers = current.offers.filter((offer) => onChosenService(offer, request.services));
       if (
         current.state !== 'AVAILABLE' ||
         offers.length === 0 ||

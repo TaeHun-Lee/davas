@@ -1,4 +1,5 @@
 import type { MediaType } from '@davas/shared';
+import { tmdbImageUrl } from './tmdb.mapper';
 
 export type TmdbImageItem = {
   file_path?: string | null;
@@ -80,12 +81,6 @@ export type TmdbMediaDetail = {
   certification: string | null;
 };
 
-const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
-
-function imageUrl(size: 'w500' | 'w780', path?: string | null): string | null {
-  return path ? `${TMDB_IMAGE_BASE_URL}/${size}${path}` : null;
-}
-
 function firstRuntime(payload: TmdbDetailPayload, mediaType: MediaType) {
   return mediaType === 'TV'
     ? (payload.episode_run_time?.[0] ?? payload.last_episode_to_air?.runtime ?? null)
@@ -125,7 +120,7 @@ export function mapTmdbDetail(payload: TmdbDetailPayload, mediaType: MediaType):
     .filter((name): name is string => Boolean(name))
     .slice(0, 8);
   const stillCuts = (payload.images?.backdrops ?? [])
-    .map((image) => imageUrl('w780', image.file_path))
+    .map((image) => tmdbImageUrl('w780', image.file_path))
     .filter((url): url is string => Boolean(url))
     .slice(0, 10);
 
@@ -137,8 +132,8 @@ export function mapTmdbDetail(payload: TmdbDetailPayload, mediaType: MediaType):
     originalTitle: originalTitle ?? title ?? '',
     overview: payload.overview ?? '',
     tagline: payload.tagline || null,
-    posterUrl: imageUrl('w500', payload.poster_path),
-    backdropUrl: imageUrl('w780', payload.backdrop_path),
+    posterUrl: tmdbImageUrl('w500', payload.poster_path),
+    backdropUrl: tmdbImageUrl('w780', payload.backdrop_path),
     releaseDate: releaseDate || null,
     runtime: firstRuntime(payload, mediaType),
     genres: payload.genres?.map((genre) => genre.name).filter(Boolean) ?? [],

@@ -14,6 +14,13 @@ export type ProviderOffer = {
   confidence: number;
 };
 
+/** Offers a subscription (or a free or ad-supported plan) covers; renting or buying does not count. */
+export const SUBSCRIPTION_OFFER_TYPES: ReadonlySet<string> = new Set<ProviderOffer['offerType']>([
+  'STREAM',
+  'FREE',
+  'ADS',
+]);
+
 export type ProviderAvailabilityLookup = {
   sourceProvider: string;
   status: 'AVAILABLE' | 'NO_OFFERS';

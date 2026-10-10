@@ -7,6 +7,7 @@ import {
   mapTmdbRecommendationResult,
   mapTmdbSearchResult,
   MediaRecommendationItem,
+  tmdbImageUrl,
   TmdbSearchResult,
 } from './tmdb.mapper';
 import type { ProviderAvailabilityLookup, ProviderOffer } from './ports/availability-provider.port';
@@ -53,11 +54,20 @@ export type DiscoverRecommendationsInput = {
   page: number;
   language?: string;
   region?: string;
-  withGenres: number[];
+  /** Titles carrying every one of these genres. */
+  withGenres?: number[];
+  /** Titles carrying at least one of these genres; ignored when `withGenres` is set. */
+  withAnyGenres?: number[];
+  withoutGenres?: number[];
+  /** Titles a subscription (or a free or ad-supported plan) on one of these streams in `region`. */
+  watchProviderIds?: number[];
   sortBy: string;
   voteCountGte: number;
   reason: string;
 };
+
+/** A TMDB watch provider or genre: its id and the name TMDB shows for it. */
+export type TmdbCatalogEntry = { id: number; name: string };
 
 export type RecommendationResponse = {
   page: number;
@@ -119,6 +129,8 @@ type TmdbWatchProvider = {
   provider_name?: string;
 };
 
+type TmdbPage<T> = { page?: number; total_pages?: number; results?: T[] };
+
 type TmdbWatchProviderRegion = {
   flatrate?: TmdbWatchProvider[];
   rent?: TmdbWatchProvider[];
@@ -154,38 +166,20 @@ export class TmdbClient {
     language = 'ko-KR',
     region = 'KR',
   }: MediaSearchInput): Promise<MediaSearchResponse> {
-    if (!this.apiKey) {
-      throw new ServiceUnavailableException('TMDB_API_KEY is not configured');
-    }
-
-    const endpoint = `/search/${type}`;
-    const url = new URL(`${this.baseUrl}${endpoint}`);
-    url.searchParams.set('api_key', this.apiKey);
-    url.searchParams.set('query', query);
-    url.searchParams.set('page', String(page));
-    url.searchParams.set('language', language);
-    url.searchParams.set('region', region);
-    url.searchParams.set('include_adult', 'false');
-
-    const response = await this.request(url, 'search');
-    if (!response.ok) {
-      throw new ServiceUnavailableException(`TMDB search failed with status ${response.status}`);
-    }
-
-    const payload = (await response.json()) as {
-      page?: number;
-      total_pages?: number;
-      results?: TmdbSearchResult[];
-    };
-    const normalizedResults = (payload.results ?? [])
-      .filter((result) => this.isSupportedResult(result, type))
-      .map((result) => mapTmdbSearchResult(this.withMediaType(result, type)));
-
+    const payload = await this.get<TmdbPage<TmdbSearchResult>>('search', `/search/${type}`, {
+      query,
+      page: String(page),
+      language,
+      region,
+      include_adult: 'false',
+    });
     return {
       query,
       page: payload.page ?? page,
       totalPages: payload.total_pages ?? 1,
-      items: normalizedResults,
+      items: (payload.results ?? [])
+        .filter((result) => this.isSupportedResult(result, type))
+        .map((result) => mapTmdbSearchResult(this.withMediaType(result, type))),
     };
   }
 
@@ -194,26 +188,11 @@ export class TmdbClient {
     page,
     language = 'ko-KR',
   }: TrendingRecommendationsInput): Promise<RecommendationResponse> {
-    if (!this.apiKey) {
-      throw new ServiceUnavailableException('TMDB_API_KEY is not configured');
-    }
-
-    const url = new URL(`${this.baseUrl}/trending/all/${period}`);
-    url.searchParams.set('api_key', this.apiKey);
-    url.searchParams.set('page', String(page));
-    url.searchParams.set('language', language);
-
-    const response = await this.request(url, 'trending');
-    if (!response.ok) {
-      throw new ServiceUnavailableException(`TMDB trending failed with status ${response.status}`);
-    }
-
-    const payload = (await response.json()) as {
-      page?: number;
-      total_pages?: number;
-      results?: TmdbSearchResult[];
-    };
-
+    const payload = await this.get<TmdbPage<TmdbSearchResult>>(
+      'trending',
+      `/trending/all/${period}`,
+      { page: String(page), language },
+    );
     return {
       page: payload.page ?? page,
       totalPages: payload.total_pages ?? 1,
@@ -229,35 +208,36 @@ export class TmdbClient {
     language = 'ko-KR',
     region = 'KR',
     withGenres,
+    withAnyGenres,
+    withoutGenres,
+    watchProviderIds,
     sortBy,
     voteCountGte,
     reason,
   }: DiscoverRecommendationsInput): Promise<RecommendationResponse> {
-    if (!this.apiKey) {
-      throw new ServiceUnavailableException('TMDB_API_KEY is not configured');
-    }
-
-    const url = new URL(`${this.baseUrl}/discover/${mediaType}`);
-    url.searchParams.set('api_key', this.apiKey);
-    url.searchParams.set('page', String(page));
-    url.searchParams.set('language', language);
-    url.searchParams.set('region', region);
-    url.searchParams.set('with_genres', withGenres.join(','));
-    url.searchParams.set('sort_by', sortBy);
-    url.searchParams.set('vote_count.gte', String(voteCountGte));
-    url.searchParams.set('include_adult', 'false');
-
-    const response = await this.request(url, 'discover');
-    if (!response.ok) {
-      throw new ServiceUnavailableException(`TMDB discover failed with status ${response.status}`);
-    }
-
-    const payload = (await response.json()) as {
-      page?: number;
-      total_pages?: number;
-      results?: TmdbSearchResult[];
-    };
-
+    const genres = withGenres?.length
+      ? withGenres.join(',')
+      : withAnyGenres?.length
+        ? withAnyGenres.join('|')
+        : undefined;
+    const providers = watchProviderIds?.length ? watchProviderIds.join('|') : undefined;
+    const payload = await this.get<TmdbPage<TmdbSearchResult>>(
+      'discover',
+      `/discover/${mediaType}`,
+      {
+        page: String(page),
+        language,
+        region,
+        with_genres: genres,
+        without_genres: withoutGenres?.length ? withoutGenres.join(',') : undefined,
+        watch_region: providers ? region : undefined,
+        with_watch_providers: providers,
+        with_watch_monetization_types: providers ? 'flatrate|free|ads' : undefined,
+        sort_by: sortBy,
+        'vote_count.gte': String(voteCountGte),
+        include_adult: 'false',
+      },
+    );
     return {
       page: payload.page ?? page,
       totalPages: payload.total_pages ?? 1,
@@ -267,35 +247,43 @@ export class TmdbClient {
     };
   }
 
+  /** The streaming services TMDB knows in a region, with the ids discover filters by. */
+  async watchProviderCatalog(
+    mediaType: 'movie' | 'tv',
+    region: string,
+  ): Promise<TmdbCatalogEntry[]> {
+    const payload = await this.get<{
+      results?: Array<{ provider_id?: number; provider_name?: string }>;
+    }>('watch provider list', `/watch/providers/${mediaType}`, { watch_region: region });
+    return (payload.results ?? []).flatMap((provider) =>
+      provider.provider_id && provider.provider_name?.trim()
+        ? [{ id: provider.provider_id, name: provider.provider_name.trim() }]
+        : [],
+    );
+  }
+
+  /** TMDB's genres with their names in `language`, the names stored on titles. */
+  async genreCatalog(mediaType: 'movie' | 'tv', language = 'ko-KR'): Promise<TmdbCatalogEntry[]> {
+    const payload = await this.get<{ genres?: Array<{ id?: number; name?: string }> }>(
+      'genre list',
+      `/genre/${mediaType}/list`,
+      { language },
+    );
+    return (payload.genres ?? []).flatMap((genre) =>
+      genre.id && genre.name?.trim() ? [{ id: genre.id, name: genre.name.trim() }] : [],
+    );
+  }
+
   async searchPeople({
     query,
     page,
     language = 'ko-KR',
   }: PersonSearchInput): Promise<PersonSearchResponse> {
-    if (!this.apiKey) {
-      throw new ServiceUnavailableException('TMDB_API_KEY is not configured');
-    }
-
-    const url = new URL(`${this.baseUrl}/search/person`);
-    url.searchParams.set('api_key', this.apiKey);
-    url.searchParams.set('query', query);
-    url.searchParams.set('page', String(page));
-    url.searchParams.set('language', language);
-    url.searchParams.set('include_adult', 'false');
-
-    const response = await this.request(url, 'searchPeople');
-    if (!response.ok) {
-      throw new ServiceUnavailableException(
-        `TMDB person search failed with status ${response.status}`,
-      );
-    }
-
-    const payload = (await response.json()) as {
-      page?: number;
-      total_pages?: number;
-      results?: TmdbPersonSearchResult[];
-    };
-
+    const payload = await this.get<TmdbPage<TmdbPersonSearchResult>>(
+      'person search',
+      '/search/person',
+      { query, page: String(page), language, include_adult: 'false' },
+    );
     return {
       query,
       page: payload.page ?? page,
@@ -303,7 +291,7 @@ export class TmdbClient {
       items: (payload.results ?? []).map((person) => ({
         id: String(person.id),
         name: person.name ?? '',
-        profileUrl: imageUrl('w500', person.profile_path),
+        profileUrl: tmdbImageUrl('w500', person.profile_path),
         knownForDepartment: person.known_for_department ?? '',
         knownFor: (person.known_for ?? [])
           .filter((result) => this.isSupportedResult(result, 'multi'))
@@ -316,27 +304,12 @@ export class TmdbClient {
     personId,
     language = 'ko-KR',
   }: PersonCreditsInput): Promise<PersonCreditsResponse> {
-    if (!this.apiKey) {
-      throw new ServiceUnavailableException('TMDB_API_KEY is not configured');
-    }
-
-    const url = new URL(`${this.baseUrl}/person/${personId}/combined_credits`);
-    url.searchParams.set('api_key', this.apiKey);
-    url.searchParams.set('language', language);
-
-    const response = await this.request(url, 'personCredits');
-    if (!response.ok) {
-      throw new ServiceUnavailableException(
-        `TMDB person credits failed with status ${response.status}`,
-      );
-    }
-
-    const payload = (await response.json()) as {
-      cast?: TmdbSearchResult[];
-      crew?: TmdbSearchResult[];
-    };
+    const payload = await this.get<{ cast?: TmdbSearchResult[]; crew?: TmdbSearchResult[] }>(
+      'person credits',
+      `/person/${personId}/combined_credits`,
+      { language },
+    );
     const credits = [...(payload.cast ?? []), ...(payload.crew ?? [])];
-
     return {
       personId,
       items: credits
@@ -350,25 +323,14 @@ export class TmdbClient {
     mediaType,
     language = 'ko-KR',
   }: MediaDetailInput): Promise<TmdbMediaDetail> {
-    if (!this.apiKey) {
-      throw new ServiceUnavailableException('TMDB_API_KEY is not configured');
-    }
-
     const resource = mediaType === 'TV' ? 'tv' : 'movie';
-    const appendToResponse =
-      mediaType === 'TV' ? 'credits,images,content_ratings' : 'credits,images,release_dates';
-    const url = new URL(`${this.baseUrl}/${resource}/${externalId}`);
-    url.searchParams.set('api_key', this.apiKey);
-    url.searchParams.set('language', language);
-    url.searchParams.set('append_to_response', appendToResponse);
-    url.searchParams.set('include_image_language', `${language.slice(0, 2)},en,null`);
-
-    const response = await this.request(url, 'detail');
-    if (!response.ok) {
-      throw new ServiceUnavailableException(`TMDB detail failed with status ${response.status}`);
-    }
-
-    return mapTmdbDetail((await response.json()) as TmdbDetailPayload, mediaType);
+    const payload = await this.get<TmdbDetailPayload>('detail', `/${resource}/${externalId}`, {
+      language,
+      append_to_response:
+        mediaType === 'TV' ? 'credits,images,content_ratings' : 'credits,images,release_dates',
+      include_image_language: `${language.slice(0, 2)},en,null`,
+    });
+    return mapTmdbDetail(payload, mediaType);
   }
 
   async watchProviders({
@@ -376,24 +338,12 @@ export class TmdbClient {
     mediaType,
     region,
   }: WatchProvidersInput): Promise<ProviderAvailabilityLookup> {
-    if (!this.apiKey) {
-      throw new ServiceUnavailableException('TMDB_API_KEY is not configured');
-    }
-
     const resource = mediaType === 'TV' ? 'tv' : 'movie';
-    const url = new URL(`${this.baseUrl}/${resource}/${externalId}/watch/providers`);
-    url.searchParams.set('api_key', this.apiKey);
-
-    const response = await this.request(url, 'watchProviders');
-    if (!response.ok) {
-      throw new ServiceUnavailableException(
-        `TMDB watch providers failed with status ${response.status}`,
-      );
-    }
-
-    const payload = (await response.json()) as {
-      results?: Record<string, TmdbWatchProviderRegion>;
-    };
+    const payload = await this.get<{ results?: Record<string, TmdbWatchProviderRegion> }>(
+      'watch providers',
+      `/${resource}/${externalId}/watch/providers`,
+      {},
+    );
     const regionResult = payload.results?.[region.toUpperCase()];
     const offers: ProviderOffer[] = [];
     const seen = new Set<string>();
@@ -426,16 +376,30 @@ export class TmdbClient {
   }
 
   /**
-   * Every TMDB call gives up after a few seconds: a slow TMDB must not hold a search, a detail
-   * sheet or a group recommendation open for the whole request timeout.
+   * One GET with the API key. A missing key, a TMDB that does not answer within a few seconds
+   * (a slow TMDB must not hold a search, a detail sheet or a group recommendation open) and a
+   * failed answer are each a 503 named after `label`.
    */
-  private async request(url: URL, label: string) {
+  private async get<T>(label: string, path: string, params: Record<string, string | undefined>) {
+    if (!this.apiKey) {
+      throw new ServiceUnavailableException('TMDB_API_KEY is not configured');
+    }
+    const url = new URL(`${this.baseUrl}${path}`);
+    url.searchParams.set('api_key', this.apiKey);
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined) url.searchParams.set(key, value);
+    }
+    let response: Response;
     try {
-      return await this.fetcher(url, { signal: AbortSignal.timeout(this.timeoutMs) });
+      response = await this.fetcher(url, { signal: AbortSignal.timeout(this.timeoutMs) });
     } catch (error) {
       const reason = error instanceof Error ? error.name : 'Error';
       throw new ServiceUnavailableException(`TMDB ${label} did not answer (${reason})`);
     }
+    if (!response.ok) {
+      throw new ServiceUnavailableException(`TMDB ${label} failed with status ${response.status}`);
+    }
+    return (await response.json()) as T;
   }
 
   private isSupportedResult(result: TmdbSearchResult, type: MediaSearchType) {
@@ -454,8 +418,4 @@ export class TmdbClient {
     }
     return result;
   }
-}
-
-function imageUrl(size: 'w500' | 'w780', path?: string | null): string | null {
-  return path ? `https://image.tmdb.org/t/p/${size}${path}` : null;
 }

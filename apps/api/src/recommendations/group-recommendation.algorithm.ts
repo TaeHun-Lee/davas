@@ -62,13 +62,17 @@ const normalized = (value: string) => value.trim().toLocaleLowerCase('en-US');
 const round = (value: number) => Number(value.toFixed(5));
 
 /**
- * Whether a mood or avoid tag fits a title's genres. A mood the web offers ("웃긴") stands for
- * the genres that carry it; any other tag is compared as a genre name ("공포").
+ * The genres a mood or avoid tag stands for. A mood the web offers ("웃긴") stands for the
+ * genres that carry it; any other tag is read as a genre name ("공포").
  */
+export function tagGenreNames(tag: string): readonly string[] {
+  return RECOMMENDATION_MOOD_GENRES[tag.trim()] ?? [tag];
+}
+
+/** Whether a mood or avoid tag fits a title's genres. */
 export function tagMatchesGenres(tag: string, genres: readonly string[]) {
   const titleGenres = new Set(genres.map(normalized));
-  const tagGenres = RECOMMENDATION_MOOD_GENRES[tag.trim()] ?? [tag];
-  return tagGenres.some((genre) => titleGenres.has(normalized(genre)));
+  return tagGenreNames(tag).some((genre) => titleGenres.has(normalized(genre)));
 }
 
 export function standardDeviation(values: number[]) {

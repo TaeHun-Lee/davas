@@ -14,6 +14,7 @@ import {
   WatchReactionEntity,
 } from '../database/entities';
 import { SpaceAccessService } from '../spaces/space-access.service';
+import { GroupRecommendationPool } from './group-recommendation-pool';
 import { GroupRecommendationsService } from './group-recommendations.service';
 
 type Row = Record<string, unknown> & { id?: string };
@@ -108,7 +109,13 @@ class FakeDatabase {
     );
   }
 
-  addMedia(id: string, title: string, genres: string[], provider = 'Netflix') {
+  addMedia(
+    id: string,
+    title: string,
+    genres: string[],
+    provider = 'Netflix',
+    offerType = 'STREAM',
+  ) {
     const media = Object.assign(new MediaEntity(), {
       id,
       externalProvider: 'TMDB' as const,
@@ -139,7 +146,7 @@ class FakeDatabase {
       region: 'KR',
       sourceProvider: 'TMDB',
       provider,
-      offerType: 'FLATRATE',
+      offerType,
       status: 'AVAILABLE' as const,
       observedAt: new Date('2026-08-13T00:00:00.000Z'),
       expiresAt: new Date('2099-01-01T00:00:00.000Z'),
@@ -172,18 +179,23 @@ class FakeDatabase {
   }
 
   private matches(candidate: Row, where: Row) {
-    return Object.entries(where).every(([key, expected]) => {
-      if (
-        expected &&
-        typeof expected === 'object' &&
-        '_type' in expected &&
-        (expected as { _type?: string })._type === 'in'
-      ) {
-        return (expected as unknown as { _value: unknown[] })._value.includes(candidate[key]);
-      }
-      return candidate[key] === expected;
-    });
+    return Object.entries(where).every(([key, expected]) => matchesValue(candidate[key], expected));
   }
+}
+
+type Operator = { _type: string; _value: unknown };
+
+/** TypeORM's In, Not and MoreThan, as far as the service uses them. */
+function matchesValue(actual: unknown, expected: unknown): boolean {
+  if (expected && typeof expected === 'object' && '_type' in expected) {
+    const operator = expected as Operator;
+    if (operator._type === 'in') return (operator._value as unknown[]).includes(actual);
+    if (operator._type === 'not') return !matchesValue(actual, operator._value);
+    if (operator._type === 'moreThan') {
+      return actual instanceof Date && actual.getTime() > (operator._value as Date).getTime();
+    }
+  }
+  return actual === expected;
 }
 
 function setup(participantIds = ['u1', 'u2'], notifications?: object) {
@@ -219,16 +231,18 @@ function setup(participantIds = ['u1', 'u2'], notifications?: object) {
     database.repository(RecommendationSessionEntity),
     database.repository(RecommendationExposureEntity),
     database.repository(RecommendationFeedbackEntity),
-    database.repository(MediaEntity),
-    database.repository(AvailabilityObservationEntity),
     database.repository(DiaryEntity),
     database.repository(WatchParticipantEntity),
     database.repository(WatchReactionEntity),
     availability as never,
     spaceAccess,
     database.dataSource as never,
-    undefined,
-    undefined,
+    // No TMDB here: the pool only reads what the fixtures stored.
+    new GroupRecommendationPool(
+      database.repository(MediaEntity),
+      database.repository(AvailabilityObservationEntity),
+      { refresh: async () => undefined } as never,
+    ),
     notifications as never,
   );
   // The fixtures date every session 2026-08-13, a day before "now", inside the open week.
@@ -278,6 +292,21 @@ describe('GroupRecommendationsService', () => {
     assert.doesNotMatch(wire, /participantScores|scoreParts|groupScore|reviewText/);
     assert.match(wire, /reasonCode/);
     assert.match(wire, /AVAILABLE_ON_SELECTED_SERVICES/);
+  });
+
+  it('leaves out titles the group watched and titles a chosen service only rents', async () => {
+    const { database, service } = setup();
+    database.addMedia('content-rent', 'Rent Only', ['drama'], 'Netflix', 'RENT');
+    database.addMedia('content-watched', 'Seen It', ['drama']);
+    database.diaries.push(
+      Object.assign(new DiaryEntity(), { id: 'diary-1', userId: 'u2', mediaId: 'content-watched' }),
+    );
+
+    const created = await service.create('u1', request());
+    const ids = created.items.map((item) => item.content.id);
+    assert.ok(ids.includes('content-drama'));
+    assert.ok(!ids.includes('content-rent'), 'rent-only title left out');
+    assert.ok(!ids.includes('content-watched'), 'watched title left out');
   });
 
   it('rejects inactive participants and invalid request contradictions with safe errors', async () => {

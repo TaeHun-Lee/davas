@@ -19,6 +19,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { TmdbClient } from '../media/tmdb.client';
 import { SpacesModule } from '../spaces/spaces.module';
 import { GroupRecommendationsController } from './group-recommendations.controller';
+import { GroupRecommendationPool } from './group-recommendation-pool';
 import { GroupRecommendationsService } from './group-recommendations.service';
 import { RecommendationsController } from './recommendations.controller';
 import { RecommendationsService } from './recommendations.service';
@@ -46,6 +47,12 @@ import { SpaceWishesService } from './space-wishes.service';
     ]),
   ],
   controllers: [RecommendationsController, GroupRecommendationsController, SpaceWishesController],
-  providers: [RecommendationsService, GroupRecommendationsService, SpaceWishesService, TmdbClient],
+  providers: [
+    RecommendationsService,
+    GroupRecommendationsService,
+    GroupRecommendationPool,
+    SpaceWishesService,
+    TmdbClient,
+  ],
 })
 export class RecommendationsModule {}
