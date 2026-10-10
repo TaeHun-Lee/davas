@@ -240,7 +240,7 @@ describe('CommentsService', () => {
     );
   });
 
-  it('updates and deletes only comments owned by the authenticated user', async () => {
+  it('deletes only comments owned by the authenticated user', async () => {
     const comments = fakeCommentsRepository([makeComment()]);
     const diaries = fakeDiariesRepository({
       id: 'diary-1',
@@ -248,24 +248,19 @@ describe('CommentsService', () => {
     } as unknown as DiaryEntity);
     const service = new CommentsService(comments as never, diaries as never, fakeAccess() as never);
 
-    const updated = await service.update('comment-1', 'user-1', '  수정 댓글  ');
     await service.remove('comment-1', 'user-1');
 
     assert.deepEqual(
       comments.calls.filter((call) => call.method === 'findOne').map((call) => call.input),
-      [
-        { where: { id: 'comment-1', userId: 'user-1' }, relations: { user: true, diary: true } },
-        { where: { id: 'comment-1', userId: 'user-1' }, relations: { user: true, diary: true } },
-      ],
+      [{ where: { id: 'comment-1', userId: 'user-1' }, relations: { user: true, diary: true } }],
     );
-    assert.equal(updated.content, '수정 댓글');
     assert.deepEqual(comments.calls.at(-1), {
       method: 'softDelete',
       input: { id: 'comment-1', userId: 'user-1' },
     });
   });
 
-  it('rejects update and delete attempts from a different authenticated user', async () => {
+  it('rejects delete attempts from a different authenticated user', async () => {
     const comments = fakeCommentsRepository([makeComment({ id: 'comment-1', userId: 'owner-1' })]);
     const diaries = fakeDiariesRepository({
       id: 'diary-1',
@@ -273,10 +268,6 @@ describe('CommentsService', () => {
     } as unknown as DiaryEntity);
     const service = new CommentsService(comments as never, diaries as never, fakeAccess() as never);
 
-    await assert.rejects(
-      () => service.update('comment-1', 'intruder-1', '남의 댓글 수정'),
-      NotFoundException,
-    );
     await assert.rejects(() => service.remove('comment-1', 'intruder-1'), NotFoundException);
 
     assert.deepEqual(
@@ -286,15 +277,7 @@ describe('CommentsService', () => {
           where: { id: 'comment-1', userId: 'intruder-1' },
           relations: { user: true, diary: true },
         },
-        {
-          where: { id: 'comment-1', userId: 'intruder-1' },
-          relations: { user: true, diary: true },
-        },
       ],
-    );
-    assert.equal(
-      comments.calls.some((call) => call.method === 'save'),
-      false,
     );
     assert.equal(
       comments.calls.some((call) => call.method === 'softDelete'),

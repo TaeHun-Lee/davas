@@ -305,10 +305,8 @@ function setup() {
   );
   const service = new WatchEventsService(
     database.repository(DiaryEntity),
-    database.repository(MediaEntity),
     database.repository(WatchParticipantEntity),
     database.repository(WatchReactionEntity),
-    database.repository(WatchSourceEntity),
     watchShares,
     database.repository(WatchReviewLikeEntity),
     database.repository(CommentEntity),

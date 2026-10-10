@@ -14,7 +14,7 @@
 | `/community/authors/...`, `/community`, `/feed` | `/` | `middleware.ts`, 각 `page.tsx` |
 | `/watchlist` | `/me` | `middleware.ts` |
 
-예전 화면(`home`, `diary`, `community`, `watchlist`, `profile`, `explore` 컴포넌트와 그 화면만 쓰던 웹 API 함수)은 지웠고, 예전 주소는 위 표대로 새 화면으로 이동만 한다. 이동할 때 주소의 질문 부분(`?mediaId=…`)은 그대로 넘긴다. 예전 API(`watchlist`, `reactions`, `comments`, `community`)는 데이터 호환을 위해 남아 있다. 새 기능의 근거로 쓰지 말고, 지울 때는 데이터 보존 정책을 먼저 정한다.
+예전 화면(`home`, `diary`, `community`, `watchlist`, `profile`, `explore` 컴포넌트와 그 화면만 쓰던 웹 API 함수)은 지웠고, 예전 주소는 위 표대로 새 화면으로 이동만 한다. 이동할 때 주소의 질문 부분(`?mediaId=…`)은 그대로 넘긴다. 예전 API도 웹이 부르지 않는 것은 지웠다: 기록 쓰기·읽기·고치기·지우기와 대시보드(`/diaries`, `/diaries/:id`, `/diaries/dashboard`), 좋아요(`reactions`), 커뮤니티(`community`), 댓글 고치기, 보고 싶어요 목록·수정·완료, 배우 검색, 공개 프로필 자리 표시, 탈퇴 요청의 중복 경로(`POST /users/me/deletion`). 그 데이터가 있던 표(`diary_reactions`, `diary_likes`, `user_follows`, `media_favorites`, `diary_companions`, 보고 싶어요의 우선순위·메모·함께 볼 사람)는 그대로 두었다. 지울 때는 데이터 보존 정책을 먼저 정한다.
 
 ### 알려진 문제
 
@@ -29,9 +29,9 @@
 
 ### 데이터 모델 사정
 
-- 감상 사건(`WatchEvent`)은 기존 `/diaries` API 호환을 위해 `diaries` 테이블(`DiaryEntity`)에 저장한다. 개인 별점·리뷰는 `watch_reactions`에 따로 두고, 예전 `rating`·`content`는 호환용 복사본이다.
+- 감상 사건(`WatchEvent`)은 예전 기록과 같은 `diaries` 테이블(`DiaryEntity`)에 저장한다. 개인 별점·리뷰는 `watch_reactions`에 따로 두고, 예전 `rating`·`content`는 호환용 복사본이다.
 - 예전 공개 범위 `SELECTED`(일부 친구 공개)는 읽기·수정만 호환한다. 새 공유는 공간 단위(`watch_event_shares`)로 한다.
-- 예전 `/diaries` 별점은 1~5 정수, 감상 사건 별점은 0.5 단위다.
+- 예전 `/diaries` API로 저장된 기록의 별점은 1~5 정수, 감상 사건 별점은 0.5 단위다.
 
 ### 2026-10 보안 보강 병합 기록
 

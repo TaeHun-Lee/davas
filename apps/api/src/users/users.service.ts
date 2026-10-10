@@ -4,12 +4,12 @@ import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'node:crypto';
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { basename, join } from 'node:path';
-import { OTT_SERVICE_KEYS } from '@davas/shared';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { FileCleanupJobEntity, UserEntity } from '../database/entities';
 import { watchPhotoPaths } from '../diaries/watch-photos.service';
 import { TransactionOutboxService } from '../outbox/transaction-outbox.service';
 import { validateProfileImageContent } from './profile-image-upload';
+import type { UpdateMeDto } from './dto/update-me.dto';
 
 export type UserProfileResponse = {
   id: string;
@@ -20,13 +20,6 @@ export type UserProfileResponse = {
   preferredGenres: string[];
   ottServices: string[];
   recoveryCodeCreatedAt: string | null;
-};
-
-export type UpdateMeDto = {
-  nickname?: string;
-  bio?: string | null;
-  preferredGenres?: string[];
-  ottServices?: string[];
 };
 
 export type ProfileImageFile = {
@@ -59,32 +52,11 @@ export class UsersService {
       user.nickname = nextNickname;
     }
 
-    if (dto.bio !== undefined) {
-      const nextBio = dto.bio?.trim() || null;
-      user.bio = nextBio;
-    }
-
-    if (dto.preferredGenres !== undefined) {
-      user.preferredGenres = dto.preferredGenres
-        .map((genre) => genre.trim())
-        .filter(Boolean)
-        .slice(0, 10);
-    }
-
     if (dto.ottServices !== undefined) {
-      // UpdateMeDto is a plain type, so unknown or repeated keys are dropped here.
-      const keys = new Set<string>(OTT_SERVICE_KEYS);
-      user.ottServices = Array.isArray(dto.ottServices)
-        ? [...new Set(dto.ottServices.filter((key) => typeof key === 'string' && keys.has(key)))]
-        : [];
+      // UpdateMeDto only lets known keys through; a key sent twice is kept once.
+      user.ottServices = [...new Set(dto.ottServices)];
     }
 
-    return this.toUserResponse(await this.users.save(user));
-  }
-
-  async updateProfileImage(userId: string, imageUrl: string) {
-    const user = await this.loadUserById(userId);
-    user.profileImageUrl = imageUrl;
     return this.toUserResponse(await this.users.save(user));
   }
 

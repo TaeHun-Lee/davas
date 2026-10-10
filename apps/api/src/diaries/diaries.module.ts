@@ -20,7 +20,6 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { OutboxModule } from '../outbox/outbox.module';
 import { SpacesModule } from '../spaces/spaces.module';
 import { DiaryAccessService } from './diary-access.service';
-import { DiariesDashboardService } from './diaries-dashboard.service';
 import { DiariesController } from './diaries.controller';
 import { DiariesService } from './diaries.service';
 import { SpaceMemoriesService } from './space-memories.service';
@@ -59,7 +58,6 @@ import { WatchPhotosService } from './watch-photos.service';
     SpaceWatchController,
   ],
   providers: [
-    DiariesDashboardService,
     DiariesService,
     DiaryAccessService,
     WatchEventsService,

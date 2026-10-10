@@ -5,8 +5,6 @@ import { MediaService } from './media.service';
 class FakeTmdbClient {
   calls: Array<{ query: string; type: 'movie' | 'tv' | 'multi'; page: number }> = [];
   detailCalls: Array<{ externalId: string; mediaType: 'MOVIE' | 'TV'; language?: string }> = [];
-  peopleCalls: Array<{ query: string; page: number; language: string }> = [];
-  creditCalls: Array<{ personId: string; language: string }> = [];
 
   async detail(input: { externalId: string; mediaType: 'MOVIE' | 'TV'; language?: string }) {
     this.detailCalls.push(input);
@@ -57,39 +55,6 @@ class FakeTmdbClient {
       ],
     };
   }
-
-  async searchPeople(input: { query: string; page: number; language: string }) {
-    this.peopleCalls.push(input);
-    return {
-      query: input.query,
-      page: input.page,
-      totalPages: 1,
-      items: [
-        {
-          id: '20738',
-          name: '송강호',
-          profileUrl: null,
-          knownForDepartment: 'Acting',
-          knownFor: [],
-        },
-      ],
-    };
-  }
-
-  async personCredits(input: { personId: string; language: string }) {
-    this.creditCalls.push(input);
-    return {
-      personId: input.personId,
-      items: [
-        {
-          externalProvider: 'TMDB' as const,
-          externalId: '496243',
-          mediaType: 'MOVIE' as const,
-          title: '기생충',
-        },
-      ],
-    };
-  }
 }
 
 function fakeRepository(media: Record<string, unknown> | null) {
@@ -118,35 +83,6 @@ function fakeDiariesRepository(diaries: Array<Record<string, unknown>>) {
     async find(input?: unknown) {
       calls.push(input);
       return diaries;
-    },
-  };
-}
-
-function fakeFavoriteRepository(favorite: Record<string, unknown> | null = null) {
-  const calls: Array<{ method: string; input?: unknown }> = [];
-  return {
-    calls,
-    async findOne(input?: unknown) {
-      calls.push({ method: 'findOne', input });
-      return favorite;
-    },
-    create(input: unknown) {
-      calls.push({ method: 'create', input });
-      return input;
-    },
-    async save(input: unknown) {
-      calls.push({ method: 'save', input });
-      favorite = input as Record<string, unknown>;
-      return favorite;
-    },
-    async delete(input: unknown) {
-      calls.push({ method: 'delete', input });
-      favorite = null;
-      return { affected: 1 };
-    },
-    async find(input?: unknown) {
-      calls.push({ method: 'find', input });
-      return favorite ? [favorite] : [];
     },
   };
 }
@@ -336,7 +272,6 @@ describe('MediaService detail', () => {
         runtime: null,
       }) as never,
       fakeDiaryRepository(null) as never,
-      fakeFavoriteRepository(null) as never,
       watchlist as never,
     );
 
@@ -345,80 +280,6 @@ describe('MediaService detail', () => {
     assert.equal(detail.watchlistItemId, 'watchlist-id');
     assert.equal(detail.watchlistStatus, 'ACTIVE');
     assert.equal('isFavorite' in detail, false);
-  });
-
-  it('toggles a media favorite for the authenticated user', async () => {
-    const tmdbClient = new FakeTmdbClient();
-    const favorites = fakeFavoriteRepository(null);
-    const service = new MediaService(
-      tmdbClient as never,
-      fakeRepository({ id: 'media-id' }) as never,
-      fakeDiaryRepository(null) as never,
-      favorites as never,
-    );
-
-    const favorited = await service.toggleFavorite('media-id', 'user-id');
-
-    assert.deepEqual(favorited, { mediaId: 'media-id', isFavorite: true });
-    assert.deepEqual(
-      favorites.calls.map((call) => call.method),
-      ['findOne', 'create', 'save'],
-    );
-  });
-
-  it('lists the authenticated user favorite media in recently favorited order', async () => {
-    const tmdbClient = new FakeTmdbClient();
-    const favoriteCreatedAt = new Date('2026-05-09T11:00:00.000Z');
-    const favorites = fakeFavoriteRepository({
-      id: 'favorite-id',
-      userId: 'user-id',
-      mediaId: 'media-id',
-      createdAt: favoriteCreatedAt,
-      media: {
-        id: 'media-id',
-        externalProvider: 'TMDB',
-        externalId: '1124566',
-        mediaType: 'MOVIE',
-        title: '센티멘탈 밸류',
-        originalTitle: 'Affeksjonsverdi',
-        overview: '검색 시놉시스',
-        posterUrl: 'https://image.tmdb.org/t/p/w500/poster.jpg',
-        backdropUrl: null,
-        releaseDate: '2026-02-18',
-        genres: ['18'],
-        country: 'NO',
-      },
-    });
-    const service = new MediaService(
-      tmdbClient as never,
-      fakeRepository(null) as never,
-      fakeDiaryRepository(null) as never,
-      favorites as never,
-    );
-
-    const result = await service.findFavorites('user-id');
-
-    assert.deepEqual(favorites.calls[0], {
-      method: 'find',
-      input: {
-        where: { userId: 'user-id' },
-        relations: { media: true },
-        order: { createdAt: 'DESC' },
-      },
-    });
-    assert.deepEqual(result.items, [
-      {
-        id: 'media-id',
-        mediaType: 'MOVIE',
-        title: '센티멘탈 밸류',
-        originalTitle: 'Affeksjonsverdi',
-        posterUrl: 'https://image.tmdb.org/t/p/w500/poster.jpg',
-        backdropUrl: null,
-        releaseDate: '2026-02-18',
-        genres: ['드라마'],
-        favoritedAt: '2026-05-09T11:00:00.000Z',
-      },
-    ]);
   });
 });
 
@@ -451,25 +312,5 @@ describe('MediaService search', () => {
       language: 'ko-KR',
       region: 'KR',
     });
-  });
-
-  it('searches actor candidates with a trimmed query and Korean defaults', async () => {
-    const tmdbClient = new FakeTmdbClient();
-    const service = new MediaService(tmdbClient as never);
-
-    const result = await service.searchPeople({ q: '  송강호  ', page: 2 });
-
-    assert.equal(result.items[0].name, '송강호');
-    assert.deepEqual(tmdbClient.peopleCalls[0], { query: '송강호', page: 2, language: 'ko-KR' });
-  });
-
-  it('loads combined movie and tv credits for a selected actor', async () => {
-    const tmdbClient = new FakeTmdbClient();
-    const service = new MediaService(tmdbClient as never);
-
-    const result = await service.findPersonCredits('20738');
-
-    assert.equal(result.items[0].title, '기생충');
-    assert.deepEqual(tmdbClient.creditCalls[0], { personId: '20738', language: 'ko-KR' });
   });
 });

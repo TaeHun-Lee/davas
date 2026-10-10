@@ -33,7 +33,7 @@ describe('friend diary feed query', () => {
     assert.match(serviceSource, /diary\.mediaId = :mediaId'[\s\S]*mediaId: query\.mediaId/);
   });
 
-  it('does not reveal the complete selected-recipient list to a viewer', () => {
-    assert.match(serviceSource, /diary\.userId === viewerId && diary\.visibility === 'SELECTED'/);
+  it('never puts the selected-recipient list on a list card', () => {
+    assert.doesNotMatch(serviceSource, /selectedUserIds|selectedShares\?\.map/);
   });
 });

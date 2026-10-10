@@ -19,8 +19,6 @@ const auth = {
 };
 const media = {
   search: async () => ({ items: [] }),
-  searchPeople: async () => ({ items: [] }),
-  findPersonCredits: async () => ({ items: [] }),
   findDetail: async () => ({ id: 'media-1' }),
 };
 

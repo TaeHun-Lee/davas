@@ -34,7 +34,6 @@ describe('Media selection API contract', () => {
     for (const entity of [
       'MediaEntity',
       'DiaryEntity',
-      'MediaFavoriteEntity',
       'WatchlistItemEntity',
       'ExternalContentRefEntity',
       'AvailabilityObservationEntity',
@@ -71,8 +70,9 @@ describe('Media selection API contract', () => {
     assert.match(controllerSource, /availabilityService/);
     assert.match(availabilityDtoSource, /region/);
     assert.match(availabilityDtoSource, /default: 'KR'/);
-    assert.match(moduleSource, /METADATA_PROVIDER/);
     assert.match(moduleSource, /AVAILABILITY_PROVIDER/);
+    // Title search and detail call TmdbClient directly; there is no second metadata path.
+    assert.doesNotMatch(moduleSource, /METADATA_PROVIDER/);
 
     assert.ok(
       controllerSource.indexOf("@Get(':id/availability')") <
@@ -81,27 +81,11 @@ describe('Media selection API contract', () => {
     );
   });
 
-  it('exposes actor search and actor credits before the catch-all media detail route', () => {
-    assert.match(controllerSource, /@Get\('people\/search'\)/);
-    assert.match(controllerSource, /@Get\('people\/:personId\/credits'\)/);
-    assert.match(controllerSource, /mediaService\.searchPeople/);
-    assert.match(controllerSource, /mediaService\.findPersonCredits/);
-
-    assert.ok(
-      controllerSource.indexOf("@Get('people/search')") < controllerSource.indexOf("@Get(':id')"),
-      'people search route must be declared before @Get(:id)',
-    );
-    assert.ok(
-      controllerSource.indexOf("@Get('people/:personId/credits')") <
-        controllerSource.indexOf("@Get(':id')"),
-      'person credits route must be declared before @Get(:id)',
-    );
-  });
-
   it('removes legacy favorite mutations and exposes watchlist as the single planning contract', () => {
     assert.doesNotMatch(controllerSource, /favorites|:id\/favorite|toggleFavorite|findFavorites/);
     assert.match(watchlistControllerSource, /@Controller\('watchlist'\)/);
     assert.match(watchlistControllerSource, /CreateWatchlistDto/);
-    assert.match(watchlistControllerSource, /UpdateWatchlistDto/);
+    // The title sheet only adds and removes; nothing lists or edits the old planning fields.
+    assert.doesNotMatch(watchlistControllerSource, /@Get\(|@Patch\(|complete/);
   });
 });

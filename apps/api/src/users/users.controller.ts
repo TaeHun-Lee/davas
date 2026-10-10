@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   HttpCode,
-  Param,
   Patch,
   Post,
   Req,
@@ -21,19 +20,15 @@ import { Public } from '../auth/public.decorator';
 import { ROUTE_RATE_LIMITS } from '../common/request-limits';
 import { CancelDeletionDto } from './dto/cancel-deletion.dto';
 import { DeleteMeDto } from './dto/delete-me.dto';
+import { UpdateMeDto } from './dto/update-me.dto';
 import { PROFILE_IMAGE_UPLOAD_OPTIONS } from './profile-image-upload';
 import { UploadConcurrencyInterceptor } from './upload-concurrency.interceptor';
-import { type ProfileImageFile, type UpdateMeDto, UsersService } from './users.service';
+import { type ProfileImageFile, UsersService } from './users.service';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly users: UsersService) {}
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return { id, message: 'public user profile endpoint is not implemented yet' };
-  }
 
   @Patch('me')
   async updateMe(@Req() request: AuthenticatedRequest, @Body() body: UpdateMeDto) {
@@ -67,17 +62,6 @@ export class UsersController {
   @Get('me/export')
   exportMe(@Req() request: AuthenticatedRequest) {
     return this.users.exportMe(request.user.id);
-  }
-
-  @Post('me/deletion')
-  async requestDeletion(
-    @Req() request: AuthenticatedRequest,
-    @Res({ passthrough: true }) response: Response,
-    @Body() body: DeleteMeDto,
-  ) {
-    const result = await this.users.requestDeletion(request.user.id, body.password);
-    this.clearAccessCookie(response);
-    return result;
   }
 
   // A deletion-pending account has no usable session, so recovery re-checks the password.

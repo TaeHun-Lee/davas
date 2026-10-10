@@ -75,45 +75,6 @@ export type RecommendationResponse = {
   items: MediaRecommendationItem[];
 };
 
-type TmdbPersonSearchResult = {
-  id: number;
-  name?: string;
-  profile_path?: string | null;
-  known_for_department?: string;
-  known_for?: TmdbSearchResult[];
-};
-
-export type PersonSearchInput = {
-  query: string;
-  page: number;
-  language?: string;
-};
-
-export type DavasPersonSearchItem = {
-  id: string;
-  name: string;
-  profileUrl: string | null;
-  knownForDepartment: string;
-  knownFor: DavasMediaSearchItem[];
-};
-
-export type PersonSearchResponse = {
-  query: string;
-  page: number;
-  totalPages: number;
-  items: DavasPersonSearchItem[];
-};
-
-export type PersonCreditsInput = {
-  personId: string;
-  language?: string;
-};
-
-export type PersonCreditsResponse = {
-  personId: string;
-  items: DavasMediaSearchItem[];
-};
-
 export type MediaDetailInput = {
   externalId: string;
   mediaType: MediaType;
@@ -272,50 +233,6 @@ export class TmdbClient {
     return (payload.genres ?? []).flatMap((genre) =>
       genre.id && genre.name?.trim() ? [{ id: genre.id, name: genre.name.trim() }] : [],
     );
-  }
-
-  async searchPeople({
-    query,
-    page,
-    language = 'ko-KR',
-  }: PersonSearchInput): Promise<PersonSearchResponse> {
-    const payload = await this.get<TmdbPage<TmdbPersonSearchResult>>(
-      'person search',
-      '/search/person',
-      { query, page: String(page), language, include_adult: 'false' },
-    );
-    return {
-      query,
-      page: payload.page ?? page,
-      totalPages: payload.total_pages ?? 1,
-      items: (payload.results ?? []).map((person) => ({
-        id: String(person.id),
-        name: person.name ?? '',
-        profileUrl: tmdbImageUrl('w500', person.profile_path),
-        knownForDepartment: person.known_for_department ?? '',
-        knownFor: (person.known_for ?? [])
-          .filter((result) => this.isSupportedResult(result, 'multi'))
-          .map((result) => mapTmdbSearchResult(result)),
-      })),
-    };
-  }
-
-  async personCredits({
-    personId,
-    language = 'ko-KR',
-  }: PersonCreditsInput): Promise<PersonCreditsResponse> {
-    const payload = await this.get<{ cast?: TmdbSearchResult[]; crew?: TmdbSearchResult[] }>(
-      'person credits',
-      `/person/${personId}/combined_credits`,
-      { language },
-    );
-    const credits = [...(payload.cast ?? []), ...(payload.crew ?? [])];
-    return {
-      personId,
-      items: credits
-        .filter((result) => this.isSupportedResult(result, 'multi'))
-        .map((result) => mapTmdbSearchResult(result)),
-    };
   }
 
   async detail({

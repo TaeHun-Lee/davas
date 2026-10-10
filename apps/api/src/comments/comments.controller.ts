@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Req } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedRequest } from '../auth/jwt-cookie-auth.guard';
 import { CommentsService } from './comments.service';
@@ -20,15 +20,6 @@ export class CommentsController {
   @Get('diaries/:diaryId/comments')
   findByDiary(@Req() request: AuthenticatedRequest, @Param('diaryId') diaryId: string) {
     return this.commentsService.listForDiary(diaryId, request.user.id);
-  }
-
-  @Patch('comments/:commentId')
-  update(
-    @Req() request: AuthenticatedRequest,
-    @Param('commentId') commentId: string,
-    @Body('content') content: string,
-  ) {
-    return this.commentsService.update(commentId, request.user.id, content ?? '');
   }
 
   @Delete('comments/:commentId')

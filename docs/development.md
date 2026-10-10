@@ -127,12 +127,13 @@ graphify-out/      Graphify 코드 그래프 (도구가 생성, 손으로 수정
 | `users` | 프로필, 프로필 사진 업로드, 데이터 내보내기, 탈퇴 신청(30일 유예)·복구, 유예가 지난 계정을 매시간 영구 삭제하는 작업 |
 | `friends` | 친구 요청·목록·검색, 일회성 친구 초대 토큰 |
 | `spaces` | 2~5명 공유 공간, 이름 변경, 공간 초대(수락·거절), 소유권 이전·탈퇴·종료 (`/v1/spaces`, `/v1/invites`). 공개된 초대 확인(`GET /v1/invites/:token`)은 쓸 수 있거나 정원이 찬 초대에 공간 이름, 초대한 사람, 만료 시각과 구성원 수·정원·닉네임 첫 글자만 담는다 |
-| `diaries` | 감상 기록(`/diaries`)과 감상 사건·참여자·개인 반응(`/v1/watch-events`), 기록 검색(`/v1/watch-events/search`), 내 사진(`PUT /v1/watch-events/:id/photos`), 공간 타임라인·모아보기·달력(`/v1/spaces/:spaceId/calendar?month=`) |
+| `diaries` | 예전 기록 목록(친구 기록 `/diaries/feed`, 내 기록 `/diaries/me`)과 감상 사건·참여자·개인 반응(`/v1/watch-events`), 기록 검색(`/v1/watch-events/search`), 내 사진(`PUT /v1/watch-events/:id/photos`), 공간 타임라인·모아보기·달력(`/v1/spaces/:spaceId/calendar?month=`) |
 | `media` | TMDB 검색·상세·인물 검색, 작품 선택(서버가 TMDB 원본 저장), 시청 가능성(`/media/:id/availability`) |
 | `recommendations` | 탐색·홈의 인기작(`/recommendations/trending`)과 분위기 카드별 장르 추천(`/recommendations/genres/:presetId`), 그룹 추천 세션과 피드백(`/v1/recommendation-sessions`, 공간의 최근 세션 `/v1/spaces/:spaceId/recommendation-sessions`, 정하기 `POST .../:sessionId/decision`, 끝내기 `POST .../:sessionId/close`, 홈의 정한 작품 `GET /v1/spaces/:spaceId/recommendation-sessions/decided`), 공간의 같이 보고 싶어요 목록과 빠른 추천(`/v1/spaces/:spaceId/wishes`) |
 | `notifications` | 알림 목록과 알림 설정 |
 | `outbox` | 트랜잭션 아웃박스 저장 (소비 워커는 아직 없음) |
-| `watchlist`, `reactions`, `comments`, `community` | 예전 기능. 데이터·API 호환을 위해 유지 |
+| `comments` | 기록 댓글(`/diaries/:id/comments` 쓰기·읽기, `DELETE /comments/:id`) |
+| `watchlist` | 작품 상세의 "보고 싶어요"(`POST /watchlist`, `DELETE /watchlist/:id`) |
 
 공간에 묶인 데이터는 반드시 `SpaceAccessService`(공간)와 `DiaryAccessService`(기록) 권한 경계를 거친다. 권한이 없는 리소스는 존재 여부가 드러나지 않게 404로 응답한다.
 
@@ -179,7 +180,7 @@ npm run migration:show --workspace @davas/api
 - 영화·드라마 구분은 작품(`MOVIE`/`TV`)에, 시청 방식(`THEATER`/`OTT` 등)은 기록마다 저장한다. 서비스 이름(`providerName`)은 OTT일 때만 저장해서, OTT로 고르다 극장으로 바꾼 기록에 서비스 이름이 남지 않는다.
 - 날짜는 한국 날짜 기준이다. "오늘 이후는 저장할 수 없음" 같은 판단은 `common/seoul-date.ts`를 쓴다(UTC로 비교하면 밤 12시~오전 9시에 오늘이 내일로 판정된다).
 - 작성 화면은 탭에 저장하지 않은 기록 하나를 임시로 남기고, 같은 작품을 다시 열거나 작품 선택 전일 때만 되살린다. 다른 작품이면 새로 시작한다(`components/core/composer-draft.ts`).
-- 감상 사건(`/v1/watch-events`)의 별점은 미평가 또는 0.5~5.0(0.5 단위)이다. 예전 `/diaries` API는 1~5 정수 별점을 유지한다.
+- 감상 사건(`/v1/watch-events`)의 별점은 미평가 또는 0.5~5.0(0.5 단위)이다. 기록은 감상 사건 API로만 쓰고 고친다.
 - 개인 리뷰(`watch_reactions`)는 별점·한줄평(40자)·소감(2,000자)·스포일러·블라인드 여부를 가진다. 블라인드 공개 규칙은 `diaries/blind-review.ts` 한 곳에 있고, 감상 상세·타임라인·반응 비교·예전 `/diaries/:id`·`/community/diaries/:id`가 모두 이 규칙으로 가린다. 함께 보지 않은 사람에게는 함께 봤는지 아직 답하지 않은 사람(PENDING)까지 모두 써야 열려서, 누가 확인을 눌러도 열렸던 리뷰가 다시 잠기지 않는다. 가려진 리뷰는 내용·별점·좋아요 수·수정 시각을 보내지 않고, 화면은 보는 사람의 처지(함께 봄·확인 대기·함께 보지 않음)에 맞춰 무엇을 하면 열리는지 알려 준다(`space-watch-model.ts`의 `lockedReviewHint`). 함께 본 사람이 없으면 열어 줄 사람이 없으므로 작성 화면은 블라인드 스위치를 보여 주지 않고 저장도 꺼진 채로 한다. 리뷰 화면에서 쓰든 기록 수정에서 별점·리뷰를 쓰든, 그 순간 열린 블라인드 리뷰의 주인에게 알림이 간다.
 - 구독 OTT: 사람마다 `users.ott_services`에 `OTT_SERVICES` 키(넷플릭스·티빙·쿠팡플레이·웨이브·디즈니+·왓챠·Apple TV+·프라임 비디오)를 저장한다(`PATCH /users/me`의 `ottServices`). 공유 타입의 `OTT_SERVICES`가 키, 한국어 이름, TMDB 제공자 이름을 함께 정의하고 서버·웹이 같이 쓴다.
 - 같이 보고 싶어요: `space_wishes`의 한 행이 "이 구성원이 이 작품을 보고 싶다"다. 목록은 작품별로 묶어 모두 담았는지, 담은 뒤 공간에 공유된 기록이 새로 만들어졌는지(봤어요, 예전 기록을 고쳐도 바뀌지 않는다), 구성원 누군가의 구독 OTT에서 정액제로 볼 수 있는지를 알려 준다. 볼 수 있는 곳 정보는 목록 전체를 한 번에 읽고(`AvailabilityService.getCurrentMany`), 정보가 없거나 만료된 작품만 요청당 8편까지 TMDB에서 새로 받는다(결과는 6시간 보관). 빠른 추천(`/wishes/pick`)은 모두 담음 > 구독 OTT에서 볼 수 있음 > 기분 장르 순으로 점수를 매기고 `exclude`로 다음 후보를 고른다. 작품 상세 시트의 "보고 싶어요"는 공간이 있으면 이 목록을, 없으면 예전 개인 목록을 쓴다.

@@ -57,9 +57,7 @@ describe('API runtime surface', () => {
     const appModule = source('app.module.ts');
     for (const featureModule of [
       'CommentsModule',
-      'CommunityModule',
       'NotificationsModule',
-      'ReactionsModule',
       'RecommendationsModule',
       'SpacesModule',
       'WatchlistModule',

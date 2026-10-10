@@ -78,12 +78,6 @@ export class CommentsService {
     return this.toCommentView(savedWithUser ?? saved, userId);
   }
 
-  async update(commentId: string, userId: string, content: string) {
-    const comment = await this.findOwnedAccessibleComment(commentId, userId);
-    comment.content = normalizeContent(content);
-    return this.toCommentView(await this.comments.save(comment), userId);
-  }
-
   async remove(commentId: string, userId: string) {
     await this.findOwnedAccessibleComment(commentId, userId);
     await this.comments.softDelete({ id: commentId, userId });

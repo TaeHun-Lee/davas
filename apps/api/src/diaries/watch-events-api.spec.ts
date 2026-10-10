@@ -37,15 +37,6 @@ describe('watch events REST API contract', () => {
     assert.match(access, /isActiveMemberOfAny/);
   });
 
-  it('dual-writes legacy author reviews into the separated personal reaction projection', () => {
-    const service = source('diaries/diaries.service.ts');
-    assert.match(service, /WatchParticipantEntity/);
-    assert.match(service, /WatchReactionEntity/);
-    assert.match(service, /syncAuthorProjection/);
-    assert.match(service, /ratingScale/);
-    assert.match(service, /reviewText/);
-  });
-
   it('models watch-time source separately and never treats it as current availability', () => {
     const entity = source('database/entities/watch-source.entity.ts');
     assert.match(entity, /WatchSourceKind/);

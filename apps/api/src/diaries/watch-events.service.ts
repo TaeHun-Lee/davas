@@ -77,14 +77,10 @@ export class WatchEventsService {
   constructor(
     @InjectRepository(DiaryEntity)
     private readonly diaries: Repository<DiaryEntity>,
-    @InjectRepository(MediaEntity)
-    private readonly media: Repository<MediaEntity>,
     @InjectRepository(WatchParticipantEntity)
     private readonly participants: Repository<WatchParticipantEntity>,
     @InjectRepository(WatchReactionEntity)
     private readonly reactions: Repository<WatchReactionEntity>,
-    @InjectRepository(WatchSourceEntity)
-    private readonly sources: Repository<WatchSourceEntity>,
     @InjectRepository(WatchShareEntity)
     private readonly spaceShares: Repository<WatchShareEntity>,
     @InjectRepository(WatchReviewLikeEntity)

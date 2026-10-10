@@ -3,8 +3,6 @@ import { coreFetch } from './core';
 
 export type UpdateMePayload = {
   nickname?: string;
-  bio?: string | null;
-  preferredGenres?: string[];
   /** OTT_SERVICES keys. */
   ottServices?: string[];
 };

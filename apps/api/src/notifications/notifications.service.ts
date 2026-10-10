@@ -144,14 +144,6 @@ export class NotificationsService {
     return this.createForOtherUser({ ...input, diaryId: null, type: 'WISH_MATCHED' });
   }
 
-  async notifyDiaryLiked(input: CreateNotificationInput) {
-    return this.createForOtherUser({
-      ...input,
-      diaryId: input.diaryId ?? null,
-      type: 'DIARY_LIKED',
-    });
-  }
-
   async notifyDiaryCommented(input: CreateNotificationInput) {
     return this.createForOtherUser({
       ...input,
@@ -165,9 +157,6 @@ export class NotificationsService {
   }
   async notifyFriendAccepted(input: Omit<CreateNotificationInput, 'diaryId'>) {
     return this.createForOtherUser({ ...input, diaryId: null, type: 'FRIEND_ACCEPTED' });
-  }
-  async notifySpaceInvite(input: Omit<CreateNotificationInput, 'diaryId'>) {
-    return this.createForOtherUser({ ...input, diaryId: null, type: 'SPACE_INVITE' });
   }
   async notifySpaceInviteDeclined(input: Omit<CreateNotificationInput, 'diaryId'>) {
     return this.createForOtherUser({ ...input, diaryId: null, type: 'SPACE_INVITE_DECLINED' });

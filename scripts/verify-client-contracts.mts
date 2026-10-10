@@ -241,10 +241,7 @@ const calls: Array<[string, () => Promise<unknown>]> = [
   ['add a wish', () => wishes.setWish(SPACE, MEDIA, true)],
   ['remove a wish', () => wishes.setWish(SPACE, MEDIA, false)],
   ['save subscriptions', () => users.updateMe({ ottServices: ['netflix', 'apple', 'prime'] })],
-  [
-    'save profile',
-    () => users.updateMe({ nickname: '지우', bio: null, preferredGenres: ['드라마'] }),
-  ],
+  ['save profile', () => users.updateMe({ nickname: '지우' })],
   ['trending', () => recommendations.getTrendingRecommendations({ limit: 20 })],
   ['genre picks', () => recommendations.getGenreRecommendations('romance', { limit: 4 })],
   [

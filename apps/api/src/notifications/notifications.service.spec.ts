@@ -144,21 +144,16 @@ describe('NotificationsService', () => {
     });
   });
 
-  it('creates reaction and comment notifications without notifying self-actions', async () => {
+  it('creates comment notifications without notifying self-actions', async () => {
     const repository = fakeNotificationsRepository();
     const service = new NotificationsService(repository as never);
 
-    await service.notifyDiaryLiked({
-      diaryId: 'diary-1',
-      recipientId: 'author-1',
-      actorId: 'viewer-1',
-    });
     await service.notifyDiaryCommented({
       diaryId: 'diary-1',
       recipientId: 'author-1',
       actorId: 'viewer-1',
     });
-    await service.notifyDiaryLiked({
+    await service.notifyDiaryCommented({
       diaryId: 'mine',
       recipientId: 'viewer-1',
       actorId: 'viewer-1',
@@ -167,14 +162,6 @@ describe('NotificationsService', () => {
     assert.deepEqual(
       repository.calls.filter((call) => call.method === 'create').map((call) => call.input),
       [
-        {
-          userId: 'author-1',
-          actorId: 'viewer-1',
-          diaryId: 'diary-1',
-          mediaId: null,
-          type: 'DIARY_LIKED',
-          idempotencyKey: 'DIARY_LIKED:author-1:viewer-1:diary-1',
-        },
         {
           userId: 'author-1',
           actorId: 'viewer-1',
@@ -216,12 +203,12 @@ describe('NotificationsService', () => {
     };
     const service = new NotificationsService(repository as never, preferences as never);
 
-    await service.notifySpaceInvite({
+    await service.notifySpaceInviteDeclined({
       recipientId: 'recipient-1',
       actorId: 'actor-1',
       idempotencyKey: 'invite-1',
     });
-    await service.notifySpaceInvite({
+    await service.notifySpaceInviteDeclined({
       recipientId: 'recipient-1',
       actorId: 'actor-1',
       idempotencyKey: 'invite-1',
@@ -233,11 +220,11 @@ describe('NotificationsService', () => {
     );
 
     await service.setPreference('recipient-1', 'SOCIAL', false);
-    const skipped = await service.notifyDiaryLiked({
+    const skipped = await service.notifyDiaryCommented({
       recipientId: 'recipient-1',
       actorId: 'actor-2',
       diaryId: 'diary-2',
-      idempotencyKey: 'like-2',
+      idempotencyKey: 'comment-2',
     });
     assert.equal(skipped, null);
     const listed = await service.listPreferences('recipient-1');

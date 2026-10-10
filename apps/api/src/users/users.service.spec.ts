@@ -151,14 +151,12 @@ describe('UsersService', () => {
   it('updates the guard-authenticated profile without changing immutable fields', async () => {
     const result = await service.updateMe('user-1', {
       nickname: ' after ',
-      bio: ' hello ',
-      preferredGenres: ['SF', 'Drama'],
+      ottServices: ['netflix', 'tving', 'netflix'],
     });
 
     assert.equal(result.nickname, 'after');
     assert.equal(result.email, 'me@example.com');
-    assert.equal(result.bio, 'hello');
-    assert.deepEqual(result.preferredGenres, ['SF', 'Drama']);
+    assert.deepEqual(result.ottServices, ['netflix', 'tving']);
   });
 
   it('rejects duplicate nicknames when updating the profile', async () => {
@@ -175,11 +173,8 @@ describe('UsersService', () => {
     );
   });
 
-  it('stores and deletes the guard-authenticated profile image URL', async () => {
-    const stored = await service.updateProfileImage('user-1', '/uploads/profile-images/user-1.png');
-
-    assert.equal(stored.profileImageUrl, '/uploads/profile-images/user-1.png');
-
+  it('deletes the guard-authenticated profile image URL', async () => {
+    users.users[0].profileImageUrl = '/uploads/profile-images/user-1.png';
     const deleted = await service.deleteProfileImage('user-1');
 
     assert.equal(deleted.profileImageUrl, null);
@@ -330,10 +325,7 @@ describe('UsersService', () => {
       () => service.updateMe('missing-user', { nickname: 'new' }),
       UnauthorizedException,
     );
-    await assert.rejects(
-      () => service.updateProfileImage('missing-user', '/uploads/profile-images/x.png'),
-      UnauthorizedException,
-    );
+    await assert.rejects(() => service.deleteProfileImage('missing-user'), UnauthorizedException);
   });
 
   it('rejects deletion-pending accounts even with a previously valid principal', async () => {

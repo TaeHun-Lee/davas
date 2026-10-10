@@ -8,7 +8,6 @@ import { JwtCookieAuthGuard } from './auth/jwt-cookie-auth.guard';
 import { CommentsModule } from './comments/comments.module';
 import { OriginGuard } from './common/app-security';
 import { DEFAULT_RATE_LIMIT } from './common/request-limits';
-import { CommunityModule } from './community/community.module';
 import { createTypeOrmOptions } from './database/typeorm.config';
 import { DiariesModule } from './diaries/diaries.module';
 import { FriendsModule } from './friends/friends.module';
@@ -16,7 +15,6 @@ import { HealthController } from './health.controller';
 import { InvitesModule } from './invites/invites.module';
 import { MediaModule } from './media/media.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { ReactionsModule } from './reactions/reactions.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 import { SpacesModule } from './spaces/spaces.module';
 import { UsersModule } from './users/users.module';
@@ -31,13 +29,11 @@ import { WatchlistModule } from './watchlist/watchlist.module';
     InvitesModule,
     FriendsModule,
     WatchlistModule,
-    ReactionsModule,
     UsersModule,
     MediaModule,
     RecommendationsModule,
     DiariesModule,
     CommentsModule,
-    CommunityModule,
     NotificationsModule,
     SpacesModule,
   ],
