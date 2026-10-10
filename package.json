@@ -35,6 +35,7 @@
     "verify:security": "node scripts/verify-security-http.mjs",
     "verify:contracts": "node --import tsx scripts/verify-client-contracts.mts",
     "verify:caddy": "node --test scripts/fetch-when-ready.spec.mjs && node scripts/verify-caddy-headers.mjs",
+    "recommendation:backtest": "node --import tsx scripts/recommendation-backtest.mts",
     "verify": "npm run format:check && npm run docs:check && npm run verify:deployment && npm test && npm run lint && npm run build && npm run verify:auth && npm run verify:security && npm run verify:upload && npm run verify:contracts",
     "audit:prod": "npm audit --omit=dev",
     "verify:release": "npm run verify && npm run verify:caddy && npm run audit:prod",

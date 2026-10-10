@@ -1,6 +1,8 @@
 import { RECOMMENDATION_MOOD_GENRES, SPACE_MAX_MEMBERS, SPACE_MIN_MEMBERS } from '@davas/shared';
+import { DAY_MS } from '../common/time';
+import { predictTaste, type TasteProfile } from './taste-profile';
 
-export const GROUP_RECOMMENDATION_ALGORITHM_VERSION = 'group-content-v1-deterministic';
+export const GROUP_RECOMMENDATION_ALGORITHM_VERSION = 'group-content-v2-taste';
 export const DEFAULT_GROUP_LAMBDA = 0.6;
 export const DEFAULT_GROUP_GAMMA = 0.1;
 
@@ -35,16 +37,10 @@ export type NormalizedRecommendationRequest = {
   rewatchPolicy: 'EXCLUDE' | 'ALLOW';
 };
 
-export type RatingSignal = {
-  genres: string[];
-  ratingScale: number;
-};
-
 export type ParticipantPrediction = {
   accountId: string;
   score: number;
   uncertainty: number;
-  knownSignalCount: number;
 };
 
 export type RankedCandidate = {
@@ -59,6 +55,9 @@ export type RankedCandidate = {
 
 export const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
 const normalized = (value: string) => value.trim().toLocaleLowerCase('en-US');
+
+/** The features taste is read from: a title's genres, lower-cased. */
+export const tasteFeatures = (genres: readonly string[]) => genres.map(normalized);
 export const round = (value: number) => Number(value.toFixed(5));
 
 /**
@@ -108,37 +107,91 @@ export function qualityPrior(candidate: RecommendationCandidate) {
   return round(0.55 + (rating - 0.55) * confidence);
 }
 
+/**
+ * A person's predicted enjoyment of a title, 0–1: their taste for its features (see
+ * taste-profile.ts), the title's quality and the requested mood. A person with no history
+ * for these features gets the title's quality around 0.5 and a high uncertainty, never
+ * somebody else's taste.
+ */
 export function scoreParticipant(
   accountId: string,
   candidate: RecommendationCandidate,
-  signals: RatingSignal[],
+  profile: TasteProfile,
+  universe: ReadonlyMap<string, number>,
   moodTags: string[],
 ): ParticipantPrediction {
-  const genres = new Set(candidate.genres.map(normalized));
-  const matching = signals.filter((signal) =>
-    signal.genres.some((genre) => genres.has(normalized(genre))),
-  );
+  const taste = predictTaste(profile, tasteFeatures(candidate.genres), universe);
   const moodFit = moodTags.length
     ? moodTags.filter((tag) => tagMatchesGenres(tag, candidate.genres)).length / moodTags.length
     : 0;
   const quality = qualityPrior(candidate);
-
-  if (matching.length === 0) {
-    return {
-      accountId,
-      score: round(clamp01(0.45 + 0.35 * quality + 0.1 * moodFit)),
-      uncertainty: 0.9,
-      knownSignalCount: 0,
-    };
-  }
-
-  const affinity =
-    matching.reduce((total, signal) => total + signal.ratingScale / 10, 0) / matching.length;
   return {
     accountId,
-    score: round(clamp01(0.25 + 0.5 * affinity + 0.2 * quality + 0.05 * moodFit)),
-    uncertainty: round(Math.max(0.2, 0.7 - matching.length * 0.08)),
-    knownSignalCount: matching.length,
+    score: round(clamp01(0.5 + 0.2 * taste.affinity + 0.3 * (quality - 0.55) + 0.05 * moodFit)),
+    uncertainty: round(taste.uncertainty),
+  };
+}
+
+// A title is fresh for two years after release, most on release day.
+const FRESHNESS_DAYS = 730;
+
+export function freshness(candidate: RecommendationCandidate, now: Date) {
+  if (!candidate.releaseDate) return 0;
+  const days = (now.getTime() - Date.parse(candidate.releaseDate)) / DAY_MS;
+  return days < 0 ? 0 : round(Math.max(0, 1 - days / FRESHNESS_DAYS));
+}
+
+/**
+ * Where a title lands for the group: the group base (the least happy person weighs most),
+ * plus the requested mood, quality, freshness and safe exploration, minus how unsure the
+ * predictions are. A single person's ranking, as the backtest replays it, uses their score as
+ * the base.
+ */
+export function rankCandidate(
+  candidate: RecommendationCandidate,
+  participantScores: ParticipantPrediction[],
+  context: { moodTags: string[]; channels: string[]; now: Date },
+): RankedCandidate {
+  const scores = participantScores.map(({ score }) => score);
+  const group =
+    scores.length >= SPACE_MIN_MEMBERS
+      ? calculateGroupBase(scores)
+      : { mean: scores[0], floor: scores[0], dispersion: 0, groupBase: scores[0] };
+  const contextFit = context.moodTags.some((tag) => tagMatchesGenres(tag, candidate.genres))
+    ? 0.04
+    : 0;
+  const qualityBonus = qualityPrior(candidate) * 0.06;
+  const freshnessBonus = 0.12 * freshness(candidate, context.now);
+  const explorationBonus = context.channels.includes('SAFE_EXPLORATION') ? 0.015 : 0;
+  const uncertaintyRisk =
+    (participantScores.reduce((total, prediction) => total + prediction.uncertainty, 0) /
+      participantScores.length) *
+    0.06;
+  return {
+    candidate,
+    participantScores,
+    groupBase: group.groupBase,
+    finalScore: round(
+      clamp01(
+        group.groupBase +
+          contextFit +
+          qualityBonus +
+          freshnessBonus +
+          explorationBonus -
+          uncertaintyRisk,
+      ),
+    ),
+    channels: context.channels,
+    scoreParts: {
+      mean: group.mean,
+      floor: group.floor,
+      dispersion: group.dispersion,
+      contextFit: round(contextFit),
+      qualityPrior: round(qualityBonus),
+      freshnessBonus: round(freshnessBonus),
+      explorationBonus: round(explorationBonus),
+      uncertaintyRisk: round(uncertaintyRisk),
+    },
   };
 }
 

@@ -10,6 +10,7 @@ import {
   RecommendationFeedbackEntity,
   RecommendationSessionEntity,
   SpaceMembershipEntity,
+  SpaceWishEntity,
   WatchParticipantEntity,
   WatchReactionEntity,
 } from '../database/entities';
@@ -29,6 +30,7 @@ class FakeDatabase {
   diaries: DiaryEntity[] = [];
   participants: WatchParticipantEntity[] = [];
   reactions: WatchReactionEntity[] = [];
+  wishes: SpaceWishEntity[] = [];
   private sequence = 0;
 
   readonly manager = {
@@ -175,6 +177,7 @@ class FakeDatabase {
     if (key === DiaryEntity) return this.diaries as unknown as T[];
     if (key === WatchParticipantEntity) return this.participants as unknown as T[];
     if (key === WatchReactionEntity) return this.reactions as unknown as T[];
+    if (key === SpaceWishEntity) return this.wishes as unknown as T[];
     throw new Error(`Unexpected repository ${target.name}`);
   }
 
@@ -234,6 +237,7 @@ function setup(participantIds = ['u1', 'u2'], notifications?: object) {
     database.repository(DiaryEntity),
     database.repository(WatchParticipantEntity),
     database.repository(WatchReactionEntity),
+    database.repository(SpaceWishEntity),
     availability as never,
     spaceAccess,
     database.dataSource as never,
@@ -307,6 +311,32 @@ describe('GroupRecommendationsService', () => {
     assert.ok(ids.includes('content-drama'));
     assert.ok(!ids.includes('content-rent'), 'rent-only title left out');
     assert.ok(!ids.includes('content-watched'), 'watched title left out');
+  });
+
+  it("reads each person's own records as taste and says taste is unknown only when it is", async () => {
+    const { database, service } = setup();
+    // u1 has watched dramas; u2 has no history, and does not borrow u1's.
+    for (let index = 0; index < 4; index += 1) {
+      const media = database.addMedia(`seen-${index}`, `Seen ${index}`, ['drama']);
+      database.diaries.push(
+        Object.assign(new DiaryEntity(), {
+          id: `diary-${index}`,
+          userId: 'u1',
+          mediaId: media.id,
+          media,
+          watchedDate: '2026-08-01',
+        }),
+      );
+    }
+
+    await service.create('u1', request());
+    const drama = database.exposures.find((exposure) => exposure.contentId === 'content-drama')!;
+    const scoreOf = (accountId: string) =>
+      drama.participantScores.find((person) => person.accountId === accountId)!;
+    assert.ok(scoreOf('u1').uncertainty < 0.6);
+    assert.equal(scoreOf('u2').uncertainty, 1);
+    const comedy = database.exposures.find((exposure) => exposure.contentId === 'content-comedy')!;
+    assert.ok(comedy.reasonCodes.includes('QUALITY_COLD_START'), 'nobody knows their comedy taste');
   });
 
   it('rejects inactive participants and invalid request contradictions with safe errors', async () => {

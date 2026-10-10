@@ -163,6 +163,33 @@ $DC down               # 중지 (볼륨은 유지)
 - DB 데이터, Caddy 인증서, 업로드 파일은 Docker 볼륨에 있다. `down -v`는 이 데이터를 지운다.
 - 코드만 바뀐 배포도 빌드 → migration 확인 → 전환 순서를 지킨다. schema 변경이 섞일 수 있는 배포에서 `up -d --build`로 단계를 건너뛰지 않는다.
 - OS, Docker 이미지, Next.js, NestJS, 업로드 관련 의존성을 주기적으로 갱신한다(`npm run audit:prod`).
+- 추천 점수 공식을 바꾸기 전에 운영 기록으로 재현 시험을 한다. 아래는 읽기만 하는 질의로, 사람은 `person-1` 같은 이름표로 바꿔 내보낸다. 결과 파일은 감상 기록이므로 저장소 밖(작업 PC의 임시 폴더)에 두고, `npm run recommendation:backtest -- <파일>`로 돌린다.
+
+```bash
+$DC exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA' </dev/null > taste-snapshot.json <<'SQL'
+with people as (select id, 'person-' || row_number() over (order by created_at) as label from users)
+select json_build_object(
+  'titles', (select json_agg(json_build_object('id', m.id, 'mediaType', m.media_type,
+      'genres', coalesce(m.genres, '{}'), 'rating', m.tmdb_rating::float,
+      'voteCount', coalesce(m.tmdb_vote_count, 0), 'releaseDate', m.release_date,
+      'runtime', m.runtime)) from media m),
+  'watches', (select json_agg(w) from (
+      select p.label as "accountId", d.media_id as "contentId", d.watched_date as "watchedDate",
+             d.created_at as "createdAt"
+        from diaries d join people p on p.id = d.user_id where d.deleted_at is null
+      union all
+      select p.label, d.media_id, d.watched_date, d.created_at
+        from watch_participants wp join diaries d on d.id = wp.diary_id and d.deleted_at is null
+        join people p on p.id = wp.account_id
+       where wp.status = 'CONFIRMED' and wp.account_id <> d.user_id) w),
+  'ratings', coalesce((select json_agg(json_build_object('accountId', p.label, 'contentId', d.media_id,
+      'ratingScale', r.rating_scale)) from watch_reactions r
+      join diaries d on d.id = r.diary_id and d.deleted_at is null
+      join people p on p.id = r.account_id where r.rating_scale is not null), '[]'::json),
+  'wishes', coalesce((select json_agg(json_build_object('accountId', p.label, 'contentId', w.media_id,
+      'at', w.created_at)) from space_wishes w join people p on p.id = w.account_id), '[]'::json));
+SQL
+```
 
 ## 7. 복구 시험과 되돌리기
 

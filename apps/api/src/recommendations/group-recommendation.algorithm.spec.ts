@@ -6,9 +6,14 @@ import {
   passesHardFilters,
   qualityPrior,
   RecommendationCandidate,
+  freshness,
+  rankCandidate,
   scoreParticipant,
   tagMatchesGenres,
 } from './group-recommendation.algorithm';
+import { buildTasteProfile } from './taste-profile';
+
+const noTaste = buildTasteProfile([], new Date('2026-08-13T00:00:00.000Z'));
 
 const now = new Date('2026-08-13T00:00:00.000Z');
 const candidate = (overrides: Partial<RecommendationCandidate> = {}): RecommendationCandidate => ({
@@ -103,11 +108,25 @@ describe('deterministic group recommendation algorithm', () => {
 
   it('treats an unknown participant as uncertain rather than disliked', () => {
     const content = candidate();
-    const prediction = scoreParticipant('new-user', content, [], []);
-    assert.equal(prediction.knownSignalCount, 0);
-    assert.equal(prediction.uncertainty, 0.9);
+    const prediction = scoreParticipant('new-user', content, noTaste, new Map(), []);
+    assert.equal(prediction.uncertainty, 1);
     assert.ok(prediction.score >= 0.5);
     assert.ok(qualityPrior(content) > 0.5);
+  });
+
+  it('ranks fresh titles a little higher and lets a single person rank on their own score', () => {
+    const recent = candidate({ releaseDate: '2026-07-01' });
+    const old = candidate({ id: 'content-old', releaseDate: '2001-01-01' });
+    assert.ok(freshness(recent, now) > 0.9);
+    assert.equal(freshness(old, now), 0);
+    assert.equal(freshness(candidate({ releaseDate: '2027-01-01' }), now), 0);
+    const person = [{ accountId: 'u1', score: 0.6, uncertainty: 0.2 }];
+    const context = { moodTags: [], channels: [], now };
+    assert.ok(
+      rankCandidate(recent, person, context).finalScore >
+        rankCandidate(old, person, context).finalScore,
+    );
+    assert.equal(rankCandidate(old, person, context).groupBase, 0.6);
   });
 
   it('reads the moods the web offers through the genres that carry them', () => {
@@ -118,8 +137,8 @@ describe('deterministic group recommendation algorithm', () => {
     // A tag that is not one of the moods is still a plain genre name.
     assert.equal(tagMatchesGenres('스릴러', thriller.genres), true);
     assert.ok(
-      scoreParticipant('new-user', comedy, [], ['웃긴']).score >
-        scoreParticipant('new-user', comedy, [], ['긴장감']).score,
+      scoreParticipant('new-user', comedy, noTaste, new Map(), ['웃긴']).score >
+        scoreParticipant('new-user', comedy, noTaste, new Map(), ['긴장감']).score,
     );
     const avoidTense = { ...request, moodTags: [], avoidTags: ['긴장감'] };
     assert.equal(passesHardFilters(thriller, avoidTense, now, new Set(), new Set()), false);

@@ -160,6 +160,14 @@ export class GroupRecommendationPool {
     });
   }
 
+  /** Every stored title of the requested types, watched or not: the baseline taste is read against. */
+  known(request: Pick<PoolRequest, 'contentTypes'>) {
+    return this.media.find({
+      where: { mediaType: In(request.contentTypes) },
+      select: { id: true, genres: true },
+    });
+  }
+
   /** Each title's newest observation that is still fresh. */
   async freshFor(contentIds: string[], region: string) {
     if (!contentIds.length) return new Map<string, LatestAvailability>();

@@ -25,6 +25,7 @@ import {
   RecommendationFeedbackEntity,
   RecommendationSessionEntity,
   SpaceMembershipEntity,
+  SpaceWishEntity,
   WatchParticipantEntity,
   WatchReactionEntity,
 } from '../database/entities';
@@ -37,22 +38,26 @@ import {
 } from './group-recommendations.dto';
 import {
   assignCandidateChannels,
-  calculateGroupBase,
-  clamp01,
   DEFAULT_GROUP_GAMMA,
   DEFAULT_GROUP_LAMBDA,
   diversityRerank,
   GROUP_RECOMMENDATION_ALGORITHM_VERSION,
   NormalizedRecommendationRequest,
   passesHardFilters,
-  qualityPrior,
+  rankCandidate,
   RankedCandidate,
   RecommendationCandidate,
-  RatingSignal,
-  round,
   scoreParticipant,
   tagMatchesGenres,
+  tasteFeatures,
 } from './group-recommendation.algorithm';
+import {
+  buildTasteProfile,
+  favoriteFeatures,
+  featureShare,
+  type TasteProfile,
+  type TasteSignal,
+} from './taste-profile';
 import {
   GroupRecommendationPool,
   type LatestAvailability,
@@ -100,6 +105,8 @@ export class GroupRecommendationsService {
     private readonly watchParticipants: Repository<WatchParticipantEntity>,
     @InjectRepository(WatchReactionEntity)
     private readonly watchReactions: Repository<WatchReactionEntity>,
+    @InjectRepository(SpaceWishEntity)
+    private readonly wishes: Repository<SpaceWishEntity>,
     private readonly availability: AvailabilityService,
     private readonly spaceAccess: SpaceAccessService,
     private readonly dataSource: DataSource,
@@ -487,8 +494,20 @@ export class GroupRecommendationsService {
       ...(request.rewatchPolicy === 'EXCLUDE' ? history.watched : []),
     ]);
     await this.pool.warm(request, excluded);
-    const now = new Date();
+    const now = this.now();
     const media = await this.pool.unseen(request, excluded);
+    // Taste is read against every known title of the requested types, not only what is left.
+    const universe = featureShare(
+      (await this.pool.known(request)).map((item) => ({
+        features: tasteFeatures(item.genres ?? []),
+      })),
+    );
+    const profiles = new Map(
+      request.participantAccountIds.map((accountId) => [
+        accountId,
+        buildTasteProfile(history.signals.get(accountId) ?? [], now),
+      ]),
+    );
     const fresh = await this.pool.freshFor(
       media.map((item) => item.id),
       request.region,
@@ -500,14 +519,16 @@ export class GroupRecommendationsService {
     const mediaById = new Map(candidates.map((item) => [item.candidate.id, item.media]));
     const channels = assignCandidateChannels(
       candidates.map((item) => item.candidate),
-      history.positiveGenres,
+      favoriteFeatures(buildTasteProfile(history.shared, now), universe),
       seed,
     ).map(({ candidate, channels }) => ({
       candidate,
       media: mediaById.get(candidate.id)!,
       channels,
     }));
-    const scored = channels.map((item) => this.scoreCandidate(item, request, history.ratings, now));
+    const scored = channels.map((item) =>
+      this.scoreCandidate(item, request, profiles, universe, now),
+    );
     const reranked = diversityRerank(
       scored.map((item) => item.ranked),
       Math.min(scored.length, 30),
@@ -532,59 +553,108 @@ export class GroupRecommendationsService {
   }
 
   /**
-   * What the participants rated, watched and turned down: ratings feed their predicted
-   * scores, and watched or rejected titles never come back as candidates.
+   * What the participants watched, rated, answered and wished for. Each person's signals feed
+   * only their own taste; the shared list (one entry per title and day, however many watched
+   * it together) feeds the group's favourite features. Watched or rejected titles never come
+   * back as candidates.
    */
   private async participantHistory(request: SessionRequest) {
-    const [reactions, diaries, participations, feedback] = await Promise.all([
+    const ids = request.participantAccountIds;
+    const [reactions, diaries, participations, feedback, wishes] = await Promise.all([
       this.watchReactions.find({
-        where: { accountId: In(request.participantAccountIds) },
+        where: { accountId: In(ids) },
         relations: { diary: { media: true } },
       }),
-      this.diaries.find({
-        where: { userId: In(request.participantAccountIds) },
-      }),
+      this.diaries.find({ where: { userId: In(ids) }, relations: { media: true } }),
       this.watchParticipants.find({
-        where: {
-          accountId: In(request.participantAccountIds),
-          status: 'CONFIRMED',
-        },
-        relations: { diary: true },
+        where: { accountId: In(ids), status: 'CONFIRMED' },
+        relations: { diary: { media: true } },
       }),
       this.feedback.find({
         where: {
-          accountId: In(request.participantAccountIds),
-          kind: In(['REJECTED', 'ALREADY_WATCHED']),
+          accountId: In(ids),
+          kind: In(['INTERESTED', 'REJECTED', 'ALREADY_WATCHED']),
         },
-        relations: { exposure: true },
+        relations: { exposure: { content: true } },
+      }),
+      this.wishes.find({
+        where: { spaceId: request.spaceId, accountId: In(ids) },
+        relations: { media: true },
       }),
     ]);
 
-    const ratings = this.ratingSignals(request.participantAccountIds, reactions);
-    const positiveGenres = new Set<string>();
-    for (const signals of ratings.values()) {
-      for (const signal of signals) {
-        if (signal.ratingScale >= 7) {
-          signal.genres.forEach((genre) => positiveGenres.add(normalized(genre)));
-        }
+    const signals = new Map<string, TasteSignal[]>(ids.map((accountId) => [accountId, []]));
+    const add = (accountId: string, signal: TasteSignal) => signals.get(accountId)?.push(signal);
+    // A record's day, at noon so no time zone moves it; a record without one counts as today.
+    const day = (date: string | null | undefined) =>
+      date ? new Date(`${date}T12:00:00Z`) : new Date();
+    // An author also has a confirmed participant row for their own record: one watch each.
+    const watches = new Map<string, { accountId: string; diary: DiaryEntity }>();
+    for (const diary of diaries)
+      watches.set(`${diary.userId}:${diary.id}`, { accountId: diary.userId, diary });
+    for (const participant of participations) {
+      if (participant.diary) {
+        watches.set(`${participant.accountId}:${participant.diaryId}`, {
+          accountId: participant.accountId,
+          diary: participant.diary,
+        });
       }
     }
-    const rejected = new Set(
-      feedback
-        .filter((item) => item.kind === 'REJECTED')
-        .map((item) => item.exposure?.contentId)
-        .filter((contentId): contentId is string => Boolean(contentId)),
-    );
-    const watched = new Set(
-      [
-        ...diaries.map((diary) => diary.mediaId),
-        ...participations.map((participant) => participant.diary?.mediaId),
-        ...feedback
-          .filter((item) => item.kind === 'ALREADY_WATCHED')
-          .map((item) => item.exposure?.contentId),
-      ].filter((contentId): contentId is string => Boolean(contentId)),
-    );
-    return { ratings, positiveGenres, rejected, watched };
+    for (const { accountId, diary } of watches.values()) {
+      add(accountId, {
+        contentId: diary.mediaId,
+        features: tasteFeatures(diary.media?.genres ?? []),
+        at: day(diary.watchedDate),
+        kind: 'WATCHED',
+      });
+    }
+    for (const reaction of reactions) {
+      if (reaction.ratingScale === null || !reaction.diary) continue;
+      add(reaction.accountId, {
+        contentId: reaction.diary.mediaId,
+        features: tasteFeatures(reaction.diary.media?.genres ?? []),
+        at: day(reaction.diary.watchedDate),
+        kind: 'RATED',
+        rating: reaction.ratingScale,
+      });
+    }
+    for (const item of feedback) {
+      if (!item.exposure) continue;
+      add(item.accountId, {
+        contentId: item.exposure.contentId,
+        features: tasteFeatures(item.exposure.content?.genres ?? []),
+        at: item.updatedAt ?? item.createdAt ?? new Date(),
+        kind:
+          item.kind === 'ALREADY_WATCHED'
+            ? 'WATCHED'
+            : item.kind === 'INTERESTED'
+              ? 'INTERESTED'
+              : 'REJECTED',
+      });
+    }
+    for (const wish of wishes) {
+      add(wish.accountId, {
+        contentId: wish.mediaId,
+        features: tasteFeatures(wish.media?.genres ?? []),
+        at: wish.createdAt,
+        kind: 'WISHED',
+      });
+    }
+
+    const shared = new Map<string, TasteSignal>();
+    for (const signal of [...signals.values()].flat()) {
+      const key = `${signal.kind}:${signal.contentId}:${signal.at.toISOString().slice(0, 10)}`;
+      if (!shared.has(key)) shared.set(key, signal);
+    }
+    const all = [...signals.values()].flat();
+    return {
+      signals,
+      shared: [...shared.values()],
+      rejected: new Set(
+        all.filter((item) => item.kind === 'REJECTED').map((item) => item.contentId),
+      ),
+      watched: new Set(all.filter((item) => item.kind === 'WATCHED').map((item) => item.contentId)),
+    };
   }
 
   private toCandidates(media: MediaEntity[], fresh: ReadonlyMap<string, LatestAvailability>) {
@@ -616,69 +686,27 @@ export class GroupRecommendationsService {
     });
   }
 
-  private ratingSignals(participantIds: string[], reactions: WatchReactionEntity[]) {
-    const result = new Map<string, RatingSignal[]>(
-      participantIds.map((accountId) => [accountId, []]),
-    );
-    for (const reaction of reactions) {
-      if (reaction.ratingScale === null || !reaction.diary?.media) continue;
-      result.get(reaction.accountId)?.push({
-        genres: reaction.diary.media.genres ?? [],
-        ratingScale: reaction.ratingScale,
-      });
-    }
-    return result;
-  }
-
   private scoreCandidate(
     item: CandidateWithChannels,
     request: SessionRequest,
-    ratings: Map<string, RatingSignal[]>,
+    profiles: ReadonlyMap<string, TasteProfile>,
+    universe: ReadonlyMap<string, number>,
     now: Date,
   ) {
     const participantScores = request.participantAccountIds.map((accountId) =>
-      scoreParticipant(accountId, item.candidate, ratings.get(accountId) ?? [], request.moodTags),
-    );
-    const group = calculateGroupBase(participantScores.map(({ score }) => score));
-    const contextFit = request.moodTags.some((tag) => tagMatchesGenres(tag, item.candidate.genres))
-      ? 0.04
-      : 0;
-    const qualityBonus = qualityPrior(item.candidate) * 0.06;
-    const releaseYear = Number(item.candidate.releaseDate?.slice(0, 4));
-    const freshnessBonus =
-      Number.isFinite(releaseYear) && releaseYear >= now.getUTCFullYear() - 3 ? 0.03 : 0;
-    const explorationBonus = item.channels.includes('SAFE_EXPLORATION') ? 0.015 : 0;
-    const uncertaintyRisk =
-      (participantScores.reduce((total, prediction) => total + prediction.uncertainty, 0) /
-        participantScores.length) *
-      0.06;
-    const finalScore = round(
-      clamp01(
-        group.groupBase +
-          contextFit +
-          qualityBonus +
-          freshnessBonus +
-          explorationBonus -
-          uncertaintyRisk,
+      scoreParticipant(
+        accountId,
+        item.candidate,
+        profiles.get(accountId)!,
+        universe,
+        request.moodTags,
       ),
     );
-    const ranked: RankedCandidate = {
-      candidate: item.candidate,
-      participantScores,
-      groupBase: group.groupBase,
-      finalScore,
+    const ranked = rankCandidate(item.candidate, participantScores, {
+      moodTags: request.moodTags,
       channels: item.channels,
-      scoreParts: {
-        mean: group.mean,
-        floor: group.floor,
-        dispersion: group.dispersion,
-        contextFit: round(contextFit),
-        qualityPrior: round(qualityBonus),
-        freshnessBonus: round(freshnessBonus),
-        explorationBonus: round(explorationBonus),
-        uncertaintyRisk: round(uncertaintyRisk),
-      },
-    };
+      now,
+    });
     return { media: item.media, ranked };
   }
 
@@ -713,7 +741,13 @@ export class GroupRecommendationsService {
   ) {
     const codes = ['AVAILABLE_ON_SELECTED_SERVICES'];
     if (item.ranked.channels.includes('CONTENT_AFFINITY')) codes.push('GROUP_CONTENT_AFFINITY');
-    if (item.ranked.channels.includes('QUALITY_POPULAR')) codes.push('QUALITY_COLD_START');
+    // "Little is known about your taste, so quality and popularity helped" only when true.
+    const uncertainty =
+      item.ranked.participantScores.reduce((sum, person) => sum + person.uncertainty, 0) /
+      item.ranked.participantScores.length;
+    if (item.ranked.channels.includes('QUALITY_POPULAR') && uncertainty >= 0.6) {
+      codes.push('QUALITY_COLD_START');
+    }
     if (item.ranked.channels.includes('FRESH_RELEASE')) codes.push('RECENT_RELEASE');
     if (request.moodTags.some((tag) => tagMatchesGenres(tag, item.media.genres)))
       codes.push('MATCHES_REQUESTED_MOOD');
