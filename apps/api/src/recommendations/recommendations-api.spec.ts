@@ -26,14 +26,16 @@ describe('Recommendations source retention policy', () => {
     assert.match(controllerSource, /@Controller\('recommendations'\)/);
   });
 
-  it('keeps the legacy discovery recommendation routes available', () => {
+  it('serves only the discovery routes the web calls: trending and a mood preset', () => {
     const controllerSource = maybeSource('recommendations/recommendations.controller.ts');
-    const serviceSource = maybeSource('recommendations/recommendations.service.ts');
 
     assert.match(controllerSource, /@Get\('trending'\)/);
-    assert.match(controllerSource, /@Get\('genres'\)/);
-    assert.match(controllerSource, /@Get\('today\/carousel'\)/);
-    assert.match(serviceSource, /randomGenreRecommendations/);
+    assert.match(controllerSource, /@Get\('genres\/:presetId'\)/);
+    // The old explore dashboard's routes went with it.
+    assert.doesNotMatch(
+      controllerSource,
+      /@Get\('(today|today\/carousel|genres|genres\/random)'\)/,
+    );
   });
 
   it('adds authenticated group session, session-read, and feedback routes without changing legacy routes', () => {

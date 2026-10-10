@@ -129,7 +129,7 @@ graphify-out/      Graphify 코드 그래프 (도구가 생성, 손으로 수정
 | `spaces` | 2~5명 공유 공간, 이름 변경, 공간 초대(수락·거절), 소유권 이전·탈퇴·종료 (`/v1/spaces`, `/v1/invites`). 공개된 초대 확인(`GET /v1/invites/:token`)은 쓸 수 있거나 정원이 찬 초대에 공간 이름, 초대한 사람, 만료 시각과 구성원 수·정원·닉네임 첫 글자만 담는다 |
 | `diaries` | 감상 기록(`/diaries`)과 감상 사건·참여자·개인 반응(`/v1/watch-events`), 기록 검색(`/v1/watch-events/search`), 내 사진(`PUT /v1/watch-events/:id/photos`), 공간 타임라인·모아보기·달력(`/v1/spaces/:spaceId/calendar?month=`) |
 | `media` | TMDB 검색·상세·인물 검색, 작품 선택(서버가 TMDB 원본 저장), 시청 가능성(`/media/:id/availability`) |
-| `recommendations` | 오늘의 추천·장르 추천, 그룹 추천 세션과 피드백(`/v1/recommendation-sessions`, 공간의 최근 세션 `/v1/spaces/:spaceId/recommendation-sessions`, 정하기 `POST .../:sessionId/decision`, 끝내기 `POST .../:sessionId/close`, 홈의 정한 작품 `GET /v1/spaces/:spaceId/recommendation-sessions/decided`), 공간의 같이 보고 싶어요 목록과 빠른 추천(`/v1/spaces/:spaceId/wishes`) |
+| `recommendations` | 탐색·홈의 인기작(`/recommendations/trending`)과 분위기 카드별 장르 추천(`/recommendations/genres/:presetId`), 그룹 추천 세션과 피드백(`/v1/recommendation-sessions`, 공간의 최근 세션 `/v1/spaces/:spaceId/recommendation-sessions`, 정하기 `POST .../:sessionId/decision`, 끝내기 `POST .../:sessionId/close`, 홈의 정한 작품 `GET /v1/spaces/:spaceId/recommendation-sessions/decided`), 공간의 같이 보고 싶어요 목록과 빠른 추천(`/v1/spaces/:spaceId/wishes`) |
 | `notifications` | 알림 목록과 알림 설정 |
 | `outbox` | 트랜잭션 아웃박스 저장 (소비 워커는 아직 없음) |
 | `watchlist`, `reactions`, `comments`, `community` | 예전 기능. 데이터·API 호환을 위해 유지 |
