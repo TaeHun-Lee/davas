@@ -25,6 +25,7 @@ import { RecommendationsController } from './recommendations.controller';
 import { RecommendationsService } from './recommendations.service';
 import { SpaceWishesController } from './space-wishes.controller';
 import { SpaceWishesService } from './space-wishes.service';
+import { TasteHistory } from './taste-history';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { SpaceWishesService } from './space-wishes.service';
     GroupRecommendationsService,
     GroupRecommendationPool,
     SpaceWishesService,
+    TasteHistory,
     TmdbClient,
   ],
 })

@@ -1,6 +1,10 @@
 import { DEFAULT_LANGUAGE, DEFAULT_REGION } from '@davas/shared';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { TmdbClient } from '../media/tmdb.client';
+import type { MediaRecommendationItem } from '../media/tmdb.mapper';
+import { rankForViewer, titleKey } from './personal-ranking';
+import { TasteHistory } from './taste-history';
+import { buildTasteProfile } from './taste-profile';
 
 export type GenrePreset = {
   id: string;
@@ -52,56 +56,116 @@ const GENRE_PRESETS: GenrePreset[] = [
   },
 ];
 
-export type RecommendationQuery = {
-  page?: number;
-  limit?: number;
-  language?: string;
-  region?: string;
-};
+// TMDB pages read for one list: about sixty titles, so enough are left once a person's
+// watched ones are taken out and the rest are reordered for them.
+const LIST_PAGES = [1, 2, 3];
+// The lists are the same for everyone and change through the day, not by the minute.
+const LIST_TTL_MS = 30 * 60 * 1000;
 
+/**
+ * Home's "오늘 뭐 볼까요?" and 탐색's 화제작 and mood cards: TMDB's popular titles, reordered
+ * for the person asking (see personal-ranking.ts).
+ */
 @Injectable()
 export class RecommendationsService {
-  constructor(private readonly tmdbClient: TmdbClient) {}
+  private readonly lists = new Map<
+    string,
+    { expiresAt: number; value: Promise<MediaRecommendationItem[]> }
+  >();
 
-  async trending(query: RecommendationQuery & { period?: 'daily' | 'weekly' } = {}) {
-    const limit = this.limit(query.limit);
-    const response = await this.tmdbClient.trending({
-      period: query.period === 'weekly' ? 'week' : 'day',
-      page: query.page ?? 1,
-      language: query.language ?? DEFAULT_LANGUAGE,
-    });
+  constructor(
+    private readonly tmdbClient: TmdbClient,
+    private readonly tasteHistory: TasteHistory,
+  ) {}
 
-    return { ...response, items: response.items.slice(0, limit) };
+  /** The service's clock; tests move it to see kept lists expire. */
+  now: () => Date = () => new Date();
+
+  async trending(accountId: string, limit?: number) {
+    const items = await this.list('trending', (page) =>
+      this.tmdbClient.trending({ period: 'day', page, language: DEFAULT_LANGUAGE }),
+    );
+    return { items: await this.forViewer(accountId, items, limit) };
   }
 
-  async genreRecommendations(presetId: string, query: RecommendationQuery = {}) {
+  async genreRecommendations(accountId: string, presetId: string, limit?: number) {
     const preset = GENRE_PRESETS.find((item) => item.id === presetId);
     if (!preset) {
       throw new NotFoundException('Recommendation genre preset not found');
     }
-
-    return this.loadGenrePreset(preset, query);
-  }
-
-  private async loadGenrePreset(preset: GenrePreset, query: RecommendationQuery = {}) {
-    const limit = this.limit(query.limit);
-    const response = await this.tmdbClient.discover({
-      mediaType: preset.mediaType,
-      page: query.page ?? 1,
-      language: query.language ?? DEFAULT_LANGUAGE,
-      region: query.region ?? DEFAULT_REGION,
-      withGenres: preset.genreIds,
-      sortBy: preset.sortBy,
-      voteCountGte: preset.voteCountGte,
-      reason: `genre:${preset.id}`,
-    });
-
+    const items = await this.list(`genre:${preset.id}`, (page) =>
+      this.tmdbClient.discover({
+        mediaType: preset.mediaType,
+        page,
+        language: DEFAULT_LANGUAGE,
+        region: DEFAULT_REGION,
+        withGenres: preset.genreIds,
+        sortBy: preset.sortBy,
+        voteCountGte: preset.voteCountGte,
+        reason: `genre:${preset.id}`,
+      }),
+    );
     return {
       preset: { id: preset.id, label: preset.label, description: preset.description },
-      page: response.page,
-      totalPages: response.totalPages,
-      items: response.items.slice(0, limit),
+      items: await this.forViewer(accountId, items, limit),
     };
+  }
+
+  private async forViewer(
+    accountId: string,
+    items: readonly MediaRecommendationItem[],
+    limit?: number,
+  ) {
+    const now = this.now();
+    const history = await this.tasteHistory.read([accountId]);
+    const signals = history.signals.get(accountId) ?? [];
+    const seen = new Set<string>();
+    for (const contentId of [...history.watched, ...history.rejected]) {
+      const title = history.titles.get(contentId);
+      if (title?.externalProvider === 'TMDB') seen.add(titleKey(title));
+    }
+    const historyFeatures = new Map(signals.map((signal) => [signal.contentId, signal.features]));
+    return rankForViewer(
+      items,
+      {
+        accountId,
+        profile: buildTasteProfile(signals, now),
+        historyFeatures: [...historyFeatures.values()],
+        seen,
+      },
+      now,
+      this.limit(limit),
+    );
+  }
+
+  /**
+   * A TMDB list's first pages, kept for a while. A page that fails is left out; a list with a
+   * missing page is not kept, and one with no page at all fails.
+   */
+  private list(
+    key: string,
+    page: (page: number) => Promise<{ items: MediaRecommendationItem[] }>,
+  ): Promise<MediaRecommendationItem[]> {
+    const now = this.now().getTime();
+    const kept = this.lists.get(key);
+    if (kept && kept.expiresAt > now) return kept.value;
+    const entry = {
+      expiresAt: now + LIST_TTL_MS,
+      value: Promise.allSettled(LIST_PAGES.map(page)).then((results) => {
+        const read = results.flatMap((result) =>
+          result.status === 'fulfilled' ? [result.value.items] : [],
+        );
+        if (read.length < results.length) this.forget(key, entry);
+        if (read.length === 0) throw (results[0] as PromiseRejectedResult).reason;
+        return read.flat();
+      }),
+    };
+    this.lists.set(key, entry);
+    return entry.value;
+  }
+
+  private forget(key: string, entry: { value: Promise<MediaRecommendationItem[]> }) {
+    if (this.lists.get(key)?.value === entry.value) this.lists.delete(key);
   }
 
   private limit(value?: number) {

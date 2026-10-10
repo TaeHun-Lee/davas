@@ -1,4 +1,3 @@
-import { DEFAULT_LANGUAGE } from '@davas/shared';
 import type {
   GroupRecommendationDecidedPickResponse,
   GroupRecommendationDecisionRequest,
@@ -18,9 +17,8 @@ export type MediaRecommendationItem = MediaSearchResult & {
   reason: string;
 };
 
+/** TMDB's popular titles without the ones I watched, in the order my records suggest. */
 export type RecommendationListResponse = {
-  page: number;
-  totalPages: number;
   items: MediaRecommendationItem[];
 };
 
@@ -34,34 +32,16 @@ export type GenreRecommendationsResponse = RecommendationListResponse & {
   preset: GenreRecommendationPreset;
 };
 
-export async function getTrendingRecommendations({
-  limit = 10,
-  page = 1,
-  language = DEFAULT_LANGUAGE,
-}: { limit?: number; page?: number; language?: string } = {}) {
-  const params = new URLSearchParams();
-  params.set('limit', String(limit));
-  params.set('page', String(page));
-  params.set('language', language);
-
-  return coreFetch<RecommendationListResponse>(`/recommendations/trending?${params.toString()}`);
+export async function getTrendingRecommendations({ limit = 10 }: { limit?: number } = {}) {
+  return coreFetch<RecommendationListResponse>(`/recommendations/trending?limit=${limit}`);
 }
 
 export async function getGenreRecommendations(
   presetId: string,
-  {
-    limit = 4,
-    page = 1,
-    language = DEFAULT_LANGUAGE,
-  }: { limit?: number; page?: number; language?: string } = {},
+  { limit = 4 }: { limit?: number } = {},
 ) {
-  const params = new URLSearchParams();
-  params.set('limit', String(limit));
-  params.set('page', String(page));
-  params.set('language', language);
-
   return coreFetch<GenreRecommendationsResponse>(
-    `/recommendations/genres/${presetId}?${params.toString()}`,
+    `/recommendations/genres/${encodeURIComponent(presetId)}?limit=${limit}`,
   );
 }
 

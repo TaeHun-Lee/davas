@@ -25,9 +25,7 @@ import {
   RecommendationFeedbackEntity,
   RecommendationSessionEntity,
   SpaceMembershipEntity,
-  SpaceWishEntity,
   WatchParticipantEntity,
-  WatchReactionEntity,
 } from '../database/entities';
 import { AvailabilityService } from '../media/availability.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -57,8 +55,8 @@ import {
   favoriteFeatures,
   featureShare,
   type TasteProfile,
-  type TasteSignal,
 } from './taste-profile';
+import { TasteHistory } from './taste-history';
 import {
   GroupRecommendationPool,
   type LatestAvailability,
@@ -98,16 +96,11 @@ export class GroupRecommendationsService {
     private readonly sessions: Repository<RecommendationSessionEntity>,
     @InjectRepository(RecommendationExposureEntity)
     private readonly exposures: Repository<RecommendationExposureEntity>,
-    @InjectRepository(RecommendationFeedbackEntity)
-    private readonly feedback: Repository<RecommendationFeedbackEntity>,
     @InjectRepository(DiaryEntity)
     private readonly diaries: Repository<DiaryEntity>,
     @InjectRepository(WatchParticipantEntity)
     private readonly watchParticipants: Repository<WatchParticipantEntity>,
-    @InjectRepository(WatchReactionEntity)
-    private readonly watchReactions: Repository<WatchReactionEntity>,
-    @InjectRepository(SpaceWishEntity)
-    private readonly wishes: Repository<SpaceWishEntity>,
+    private readonly tasteHistory: TasteHistory,
     private readonly availability: AvailabilityService,
     private readonly spaceAccess: SpaceAccessService,
     private readonly dataSource: DataSource,
@@ -489,7 +482,9 @@ export class GroupRecommendationsService {
   }
 
   private async rankCandidates(request: SessionRequest, seed: string) {
-    const history = await this.participantHistory(request);
+    const history = await this.tasteHistory.read(request.participantAccountIds, {
+      spaceId: request.spaceId,
+    });
     const excluded = new Set([
       ...history.rejected,
       ...(request.rewatchPolicy === 'EXCLUDE' ? history.watched : []),
@@ -552,111 +547,6 @@ export class GroupRecommendationsService {
       });
     }
     return result;
-  }
-
-  /**
-   * What the participants watched, rated, answered and wished for. Each person's signals feed
-   * only their own taste; the shared list (one entry per title and day, however many watched
-   * it together) feeds the group's favourite features. Watched or rejected titles never come
-   * back as candidates.
-   */
-  private async participantHistory(request: SessionRequest) {
-    const ids = request.participantAccountIds;
-    const [reactions, diaries, participations, feedback, wishes] = await Promise.all([
-      this.watchReactions.find({
-        where: { accountId: In(ids) },
-        relations: { diary: { media: true } },
-      }),
-      this.diaries.find({ where: { userId: In(ids) }, relations: { media: true } }),
-      this.watchParticipants.find({
-        where: { accountId: In(ids), status: 'CONFIRMED' },
-        relations: { diary: { media: true } },
-      }),
-      this.feedback.find({
-        where: {
-          accountId: In(ids),
-          kind: In(['INTERESTED', 'REJECTED', 'ALREADY_WATCHED']),
-        },
-        relations: { exposure: { content: true } },
-      }),
-      this.wishes.find({
-        where: { spaceId: request.spaceId, accountId: In(ids) },
-        relations: { media: true },
-      }),
-    ]);
-
-    const signals = new Map<string, TasteSignal[]>(ids.map((accountId) => [accountId, []]));
-    const add = (accountId: string, signal: TasteSignal) => signals.get(accountId)?.push(signal);
-    // A record's day, at noon so no time zone moves it; a record without one counts as today.
-    const day = (date: string | null | undefined) =>
-      date ? new Date(`${date}T12:00:00Z`) : new Date();
-    // An author also has a confirmed participant row for their own record: one watch each.
-    const watches = new Map<string, { accountId: string; diary: DiaryEntity }>();
-    for (const diary of diaries)
-      watches.set(`${diary.userId}:${diary.id}`, { accountId: diary.userId, diary });
-    for (const participant of participations) {
-      if (participant.diary) {
-        watches.set(`${participant.accountId}:${participant.diaryId}`, {
-          accountId: participant.accountId,
-          diary: participant.diary,
-        });
-      }
-    }
-    for (const { accountId, diary } of watches.values()) {
-      add(accountId, {
-        contentId: diary.mediaId,
-        features: tasteFeatures(diary.media?.genres ?? []),
-        at: day(diary.watchedDate),
-        kind: 'WATCHED',
-      });
-    }
-    for (const reaction of reactions) {
-      if (reaction.ratingScale === null || !reaction.diary) continue;
-      add(reaction.accountId, {
-        contentId: reaction.diary.mediaId,
-        features: tasteFeatures(reaction.diary.media?.genres ?? []),
-        at: day(reaction.diary.watchedDate),
-        kind: 'RATED',
-        rating: reaction.ratingScale,
-      });
-    }
-    for (const item of feedback) {
-      if (!item.exposure) continue;
-      add(item.accountId, {
-        contentId: item.exposure.contentId,
-        features: tasteFeatures(item.exposure.content?.genres ?? []),
-        at: item.updatedAt ?? item.createdAt ?? new Date(),
-        kind:
-          item.kind === 'ALREADY_WATCHED'
-            ? 'WATCHED'
-            : item.kind === 'INTERESTED'
-              ? 'INTERESTED'
-              : 'REJECTED',
-      });
-    }
-    for (const wish of wishes) {
-      add(wish.accountId, {
-        contentId: wish.mediaId,
-        features: tasteFeatures(wish.media?.genres ?? []),
-        at: wish.createdAt,
-        kind: 'WISHED',
-      });
-    }
-
-    const shared = new Map<string, TasteSignal>();
-    for (const signal of [...signals.values()].flat()) {
-      const key = `${signal.kind}:${signal.contentId}:${signal.at.toISOString().slice(0, 10)}`;
-      if (!shared.has(key)) shared.set(key, signal);
-    }
-    const all = [...signals.values()].flat();
-    return {
-      signals,
-      shared: [...shared.values()],
-      rejected: new Set(
-        all.filter((item) => item.kind === 'REJECTED').map((item) => item.contentId),
-      ),
-      watched: new Set(all.filter((item) => item.kind === 'WATCHED').map((item) => item.contentId)),
-    };
   }
 
   private toCandidates(media: MediaEntity[], fresh: ReadonlyMap<string, LatestAvailability>) {

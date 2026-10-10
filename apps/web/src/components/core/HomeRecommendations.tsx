@@ -114,7 +114,7 @@ export function HomeRecommendations() {
           <h2 id="home-recommendations-title" className="section-title">
             오늘 뭐 볼까요?
           </h2>
-          <p>지금 인기 있는 영화와 드라마를 골라봤어요.</p>
+          <p>요즘 인기작 중 아직 안 본 작품을 내 기록에 맞춰 골라봤어요.</p>
         </div>
         <Link href="/spaces?view=recommend">
           함께 고르기 <span aria-hidden="true">›</span>

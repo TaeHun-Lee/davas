@@ -17,6 +17,7 @@ import {
 import { SpaceAccessService } from '../spaces/space-access.service';
 import { GroupRecommendationPool } from './group-recommendation-pool';
 import { GroupRecommendationsService } from './group-recommendations.service';
+import { TasteHistory } from './taste-history';
 
 type Row = Record<string, unknown> & { id?: string };
 
@@ -233,11 +234,15 @@ function setup(participantIds = ['u1', 'u2'], notifications?: object) {
   const service = new GroupRecommendationsService(
     database.repository(RecommendationSessionEntity),
     database.repository(RecommendationExposureEntity),
-    database.repository(RecommendationFeedbackEntity),
     database.repository(DiaryEntity),
     database.repository(WatchParticipantEntity),
-    database.repository(WatchReactionEntity),
-    database.repository(SpaceWishEntity),
+    new TasteHistory(
+      database.repository(DiaryEntity),
+      database.repository(WatchParticipantEntity),
+      database.repository(WatchReactionEntity),
+      database.repository(RecommendationFeedbackEntity),
+      database.repository(SpaceWishEntity),
+    ),
     availability as never,
     spaceAccess,
     database.dataSource as never,
