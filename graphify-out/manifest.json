@@ -425,23 +425,23 @@
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/recommendations.controller.ts": {
-    "mtime": 1791615311.5503118,
-    "ast_hash": "6b0d9b5841f889c84a72f82b879b4d9a",
+    "mtime": 1791630873.6121402,
+    "ast_hash": "ae65737a7bf3cd0089161f01784335a9",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/recommendations.module.ts": {
-    "mtime": 1791615165.7891757,
-    "ast_hash": "3a3c1a71daba47747121f9576ec598cd",
+    "mtime": 1791630875.1722388,
+    "ast_hash": "db2c5aaca508d31eecc58181c279ca2d",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/recommendations.service.spec.ts": {
-    "mtime": 1791615338.9403672,
-    "ast_hash": "5bc28e0fdec5eb0ccdbf1bf76de77900",
+    "mtime": 1791630937.6448038,
+    "ast_hash": "b493bb4746a63a0305dd3c4812448380",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/recommendations.service.ts": {
-    "mtime": 1791617643.6451383,
-    "ast_hash": "a3b97c029311526b86faa7e30abacaa4",
+    "mtime": 1791630860.8631487,
+    "ast_hash": "651ef70a788886a80bf96c49237ae123",
     "semantic_hash": ""
   },
   "apps/api/src/users/dto/delete-me.dto.ts": {
@@ -790,8 +790,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/recommendations.ts": {
-    "mtime": 1791617643.648139,
-    "ast_hash": "a561e48db1891d443c1d9d2fb4b01ca7",
+    "mtime": 1791630985.167957,
+    "ast_hash": "f93effc24dba490a0018e9b661037146",
     "semantic_hash": ""
   },
   "apps/web/src/lib/api/users.ts": {
@@ -1235,13 +1235,13 @@
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendations.service.spec.ts": {
-    "mtime": 1791623194.0398276,
-    "ast_hash": "15b8be9b1e768b30522125cade918add",
+    "mtime": 1791630770.8473494,
+    "ast_hash": "4bab9d09f3848ed4761cb6759ddd136c",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendations.service.ts": {
-    "mtime": 1791628594.091858,
-    "ast_hash": "18f40e7a761ba9a75613df333e848d05",
+    "mtime": 1791630763.8362746,
+    "ast_hash": "e7581ca7e7a3cc0575f4212726f459e9",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendations.dto.spec.ts": {
@@ -1345,8 +1345,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/core/HomeRecommendations.tsx": {
-    "mtime": 1791618034.5191479,
-    "ast_hash": "6c5f0d1f2501f3801fd42075d6f9ae3c",
+    "mtime": 1791630985.168957,
+    "ast_hash": "a0790760472544188406814692901442",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20260816_085906_\uae30\ub85d_\uc791\uc131_\ud654\uba74_uiux__\ubcc4\uc810_\uc2ac\ub77c\uc774\ub354__\ub4a4\ub85c\uac00\uae30_\ud750\ub984_\ubd84\uc11d.md": {
@@ -1660,8 +1660,8 @@
     "semantic_hash": ""
   },
   "docs/development.md": {
-    "mtime": 1791628786.4132695,
-    "ast_hash": "55de0db50fb5c06ab0fb5b4fc11c922d",
+    "mtime": 1791631197.1288116,
+    "ast_hash": "9d296fca3db80514b5292322747396e3",
     "semantic_hash": ""
   },
   "docs/operations.md": {
@@ -2217,6 +2217,21 @@
   "apps/api/src/database/migrations/media-popularity-migration.spec.ts": {
     "mtime": 1791628487.9481263,
     "ast_hash": "eb43f9cb65130694f7ae46f25a39ae0b",
+    "semantic_hash": ""
+  },
+  "apps/api/src/recommendations/personal-ranking.spec.ts": {
+    "mtime": 1791630937.5934553,
+    "ast_hash": "c7bd1c23be3233d09b1c13c6ba29ee8d",
+    "semantic_hash": ""
+  },
+  "apps/api/src/recommendations/personal-ranking.ts": {
+    "mtime": 1791630937.5749412,
+    "ast_hash": "0652ce2154a187a8fcafaa7c5929f34e",
+    "semantic_hash": ""
+  },
+  "apps/api/src/recommendations/taste-history.ts": {
+    "mtime": 1791630744.086562,
+    "ast_hash": "d3e27bb9638afa0958b4033588308145",
     "semantic_hash": ""
   }
 }
