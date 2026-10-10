@@ -5,6 +5,7 @@ import type {
   WatchReaction,
   WatchTimelineGroup,
 } from '../../lib/api/watch-events';
+import { monthDayLabel } from '../../lib/dates';
 
 const SOURCE_LABELS = {
   THEATER: '극장',
@@ -94,12 +95,6 @@ export function lockedReviewHint(role: BlindViewerRole) {
   return LOCKED_HINTS[role];
 }
 
-/** `2026-10-04` → `10월 4일`. Falls back to the raw value for anything unexpected. */
-export function watchedDayLabel(date: string) {
-  const match = /^\d{4}-(\d{2})-(\d{2})$/.exec(date);
-  return match ? `${Number(match[1])}월 ${Number(match[2])}일` : date;
-}
-
 /** `2025-10-06` → `2025년 10월 6일`, for a day in another year. */
 export function watchedFullDayLabel(date: string) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
@@ -125,7 +120,7 @@ export function watchSourceSummary(event: WatchEvent) {
  */
 export function watchCardSource(event: WatchEvent) {
   const source = event.source;
-  const parts = [watchedDayLabel(event.watchedDate)];
+  const parts = [monthDayLabel(event.watchedDate)];
   if (source) {
     parts.push(
       source.kind === 'OTT' && source.providerName

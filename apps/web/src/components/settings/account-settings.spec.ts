@@ -29,7 +29,7 @@ describe('account settings and recovery', () => {
     assert.match(auth, /계정 되살리기/);
     // The copy matches the 30-day grace period instead of calling deletion irreversible.
     assert.doesNotMatch(settings, /되돌릴 수 없어요/);
-    assert.match(settings, /30일 동안 삭제 대기 상태가 돼요/);
+    assert.match(settings, /\{ACCOUNT_DELETION_GRACE_DAYS\}일 동안 삭제 대기 상태가 돼요/);
     assert.doesNotMatch(settings, /role="dialog"/);
   });
 

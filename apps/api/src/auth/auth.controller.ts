@@ -9,6 +9,7 @@ import { ChangePasswordDto, RecoveryCodeDto, ResetPasswordDto } from './dto/pass
 import { SignupDto } from './dto/signup.dto';
 import { ACCESS_TOKEN_COOKIE, type AuthenticatedRequest } from './jwt-cookie-auth.guard';
 import { Public } from './public.decorator';
+import { accessCookieMaxAgeMs, accessCookieOptions } from './access-cookie';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -35,7 +36,7 @@ export class AuthController {
   @Public()
   @Post('logout')
   logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie(ACCESS_TOKEN_COOKIE, this.cookieOptions());
+    response.clearCookie(ACCESS_TOKEN_COOKIE, accessCookieOptions());
     return { ok: true };
   }
 
@@ -70,17 +71,8 @@ export class AuthController {
 
   private setAccessTokenCookie(response: Response, accessToken: string) {
     response.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
-      ...this.cookieOptions(),
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      ...accessCookieOptions(),
+      maxAge: accessCookieMaxAgeMs(),
     });
-  }
-
-  private cookieOptions() {
-    return {
-      httpOnly: true,
-      sameSite: 'lax' as const,
-      secure: process.env.COOKIE_SECURE === 'true',
-      path: '/',
-    };
   }
 }

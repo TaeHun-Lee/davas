@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, type CSSProperties, type ReactNode } from 'react';
-import { OTT_SERVICES as SUBSCRIPTION_SERVICES } from '@davas/shared';
+import { OTT_SERVICES as SUBSCRIPTION_SERVICES, WATCH_EPISODE_MAX } from '@davas/shared';
 import type { TheaterFormat } from '../../lib/api/watch-events';
 import { seriesProgressSummary } from './composer-draft';
 
@@ -257,7 +257,7 @@ export function SeriesProgress({
           type="number"
           inputMode="numeric"
           min={1}
-          max={2000}
+          max={WATCH_EPISODE_MAX}
           placeholder="모르면 비워 두세요"
           value={total ?? ''}
           onChange={(event) => {

@@ -1,3 +1,4 @@
+import { ACCOUNT_DELETION_GRACE_DAYS } from '@davas/shared';
 import { ConflictException, Injectable, Optional, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
@@ -10,6 +11,8 @@ import { watchPhotoPaths } from '../diaries/watch-photos.service';
 import { TransactionOutboxService } from '../outbox/transaction-outbox.service';
 import { validateProfileImageContent } from './profile-image-upload';
 import type { UpdateMeDto } from './dto/update-me.dto';
+import { uploadsRoot } from '../common/uploads-root';
+import { DAY_MS } from '../common/time';
 
 export type UserProfileResponse = {
   id: string;
@@ -28,8 +31,6 @@ export type ProfileImageFile = {
   buffer: Buffer;
   size: number;
 };
-
-const DELETION_GRACE_DAYS = 30;
 
 @Injectable()
 export class UsersService {
@@ -67,7 +68,7 @@ export class UsersService {
     const validated = validateProfileImageContent(file);
 
     const user = await this.loadUserById(userId);
-    const uploadRoot = process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads');
+    const uploadRoot = uploadsRoot();
     const imageDirectory = join(uploadRoot, 'profile-images');
     await mkdir(imageDirectory, { recursive: true });
     const filename = `${user.id}-${randomUUID()}.${validated.extension}`;
@@ -179,9 +180,7 @@ export class UsersService {
     if (!this.dataSource?.isInitialized) {
       throw new ConflictException('계정 삭제를 지금 처리할 수 없습니다.');
     }
-    const deletionScheduledFor = new Date(
-      now.getTime() + DELETION_GRACE_DAYS * 24 * 60 * 60 * 1000,
-    );
+    const deletionScheduledFor = new Date(now.getTime() + ACCOUNT_DELETION_GRACE_DAYS * DAY_MS);
     await this.dataSource.transaction(async (manager) => {
       const users = manager.getRepository(UserEntity);
       const locked = await users.findOne({
@@ -382,7 +381,7 @@ export class UsersService {
     const filename = profileImageUrl.split('/').at(-1);
     if (!filename || basename(filename) !== filename) return;
 
-    const uploadRoot = process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads');
+    const uploadRoot = uploadsRoot();
     const path = join(uploadRoot, 'profile-images', filename);
     try {
       await unlink(path);

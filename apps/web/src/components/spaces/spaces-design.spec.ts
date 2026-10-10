@@ -51,7 +51,8 @@ describe('spaces onboarding and member management UI', () => {
     assert.match(screen, /transferSpaceOwnership/);
     assert.match(screen, /leaveSpace/);
     assert.match(screen, /closeSpace/);
-    assert.match(screen, /\[2, 3, 4, 5\]/);
+    // One option per allowed size, from the shared space size rule.
+    assert.match(screen, /length: SPACE_MAX_MEMBERS - SPACE_MIN_MEMBERS \+ 1/);
     assert.match(screen, /activeSpace\.members\.length >= activeSpace\.maxMembers/);
     assert.match(invite, /acceptSpaceInvite\(token\)/);
     assert.match(invite, /localStorage\.setItem\(ACTIVE_SPACE_KEY, accepted\.spaceId\)/);

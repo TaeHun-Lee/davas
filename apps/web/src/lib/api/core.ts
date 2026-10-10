@@ -84,7 +84,9 @@ export function listRecords(scope: 'friends' | 'mine', filters: RecordFilters) {
   );
 }
 
-export const mediaTypeLabel = (value: MediaType) => (value === 'MOVIE' ? '영화' : '드라마');
+// A title whose type is not known yet reads as a movie, as the cards always did.
+export const mediaTypeLabel = (value: MediaType | null | undefined) =>
+  value === 'TV' ? '드라마' : '영화';
 export const viewingMethodLabel = (value: ViewingMethod | null) =>
   value === 'THEATER' ? '영화관' : value === 'OTT' ? 'OTT' : '본 곳 미입력';
 export const visibilityLabel = (value: DiaryVisibility) =>

@@ -9,7 +9,7 @@ import {
   type WatchReaction,
 } from '../../lib/api/watch-events';
 import { TimelineCard } from './SpaceWatchGroupCard';
-import { watchedDayLabel } from './space-watch-model';
+import { monthDayLabel } from '../../lib/dates';
 
 /** One person's reaction in the comparison panel, with the same blind and spoiler rules as the cards. */
 function ComparedReaction({ reaction, isMe }: { reaction: WatchReaction; isMe: boolean }) {
@@ -206,7 +206,7 @@ export function SpaceTimeline({
               {comparison.events.map((event) => (
                 <article key={event.watchEventId} className="rounded-xl bg-[#f7f9fd] p-3">
                   <p className="text-[12px] font-black text-[var(--blue-ink)]">
-                    {watchedDayLabel(event.watchedDate)} 감상
+                    {monthDayLabel(event.watchedDate)} 감상
                   </p>
                   {event.reactions.length ? (
                     <ul className="mt-2 space-y-2">

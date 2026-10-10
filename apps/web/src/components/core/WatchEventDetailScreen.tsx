@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { WATCH_HEADLINE_MAX_LENGTH, WATCH_REVIEW_MAX_LENGTH } from '@davas/shared';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { getMe } from '../../lib/api/auth';
-import { CoreApiError } from '../../lib/api/core';
+import { CoreApiError, mediaTypeLabel } from '../../lib/api/core';
 import { safeCoreReturnTo } from '../../lib/core-routes';
 import {
   deleteWatchEvent,
@@ -579,10 +579,7 @@ export function WatchEventDetailScreen({ id }: { id: string }) {
           <div className="min-w-0 flex-1">
             <h1 id="record-detail-title">{watchEvent.media.title}</h1>
             <p className="record-detail-type">
-              {[
-                watchEvent.media.mediaType === 'TV' ? '드라마' : '영화',
-                watchEvent.media.releaseYear,
-              ]
+              {[mediaTypeLabel(watchEvent.media.mediaType), watchEvent.media.releaseYear]
                 .filter(Boolean)
                 .join(' · ')}
             </p>

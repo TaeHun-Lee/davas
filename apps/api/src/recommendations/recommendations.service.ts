@@ -1,3 +1,4 @@
+import { DEFAULT_LANGUAGE, DEFAULT_REGION } from '@davas/shared';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { TmdbClient } from '../media/tmdb.client';
 
@@ -67,7 +68,7 @@ export class RecommendationsService {
     const response = await this.tmdbClient.trending({
       period: query.period === 'weekly' ? 'week' : 'day',
       page: query.page ?? 1,
-      language: query.language ?? 'ko-KR',
+      language: query.language ?? DEFAULT_LANGUAGE,
     });
 
     return { ...response, items: response.items.slice(0, limit) };
@@ -87,8 +88,8 @@ export class RecommendationsService {
     const response = await this.tmdbClient.discover({
       mediaType: preset.mediaType,
       page: query.page ?? 1,
-      language: query.language ?? 'ko-KR',
-      region: query.region ?? 'KR',
+      language: query.language ?? DEFAULT_LANGUAGE,
+      region: query.region ?? DEFAULT_REGION,
       withGenres: preset.genreIds,
       sortBy: preset.sortBy,
       voteCountGte: preset.voteCountGte,

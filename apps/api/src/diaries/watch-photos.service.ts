@@ -19,15 +19,17 @@ import {
   validateWatchPhoto,
   type UploadedPhotoFile,
 } from './watch-photo-processing';
+import { uploadsRoot } from '../common/uploads-root';
+import { DAY_MS, HOUR_MS } from '../common/time';
 
 export type WatchPhotoVariant = 'thumb' | 'display' | 'original';
 
 // Photos picked in the composer but never saved with a record are dropped after a day.
-const STAGED_PHOTO_TTL_MS = 24 * 60 * 60 * 1000;
+const STAGED_PHOTO_TTL_MS = DAY_MS;
 // Enough for one full composer (10) plus retries, without letting one account fill the disk.
 const MAX_STAGED_PHOTOS = 30;
 // Abandoned uploads are also swept hourly, not only on the same person's next upload.
-const SWEEP_INTERVAL_MS = 60 * 60 * 1000;
+const SWEEP_INTERVAL_MS = HOUR_MS;
 const SWEEP_BATCH_SIZE = 200;
 
 const ORIGINAL_EXTENSIONS: Record<string, string> = {
@@ -38,7 +40,7 @@ const ORIGINAL_EXTENSIONS: Record<string, string> = {
 
 /** Where a photo's original and resized copies live on disk. */
 export function watchPhotoPaths(storageKey: string, originalMimeType: string) {
-  const root = join(process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads'), 'watch-photos');
+  const root = join(uploadsRoot(), 'watch-photos');
   return {
     original: join(
       root,
@@ -298,7 +300,7 @@ export class WatchPhotosService implements OnModuleInit, OnModuleDestroy {
   }
 
   private root() {
-    return join(process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads'), 'watch-photos');
+    return join(uploadsRoot(), 'watch-photos');
   }
 
   private paths(storageKey: string, originalMimeType: string) {

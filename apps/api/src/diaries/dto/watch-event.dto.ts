@@ -1,12 +1,20 @@
 import {
+  SPACE_MAX_MEMBERS,
   THEATER_FORMATS,
+  type TheaterFormat,
+  WATCH_EPISODE_MAX,
   WATCH_HEADLINE_MAX_LENGTH,
   WATCH_MEMORY_NOTE_MAX_LENGTH,
   WATCH_PHOTO_MAX_COUNT,
+  WATCH_PLACE_MAX_LENGTH,
+  WATCH_PROVIDER_NAME_MAX_LENGTH,
+  WATCH_RATING_MAX,
+  WATCH_RATING_MIN,
+  WATCH_RATING_STEP,
   WATCH_REVIEW_MAX_LENGTH,
   WATCH_SEARCH_SCOPES,
+  WATCH_SEAT_MAX_LENGTH,
   WATCH_SOURCE_KINDS,
-  type TheaterFormat,
   type WatchParticipantStatus,
   type WatchSearchScope,
   type WatchSourceKind,
@@ -29,7 +37,10 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-const WATCH_RATINGS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+const WATCH_RATINGS = Array.from(
+  { length: Math.round((WATCH_RATING_MAX - WATCH_RATING_MIN) / WATCH_RATING_STEP) + 1 },
+  (_, index) => WATCH_RATING_MIN + index * WATCH_RATING_STEP,
+);
 
 export class WatchSourceDto {
   @IsIn(WATCH_SOURCE_KINDS)
@@ -37,12 +48,12 @@ export class WatchSourceDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(80)
+  @MaxLength(WATCH_PROVIDER_NAME_MAX_LENGTH)
   providerName?: string | null;
 
   @IsOptional()
   @IsString()
-  @MaxLength(160)
+  @MaxLength(WATCH_PLACE_MAX_LENGTH)
   placeText?: string | null;
 
   @IsOptional()
@@ -51,19 +62,19 @@ export class WatchSourceDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(40)
+  @MaxLength(WATCH_SEAT_MAX_LENGTH)
   seatText?: string | null;
 
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(2000)
+  @Max(WATCH_EPISODE_MAX)
   episodeWatched?: number | null;
 
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(2000)
+  @Max(WATCH_EPISODE_MAX)
   episodeTotal?: number | null;
 
   @IsOptional()
@@ -112,7 +123,7 @@ export class CreateWatchEventDto extends WatchReviewFieldsDto {
 
   @IsOptional()
   @IsArray()
-  @ArrayMaxSize(4)
+  @ArrayMaxSize(SPACE_MAX_MEMBERS - 1)
   @ArrayUnique()
   @IsUUID('4', { each: true })
   participantAccountIds?: string[];

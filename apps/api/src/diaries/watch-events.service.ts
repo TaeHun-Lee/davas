@@ -1,3 +1,4 @@
+import { isAfterSeoulToday, seoulToday } from '@davas/shared';
 import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
@@ -22,7 +23,6 @@ import {
   WatchSourceEntity,
 } from '../database/entities';
 import { NotificationsService } from '../notifications/notifications.service';
-import { isAfterSeoulToday, seoulToday } from '../common/seoul-date';
 import { TransactionOutboxService } from '../outbox/transaction-outbox.service';
 import { SpaceAccessService } from '../spaces/space-access.service';
 import type { WatchProgress, WatchSearchMatchField, WatchSearchResponse } from '@davas/shared';

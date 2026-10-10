@@ -1,3 +1,4 @@
+import { seoulToday } from '@davas/shared';
 import type { SpaceView } from '@davas/shared';
 import type { MediaDetail, SelectedMedia } from '../../lib/api/media';
 import { getWatchProgress, type WatchProgress } from '../../lib/api/memories';
@@ -33,19 +34,12 @@ export type Draft = {
   seriesPrefilledFor: string | null;
 };
 /** Today in Korea, as `YYYY-MM-DD`. */
-export const today = () =>
-  new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
 export const freshDraft = (): Draft => ({
   selected: null,
   sourceKind: null,
   providerName: '',
   placeText: '',
-  watchedDate: today(),
+  watchedDate: seoulToday(),
   rating: null,
   headline: '',
   content: '',

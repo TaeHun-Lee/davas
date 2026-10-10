@@ -1,11 +1,14 @@
 'use client';
 
+import { seoulToday } from '@davas/shared';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSpaceCalendar, type SpaceCalendar } from '../../lib/api/memories';
 import { AsyncState, Poster } from '../core/CoreUi';
 import { WatchPhoto } from '../core/WatchPhoto';
-import { monthDayLabel, monthGrid, seoulDay, seoulMonth, shiftMonth } from './memories-model';
+import { monthDayLabel } from '../../lib/dates';
+import { monthGrid, seoulMonth, shiftMonth } from './memories-model';
+import { mediaTypeLabel } from '../../lib/api/core';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const SOURCE_LABELS: Record<string, string> = {
@@ -19,7 +22,7 @@ const RETURN_TO = '/spaces/memories?view=calendar';
 /** A month of the space's shared records on a calendar; a day opens its records below. */
 export function SpaceCalendarView({ spaceId }: { spaceId: string }) {
   const thisMonth = seoulMonth();
-  const today = seoulDay();
+  const today = seoulToday();
   const [month, setMonth] = useState(thisMonth);
   const [data, setData] = useState<SpaceCalendar | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -155,7 +158,7 @@ export function SpaceCalendarView({ spaceId }: { spaceId: string }) {
                     <strong>{record.title}</strong>
                     <span>
                       {[
-                        record.mediaType === 'TV' ? '드라마' : '영화',
+                        mediaTypeLabel(record.mediaType),
                         record.sourceKind ? SOURCE_LABELS[record.sourceKind] : null,
                         record.isMine
                           ? '내 기록'

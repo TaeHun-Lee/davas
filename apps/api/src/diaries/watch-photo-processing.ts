@@ -1,3 +1,4 @@
+import { WATCH_PHOTO_MAX_BYTES } from '@davas/shared';
 import { BadRequestException } from '@nestjs/common';
 import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import sharp from 'sharp';
@@ -8,7 +9,7 @@ import {
 } from '../users/profile-image-upload';
 
 // Phone photos are usually 2-8MB; 15MB leaves room for large-sensor JPEGs.
-export const WATCH_PHOTO_MAX_BYTES = 15 * 1024 * 1024;
+export { WATCH_PHOTO_MAX_BYTES };
 // About 60 megapixels. Larger inputs are refused before decoding so one photo cannot exhaust
 // the Raspberry Pi's memory.
 const MAX_INPUT_PIXELS = 60_000_000;

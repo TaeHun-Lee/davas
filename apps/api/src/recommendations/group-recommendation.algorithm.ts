@@ -1,4 +1,4 @@
-import { RECOMMENDATION_MOOD_GENRES } from '@davas/shared';
+import { RECOMMENDATION_MOOD_GENRES, SPACE_MAX_MEMBERS, SPACE_MIN_MEMBERS } from '@davas/shared';
 
 export const GROUP_RECOMMENDATION_ALGORITHM_VERSION = 'group-content-v1-deterministic';
 export const DEFAULT_GROUP_LAMBDA = 0.6;
@@ -57,9 +57,9 @@ export type RankedCandidate = {
   diversityPenalty?: number;
 };
 
-const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
+export const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
 const normalized = (value: string) => value.trim().toLocaleLowerCase('en-US');
-const round = (value: number) => Number(value.toFixed(5));
+export const round = (value: number) => Number(value.toFixed(5));
 
 /**
  * The genres a mood or avoid tag stands for. A mood the web offers ("웃긴") stands for the
@@ -86,8 +86,10 @@ export function calculateGroupBase(
   lambda = DEFAULT_GROUP_LAMBDA,
   gamma = DEFAULT_GROUP_GAMMA,
 ) {
-  if (scores.length < 2 || scores.length > 5) {
-    throw new Error('Group scores require 2 to 5 participants');
+  if (scores.length < SPACE_MIN_MEMBERS || scores.length > SPACE_MAX_MEMBERS) {
+    throw new Error(
+      `Group scores require ${SPACE_MIN_MEMBERS} to ${SPACE_MAX_MEMBERS} participants`,
+    );
   }
   const mean = scores.reduce((total, value) => total + value, 0) / scores.length;
   const floor = Math.min(...scores);

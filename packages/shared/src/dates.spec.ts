@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { isAfterSeoulToday, seoulToday } from './seoul-date';
+import { isAfterSeoulToday, seoulToday } from './dates.js';
 
 describe('Korean calendar dates', () => {
   it('rolls over at midnight in Korea, not at midnight UTC', () => {

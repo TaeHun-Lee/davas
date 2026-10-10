@@ -1,4 +1,10 @@
-import { MEDIA_SEARCH_TYPES, type MediaSearchRequest, type MediaSearchType } from '@davas/shared';
+import {
+  DEFAULT_LANGUAGE,
+  DEFAULT_REGION,
+  MEDIA_SEARCH_TYPES,
+  type MediaSearchRequest,
+  type MediaSearchType,
+} from '@davas/shared';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
@@ -34,13 +40,13 @@ export class MediaSearchQueryDto implements MediaSearchRequest {
   @Max(500)
   page?: number = 1;
 
-  @ApiPropertyOptional({ default: 'ko-KR' })
+  @ApiPropertyOptional({ default: DEFAULT_LANGUAGE })
   @IsOptional()
   @IsString()
-  language?: string = 'ko-KR';
+  language?: string = DEFAULT_LANGUAGE;
 
-  @ApiPropertyOptional({ default: 'KR' })
+  @ApiPropertyOptional({ default: DEFAULT_REGION })
   @IsOptional()
   @IsString()
-  region?: string = 'KR';
+  region?: string = DEFAULT_REGION;
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { SEARCH_MIN_LENGTH, SPACE_MAX_MEMBERS, SPACE_MIN_MEMBERS } from '@davas/shared';
 import Link from 'next/link';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
@@ -56,7 +57,7 @@ export function FriendsScreen() {
     try {
       await action();
       await load();
-      if (q.trim().length >= 2) {
+      if (q.trim().length >= SEARCH_MIN_LENGTH) {
         setResults((await searchFriends(q)).items);
       }
     } catch {
@@ -67,7 +68,7 @@ export function FriendsScreen() {
   };
 
   const search = async () => {
-    if (q.trim().length < 2) {
+    if (q.trim().length < SEARCH_MIN_LENGTH) {
       say('두 글자 이상 입력해 주세요.');
       return;
     }
@@ -156,7 +157,9 @@ export function FriendsScreen() {
         </span>
         <span className="friend-record-search-copy">
           <strong>공유 공간</strong>
-          <small>2~5명이 함께 기록을 나누고, 같이 볼 작품을 골라요.</small>
+          <small>
+            {SPACE_MIN_MEMBERS}~{SPACE_MAX_MEMBERS}명이 함께 기록을 나누고, 같이 볼 작품을 골라요.
+          </small>
         </span>
         <span className="friend-record-search-arrow" aria-hidden="true">
           ›

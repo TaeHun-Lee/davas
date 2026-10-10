@@ -1,3 +1,4 @@
+import { ACCESS_TOKEN_COOKIE } from '@davas/shared';
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
@@ -5,7 +6,7 @@ import type { AuthenticatedUser } from '@davas/shared';
 import { AuthService } from './auth.service';
 import { IS_PUBLIC_KEY } from './public.decorator';
 
-export const ACCESS_TOKEN_COOKIE = 'davas_access_token';
+export { ACCESS_TOKEN_COOKIE };
 
 export type AuthenticatedRequest = Request & {
   user: AuthenticatedUser;

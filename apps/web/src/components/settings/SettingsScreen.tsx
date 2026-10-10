@@ -1,4 +1,12 @@
 'use client';
+
+import {
+  ACCOUNT_DELETION_GRACE_DAYS,
+  NICKNAME_MAX_LENGTH,
+  NICKNAME_MIN_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  seoulToday,
+} from '@davas/shared';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -76,7 +84,7 @@ export function SettingsScreen() {
     setBusy('export');
     setExportError('');
     try {
-      const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+      const day = seoulToday();
       saveJson(await exportMyData(), `davas-my-data-${day}.json`);
     } catch {
       setExportError('내 데이터를 내려받지 못했어요. 잠시 후 다시 시도해 주세요.');
@@ -150,8 +158,8 @@ export function SettingsScreen() {
           <span className="field-label">닉네임</span>
           <input
             className="text-input"
-            minLength={2}
-            maxLength={20}
+            minLength={NICKNAME_MIN_LENGTH}
+            maxLength={NICKNAME_MAX_LENGTH}
             value={nickname}
             onChange={(event) => setNickname(event.target.value)}
           />
@@ -159,7 +167,9 @@ export function SettingsScreen() {
         <button
           className="commit-button mt-4"
           disabled={
-            busy === 'save' || nickname.trim() === user.nickname || nickname.trim().length < 2
+            busy === 'save' ||
+            nickname.trim() === user.nickname ||
+            nickname.trim().length < NICKNAME_MIN_LENGTH
           }
           onClick={save}
         >
@@ -216,8 +226,9 @@ export function SettingsScreen() {
         <h2 className="section-title text-[var(--danger)]">위험 영역</h2>
         {/* The server keeps a 30-day grace period; the copy says so instead of "irreversible". */}
         <p className="page-description">
-          계정을 삭제하면 30일 동안 삭제 대기 상태가 돼요. 그동안 같은 이메일과 비밀번호로
-          로그인하면 되살릴 수 있고, 30일이 지나면 기록·사진·친구 연결이 영구 삭제돼요.
+          계정을 삭제하면 {ACCOUNT_DELETION_GRACE_DAYS}일 동안 삭제 대기 상태가 돼요. 그동안 같은
+          이메일과 비밀번호로 로그인하면 되살릴 수 있고, {ACCOUNT_DELETION_GRACE_DAYS}일이 지나면
+          기록·사진·친구 연결이 영구 삭제돼요.
         </p>
         <button className="danger-button mt-4 w-full" onClick={() => setDeleteOpen(true)}>
           계정 삭제
@@ -229,7 +240,8 @@ export function SettingsScreen() {
             계정을 삭제할까요?
           </h2>
           <p className="page-description">
-            30일 안에 다시 로그인하면 되살릴 수 있어요. 확인을 위해 지금 비밀번호를 입력해 주세요.
+            {ACCOUNT_DELETION_GRACE_DAYS}일 안에 다시 로그인하면 되살릴 수 있어요. 확인을 위해 지금
+            비밀번호를 입력해 주세요.
           </p>
           <label className="mt-4 block">
             <span className="field-label">비밀번호</span>
@@ -247,7 +259,7 @@ export function SettingsScreen() {
             </button>
             <button
               className="danger-button"
-              disabled={busy === 'delete' || password.length < 8}
+              disabled={busy === 'delete' || password.length < PASSWORD_MIN_LENGTH}
               onClick={remove}
             >
               계정 삭제

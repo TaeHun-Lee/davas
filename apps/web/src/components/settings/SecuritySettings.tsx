@@ -1,20 +1,14 @@
 'use client';
 
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '@davas/shared';
 import { useState } from 'react';
 import { changePassword, createRecoveryCode, type AuthenticatedUser } from '../../lib/api/auth';
+import { koreanDate } from '../../lib/dates';
 
 type Message = { tone: 'ok' | 'error'; text: string } | null;
 
 const errorText = (cause: unknown, fallback: string) =>
   cause instanceof Error && cause.message ? cause.message : fallback;
-
-const koreanDate = (iso: string) =>
-  new Intl.DateTimeFormat('ko-KR', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date(iso));
 
 /**
  * Changing the password, and the recovery code that resets a forgotten one. There is no mail,
@@ -103,13 +97,13 @@ export function SecuritySettings({
           />
         </label>
         <label className="block">
-          <span className="field-label">새 비밀번호 (8자 이상)</span>
+          <span className="field-label">새 비밀번호 ({PASSWORD_MIN_LENGTH}자 이상)</span>
           <input
             className="text-input"
             type="password"
             autoComplete="new-password"
-            minLength={8}
-            maxLength={100}
+            minLength={PASSWORD_MIN_LENGTH}
+            maxLength={PASSWORD_MAX_LENGTH}
             value={next}
             onChange={(event) => setNext(event.target.value)}
           />
@@ -129,7 +123,12 @@ export function SecuritySettings({
       </div>
       <button
         className="commit-button mt-4"
-        disabled={passwordBusy || current.length < 8 || next.length < 8 || next !== confirm}
+        disabled={
+          passwordBusy ||
+          current.length < PASSWORD_MIN_LENGTH ||
+          next.length < PASSWORD_MIN_LENGTH ||
+          next !== confirm
+        }
         onClick={savePassword}
       >
         {passwordBusy ? '바꾸는 중…' : '비밀번호 바꾸기'}
@@ -186,7 +185,7 @@ export function SecuritySettings({
             </button>
             <button
               className="primary-button"
-              disabled={codeBusy || codePassword.length < 8}
+              disabled={codeBusy || codePassword.length < PASSWORD_MIN_LENGTH}
               onClick={makeCode}
             >
               {codeBusy ? '만드는 중…' : '만들기'}

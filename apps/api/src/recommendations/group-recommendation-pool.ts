@@ -1,14 +1,15 @@
+import { DEFAULT_LANGUAGE, seoulToday } from '@davas/shared';
 import { Injectable, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, MoreThan, Not, Repository } from 'typeorm';
 import { mapWithConcurrency } from '../common/concurrency';
-import { seoulToday } from '../common/seoul-date';
 import { AvailabilityObservationEntity, MediaEntity } from '../database/entities';
 import { AvailabilityService } from '../media/availability.service';
 import { MediaSelectionService } from '../media/media-selection.service';
 import { SUBSCRIPTION_OFFER_TYPES } from '../media/ports/availability-provider.port';
 import { TmdbClient, type TmdbCatalogEntry } from '../media/tmdb.client';
 import { tagGenreNames } from './group-recommendation.algorithm';
+import { DAY_MS } from '../common/time';
 
 export type PoolRequest = {
   region: string;
@@ -41,9 +42,9 @@ const REFRESH_LIMIT = 24;
 // The most-voted unwatched titles looked at when choosing what to refresh.
 const SCAN_LIMIT = 250;
 // An observation older than this says nothing about where a title streams now.
-const KNOWN_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+const KNOWN_WINDOW_MS = 30 * DAY_MS;
 // TMDB's provider and genre lists barely change; one lookup a day per list is plenty.
-const CATALOG_TTL_MS = 24 * 60 * 60 * 1000;
+const CATALOG_TTL_MS = DAY_MS;
 
 const normalized = (value: string) => value.trim().toLocaleLowerCase('en-US');
 const tmdbType = (type: ContentType) => (type === 'TV' ? 'tv' : 'movie');
@@ -249,7 +250,7 @@ export class GroupRecommendationPool {
       request.services,
     );
     if (!providerIds.length) {
-      return this.tmdb!.trending({ period: 'week', page, language: 'ko-KR' });
+      return this.tmdb!.trending({ period: 'week', page, language: DEFAULT_LANGUAGE });
     }
     const genreKey = `genres:${tmdbType(type)}`;
     const loadGenres = () => this.tmdb!.genreCatalog(tmdbType(type));

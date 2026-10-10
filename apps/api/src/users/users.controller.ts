@@ -24,6 +24,7 @@ import { UpdateMeDto } from './dto/update-me.dto';
 import { PROFILE_IMAGE_UPLOAD_OPTIONS } from './profile-image-upload';
 import { UploadConcurrencyInterceptor } from './upload-concurrency.interceptor';
 import { type ProfileImageFile, UsersService } from './users.service';
+import { accessCookieOptions } from '../auth/access-cookie';
 
 @ApiTags('Users')
 @Controller('users')
@@ -84,11 +85,6 @@ export class UsersController {
   }
 
   private clearAccessCookie(response: Response) {
-    response.clearCookie(ACCESS_TOKEN_COOKIE, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.COOKIE_SECURE === 'true',
-      path: '/',
-    });
+    response.clearCookie(ACCESS_TOKEN_COOKIE, accessCookieOptions());
   }
 }

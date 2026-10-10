@@ -1,3 +1,4 @@
+import { DEFAULT_REGION } from '@davas/shared';
 import type { MediaType } from '@davas/shared';
 import { tmdbImageUrl } from './tmdb.mapper';
 
@@ -90,11 +91,14 @@ function firstRuntime(payload: TmdbDetailPayload, mediaType: MediaType) {
 function koreanCertification(payload: TmdbDetailPayload, mediaType: MediaType) {
   if (mediaType === 'TV') {
     return (
-      payload.content_ratings?.results?.find((result) => result.iso_3166_1 === 'KR')?.rating || null
+      payload.content_ratings?.results?.find((result) => result.iso_3166_1 === DEFAULT_REGION)
+        ?.rating || null
     );
   }
 
-  const korea = payload.release_dates?.results?.find((result) => result.iso_3166_1 === 'KR');
+  const korea = payload.release_dates?.results?.find(
+    (result) => result.iso_3166_1 === DEFAULT_REGION,
+  );
   return korea?.release_dates?.find((release) => release.certification)?.certification || null;
 }
 

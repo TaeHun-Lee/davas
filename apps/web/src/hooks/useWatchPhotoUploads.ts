@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { WATCH_PHOTO_MAX_COUNT } from '@davas/shared';
+import { WATCH_PHOTO_MAX_BYTES, WATCH_PHOTO_MAX_COUNT } from '@davas/shared';
 import { CoreApiError } from '../lib/api/core';
 import { photoSrc, uploadWatchPhoto, type WatchPhotoView } from '../lib/api/watch-events';
 
 export const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
 const ACCEPTED_TYPES = new Set(PHOTO_ACCEPT.split(','));
-const MAX_BYTES = 15 * 1024 * 1024;
 // The API processes at most two uploads per person at once and answers 429 to a third, so
 // the queue never sends more than that.
 export const MAX_PARALLEL_UPLOADS = 2;
@@ -153,7 +152,7 @@ export function createPhotoUploadQueue(
       const created = accepted.map((file): PhotoUploadItem => {
         const previewUrl = URL.createObjectURL(file);
         objectUrls.add(previewUrl);
-        const tooLarge = file.size > MAX_BYTES;
+        const tooLarge = file.size > WATCH_PHOTO_MAX_BYTES;
         return {
           key: `local-${++keySequence}`,
           status: tooLarge ? 'error' : 'queued',

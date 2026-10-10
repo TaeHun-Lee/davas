@@ -5,6 +5,27 @@ export type ViewingMethod = (typeof VIEWING_METHODS)[number];
 export const DIARY_VISIBILITIES = ['PRIVATE', 'FRIENDS', 'SELECTED'] as const;
 export type DiaryVisibility = (typeof DIARY_VISIBILITIES)[number];
 
+// Rules the API validates and the screens repeat, so both sides read the same number.
+export const NICKNAME_MIN_LENGTH = 2;
+export const NICKNAME_MAX_LENGTH = 20;
+export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_MAX_LENGTH = 100;
+/** A space holds 2 to 5 people, its owner included; a pick or a record stays within that. */
+export const SPACE_MIN_MEMBERS = 2;
+export const SPACE_MAX_MEMBERS = 5;
+export const SPACE_NAME_MAX_LENGTH = 80;
+/** A space invite link lasts a week unless the owner picks a shorter time. */
+export const SPACE_INVITE_MAX_HOURS = 168;
+/** Searches wait for at least this many characters. */
+export const SEARCH_MIN_LENGTH = 2;
+/** A deleted account can be restored for this many days before it is purged. */
+export const ACCOUNT_DELETION_GRACE_DAYS = 30;
+/** The HttpOnly cookie that carries the session. */
+export const ACCESS_TOKEN_COOKIE = 'davas_access_token';
+/** Catalog and "where can we watch it" lookups are for Korea, in Korean. */
+export const DEFAULT_REGION = 'KR';
+export const DEFAULT_LANGUAGE = 'ko-KR';
+
 export const CURRENT_TERMS_VERSION = '2026-07-12-dev';
 export const CURRENT_PRIVACY_VERSION = '2026-07-12-dev';
 
@@ -94,6 +115,16 @@ export type WatchParticipantView = {
   requestedAt?: string;
   respondedAt?: string | null;
 };
+/** Ratings go from 0.5 to 5 stars in half stars; no rating is also allowed. */
+export const WATCH_RATING_MIN = 0.5;
+export const WATCH_RATING_MAX = 5;
+export const WATCH_RATING_STEP = 0.5;
+export const WATCH_PROVIDER_NAME_MAX_LENGTH = 80;
+export const WATCH_PLACE_MAX_LENGTH = 160;
+export const WATCH_SEAT_MAX_LENGTH = 40;
+/** The highest episode number a drama record can say it reached. */
+export const WATCH_EPISODE_MAX = 2000;
+export const WATCH_PHOTO_MAX_BYTES = 15 * 1024 * 1024;
 export const WATCH_HEADLINE_MAX_LENGTH = 40;
 export const WATCH_REVIEW_MAX_LENGTH = 2000;
 export const WATCH_MEMORY_NOTE_MAX_LENGTH = 1000;
@@ -353,6 +384,7 @@ export type GroupRecommendationFeedbackResponse = {
   consensus: GroupRecommendationConsensus;
 };
 export * from './contracts.js';
+export * from './dates.js';
 
 /**
  * Korean OTT services people can say they subscribe to, with the provider names TMDB uses

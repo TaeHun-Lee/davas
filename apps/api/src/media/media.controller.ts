@@ -1,3 +1,4 @@
+import { DEFAULT_REGION } from '@davas/shared';
 import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -34,13 +35,13 @@ export class MediaController {
   @Get(':id/availability')
   @Throttle({ default: ROUTE_RATE_LIMITS.tmdbRead })
   availability(@Param('id') id: string, @Query() query: AvailabilityQueryDto) {
-    return this.availabilityService.getCurrent(id, query.region ?? 'KR');
+    return this.availabilityService.getCurrent(id, query.region ?? DEFAULT_REGION);
   }
 
   @Post(':id/availability/refresh')
   @Throttle({ default: ROUTE_RATE_LIMITS.tmdbSelection })
   refreshAvailability(@Param('id') id: string, @Query() query: AvailabilityQueryDto) {
-    return this.availabilityService.refresh(id, query.region ?? 'KR');
+    return this.availabilityService.refresh(id, query.region ?? DEFAULT_REGION);
   }
 
   @Get(':id')

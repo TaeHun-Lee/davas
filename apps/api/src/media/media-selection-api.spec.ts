@@ -69,7 +69,7 @@ describe('Media selection API contract', () => {
     assert.match(controllerSource, /@Post\(':id\/availability\/refresh'\)/);
     assert.match(controllerSource, /availabilityService/);
     assert.match(availabilityDtoSource, /region/);
-    assert.match(availabilityDtoSource, /default: 'KR'/);
+    assert.match(availabilityDtoSource, /default: DEFAULT_REGION/);
     assert.match(moduleSource, /AVAILABILITY_PROVIDER/);
     // Title search and detail call TmdbClient directly; there is no second metadata path.
     assert.doesNotMatch(moduleSource, /METADATA_PROVIDER/);

@@ -1,6 +1,6 @@
+import { ACCESS_TOKEN_COOKIE } from '@davas/shared';
 import { NextResponse, type NextRequest } from 'next/server';
 import { safeCoreReturnTo } from './lib/core-routes';
-const ACCESS_TOKEN_COOKIE = 'davas_access_token';
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const legacy = pathname.startsWith('/profile')

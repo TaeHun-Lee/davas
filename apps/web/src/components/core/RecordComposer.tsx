@@ -3,12 +3,16 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
+  type MediaType,
+  seoulToday,
+  type SpaceView,
   WATCH_HEADLINE_MAX_LENGTH,
   WATCH_MEMORY_NOTE_MAX_LENGTH,
   WATCH_PHOTO_MAX_COUNT,
+  WATCH_PLACE_MAX_LENGTH,
+  WATCH_PROVIDER_NAME_MAX_LENGTH,
   WATCH_REVIEW_MAX_LENGTH,
-  type MediaType,
-  type SpaceView,
+  WATCH_SEAT_MAX_LENGTH,
 } from '@davas/shared';
 import { getMe } from '../../lib/api/auth';
 import {
@@ -54,9 +58,9 @@ import {
   continueSeries,
   draftWithDefaults,
   readSavedDraft,
-  today,
   type Draft,
 } from './composer-draft';
+import { mediaTypeLabel } from '../../lib/api/core';
 
 const sourceLabels: Record<WatchSourceKind, string> = {
   THEATER: '극장',
@@ -438,7 +442,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
                       .join(' · ')}
                   </p>
                   <span className="mt-2 inline-flex rounded-full bg-[var(--blue-soft)] px-2 py-1 text-xs font-bold text-[var(--blue-ink)]">
-                    {item.mediaType === 'MOVIE' ? '영화' : '드라마'}
+                    {mediaTypeLabel(item.mediaType)}
                   </span>
                   <button
                     className="secondary-button mt-3 w-full"
@@ -515,7 +519,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
       <span className="field-label">{theater ? '극장 이름 (선택)' : '장소 (선택)'}</span>
       <input
         className="date-input"
-        maxLength={160}
+        maxLength={WATCH_PLACE_MAX_LENGTH}
         placeholder={theater ? '예: 대한극장 3관' : '예: 우리 집 거실'}
         value={draft.placeText}
         onChange={(event) => setDraft({ ...draft, placeText: event.target.value })}
@@ -644,7 +648,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
           <input
             className="date-input"
             type="date"
-            max={today()}
+            max={seoulToday()}
             value={draft.watchedDate}
             onChange={(event) => setDraft({ ...draft, watchedDate: event.target.value })}
           />
@@ -682,7 +686,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
                     <span className="field-label">좌석 (선택)</span>
                     <input
                       className="date-input"
-                      maxLength={40}
+                      maxLength={WATCH_SEAT_MAX_LENGTH}
                       placeholder="예: H열 12, 13"
                       value={draft.seatText}
                       onChange={(event) => setDraft({ ...draft, seatText: event.target.value })}
@@ -709,7 +713,7 @@ export function RecordComposer({ editId }: { editId?: string }) {
                         <span className="sr-only">다른 OTT 서비스 이름</span>
                         <input
                           className="date-input"
-                          maxLength={80}
+                          maxLength={WATCH_PROVIDER_NAME_MAX_LENGTH}
                           placeholder="목록에 없으면 직접 입력"
                           value={
                             OTT_SERVICES.includes(draft.providerName) ? '' : draft.providerName

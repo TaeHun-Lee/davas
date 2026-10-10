@@ -1,5 +1,11 @@
 'use client';
-import { CURRENT_PRIVACY_VERSION, CURRENT_TERMS_VERSION } from '@davas/shared';
+import {
+  CURRENT_PRIVACY_VERSION,
+  CURRENT_TERMS_VERSION,
+  NICKNAME_MAX_LENGTH,
+  NICKNAME_MIN_LENGTH,
+  PASSWORD_MIN_LENGTH,
+} from '@davas/shared';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -9,6 +15,7 @@ import { getApiBaseUrl } from '../../lib/api/base-url';
 import { CoreApiError } from '../../lib/api/core';
 import { cancelAccountDeletion } from '../../lib/api/users';
 import { safeCoreReturnTo } from '../../lib/core-routes';
+import { koreanDate } from '../../lib/dates';
 const safeReturn = (value: string | null, fallback: string) => safeCoreReturnTo(value, fallback);
 async function post(path: string, body: object) {
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
@@ -28,15 +35,6 @@ async function post(path: string, body: object) {
 }
 const errorText = (cause: unknown, fallback: string) =>
   cause instanceof Error && cause.message ? cause.message : fallback;
-
-/** `2026-11-06T…` → `2026년 11월 6일`, in Korea. */
-const koreanDate = (iso: string) =>
-  new Intl.DateTimeFormat('ko-KR', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date(iso));
 
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
@@ -88,6 +86,7 @@ function Field({
   name,
   type = 'text',
   minLength,
+  maxLength,
   autoComplete,
   inputClassName = '',
 }: {
@@ -95,6 +94,7 @@ function Field({
   name: string;
   type?: string;
   minLength?: number;
+  maxLength?: number;
   autoComplete?: string;
   inputClassName?: string;
 }) {
@@ -110,6 +110,7 @@ function Field({
           name={name}
           type={password && visible ? 'text' : type}
           minLength={minLength}
+          maxLength={maxLength}
           autoComplete={autoComplete}
         />
         {password ? (
@@ -222,7 +223,7 @@ export function LoginCard() {
           label="비밀번호"
           name="password"
           type="password"
-          minLength={8}
+          minLength={PASSWORD_MIN_LENGTH}
           autoComplete="current-password"
         />
         {error ? (
@@ -318,17 +319,17 @@ export function ResetPasswordCard() {
           inputClassName="recovery-code-input"
         />
         <Field
-          label="새 비밀번호 (8자 이상)"
+          label={`새 비밀번호 (${PASSWORD_MIN_LENGTH}자 이상)`}
           name="newPassword"
           type="password"
-          minLength={8}
+          minLength={PASSWORD_MIN_LENGTH}
           autoComplete="new-password"
         />
         <Field
           label="새 비밀번호 확인"
           name="newPasswordConfirm"
           type="password"
-          minLength={8}
+          minLength={PASSWORD_MIN_LENGTH}
           autoComplete="new-password"
         />
         {error ? (
@@ -449,13 +450,28 @@ export function SignupCard() {
       ) : null}
       {validated ? (
         <form className="mt-6 space-y-4" onSubmit={submit}>
-          <Field label="닉네임 (2~20자)" name="nickname" minLength={2} />
+          <Field
+            label={`닉네임 (${NICKNAME_MIN_LENGTH}~${NICKNAME_MAX_LENGTH}자)`}
+            name="nickname"
+            minLength={NICKNAME_MIN_LENGTH}
+            maxLength={NICKNAME_MAX_LENGTH}
+          />
           <p className="-mt-2 text-xs font-semibold text-[var(--muted)]">
             친구 기록 카드에 이 이름이 보여요.
           </p>
           <Field label="이메일" name="email" type="email" />
-          <Field label="비밀번호 (8자 이상)" name="password" type="password" minLength={8} />
-          <Field label="비밀번호 확인" name="passwordConfirm" type="password" minLength={8} />
+          <Field
+            label={`비밀번호 (${PASSWORD_MIN_LENGTH}자 이상)`}
+            name="password"
+            type="password"
+            minLength={PASSWORD_MIN_LENGTH}
+          />
+          <Field
+            label="비밀번호 확인"
+            name="passwordConfirm"
+            type="password"
+            minLength={PASSWORD_MIN_LENGTH}
+          />
           <label className="flex min-h-11 items-start gap-3 text-sm font-semibold leading-6 text-[var(--text)]">
             <input required type="checkbox" className="mt-1 h-5 w-5 accent-[var(--blue)]" />
             <span>

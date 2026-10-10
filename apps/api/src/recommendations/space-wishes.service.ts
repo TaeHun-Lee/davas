@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  DEFAULT_REGION,
   ottServiceForProvider,
   type OttServiceKey,
   type SpaceWishItem,
@@ -16,7 +17,6 @@ import { SUBSCRIPTION_OFFER_TYPES } from '../media/ports/availability-provider.p
 import { NotificationsService } from '../notifications/notifications.service';
 import { SpaceAccessService } from '../spaces/space-access.service';
 
-const REGION = 'KR';
 // TMDB lookups per list request. Fresh observations are cached for hours, so a list fills in
 // over a few visits instead of firing one request per title every time.
 const AVAILABILITY_REFRESH_BUDGET = 8;
@@ -79,7 +79,7 @@ export class SpaceWishesService {
 
     let refreshesLeft = AVAILABILITY_REFRESH_BUDGET;
     const current = await this.availability
-      .getCurrentMany([...byMedia.keys()], REGION)
+      .getCurrentMany([...byMedia.keys()], DEFAULT_REGION)
       .catch(() => new Map<string, AvailabilityResponse>());
     const items = await mapWithConcurrency([...byMedia.values()], 4, async (group) => {
       const media = group[0].media!;
@@ -256,7 +256,7 @@ export class SpaceWishesService {
         offers: [],
       };
       if ((current.state === 'UNKNOWN' || current.state === 'EXPIRED') && mayRefresh()) {
-        current = await this.availability.refresh(mediaId, REGION);
+        current = await this.availability.refresh(mediaId, DEFAULT_REGION);
       }
       const services = [
         ...new Set(

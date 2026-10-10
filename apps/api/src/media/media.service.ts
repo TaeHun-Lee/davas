@@ -1,3 +1,4 @@
+import { DEFAULT_LANGUAGE, DEFAULT_REGION } from '@davas/shared';
 import type { MediaDetail, MyMediaDiary } from '@davas/shared';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -36,8 +37,8 @@ export class MediaService {
       query: normalizedQuery,
       type: query.type ?? 'multi',
       page: query.page ?? 1,
-      language: query.language ?? 'ko-KR',
-      region: query.region ?? 'KR',
+      language: query.language ?? DEFAULT_LANGUAGE,
+      region: query.region ?? DEFAULT_REGION,
     } as const;
     return this.tmdbClient.search(input);
   }
@@ -73,7 +74,7 @@ export class MediaService {
       detail = await this.tmdbClient.detail({
         externalId: media.externalId,
         mediaType: media.mediaType,
-        language: 'ko-KR',
+        language: DEFAULT_LANGUAGE,
       });
     } catch {
       return {

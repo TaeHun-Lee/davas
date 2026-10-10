@@ -1,3 +1,4 @@
+import { DEFAULT_REGION, SPACE_MAX_MEMBERS, SPACE_MIN_MEMBERS } from '@davas/shared';
 import type {
   GroupRecommendationConsensus,
   GroupRecommendationSessionRequest,
@@ -64,8 +65,10 @@ export function buildGroupRecommendationRequest(
   const avoidTags = unique(draft.avoidTagsText.split(','));
 
   if (!draft.spaceId) throw new Error('추천을 시작할 공간을 선택해 주세요.');
-  if (participants.length < 2 || participants.length > 5) {
-    throw new Error('추천 참여자는 2명에서 5명까지 선택해 주세요.');
+  if (participants.length < SPACE_MIN_MEMBERS || participants.length > SPACE_MAX_MEMBERS) {
+    throw new Error(
+      `추천 참여자는 ${SPACE_MIN_MEMBERS}명에서 ${SPACE_MAX_MEMBERS}명까지 선택해 주세요.`,
+    );
   }
   if (!services.length) throw new Error('하나 이상의 시청 경로를 선택해 주세요.');
   if (!contentTypes.length) throw new Error('영화 또는 드라마를 하나 이상 선택해 주세요.');
@@ -82,7 +85,7 @@ export function buildGroupRecommendationRequest(
   return {
     spaceId: draft.spaceId,
     participantAccountIds: participants,
-    region: draft.region.trim().toUpperCase() || 'KR',
+    region: draft.region.trim().toUpperCase() || DEFAULT_REGION,
     services,
     contentTypes,
     ...(runtimeMin !== undefined || runtimeMax !== undefined
@@ -130,7 +133,7 @@ export function requestFromSession(
   return {
     spaceId: session.spaceId,
     participantAccountIds: session.participantAccountIds,
-    region: typeof constraints.region === 'string' ? constraints.region : 'KR',
+    region: typeof constraints.region === 'string' ? constraints.region : DEFAULT_REGION,
     services,
     contentTypes,
     ...(minMinutes !== undefined || maxMinutes !== undefined

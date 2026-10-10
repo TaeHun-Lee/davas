@@ -16,10 +16,10 @@ import { WishPickCard } from '../spaces/WishPickCard';
 import { activeMembers } from '../spaces/space-ui';
 import {
   pendingConfirmations,
-  watchedDayLabel,
   watchSourceSummary,
   withMyParticipation,
 } from '../spaces/space-watch-model';
+import { monthDayLabel } from '../../lib/dates';
 
 const HOME_TIMELINE_LIMIT = 5;
 
@@ -224,7 +224,7 @@ function PendingConfirmation({
       <p className="space-confirm-eyebrow">확인이 필요해요</p>
       <h2 id={titleId}>‘{event.media.title}’ 함께 보셨나요?</h2>
       <p>
-        {author}님이 {watchedDayLabel(event.watchedDate)}
+        {author}님이 {monthDayLabel(event.watchedDate)}
         {source ? ` · ${source}` : ''} 기록에 나를 함께 본 사람으로 넣었어요. 맞다면 내 별점과
         리뷰도 남길 수 있어요.
       </p>

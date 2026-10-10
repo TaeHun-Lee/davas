@@ -106,7 +106,7 @@ describe('record experience screens', () => {
     const photo = source('components/core/WatchPhoto.tsx');
     const detail = source('components/core/WatchEventDetailScreen.tsx');
     const css = source('app/globals.css');
-    assert.match(gallery, /watchedDayLabel\(watchedDate\)/);
+    assert.match(gallery, /monthDayLabel\(watchedDate\)/);
     assert.match(gallery, /좌우로 넘겨 보세요/);
     assert.match(detail, /uploaderLabel=\{uploaderLabel\}/);
     assert.match(detail, /'내가 올림'/);

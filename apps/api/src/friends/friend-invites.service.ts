@@ -3,6 +3,7 @@ import { ConflictException, HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { FriendInviteEntity, FriendshipEntity, UserEntity } from '../database/entities';
+import { DAY_MS } from '../common/time';
 
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 const error = (statusCode: number, code: string, message: string) =>
@@ -26,7 +27,7 @@ export class FriendInvitesService {
 
   async create(inviterId: string) {
     const token = randomBytes(32).toString('base64url');
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 7 * DAY_MS);
     await this.invites.save(
       this.invites.create({
         tokenHash: hashToken(token),

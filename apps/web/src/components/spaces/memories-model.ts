@@ -1,4 +1,5 @@
 import type { SpaceMemories } from '@davas/shared';
+import { monthDayLabel } from '../../lib/dates';
 
 /** This month in Korea, as `2026-10`. */
 export const seoulMonth = (now = new Date()) =>
@@ -6,16 +7,6 @@ export const seoulMonth = (now = new Date()) =>
     .format(now)
     .slice(0, 7);
 
-/** Today in Korea, as `2026-10-07`. */
-export const seoulDay = (now = new Date()) =>
-  new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(now);
-
-/** `2026-10` moved by whole months. */
 export function shiftMonth(month: string, offset: number) {
   const [year, monthNumber] = month.split('-').map(Number);
   const date = new Date(Date.UTC(year, monthNumber - 1 + offset, 1));
@@ -34,9 +25,6 @@ export function monthGrid(month: string): Array<string | null> {
 }
 
 /** `2026-03-01` → `3월 1일`. */
-export const monthDayLabel = (date: string) =>
-  `${Number(date.slice(5, 7))}월 ${Number(date.slice(8, 10))}일`;
-
 export type RecapLine = { label: string; value: string };
 
 /**

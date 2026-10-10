@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { photoSrc, type WatchPhotoView } from '../../lib/api/watch-events';
-import { watchedDayLabel } from '../spaces/space-watch-model';
+import { monthDayLabel } from '../../lib/dates';
 import { WatchPhoto } from './WatchPhoto';
 
 type GalleryProps = {
@@ -223,7 +223,7 @@ function PhotoViewer({
       <div className="photo-viewer-caption">
         <p className="photo-viewer-title">
           {title}
-          {watchedDate ? ` · ${watchedDayLabel(watchedDate)}` : ''}
+          {watchedDate ? ` · ${monthDayLabel(watchedDate)}` : ''}
         </p>
         {meta ? <p className="photo-viewer-meta">{meta}</p> : null}
         {open && photos.length > 1 ? (

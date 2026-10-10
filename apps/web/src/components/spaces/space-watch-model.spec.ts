@@ -16,10 +16,10 @@ import {
   watchCardSource,
   watchedFullDayLabel,
   watchSourceLabel,
-  watchedDayLabel,
   watchSourceSummary,
   withMyParticipation,
 } from './space-watch-model';
+import { monthDayLabel } from '../../lib/dates';
 
 const reaction = (overrides: Partial<WatchReaction> & { accountId: string }): WatchReaction => ({
   id: `reaction-${overrides.accountId}`,
@@ -64,8 +64,8 @@ const event = (overrides: Partial<WatchEvent> = {}): WatchEvent => ({
 
 describe('space timeline card model', () => {
   it('formats the watch day and where it was watched', () => {
-    assert.equal(watchedDayLabel('2026-10-04'), '10월 4일');
-    assert.equal(watchedDayLabel('not-a-date'), 'not-a-date');
+    assert.equal(monthDayLabel('2026-10-04'), '10월 4일');
+    assert.equal(monthDayLabel('not-a-date'), 'not-a-date');
     assert.equal(watchSourceSummary(event()), '극장 · CGV 용산 IMAX');
     assert.equal(
       watchSourceSummary(event({ source: { kind: 'OTT', providerName: '넷플릭스' } })),

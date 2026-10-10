@@ -1,3 +1,4 @@
+import { SPACE_INVITE_MAX_HOURS, SPACE_MAX_MEMBERS } from '@davas/shared';
 import { createHash, randomBytes } from 'node:crypto';
 import type { SpaceInviteInspection, SpaceView } from '@davas/shared';
 import {
@@ -15,6 +16,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { TransactionOutboxService } from '../outbox/transaction-outbox.service';
 import { SpaceAccessService } from './space-access.service';
 import { CreateSpaceDto, CreateSpaceInviteDto } from './spaces.dto';
+import { HOUR_MS } from '../common/time';
 
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 const response = (statusCode: number, code: string, message: string) => ({
@@ -47,7 +49,7 @@ export class SpacesService {
         spaces.create({
           name: dto.name.trim(),
           status: 'ACTIVE',
-          maxMembers: dto.maxMembers ?? 5,
+          maxMembers: dto.maxMembers ?? SPACE_MAX_MEMBERS,
           ownerAccountId: accountId,
           closedAt: null,
         }),
@@ -106,7 +108,9 @@ export class SpacesService {
     return this.dataSource.transaction(async (manager) => {
       await this.ownerMembershipOrNotFound(manager, spaceId, accountId);
       const token = randomBytes(32).toString('base64url');
-      const expiresAt = new Date(Date.now() + (dto.expiresInHours ?? 168) * 60 * 60 * 1000);
+      const expiresAt = new Date(
+        Date.now() + (dto.expiresInHours ?? SPACE_INVITE_MAX_HOURS) * HOUR_MS,
+      );
       const invites = manager.getRepository(SpaceInviteEntity);
       const invite = await invites.save(
         invites.create({
@@ -161,7 +165,7 @@ export class SpacesService {
       relations: { account: true },
       order: { joinedAt: 'ASC' },
     });
-    const max = Math.min(invite.space.maxMembers, 5);
+    const max = Math.min(invite.space.maxMembers, SPACE_MAX_MEMBERS);
     // The link may travel further than the person it was for: members show only as a count
     // and the first letter of each nickname, owner first.
     const initials = [...members]
@@ -215,7 +219,7 @@ export class SpacesService {
       const activeMemberCount = await memberships.count({
         where: { spaceId: space.id, status: 'ACTIVE' },
       });
-      if (activeMemberCount >= space.maxMembers || activeMemberCount >= 5) {
+      if (activeMemberCount >= space.maxMembers || activeMemberCount >= SPACE_MAX_MEMBERS) {
         throw new ConflictException(response(409, 'SPACE_FULL', '공간 정원이 가득 찼어요.'));
       }
 

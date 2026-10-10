@@ -1,3 +1,4 @@
+import { WATCH_RATING_MAX, WATCH_RATING_MIN, WATCH_RATING_STEP } from '@davas/shared';
 function RatingStar({ fillPercent }: { fillPercent: number }) {
   return (
     <span className="watch-rating-star" aria-hidden="true">
@@ -20,7 +21,7 @@ export function WatchRatingControl({
   allowEmpty?: boolean;
   name?: string;
 }) {
-  const sliderValue = value ?? (allowEmpty ? 0 : 0.5);
+  const sliderValue = value ?? (allowEmpty ? 0 : WATCH_RATING_MIN);
 
   const updateValue = (nextValue: number) => {
     onChange(allowEmpty && nextValue === 0 ? null : nextValue);
@@ -46,9 +47,9 @@ export function WatchRatingControl({
         type="range"
         id={name}
         name={name}
-        min={allowEmpty ? 0 : 0.5}
-        max={5}
-        step={0.5}
+        min={allowEmpty ? 0 : WATCH_RATING_MIN}
+        max={WATCH_RATING_MAX}
+        step={WATCH_RATING_STEP}
         value={sliderValue}
         aria-label="별점 슬라이더"
         aria-valuetext={value === null ? '별점 안 남김' : `5점 만점에 ${value.toFixed(1)}점`}

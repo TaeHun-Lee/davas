@@ -1,3 +1,4 @@
+import { DEFAULT_LANGUAGE } from '@davas/shared';
 import { BadGatewayException, Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -65,7 +66,7 @@ export class MediaSelectionService {
     const detail = await this.tmdbClient.detail({
       externalId: selection.externalId,
       mediaType: selection.mediaType,
-      language: 'ko-KR',
+      language: DEFAULT_LANGUAGE,
     });
     if (
       detail.externalProvider !== selection.externalProvider ||

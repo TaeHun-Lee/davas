@@ -2,9 +2,12 @@
 
 import Link from 'next/link';
 import {
+  DEFAULT_REGION,
   OTT_SERVICES,
   ottProviderNames,
   RECOMMENDATION_MOODS,
+  SPACE_MAX_MEMBERS,
+  SPACE_MIN_MEMBERS,
   type SpaceView,
 } from '@davas/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -17,6 +20,7 @@ import {
   FEEDBACK_OPTIONS,
   recommendationReasonText,
 } from './group-recommendation-model';
+import { mediaTypeLabel } from '../../lib/api/core';
 
 const ottLabel = (key: string) => OTT_SERVICES.find((service) => service.key === key)?.label ?? key;
 
@@ -47,7 +51,7 @@ export function GroupRecommendationPanel({
 }: GroupRecommendationPanelProps) {
   const group = useGroupRecommendations(space);
   const [participants, setParticipants] = useState<string[]>([]);
-  const region = 'KR';
+  const region = DEFAULT_REGION;
   // Selected OTT_SERVICES keys; the request sends the TMDB provider names behind them.
   const [services, setServices] = useState<string[]>(
     defaultServices.length ? defaultServices : ['netflix'],
@@ -217,7 +221,7 @@ export function GroupRecommendationPanel({
                   aria-pressed={selected}
                   // The person asking is always in it.
                   aria-disabled={isMe || undefined}
-                  disabled={!isMe && !selected && participants.length >= 5}
+                  disabled={!isMe && !selected && participants.length >= SPACE_MAX_MEMBERS}
                   onClick={() => {
                     if (isMe) return;
                     setParticipants((current) => toggleValue(current, member.accountId, !selected));
@@ -232,9 +236,9 @@ export function GroupRecommendationPanel({
               );
             })}
           </div>
-          {activeMembers.length < 2 ? (
+          {activeMembers.length < SPACE_MIN_MEMBERS ? (
             <p className="choose-warning">
-              추천을 시작하려면 공간에 활성 구성원이 2명 이상 필요해요.
+              추천을 시작하려면 공간에 활성 구성원이 {SPACE_MIN_MEMBERS}명 이상 필요해요.
             </p>
           ) : null}
         </fieldset>
@@ -389,7 +393,7 @@ export function GroupRecommendationPanel({
         ) : null}
         <button
           type="submit"
-          disabled={group.requestStatus === 'loading' || activeMembers.length < 2}
+          disabled={group.requestStatus === 'loading' || activeMembers.length < SPACE_MIN_MEMBERS}
           className="primary-button choose-submit"
         >
           {group.requestStatus === 'loading'
@@ -542,7 +546,7 @@ export function GroupRecommendationPanel({
                               {item.content.title || '제목 정보 없음'}
                             </h4>
                             <p className="mt-1 text-[12px] font-bold text-[var(--muted)]">
-                              {item.content.mediaType === 'TV' ? '드라마' : '영화'}
+                              {mediaTypeLabel(item.content.mediaType)}
                               {item.content.runtime ? ` · ${item.content.runtime}분` : ''}
                             </p>
                           </div>

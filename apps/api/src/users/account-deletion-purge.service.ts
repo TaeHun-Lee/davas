@@ -1,7 +1,8 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { HOUR_MS } from '../common/time';
 
-const PURGE_INTERVAL_MS = 60 * 60 * 1000;
+const PURGE_INTERVAL_MS = HOUR_MS;
 
 /**
  * Finishes account deletions whose 30-day grace period has passed: once at start-up and then

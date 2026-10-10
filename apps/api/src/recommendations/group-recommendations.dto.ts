@@ -1,12 +1,14 @@
 import { Type } from 'class-transformer';
 import {
+  type GroupRecommendationDecisionRequest,
+  type GroupRecommendationFeedbackRequest,
+  type GroupRecommendationSessionRequest,
   MEDIA_TYPES,
   RECOMMENDATION_DECISION_RULES,
   RECOMMENDATION_FEEDBACK_KINDS,
   RECOMMENDATION_REWATCH_POLICIES,
-  type GroupRecommendationDecisionRequest,
-  type GroupRecommendationFeedbackRequest,
-  type GroupRecommendationSessionRequest,
+  SPACE_MAX_MEMBERS,
+  SPACE_MIN_MEMBERS,
 } from '@davas/shared';
 import {
   ArrayMaxSize,
@@ -55,8 +57,8 @@ export class CreateRecommendationSessionDto implements GroupRecommendationSessio
   spaceId!: string;
 
   @IsArray()
-  @ArrayMinSize(2)
-  @ArrayMaxSize(5)
+  @ArrayMinSize(SPACE_MIN_MEMBERS)
+  @ArrayMaxSize(SPACE_MAX_MEMBERS)
   @ArrayUnique()
   @IsUUID('4', { each: true })
   participantAccountIds!: string[];
@@ -109,7 +111,7 @@ export class CreateRecommendationSessionDto implements GroupRecommendationSessio
   @ValidateIf((value: CreateRecommendationSessionDto) => value.decisionRule === 'MINIMUM')
   @IsInt()
   @Min(1)
-  @Max(5)
+  @Max(SPACE_MAX_MEMBERS)
   minimumApprovals?: number;
 }
 

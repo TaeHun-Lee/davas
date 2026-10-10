@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { SpaceMemories } from '@davas/shared';
-import { monthDayLabel, monthGrid, recapLines, seoulMonth, shiftMonth } from './memories-model';
+import { monthDayLabel } from '../../lib/dates';
+import { monthGrid, recapLines, seoulMonth, shiftMonth } from './memories-model';
 
 describe('calendar and year-end card helpers', () => {
   it('lays a month out from Sunday and steps across years', () => {

@@ -1,3 +1,4 @@
+import { DEFAULT_LANGUAGE } from '@davas/shared';
 import type {
   MediaDetail,
   MediaSearchResponse,
@@ -21,7 +22,7 @@ export async function searchMedia({
   query,
   type = 'multi',
   page = 1,
-  language = 'ko-KR',
+  language = DEFAULT_LANGUAGE,
 }: {
   query: string;
   type?: 'movie' | 'tv' | 'multi';

@@ -1,5 +1,4 @@
 import 'reflect-metadata';
-import { join } from 'node:path';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -11,6 +10,7 @@ import { configureHttpSecurity, validateProductionConfiguration } from './common
 import { configureHttpServerTimeouts } from './common/http-server-timeouts';
 import { servePublicUploads } from './common/public-uploads';
 import { shouldEnableSwagger } from './common/swagger-config';
+import { uploadsRoot } from './common/uploads-root';
 
 async function bootstrap() {
   validateProductionConfiguration();
@@ -32,7 +32,7 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new ApiExceptionFilter());
 
-  servePublicUploads(app, process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads'));
+  servePublicUploads(app, uploadsRoot());
 
   if (shouldEnableSwagger()) {
     const swaggerConfig = new DocumentBuilder()

@@ -1,5 +1,6 @@
 'use client';
 
+import { SEARCH_MIN_LENGTH } from '@davas/shared';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useMediaSearch } from '../../hooks/useMediaSearch';
@@ -16,6 +17,7 @@ import {
 } from '../../lib/api/recommendations';
 import { MediaDetailModal } from '../media/MediaDetailModal';
 import { AsyncState, CoreAppShell, EmptyState, Poster, SearchField } from './CoreUi';
+import { mediaTypeLabel } from '../../lib/api/core';
 
 type Kind = 'MOVIE' | 'TV';
 type Loaded<T> = { status: 'loading' | 'ready' | 'error'; items: T[] };
@@ -39,9 +41,7 @@ const KINDS: Array<{ value: Kind; label: string }> = [
 ];
 
 const meta = (item: MediaSearchResult) =>
-  [item.mediaType === 'TV' ? '드라마' : '영화', item.releaseDate?.slice(0, 4)]
-    .filter(Boolean)
-    .join(' · ');
+  [mediaTypeLabel(item.mediaType), item.releaseDate?.slice(0, 4)].filter(Boolean).join(' · ');
 
 function ResultList({
   label,
@@ -85,7 +85,7 @@ function ResultList({
 export function ExploreScreen() {
   const [query, setQuery] = useState('');
   const search = useMediaSearch(query, 'multi');
-  const searching = query.trim().length >= 2;
+  const searching = query.trim().length >= SEARCH_MIN_LENGTH;
   const [kind, setKind] = useState<Kind>('MOVIE');
   const [trending, setTrending] = useState<Loaded<MediaRecommendationItem>>({
     status: 'loading',
@@ -232,10 +232,7 @@ export function ExploreScreen() {
                 }
               />
             ) : (
-              <ul
-                className="explore-rail"
-                aria-label={`지금 화제작, ${kind === 'TV' ? '드라마' : '영화'}`}
-              >
+              <ul className="explore-rail" aria-label={`지금 화제작, ${mediaTypeLabel(kind)}`}>
                 {popular.map((item) => (
                   <li key={item.externalId}>
                     <button

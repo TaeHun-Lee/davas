@@ -1,9 +1,9 @@
+import { seoulToday } from '@davas/shared';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import type { SpaceCalendar, SpaceMemories, SpaceRecap } from '@davas/shared';
 import { IsNull, Repository } from 'typeorm';
 import { DiaryEntity, WatchShareEntity } from '../database/entities';
-import { seoulToday } from '../common/seoul-date';
 import { SpaceAccessService } from '../spaces/space-access.service';
 import { hiddenReviewAccountIds } from './blind-review';
 import { WatchPhotosService } from './watch-photos.service';

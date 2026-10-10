@@ -1,3 +1,4 @@
+import { DEFAULT_LANGUAGE, DEFAULT_REGION } from '@davas/shared';
 import { Inject, Injectable, Optional, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { MediaSearchResponse, MediaSearchType, MediaType } from '@davas/shared';
@@ -117,8 +118,8 @@ export class TmdbClient {
     query,
     type,
     page,
-    language = 'ko-KR',
-    region = 'KR',
+    language = DEFAULT_LANGUAGE,
+    region = DEFAULT_REGION,
   }: MediaSearchInput): Promise<MediaSearchResponse> {
     const payload = await this.get<TmdbPage<TmdbSearchResult>>('search', `/search/${type}`, {
       query,
@@ -140,7 +141,7 @@ export class TmdbClient {
   async trending({
     period,
     page,
-    language = 'ko-KR',
+    language = DEFAULT_LANGUAGE,
   }: TrendingRecommendationsInput): Promise<RecommendationResponse> {
     const payload = await this.get<TmdbPage<TmdbSearchResult>>(
       'trending',
@@ -159,8 +160,8 @@ export class TmdbClient {
   async discover({
     mediaType,
     page,
-    language = 'ko-KR',
-    region = 'KR',
+    language = DEFAULT_LANGUAGE,
+    region = DEFAULT_REGION,
     withGenres,
     withAnyGenres,
     withoutGenres,
@@ -217,7 +218,10 @@ export class TmdbClient {
   }
 
   /** TMDB's genres with their names in `language`, the names stored on titles. */
-  async genreCatalog(mediaType: 'movie' | 'tv', language = 'ko-KR'): Promise<TmdbCatalogEntry[]> {
+  async genreCatalog(
+    mediaType: 'movie' | 'tv',
+    language = DEFAULT_LANGUAGE,
+  ): Promise<TmdbCatalogEntry[]> {
     const payload = await this.get<{ genres?: Array<{ id?: number; name?: string }> }>(
       'genre list',
       `/genre/${mediaType}/list`,
@@ -231,7 +235,7 @@ export class TmdbClient {
   async detail({
     externalId,
     mediaType,
-    language = 'ko-KR',
+    language = DEFAULT_LANGUAGE,
   }: MediaDetailInput): Promise<TmdbMediaDetail> {
     const resource = mediaType === 'TV' ? 'tv' : 'movie';
     const payload = await this.get<TmdbDetailPayload>('detail', `/${resource}/${externalId}`, {

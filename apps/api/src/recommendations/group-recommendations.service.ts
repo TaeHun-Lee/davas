@@ -1,3 +1,4 @@
+import { SPACE_MAX_MEMBERS, SPACE_MIN_MEMBERS } from '@davas/shared';
 import { createHash } from 'node:crypto';
 import type {
   GroupRecommendationConsensus,
@@ -37,6 +38,7 @@ import {
 import {
   assignCandidateChannels,
   calculateGroupBase,
+  clamp01,
   DEFAULT_GROUP_GAMMA,
   DEFAULT_GROUP_LAMBDA,
   diversityRerank,
@@ -47,6 +49,7 @@ import {
   RankedCandidate,
   RecommendationCandidate,
   RatingSignal,
+  round,
   scoreParticipant,
   tagMatchesGenres,
 } from './group-recommendation.algorithm';
@@ -56,6 +59,7 @@ import {
   onChosenService,
 } from './group-recommendation-pool';
 import { SUBSCRIPTION_OFFER_TYPES } from '../media/ports/availability-provider.port';
+import { DAY_MS } from '../common/time';
 
 const response = (statusCode: number, code: string, message: string) => ({
   statusCode,
@@ -67,9 +71,6 @@ const normalized = (value: string) => value.trim().toLocaleLowerCase('en-US');
 const SESSION_OPEN_DAYS = 7;
 // What a pick settled on stays home's "오늘 밤 후보" for a few days, or until someone records it.
 const DECIDED_PICK_DAYS = 3;
-const DAY_MS = 24 * 60 * 60 * 1000;
-const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
-const round = (value: number) => Number(value.toFixed(5));
 
 type SessionRequest = NormalizedRecommendationRequest & {
   spaceId: string;
@@ -418,13 +419,13 @@ export class GroupRecommendationsService {
   private normalizeRequest(dto: CreateRecommendationSessionDto): SessionRequest {
     const participantAccountIds = [...new Set(dto.participantAccountIds)];
     if (
-      participantAccountIds.length < 2 ||
-      participantAccountIds.length > 5 ||
+      participantAccountIds.length < SPACE_MIN_MEMBERS ||
+      participantAccountIds.length > SPACE_MAX_MEMBERS ||
       participantAccountIds.length !== dto.participantAccountIds.length
     ) {
       throw this.badRequest(
         'RECOMMENDATION_PARTICIPANTS_INVALID',
-        '추천 참여자는 중복 없이 2명에서 5명이어야 해요.',
+        `추천 참여자는 중복 없이 ${SPACE_MIN_MEMBERS}명에서 ${SPACE_MAX_MEMBERS}명이어야 해요.`,
       );
     }
     const runtimeMin = dto.runtime?.minMinutes ?? null;

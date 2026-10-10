@@ -296,7 +296,7 @@ function WishSearch({ onAdd }: { onAdd: (mediaId: string) => Promise<void> }) {
                 <div className="min-w-0">
                   <strong>{item.title}</strong>
                   <span>
-                    {[item.mediaType === 'MOVIE' ? '영화' : '드라마', item.releaseDate?.slice(0, 4)]
+                    {[mediaTypeLabel(item.mediaType), item.releaseDate?.slice(0, 4)]
                       .filter(Boolean)
                       .join(' · ')}
                   </span>

@@ -1,3 +1,4 @@
+import { DEFAULT_LANGUAGE } from '@davas/shared';
 import type {
   GroupRecommendationDecidedPickResponse,
   GroupRecommendationDecisionRequest,
@@ -36,7 +37,7 @@ export type GenreRecommendationsResponse = RecommendationListResponse & {
 export async function getTrendingRecommendations({
   limit = 10,
   page = 1,
-  language = 'ko-KR',
+  language = DEFAULT_LANGUAGE,
 }: { limit?: number; page?: number; language?: string } = {}) {
   const params = new URLSearchParams();
   params.set('limit', String(limit));
@@ -51,7 +52,7 @@ export async function getGenreRecommendations(
   {
     limit = 4,
     page = 1,
-    language = 'ko-KR',
+    language = DEFAULT_LANGUAGE,
   }: { limit?: number; page?: number; language?: string } = {},
 ) {
   const params = new URLSearchParams();

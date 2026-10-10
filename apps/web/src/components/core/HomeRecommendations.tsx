@@ -9,6 +9,7 @@ import {
   getTrendingRecommendations,
   type MediaRecommendationItem,
 } from '../../lib/api/recommendations';
+import { mediaTypeLabel } from '../../lib/api/core';
 
 type RecommendationType = 'MOVIE' | 'TV';
 type RecommendationStatus = 'loading' | 'ready' | 'error';
@@ -137,7 +138,7 @@ export function HomeRecommendations() {
           <div className="home-carousel-controls" aria-label="추천 캐러셀 이동">
             <button
               type="button"
-              aria-label={`이전 ${activeType === 'MOVIE' ? '영화' : '드라마'} 추천`}
+              aria-label={`이전 ${mediaTypeLabel(activeType)} 추천`}
               disabled={!canScrollBack}
               onClick={() => moveCarousel(-1)}
             >
@@ -145,7 +146,7 @@ export function HomeRecommendations() {
             </button>
             <button
               type="button"
-              aria-label={`다음 ${activeType === 'MOVIE' ? '영화' : '드라마'} 추천`}
+              aria-label={`다음 ${mediaTypeLabel(activeType)} 추천`}
               disabled={!canScrollForward}
               onClick={() => moveCarousel(1)}
             >
@@ -171,7 +172,7 @@ export function HomeRecommendations() {
       {status === 'ready' && visibleItems.length === 0 ? (
         <div className="home-recommendation-message">
           <p>
-            <strong>{activeType === 'MOVIE' ? '영화' : '드라마'} 추천을 준비하고 있어요.</strong>
+            <strong>{mediaTypeLabel(activeType)} 추천을 준비하고 있어요.</strong>
             <br />
             공간 멤버와 조건을 정해 함께 골라 보세요.
           </p>
@@ -184,7 +185,7 @@ export function HomeRecommendations() {
           ref={carouselRef}
           className="home-recommendation-row"
           onScroll={syncCarouselControls}
-          aria-label={`${activeType === 'MOVIE' ? '영화' : '드라마'} 추천 목록`}
+          aria-label={`${mediaTypeLabel(activeType)} 추천 목록`}
         >
           {visibleItems.map((item) => {
             const year = item.releaseDate?.slice(0, 4) ?? '연도 미상';

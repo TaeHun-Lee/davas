@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { listRecords, type RecordCardData } from '../../lib/api/core';
+import { listRecords, mediaTypeLabel, type RecordCardData } from '../../lib/api/core';
 import { type MediaDetail } from '../../lib/api/media';
 import { addWatchlist, removeWatchlist } from '../../lib/api/watchlist';
 import {
@@ -60,7 +60,7 @@ function Poster({ media }: { media: MediaDetail }) {
 
 function GenreTags({ media }: { media: MediaDetail }) {
   const tags = media.genres.slice(0, 3);
-  const fallbackTags = tags.length > 0 ? tags : [media.mediaType === 'TV' ? '드라마' : '영화'];
+  const fallbackTags = tags.length > 0 ? tags : [mediaTypeLabel(media.mediaType)];
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
       {fallbackTags.map((tag) => (

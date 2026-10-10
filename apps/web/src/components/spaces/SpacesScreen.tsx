@@ -1,5 +1,12 @@
 'use client';
 
+import {
+  seoulToday,
+  SPACE_INVITE_MAX_HOURS,
+  SPACE_MAX_MEMBERS,
+  SPACE_MIN_MEMBERS,
+  SPACE_NAME_MAX_LENGTH,
+} from '@davas/shared';
 import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import { useActiveSpace } from '../../hooks/useActiveSpace';
@@ -16,7 +23,7 @@ import {
 } from '../../lib/api/spaces';
 import { CoreAppShell, TaskShell } from '../core/CoreUi';
 import { GroupRecommendationPanel } from './GroupRecommendationPanel';
-import { monthDayLabel, seoulDay } from './memories-model';
+import { monthDayLabel } from '../../lib/dates';
 import {
   activeMembers,
   inviteDeadlineLabel,
@@ -34,7 +41,7 @@ type ActiveSpace = ReturnType<typeof useActiveSpace>;
 const INVITE_EXPIRY_OPTIONS = [
   { hours: 24, label: '24시간' },
   { hours: 72, label: '3일' },
-  { hours: 168, label: '7일' },
+  { hours: SPACE_INVITE_MAX_HOURS, label: '7일' },
 ] as const;
 
 export function SpacesScreen({ initialView = 'space' }: { initialView?: SpacesView }) {
@@ -170,9 +177,9 @@ function SpaceOverview({ active }: { active: ActiveSpace }) {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [name, setName] = useState('');
-  const [maxMembers, setMaxMembers] = useState(5);
+  const [maxMembers, setMaxMembers] = useState(SPACE_MAX_MEMBERS);
   const [creating, setCreating] = useState(false);
-  const [expiresInHours, setExpiresInHours] = useState(168);
+  const [expiresInHours, setExpiresInHours] = useState<number>(SPACE_INVITE_MAX_HOURS);
   const [invite, setInvite] = useState<SpaceInvite | null>(null);
   const [newOwnerId, setNewOwnerId] = useState('');
   const [dangerAction, setDangerAction] = useState<'leave' | 'close' | null>(null);
@@ -310,7 +317,7 @@ function SpaceOverview({ active }: { active: ActiveSpace }) {
         <input
           aria-label="공간 이름"
           required
-          maxLength={80}
+          maxLength={SPACE_NAME_MAX_LENGTH}
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder="예: 주말 영화 모임"
@@ -318,14 +325,19 @@ function SpaceOverview({ active }: { active: ActiveSpace }) {
         />
       </label>
       <label className="mt-3 block">
-        <span className="field-label">최대 인원 (2~5명)</span>
+        <span className="field-label">
+          최대 인원 ({SPACE_MIN_MEMBERS}~{SPACE_MAX_MEMBERS}명)
+        </span>
         <select
           aria-label="공간 최대 인원"
           value={maxMembers}
           onChange={(event) => setMaxMembers(Number(event.target.value))}
           className="text-input"
         >
-          {[2, 3, 4, 5].map((count) => (
+          {Array.from(
+            { length: SPACE_MAX_MEMBERS - SPACE_MIN_MEMBERS + 1 },
+            (_, index) => SPACE_MIN_MEMBERS + index,
+          ).map((count) => (
             <option key={count} value={count}>
               {count}명
             </option>
@@ -382,8 +394,8 @@ function SpaceOverview({ active }: { active: ActiveSpace }) {
               둘만의 공간을 만들어 보세요
             </h2>
             <p className="space-panel-hint">
-              새 공간은 나 혼자로 시작해요. 초대 링크로 2~5명이 함께할 수 있어요. 공간에 들어오기
-              전의 개인 기록은 자동으로 공유되지 않아요.
+              새 공간은 나 혼자로 시작해요. 초대 링크로 {SPACE_MIN_MEMBERS}~{SPACE_MAX_MEMBERS}명이
+              함께할 수 있어요. 공간에 들어오기 전의 개인 기록은 자동으로 공유되지 않아요.
             </p>
             <div className="mt-4">{createForm}</div>
           </section>
@@ -420,7 +432,7 @@ function SpaceOverview({ active }: { active: ActiveSpace }) {
                       id="space-rename-input"
                       autoFocus
                       required
-                      maxLength={80}
+                      maxLength={SPACE_NAME_MAX_LENGTH}
                       value={spaceName}
                       onChange={(event) => setSpaceName(event.target.value)}
                     />
@@ -457,7 +469,7 @@ function SpaceOverview({ active }: { active: ActiveSpace }) {
                           {owner
                             ? '공간을 만든 사람'
                             : member.joinedAt
-                              ? `${monthDayLabel(seoulDay(new Date(member.joinedAt)))}에 참여`
+                              ? `${monthDayLabel(seoulToday(new Date(member.joinedAt)))}에 참여`
                               : '멤버'}
                         </span>
                       </span>

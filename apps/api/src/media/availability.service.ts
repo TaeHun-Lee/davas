@@ -1,3 +1,4 @@
+import { DEFAULT_REGION } from '@davas/shared';
 import { Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, MoreThan, Repository } from 'typeorm';
@@ -12,9 +13,10 @@ import {
   AvailabilityProvider,
   ProviderAvailabilityLookup,
 } from './ports/availability-provider.port';
+import { HOUR_MS } from '../common/time';
 
 export const AVAILABILITY_CACHE_OPTIONS = Symbol('AVAILABILITY_CACHE_OPTIONS');
-export const DEFAULT_AVAILABILITY_TTL_MS = 6 * 60 * 60 * 1000;
+export const DEFAULT_AVAILABILITY_TTL_MS = 6 * HOUR_MS;
 
 export type AvailabilityCacheOptions = {
   ttlMs?: number;
@@ -52,7 +54,10 @@ export class AvailabilityService {
     private readonly options: AvailabilityCacheOptions = {},
   ) {}
 
-  async getCurrent(contentId: string, requestedRegion = 'KR'): Promise<AvailabilityResponse> {
+  async getCurrent(
+    contentId: string,
+    requestedRegion = DEFAULT_REGION,
+  ): Promise<AvailabilityResponse> {
     const region = this.normalizeRegion(requestedRegion);
     await this.requireContent(contentId);
     const contentRef = await this.findContentRef(contentId);
@@ -83,7 +88,7 @@ export class AvailabilityService {
    */
   async getCurrentMany(
     contentIds: string[],
-    requestedRegion = 'KR',
+    requestedRegion = DEFAULT_REGION,
   ): Promise<Map<string, AvailabilityResponse>> {
     const region = this.normalizeRegion(requestedRegion);
     const ids = [...new Set(contentIds)];
@@ -118,7 +123,10 @@ export class AvailabilityService {
     return result;
   }
 
-  async refresh(contentId: string, requestedRegion = 'KR'): Promise<AvailabilityResponse> {
+  async refresh(
+    contentId: string,
+    requestedRegion = DEFAULT_REGION,
+  ): Promise<AvailabilityResponse> {
     const region = this.normalizeRegion(requestedRegion);
     const content = await this.requireContent(contentId);
     const contentRef = await this.findContentRef(contentId);

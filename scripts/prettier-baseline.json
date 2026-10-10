@@ -28,7 +28,6 @@
   "apps/api/src/friends/friends.dto.ts": "443ccb5617a4b17a1a635af056a0a114c6e2a2a797ffff151a7d79f30825e004",
   "apps/api/src/friends/friends.module.ts": "147532afb5eeacd129df5e73efd40d3d8f8f4ba5ccf62fade5d4539010207831",
   "apps/api/src/friends/friends.service.spec.ts": "436a5a9245a01e5cfd42af3243bab30be4af7db5cfc811c371d3d19d827ecb7c",
-  "apps/api/src/friends/friends.service.ts": "5323d9fde1125acc7d655b7e63396c95094a2b65f0368568cfa1d0b469364a7c",
   "apps/api/src/invites/invites.dto.ts": "d2b1e8c7c8b86215d84a0bc2bcdcb3a459610929e2377235e21ddf8b2d62251b",
   "apps/api/src/invites/invites.module.ts": "006b78351a57b13096de65f170cb76a185680a09a44926e989fe9f9fbd6e3464",
   "apps/api/src/media/adapters/tmdb-availability.adapter.ts": "a36bbb6d41dc682182243fd95e72eb6238eaa6c8307dd1d04c76226c754c9ea9",
@@ -36,7 +35,6 @@
   "apps/api/src/recommendations/group-recommendations.dto.spec.ts": "839d63721b0e1aa9ecae56fa7eb3982a5d35f44919d52629d53ab0422756ef5c",
   "apps/api/src/spaces/space-access.service.ts": "874dddcbe76c67e11cf1cf9ad5560775da16629f1fb95cff8297dda26ad312cb",
   "apps/api/src/to-be-integration.spec.ts": "3fc0ccf76e7902165fbe8b344ade3c1c8c14904fc30bc70422dddad03972fbf6",
-  "apps/api/src/users/dto/delete-me.dto.ts": "58fe0677fda1cc395b2bb3f3c509adaa1b214944b688a755c0cf262cc3f85c70",
   "apps/api/src/watchlist/watchlist.module.ts": "a4ce8ee901f2beb5e99242a11946e38686bfb868ff788c83a9215c15c2b7b08b",
   "apps/web/public/sw.js": "b0a17aeaa29fe4253d33630d84dd8ebf904b5eefe6694ee91a1e76c6385aa257",
   "apps/web/src/app/community-design.spec.ts": "f3ee51873f7968887f6b57ea86211a8cf03daed0c2ca75cfe86bf984a3b00297",
@@ -69,6 +67,5 @@
   "apps/web/src/components/legal/LegalScreen.tsx": "a383abd8137b77ccaccc72eeb90b5b43235ff2d3b640985c1038ad2f90b4100e",
   "apps/web/src/components/pwa/PwaStatus.tsx": "e0d3e04696274520d360efd0dbcadc925886f2be9eaf503e4d7868b18fc31758",
   "apps/web/src/content/legal/index.ts": "dbd1f95c0ed3781f63531426e324f786de26e4aaefeb9165801d524b202426ab",
-  "apps/web/src/hooks/useMediaSearch.ts": "0f906ab5a452d6934965044ca8c40c7924589499dd13a9d67b5fe5252cf7cbf8",
   "apps/web/src/lib/api/spaces.spec.ts": "471ebf04655a58ad104dfb639223f7d2992873b7d8084d331cc9f9486bd143dd"
 }
