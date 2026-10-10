@@ -38,6 +38,10 @@ const STARTUP_DELAY_MS = 2 * MINUTE_MS;
 // unlinked ones in case TMDB has caught up.
 const RECHECK_LINKED_MS = 30 * DAY_MS;
 const RECHECK_UNLINKED_MS = 7 * DAY_MS;
+// Films left unlinked before this were looked up under older linking rules
+// (kobis-movie-matcher.ts) and are looked up again at the next run. With each change to the
+// rules, move it to just after that change reaches production.
+export const LINK_RULES_CHANGED_AT = new Date('2026-10-11T06:00:00+09:00');
 const LINKS_PER_RUN = 400;
 const LINK_GAP_MS = 300;
 
@@ -325,8 +329,13 @@ export class ShowtimeSyncService implements OnModuleInit, OnModuleDestroy {
       .filter((code) => {
         const movie = known.get(code);
         if (!movie?.checkedAt) return true;
-        const wait = movie.matchStatus === 'MATCHED' ? RECHECK_LINKED_MS : RECHECK_UNLINKED_MS;
-        return now - movie.checkedAt.getTime() > wait;
+        if (movie.matchStatus === 'MATCHED') {
+          return now - movie.checkedAt.getTime() > RECHECK_LINKED_MS;
+        }
+        return (
+          movie.checkedAt < LINK_RULES_CHANGED_AT ||
+          now - movie.checkedAt.getTime() > RECHECK_UNLINKED_MS
+        );
       })
       .slice(0, LINKS_PER_RUN);
 

@@ -257,15 +257,22 @@ describe('daily KOBIS showtime sync', () => {
   });
 
   it('does not look films up again before they are due, and works without a KOBIS key', async () => {
-    const kobis = fakeKobis({ A: { '2026-10-10': [row('m1', '오디세이')] } });
-    const first = setup({ kobis, linked: new Map() });
-    first.tables.movies.push({
-      code: 'm1',
-      matchStatus: 'UNMATCHED',
-      checkedAt: new Date('2026-10-08T00:00:00Z'),
+    const day = '2026-10-13';
+    const kobis = fakeKobis({
+      A: { [day]: [row('m1', '오디세이'), row('m2', '알파'), row('m3', '룩백')] },
     });
+    const first = setup({ kobis, linked: new Map() });
+    first.service.now = () => new Date(`${day}T03:00:00Z`);
+    first.tables.movies.push(
+      // Unlinked two days ago, under the current rules: due again in a week.
+      { code: 'm1', matchStatus: 'UNMATCHED', checkedAt: new Date('2026-10-11T03:00:00Z') },
+      // Unlinked at 01:22 KST by the first production run, before LINK_RULES_CHANGED_AT.
+      { code: 'm2', matchStatus: 'UNMATCHED', checkedAt: new Date('2026-10-10T16:22:00Z') },
+      // Linked ten days ago: refreshed after a month.
+      { code: 'm3', matchStatus: 'MATCHED', checkedAt: new Date('2026-10-03T03:00:00Z') },
+    );
     await first.service.run();
-    assert.deepEqual(first.matched, [], 'looked up two days ago, due again in a week');
+    assert.deepEqual(first.matched, ['m2']);
 
     const keyless = setup({
       kobis: fakeKobis({ A: { '2026-10-10': [row('m1', '오디세이')] } }),

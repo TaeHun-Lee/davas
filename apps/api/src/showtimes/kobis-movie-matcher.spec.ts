@@ -4,6 +4,7 @@ import type { MediaRecommendationItem } from '../media/tmdb.mapper';
 import type { KobisFilm } from './kobis-api.client';
 import {
   exactCandidates,
+  isReissue,
   kobisBaseTitle,
   KobisMovieMatcher,
   looseCandidates,
@@ -102,5 +103,76 @@ describe('linking KOBIS films to TMDB titles', () => {
 
     directors = {};
     assert.equal((await matcher.match('20250654'))?.tmdb, null);
+  });
+
+  // The films left unlinked by the first production run, 2026-10-11.
+  it('reads KOBIS director names in either word order', () => {
+    const alpha = film({
+      title: '알파',
+      titleEn: 'Alpha',
+      directors: ['쥘리아 뒤쿠르노', 'DUCOURNAU Julia'],
+    });
+    assert.equal(sameDirector(alpha, 'Julia Ducournau'), true);
+    assert.equal(sameDirector(alpha, '쥘리아뒤쿠르노'), true);
+    assert.equal(sameDirector(alpha, 'Julia Roberts'), false);
+  });
+
+  it('links a re-release to the original by its director, whatever year KOBIS gives it', async () => {
+    const encore = film({
+      code: '20266766',
+      title: '어벤져스: 엔드게임 앙코르',
+      titleEn: 'Avengers: Endgame Encore',
+      productionYear: 2026,
+      openDate: '2026-09-23',
+      directors: ['안소니 루소', 'Anthony RUSSO', '조 루소', 'Joe RUSSO'],
+    });
+    assert.equal(isReissue(encore), true);
+    assert.equal(isReissue(film()), false);
+    assert.equal(kobisBaseTitle('Avengers: Endgame Encore'), 'Avengers: Endgame');
+    const searches: string[] = [];
+    const matcher = new KobisMovieMatcher(
+      { configured: true, film: async () => encore } as never,
+      {
+        searchMovies: async (query: string) => {
+          searches.push(query);
+          return [
+            candidate('299534', '어벤져스: 엔드게임', '2019-04-24', 'Avengers: Endgame'),
+            candidate('1', '어벤져스: 엔드게임 메이킹', '2019-08-01'),
+          ];
+        },
+        detail: async ({ externalId }: { externalId: string }) => ({
+          director: externalId === '299534' ? 'Anthony Russo' : 'Someone',
+        }),
+      } as never,
+    );
+    assert.equal((await matcher.match('20266766'))?.tmdb?.externalId, '299534');
+    assert.deepEqual(searches, ['어벤져스: 엔드게임', 'Avengers: Endgame']);
+  });
+
+  it('finds a film TMDB names differently in Korean by its English title and director', async () => {
+    const escaped = film({
+      code: '20135630',
+      title: '사형수 탈옥하다',
+      titleEn: 'A man escaped',
+      productionYear: 1956,
+      openDate: null,
+      directors: ['로베르 브레송', 'BRESSON Robert'],
+    });
+    const matcher = new KobisMovieMatcher(
+      { configured: true, film: async () => escaped } as never,
+      {
+        searchMovies: async (query: string) =>
+          query === 'A man escaped'
+            ? [
+                candidate('15244', '저항', '1956-11-11', 'Un condamné à mort s’est échappé'),
+                candidate('2', '탈옥', '2010-01-01'),
+              ]
+            : [],
+        detail: async ({ externalId }: { externalId: string }) => ({
+          director: externalId === '15244' ? 'Robert Bresson' : 'Someone',
+        }),
+      } as never,
+    );
+    assert.equal((await matcher.match('20135630'))?.tmdb?.externalId, '15244');
   });
 });
