@@ -57,6 +57,8 @@ services:
       DAVAS_BOOTSTRAP_INVITE_EXPIRES_AT: ${DAVAS_BOOTSTRAP_INVITE_EXPIRES_AT:-}
       TMDB_API_KEY: ${TMDB_API_KEY:-}
       UPLOADS_DIR: /app/uploads
+      # Empty trusts exactly the one Caddy hop; set it only with another proxy in front.
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-}
     volumes:
       - davas-api-uploads:/app/uploads
     depends_on:

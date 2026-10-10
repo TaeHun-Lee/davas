@@ -216,6 +216,7 @@ npm run verify:release  # verify + Caddy 헤더 검사 + 운영 의존성 감사
 | 타입·린트 | `npm run lint` | TypeScript 타입, Web ESLint | 실행 동작 |
 | 빌드 | `npm run build` | shared, API, Web 운영 빌드 | 운영 DB migration |
 | 인증 경계 | `npm run verify:auth` | 빌드된 API의 공개·비공개 경로 동작 | 실제 TLS·프록시 |
+| 보안 경계 | `npm run verify:security` | 빌드된 API의 Helmet 헤더, 정확한 CORS 허용, 같은 출처 POST 201·다른 출처 POST 403 | 실제 Caddy 헤더 |
 | 업로드 | `npm run verify:upload` | 비로그인 401, 초과 413, 위장 파일 400, 정상 201, 과다 429 | 운영 볼륨 |
 | 화면↔API 계약 | `npm run verify:contracts` | Web API 클라이언트가 실제로 보내는 요청 50여 개를 빌드된 API 컨트롤러에 운영과 같은 `ValidationPipe`(허용하지 않은 필드는 400)로 보내 모두 받아들여지는지. 새 클라이언트 함수를 만들면 `scripts/verify-client-contracts.mts`에 호출을 더한다 | 서비스 동작(전부 가짜로 대체), 사진 업로드(XHR) |
 | Caddy | `npm run verify:caddy` | 실제 Caddy 컨테이너의 보안 헤더 적용 (Docker 필요) | DNS·인증서 |

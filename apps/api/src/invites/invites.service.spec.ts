@@ -56,4 +56,39 @@ describe('bootstrap invite upgrade safety', () => {
 
     assert.equal(saves, 0);
   });
+
+  it('reads empty bootstrap settings, as Compose passes unset ones, as the defaults', async () => {
+    let saved: { maxUses?: number; expiresAt?: Date } | undefined;
+    const repository = {
+      update: async () => ({ affected: 0 }),
+      findOne: async () => null,
+      create: (value: unknown) => value,
+      save: async (value: typeof saved) => {
+        saved = value;
+        return value;
+      },
+    };
+    const keys = [
+      'DAVAS_BOOTSTRAP_INVITE_CODE',
+      'DAVAS_BOOTSTRAP_INVITE_MAX_USES',
+      'DAVAS_BOOTSTRAP_INVITE_EXPIRES_AT',
+    ] as const;
+    const previous = keys.map((key) => process.env[key]);
+    process.env.DAVAS_BOOTSTRAP_INVITE_CODE = 'first-account-code-1234';
+    process.env.DAVAS_BOOTSTRAP_INVITE_MAX_USES = '';
+    process.env.DAVAS_BOOTSTRAP_INVITE_EXPIRES_AT = '';
+
+    try {
+      await new InvitesService(repository as never, {} as never).onModuleInit();
+    } finally {
+      keys.forEach((key, index) => {
+        if (previous[index] === undefined) delete process.env[key];
+        else process.env[key] = previous[index];
+      });
+    }
+
+    assert.equal(saved?.maxUses, 1);
+    assert.ok(saved?.expiresAt && !Number.isNaN(saved.expiresAt.getTime()));
+    assert.ok(saved.expiresAt.getTime() > Date.now());
+  });
 });

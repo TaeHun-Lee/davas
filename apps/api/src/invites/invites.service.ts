@@ -8,6 +8,7 @@ import {
   isPublicBootstrapInvitePlaceholder,
   PUBLIC_BOOTSTRAP_INVITE_PLACEHOLDERS,
 } from '../common/app-security';
+import { DAY_MS } from '../common/time';
 
 @Injectable()
 export class InvitesService implements OnModuleInit {
@@ -28,10 +29,11 @@ export class InvitesService implements OnModuleInit {
       this.invites.create({
         code,
         createdById: null,
-        maxUses: Number(process.env.DAVAS_BOOTSTRAP_INVITE_MAX_USES ?? 1),
+        // Compose passes unset values as empty strings; those mean "use the default".
+        maxUses: Number(process.env.DAVAS_BOOTSTRAP_INVITE_MAX_USES?.trim() || 1),
         usedCount: 0,
         expiresAt: new Date(
-          process.env.DAVAS_BOOTSTRAP_INVITE_EXPIRES_AT ?? Date.now() + 30 * 86400000,
+          process.env.DAVAS_BOOTSTRAP_INVITE_EXPIRES_AT?.trim() || Date.now() + 30 * DAY_MS,
         ),
       }),
     );
