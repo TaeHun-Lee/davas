@@ -96,11 +96,13 @@ function nameKeys(name: string) {
   return [words.join(''), [...words].sort().join(' ')];
 }
 
-/** Whether TMDB's director is one KOBIS names, in Korean or in English, in any word order. */
-export function sameDirector(film: KobisFilm, director: string | null) {
-  if (!director) return false;
+/**
+ * Whether one of TMDB's director names (Korean or original) is one KOBIS names, in Korean or
+ * in English, in any word order.
+ */
+export function sameDirector(film: KobisFilm, directors: readonly string[]) {
   const known = new Set(film.directors.flatMap(nameKeys));
-  return director.split(',').some((name) => nameKeys(name).some((key) => known.has(key)));
+  return directors.some((name) => nameKeys(name).some((key) => known.has(key)));
 }
 
 /**
@@ -157,12 +159,10 @@ export class KobisMovieMatcher {
   /** The one title among the first few whose director KOBIS names; null when not exactly one. */
   private async byDirector(film: KobisFilm, pool: MediaRecommendationItem[]) {
     const confirmed: MediaRecommendationItem[] = [];
-    for (const candidate of pool.slice(0, 3)) {
-      const detail = await this.tmdb.detail({
-        externalId: candidate.externalId,
-        mediaType: 'MOVIE',
-      });
-      if (sameDirector(film, detail.director)) confirmed.push(candidate);
+    for (const candidate of pool.slice(0, 5)) {
+      if (sameDirector(film, await this.tmdb.movieDirectors(candidate.externalId))) {
+        confirmed.push(candidate);
+      }
     }
     return confirmed.length === 1 ? confirmed[0] : null;
   }

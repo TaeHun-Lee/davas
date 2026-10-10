@@ -154,6 +154,24 @@ export class TmdbClient {
     );
   }
 
+  /**
+   * A movie's directors, each by the Korean name TMDB shows and by the original one: Korean
+   * spellings differ between sources ("쥘리아 뒤쿠르노", "줄리아 뒤쿠르노"), originals rarely do.
+   */
+  async movieDirectors(externalId: string, language = DEFAULT_LANGUAGE) {
+    const payload = await this.get<{
+      crew?: Array<{ job?: string; name?: string; original_name?: string }>;
+    }>('credits', `/movie/${externalId}/credits`, { language });
+    return [
+      ...new Set(
+        (payload.crew ?? [])
+          .filter((person) => person.job === 'Director')
+          .flatMap((person) => [person.name, person.original_name])
+          .filter((name): name is string => Boolean(name?.trim())),
+      ),
+    ];
+  }
+
   async trending({
     period,
     page,

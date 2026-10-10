@@ -68,9 +68,9 @@ describe('linking KOBIS films to TMDB titles', () => {
       looseCandidates(film(), [old, remake]).map((item) => item.externalId),
       ['9'],
     );
-    assert.equal(sameDirector(film(), 'Christopher Nolan'), true);
-    assert.equal(sameDirector(film(), '크리스토퍼놀란'), true);
-    assert.equal(sameDirector(film(), 'Someone Else'), false);
+    assert.equal(sameDirector(film(), ['Christopher Nolan']), true);
+    assert.equal(sameDirector(film(), ['크리스토퍼놀란']), true);
+    assert.equal(sameDirector(film(), ['Someone Else']), false);
   });
 
   it('links a single clear title, settles ties by director, and leaves unclear ones unlinked', async () => {
@@ -85,9 +85,9 @@ describe('linking KOBIS films to TMDB titles', () => {
           searches.push(query);
           return results;
         },
-        detail: async ({ externalId }: { externalId: string }) => {
+        movieDirectors: async (externalId: string) => {
           details.push(externalId);
-          return { director: directors[externalId] ?? null };
+          return directors[externalId] ? [directors[externalId]] : [];
         },
       } as never,
     );
@@ -106,15 +106,47 @@ describe('linking KOBIS films to TMDB titles', () => {
   });
 
   // The films left unlinked by the first production run, 2026-10-11.
-  it('reads KOBIS director names in either word order', () => {
+  it('compares directors by any of their names, in any word order', () => {
     const alpha = film({
       title: '알파',
       titleEn: 'Alpha',
-      directors: ['쥘리아 뒤쿠르노', 'DUCOURNAU Julia'],
+      directors: ['줄리아 뒤쿠르노', 'Julia Ducournau'],
     });
-    assert.equal(sameDirector(alpha, 'Julia Ducournau'), true);
-    assert.equal(sameDirector(alpha, '쥘리아뒤쿠르노'), true);
-    assert.equal(sameDirector(alpha, 'Julia Roberts'), false);
+    // TMDB spells the Korean name another way; its original name is the same.
+    assert.equal(sameDirector(alpha, ['쥘리아 뒤쿠르노', 'Julia Ducournau']), true);
+    assert.equal(sameDirector(alpha, ['쥘리아 뒤쿠르노']), false);
+    assert.equal(sameDirector(film({ directors: ['DUCOURNAU Julia'] }), ['Julia Ducournau']), true);
+    assert.equal(sameDirector(alpha, ['Julia Roberts']), false);
+  });
+
+  it('picks 알파 among four 2024–2026 films of that name by its director', async () => {
+    const alpha = film({
+      code: '20264847',
+      title: '알파',
+      titleEn: 'Alpha',
+      productionYear: 2025,
+      openDate: '2026-09-30',
+      directors: ['줄리아 뒤쿠르노', 'Julia Ducournau'],
+    });
+    const directors: Record<string, string[]> = {
+      '1284460': ['쥘리아 뒤쿠르노', 'Julia Ducournau'],
+      '1576462': ['Dhiwangkara Seta'],
+      '1318803': ['Jan-Willem van Ewijk'],
+      '1193198': ['Anteros Marra'],
+    };
+    const matcher = new KobisMovieMatcher(
+      { configured: true, film: async () => alpha } as never,
+      {
+        searchMovies: async () => [
+          candidate('1284460', '알파', '2025-08-20', 'Alpha'),
+          candidate('1576462', '알파', '2025-12-01', 'αLPα'),
+          candidate('1318803', '알파.', '2025-02-13', 'Alpha.'),
+          candidate('1193198', 'ALPHA', '2024-07-12'),
+        ],
+        movieDirectors: async (externalId: string) => directors[externalId] ?? [],
+      } as never,
+    );
+    assert.equal((await matcher.match('20264847'))?.tmdb?.externalId, '1284460');
   });
 
   it('links a re-release to the original by its director, whatever year KOBIS gives it', async () => {
@@ -140,9 +172,8 @@ describe('linking KOBIS films to TMDB titles', () => {
             candidate('1', '어벤져스: 엔드게임 메이킹', '2019-08-01'),
           ];
         },
-        detail: async ({ externalId }: { externalId: string }) => ({
-          director: externalId === '299534' ? 'Anthony Russo' : 'Someone',
-        }),
+        movieDirectors: async (externalId: string) =>
+          externalId === '299534' ? ['안소니 루소', 'Anthony Russo'] : ['Someone'],
       } as never,
     );
     assert.equal((await matcher.match('20266766'))?.tmdb?.externalId, '299534');
@@ -168,9 +199,8 @@ describe('linking KOBIS films to TMDB titles', () => {
                 candidate('2', '탈옥', '2010-01-01'),
               ]
             : [],
-        detail: async ({ externalId }: { externalId: string }) => ({
-          director: externalId === '15244' ? 'Robert Bresson' : 'Someone',
-        }),
+        movieDirectors: async (externalId: string) =>
+          externalId === '15244' ? ['로베르 브레송', 'Robert Bresson'] : ['Someone'],
       } as never,
     );
     assert.equal((await matcher.match('20135630'))?.tmdb?.externalId, '15244');
