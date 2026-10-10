@@ -1,15 +1,9 @@
-import {
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import type { WatchParticipantStatus } from '@davas/shared';
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { DiaryEntity } from './diary.entity';
 import { UserEntity } from './user.entity';
 
-export type WatchParticipantStatus = 'PENDING' | 'CONFIRMED' | 'DECLINED';
+export type { WatchParticipantStatus };
 
 @Entity({ name: 'watch_participants' })
 @Index(['diaryId', 'accountId'], { unique: true })

@@ -1,34 +1,8 @@
+import type { AuthenticatedUser, MeResponse } from '@davas/shared';
 import { getApiBaseUrl } from './base-url';
 import { coreFetch } from './core';
 
-export type AuthenticatedUser = {
-  id?: string;
-  email: string;
-  nickname: string;
-  profileImageUrl?: string | null;
-  bio?: string | null;
-  preferredGenres?: string[];
-  /** OTT_SERVICES keys. */
-  ottServices?: string[];
-  /** When the current password recovery code was made; null when there is none. */
-  recoveryCodeCreatedAt?: string | null;
-};
-
-export type MeResponse = {
-  user: AuthenticatedUser;
-};
-
-export { getApiBaseUrl };
-
-export class ApiResponseError extends Error {
-  constructor(
-    message: string,
-    public readonly status: number,
-  ) {
-    super(message);
-    this.name = 'ApiResponseError';
-  }
-}
+export type { AuthenticatedUser };
 
 export function normalizeProfileImageUrl(imageUrl?: string | null) {
   if (!imageUrl) return null;
@@ -40,15 +14,7 @@ export function normalizeProfileImageUrl(imageUrl?: string | null) {
 }
 
 export async function getMe() {
-  const response = await fetch(`${getApiBaseUrl()}/auth/me`, {
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new ApiResponseError('auth me failed', response.status);
-  }
-
-  return ((await response.json()) as MeResponse).user;
+  return (await coreFetch<MeResponse>('/auth/me', {}, { auth: 'optional' })).user;
 }
 
 export async function logout() {

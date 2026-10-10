@@ -1,13 +1,16 @@
-import type { DiaryVisibility, MediaType, ViewingMethod } from '@davas/shared';
+import type {
+  ApiErrorBody,
+  CursorPage,
+  DiaryVisibility,
+  MediaType,
+  RecordCardData,
+  RecordFilters,
+  ViewingMethod,
+} from '@davas/shared';
 import { safeCoreReturnTo } from '../core-routes';
 import { getApiBaseUrl } from './base-url';
 
-export type ApiErrorBody = {
-  statusCode: number;
-  code: string;
-  message: string;
-  details?: Record<string, unknown>;
-};
+export type { ApiErrorBody, CursorPage, RecordCardData, RecordFilters };
 export class CoreApiError extends Error {
   constructor(
     public status: number,
@@ -67,38 +70,6 @@ export async function coreFetch<T>(
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 }
-
-export type RecordCardData = {
-  id: string;
-  recordTitle?: string;
-  author: { id: string; nickname: string; profileImageUrl: string | null };
-  media: {
-    id: string;
-    title: string;
-    originalTitle: string | null;
-    posterUrl: string | null;
-    releaseYear: string | null;
-    mediaType: MediaType;
-  };
-  viewingMethod: ViewingMethod | null;
-  watchedDate: string;
-  rating: number | null;
-  reviewPreview: string | null;
-  hasSpoiler: boolean;
-  visibility: DiaryVisibility;
-  sharedAt: string | null;
-  createdAt: string;
-  isMine: boolean;
-};
-export type CursorPage<T> = { items: T[]; nextCursor: string | null; hasMore: boolean };
-export type RecordFilters = {
-  q?: string;
-  mediaId?: string;
-  mediaType?: MediaType;
-  viewingMethod?: ViewingMethod;
-  cursor?: string;
-  limit?: number;
-};
 
 const query = (filters: RecordFilters) => {
   const p = new URLSearchParams();

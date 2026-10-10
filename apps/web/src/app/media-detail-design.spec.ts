@@ -3,14 +3,17 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
-const source = (path: string) =>
-  readFileSync(join(process.cwd(), 'src', path), 'utf8');
+const source = (path: string) => readFileSync(join(process.cwd(), 'src', path), 'utf8');
 
 describe('media detail confirmation', () => {
   it('shows my records and only accessible friend-feed records for the media', () => {
     const modal = source('components/media/MediaDetailModal.tsx');
     const sections = source('components/media/media-detail-sections.tsx');
-    const coreApi = source('lib/api/core.ts');
+    // The record filter, mediaId included, is the shared contract the API also validates.
+    const contracts = readFileSync(
+      join(process.cwd(), '../../packages/shared/src/contracts.ts'),
+      'utf8',
+    );
 
     assert.match(modal, /listRecords\('friends', \{ mediaId: media\.id, limit: 12 \}\)/);
     assert.match(modal, /filter\(\(record\) => !record\.isMine\)/);
@@ -25,6 +28,6 @@ describe('media detail confirmation', () => {
     assert.match(sections, /나에게 공개된 기록만 보여요/);
     assert.match(sections, /record\.recordTitle \?\? record\.media\.title/);
     assert.match(sections, /친구 기록 더 보기/);
-    assert.match(coreApi, /mediaId\?: string/);
+    assert.match(contracts, /export type RecordFilters = \{[^}]*mediaId\?: string/);
   });
 });

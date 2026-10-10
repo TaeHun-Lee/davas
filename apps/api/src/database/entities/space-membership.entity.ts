@@ -1,16 +1,11 @@
-import {
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import type { SpaceMembershipStatus } from '@davas/shared';
+import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { SpaceEntity } from './space.entity';
 import { UserEntity } from './user.entity';
 
 export type SpaceMembershipRole = 'OWNER' | 'MEMBER';
-export type SpaceMembershipStatus = 'ACTIVE' | 'LEFT';
+
+export type { SpaceMembershipStatus };
 
 @Entity({ name: 'space_memberships' })
 @Index(['spaceId', 'accountId'], { unique: true })

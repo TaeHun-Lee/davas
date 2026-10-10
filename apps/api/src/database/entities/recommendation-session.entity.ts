@@ -1,3 +1,8 @@
+import type {
+  RecommendationDecisionRule,
+  RecommendationRewatchPolicy,
+  RecommendationSessionStatus,
+} from '@davas/shared';
 import {
   Check,
   Column,
@@ -13,9 +18,11 @@ import { RecommendationExposureEntity } from './recommendation-exposure.entity';
 import { SpaceEntity } from './space.entity';
 import { UserEntity } from './user.entity';
 
-export type RecommendationDecisionRule = 'ALL' | 'MINIMUM';
-export type RecommendationRewatchPolicy = 'EXCLUDE' | 'ALLOW';
-export type RecommendationSessionStatus = 'OPEN' | 'MATCHED' | 'CLOSED';
+export type {
+  RecommendationDecisionRule,
+  RecommendationRewatchPolicy,
+  RecommendationSessionStatus,
+};
 
 @Entity({ name: 'recommendation_sessions' })
 @Index(['spaceId', 'createdAt'])

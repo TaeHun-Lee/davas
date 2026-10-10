@@ -77,10 +77,13 @@ export function draftWithDefaults(spaces: SpaceView[] | null, accountId: string)
   return draft;
 }
 
+// A title opened from its detail is already stored; only TMDB titles can be picked.
 export const asSelected = (media: MediaDetail): SelectedMedia => ({
   ...media,
-  externalProvider: media.externalProvider,
-  genreIds: media.genreIds ?? [],
+  externalProvider: 'TMDB',
+  originalTitle: media.originalTitle ?? media.title,
+  overview: media.overview ?? '',
+  genreIds: [],
 });
 
 export function readSavedDraft(storageKey: string) {

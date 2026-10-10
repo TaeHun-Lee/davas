@@ -1,3 +1,4 @@
+import type { MediaDetail, MyMediaDiary } from '@davas/shared';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -8,47 +9,6 @@ import { MediaSearchQueryDto } from './dto/media-search-query.dto';
 import { TmdbClient } from './tmdb.client';
 import type { TmdbMediaDetail } from './tmdb-detail.mapper';
 import { resolveTmdbGenreLabels } from './tmdb-genres';
-
-export type MyMediaDiary = {
-  id: string;
-  rating: number | null;
-  title: string;
-  contentPreview: string;
-  watchedDate: string;
-  updatedAt: string;
-};
-
-export type MediaDetailResponse = {
-  id: string;
-  externalProvider: string;
-  externalId: string;
-  mediaType: string;
-  title: string;
-  originalTitle: string | null;
-  overview: string | null;
-  tagline: string | null;
-  posterUrl: string | null;
-  backdropUrl: string | null;
-  releaseDate: string | null;
-  runtime: number | null;
-  genres: string[];
-  country: string | null;
-  countries: string[];
-  tmdbRating: number | null;
-  tmdbVoteCount: number | null;
-  director: string | null;
-  creators: string[];
-  numberOfEpisodes: number | null;
-  numberOfSeasons: number | null;
-  cast: string[];
-  stillCuts: string[];
-  certification: string | null;
-  myDiary: MyMediaDiary | null;
-  myDiaries: MyMediaDiary[];
-  myAverageRating: number | null;
-  watchlistItemId: string | null;
-  watchlistStatus: 'ACTIVE' | 'WATCHED' | null;
-};
 
 function formatWatchedDate(dateString: string) {
   return dateString.split('-').join('.');
@@ -82,7 +42,7 @@ export class MediaService {
     return this.tmdbClient.search(input);
   }
 
-  async findDetail(id: string, userId?: string): Promise<MediaDetailResponse> {
+  async findDetail(id: string, userId?: string): Promise<MediaDetail> {
     const media = await this.mediaRepository?.findOne({ where: { id } });
     if (!media) {
       throw new NotFoundException('Media not found');
@@ -192,7 +152,7 @@ export class MediaService {
     return Math.round((total / ratings.length) * 10) / 10;
   }
 
-  private fromCachedMedia(media: MediaEntity): MediaDetailResponse {
+  private fromCachedMedia(media: MediaEntity): MediaDetail {
     return {
       id: media.id,
       externalProvider: media.externalProvider,

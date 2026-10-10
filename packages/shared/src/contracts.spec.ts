@@ -27,8 +27,4 @@ describe('shared active response contracts', () => {
     assert.match(contracts, /createdAt: string/);
     assert.match(contracts, /updatedAt: string/);
   });
-
-  it('describes successful account deletion as no content', () => {
-    assert.match(contracts, /export type AccountDeletionResponse = void/);
-  });
 });

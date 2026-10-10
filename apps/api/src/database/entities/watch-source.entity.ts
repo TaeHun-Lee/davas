@@ -1,8 +1,9 @@
+import type { WatchSourceKind } from '@davas/shared';
 import { Column, Entity, Index, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import type { TheaterFormat } from '@davas/shared';
 import { DiaryEntity } from './diary.entity';
 
-export type WatchSourceKind = 'THEATER' | 'OTT' | 'TV_OWNED' | 'OTHER';
+export type { WatchSourceKind };
 
 @Entity({ name: 'watch_sources' })
 @Index(['diaryId'], { unique: true })

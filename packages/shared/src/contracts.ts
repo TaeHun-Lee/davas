@@ -1,7 +1,5 @@
 import type { DiaryVisibility, FriendshipStatus, MediaType, ViewingMethod } from './index.js';
 
-export type CoreDiaryVisibility = Exclude<DiaryVisibility, 'SELECTED'>;
-
 export type ApiErrorBody = {
   statusCode: number;
   code: string;
@@ -24,15 +22,6 @@ export type AuthenticatedUser = {
 
 export type MeResponse = { user: AuthenticatedUser };
 export type UserResponse = { user: AuthenticatedUser };
-export type LogoutResponse = { ok: boolean };
-export type DeleteResult = { id: string; deleted: true };
-export type AccountDeletionResponse = void;
-
-export type UpdateMeInput = {
-  nickname?: string;
-  bio?: string | null;
-  preferredGenres?: string[];
-};
 
 export type RecordAuthor = {
   id: string;
@@ -65,12 +54,6 @@ export type RecordCardData = {
   isMine: boolean;
 };
 
-export type RecordDetailData = RecordCardData & {
-  content: string;
-  updatedAt: string;
-  selectedUserIds?: string[];
-};
-
 export type CursorPage<T> = {
   items: T[];
   nextCursor: string | null;
@@ -85,25 +68,6 @@ export type RecordFilters = {
   cursor?: string;
   limit?: number;
 };
-
-export type RecordCreateInput = {
-  mediaId: string;
-  viewingMethod: ViewingMethod;
-  watchedDate: string;
-  rating?: number | null;
-  content?: string;
-  hasSpoiler?: boolean;
-  visibility?: CoreDiaryVisibility;
-  clientRequestId: string;
-  allowDuplicate?: boolean;
-};
-
-export type RecordUpdateInput = Partial<
-  Pick<
-    RecordCreateInput,
-    'mediaId' | 'viewingMethod' | 'watchedDate' | 'rating' | 'content' | 'hasSpoiler' | 'visibility'
-  >
->;
 
 export const MEDIA_SEARCH_TYPES = ['movie', 'tv', 'multi'] as const;
 export type MediaSearchType = (typeof MEDIA_SEARCH_TYPES)[number];
@@ -170,11 +134,9 @@ export type MediaSelectionResponse = {
   updatedAt: string;
 };
 
-export type SelectedMedia = MediaSelectionResponse;
-
 export type MyMediaDiary = {
   id: string;
-  rating: number;
+  rating: number | null;
   title: string;
   contentPreview: string;
   watchedDate: string;

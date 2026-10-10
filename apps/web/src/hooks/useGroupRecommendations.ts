@@ -9,13 +9,13 @@ import type {
 } from '@davas/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { requestFromSession } from '../components/spaces/group-recommendation-model';
+import { CoreApiError } from '../lib/api/core';
 import {
   closeGroupRecommendationSession,
   createGroupRecommendationSession,
   decideGroupRecommendation,
   getGroupRecommendationSession,
   listGroupRecommendationSessions,
-  RecommendationRequestError,
   submitGroupRecommendationFeedback,
 } from '../lib/api/recommendations';
 
@@ -92,8 +92,7 @@ export function useGroupRecommendations(space: SpaceView) {
         void refreshSessions();
         return next;
       } catch (caught) {
-        const providerFailure =
-          caught instanceof RecommendationRequestError && caught.status >= 500;
+        const providerFailure = caught instanceof CoreApiError && caught.status >= 500;
         setRequestStatus(providerFailure ? 'provider-error' : 'error');
         setRequestError(
           providerFailure

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Optional, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { MediaType } from '@davas/shared';
+import type { MediaSearchResponse, MediaSearchType, MediaType } from '@davas/shared';
 import { mapTmdbDetail, TmdbDetailPayload, TmdbMediaDetail } from './tmdb-detail.mapper';
 import {
   DavasMediaSearchItem,
@@ -12,7 +12,7 @@ import {
 } from './tmdb.mapper';
 import type { ProviderAvailabilityLookup, ProviderOffer } from './ports/availability-provider.port';
 
-export type MediaSearchType = 'movie' | 'tv' | 'multi';
+export type { MediaSearchResponse, MediaSearchType };
 
 type Fetcher = typeof fetch;
 
@@ -34,13 +34,6 @@ export type MediaSearchInput = {
   page: number;
   language?: string;
   region?: string;
-};
-
-export type MediaSearchResponse = {
-  query: string;
-  page: number;
-  totalPages: number;
-  items: DavasMediaSearchItem[];
 };
 
 export type TrendingRecommendationsInput = {

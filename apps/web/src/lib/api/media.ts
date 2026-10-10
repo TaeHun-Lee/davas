@@ -1,62 +1,20 @@
-import type { MediaSelectionInput } from '@davas/shared';
+import type {
+  MediaDetail,
+  MediaSearchResponse,
+  MediaSearchResult,
+  MediaSelectionInput,
+  MediaSelectionResponse,
+  MyMediaDiary,
+} from '@davas/shared';
 import { getApiBaseUrl } from './base-url';
 import { coreFetch } from './core';
 
-export type MediaSearchResult = {
-  externalProvider: 'TMDB';
-  externalId: string;
-  mediaType: 'MOVIE' | 'TV';
-  title: string;
-  originalTitle: string;
-  overview: string;
-  posterUrl: string | null;
-  backdropUrl: string | null;
-  releaseDate: string | null;
-  genreIds: number[];
-  country: string | null;
-};
+export type { MediaDetail, MediaSearchResponse, MediaSearchResult, MyMediaDiary };
 
-export type MediaSearchResponse = {
-  query: string;
-  page: number;
-  totalPages: number;
-  items: MediaSearchResult[];
-};
-
+/** A search result once the API has stored it: the result plus its own id and genres. */
 export type SelectedMedia = MediaSearchResult & {
   id: string;
   genres?: string[];
-};
-
-export type MyMediaDiary = {
-  id: string;
-  rating: number | null;
-  title: string;
-  contentPreview: string;
-  watchedDate: string;
-  updatedAt: string;
-};
-
-export type MediaDetail = Omit<SelectedMedia, 'genreIds'> & {
-  tagline: string | null;
-  runtime: number | null;
-  genres: string[];
-  countries: string[];
-  tmdbRating: number | null;
-  tmdbVoteCount: number | null;
-  director: string | null;
-  creators: string[];
-  numberOfEpisodes: number | null;
-  numberOfSeasons: number | null;
-  cast: string[];
-  stillCuts: string[];
-  certification: string | null;
-  myDiary?: MyMediaDiary | null;
-  myDiaries?: MyMediaDiary[];
-  myAverageRating?: number | null;
-  watchlistItemId?: string | null;
-  watchlistStatus?: 'ACTIVE' | 'WATCHED' | null;
-  genreIds?: number[];
 };
 
 export async function searchMedia({
@@ -110,7 +68,7 @@ export async function selectMedia(selection: MediaSearchResult) {
     throw new Error('media selection failed');
   }
 
-  const selected = (await response.json()) as SelectedMedia;
+  const selected = (await response.json()) as MediaSelectionResponse;
   return {
     ...selection,
     ...selected,

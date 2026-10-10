@@ -1,3 +1,4 @@
+import type { RecommendationFeedbackKind } from '@davas/shared';
 import {
   Column,
   CreateDateColumn,
@@ -12,13 +13,7 @@ import { DiaryEntity } from './diary.entity';
 import { RecommendationExposureEntity } from './recommendation-exposure.entity';
 import { UserEntity } from './user.entity';
 
-export type RecommendationFeedbackKind =
-  | 'INTERESTED'
-  | 'HOLD'
-  | 'REJECTED'
-  | 'ALREADY_WATCHED'
-  | 'AVAILABILITY_ERROR'
-  | 'WATCHED';
+export type { RecommendationFeedbackKind };
 
 @Entity({ name: 'recommendation_feedback' })
 @Index(['exposureId', 'accountId'], { unique: true })

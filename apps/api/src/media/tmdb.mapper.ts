@@ -1,4 +1,4 @@
-import type { MediaType } from '@davas/shared';
+import type { MediaSearchResult, MediaType } from '@davas/shared';
 
 export type TmdbSearchResult = {
   id: number;
@@ -19,19 +19,7 @@ export type TmdbSearchResult = {
   popularity?: number | null;
 };
 
-export type DavasMediaSearchItem = {
-  externalProvider: 'TMDB';
-  externalId: string;
-  mediaType: MediaType;
-  title: string;
-  originalTitle: string;
-  overview: string;
-  posterUrl: string | null;
-  backdropUrl: string | null;
-  releaseDate: string | null;
-  genreIds: number[];
-  country: string | null;
-};
+export type DavasMediaSearchItem = MediaSearchResult;
 
 export type MediaRecommendationItem = DavasMediaSearchItem & {
   voteAverage: number | null;

@@ -1,14 +1,11 @@
-import { getApiBaseUrl, type AuthenticatedUser } from './auth';
+import type { UserResponse } from '@davas/shared';
+import { getApiBaseUrl } from './base-url';
 import { coreFetch } from './core';
 
 export type UpdateMePayload = {
   nickname?: string;
   /** OTT_SERVICES keys. */
   ottServices?: string[];
-};
-
-type UserResponse = {
-  user: AuthenticatedUser;
 };
 
 export async function updateMe(payload: UpdateMePayload) {

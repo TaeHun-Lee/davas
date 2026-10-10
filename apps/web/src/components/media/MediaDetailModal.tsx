@@ -13,7 +13,6 @@ import {
   StillCutStrip,
   type FriendRecordsStatus,
 } from './media-detail-sections';
-import { getTmdbGenreNames } from './media-genres';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useMediaTogether } from '../../hooks/useMediaTogether';
 import { useSpaceWish } from '../../hooks/useSpaceWish';
@@ -60,11 +59,7 @@ function Poster({ media }: { media: MediaDetail }) {
 }
 
 function GenreTags({ media }: { media: MediaDetail }) {
-  const tags = (
-    media.genres?.length
-      ? media.genres
-      : getTmdbGenreNames({ genreIds: media.genreIds ?? [], mediaType: media.mediaType })
-  ).slice(0, 3);
+  const tags = media.genres.slice(0, 3);
   const fallbackTags = tags.length > 0 ? tags : [media.mediaType === 'TV' ? '드라마' : '영화'];
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">

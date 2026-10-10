@@ -1,3 +1,4 @@
+import type { SpaceStatus } from '@davas/shared';
 import {
   Column,
   CreateDateColumn,
@@ -12,7 +13,7 @@ import { SpaceInviteEntity } from './space-invite.entity';
 import { SpaceMembershipEntity } from './space-membership.entity';
 import { UserEntity } from './user.entity';
 
-export type SpaceStatus = 'ACTIVE' | 'CLOSED';
+export type { SpaceStatus };
 
 @Entity({ name: 'spaces' })
 export class SpaceEntity {

@@ -1,12 +1,9 @@
-export const DAVAS_APP_NAME = 'Davas';
-
 export type MediaType = 'MOVIE' | 'TV';
 export const MEDIA_TYPES = ['MOVIE', 'TV'] as const;
 export const VIEWING_METHODS = ['THEATER', 'OTT'] as const;
 export type ViewingMethod = (typeof VIEWING_METHODS)[number];
 export const DIARY_VISIBILITIES = ['PRIVATE', 'FRIENDS', 'SELECTED'] as const;
 export type DiaryVisibility = (typeof DIARY_VISIBILITIES)[number];
-export const CORE_DIARY_VISIBILITIES = ['PRIVATE', 'FRIENDS'] as const;
 
 export const CURRENT_TERMS_VERSION = '2026-07-12-dev';
 export const CURRENT_PRIVACY_VERSION = '2026-07-12-dev';
@@ -233,6 +230,7 @@ export const RECOMMENDATION_FEEDBACK_KINDS = [
   'WATCHED',
 ] as const;
 export type RecommendationFeedbackKind = (typeof RECOMMENDATION_FEEDBACK_KINDS)[number];
+export type RecommendationSessionStatus = 'OPEN' | 'MATCHED' | 'CLOSED';
 
 export type GroupRecommendationSessionRequest = {
   spaceId: string;
@@ -265,7 +263,7 @@ export type GroupRecommendationSessionResponse = {
     constraints: Record<string, unknown>;
     algorithmVersion: string;
     /** CLOSED once someone settled on a title or ended it, or a week after it started. */
-    status: 'OPEN' | 'MATCHED' | 'CLOSED';
+    status: RecommendationSessionStatus;
     createdAt?: string;
     closedAt?: string | null;
     /** The agreed title someone settled on ("이걸로 볼게요"). */
@@ -306,7 +304,7 @@ export type GroupRecommendationSessionSummary = {
   id: string;
   requesterAccountId: string;
   participantAccountIds: string[];
-  status: 'OPEN' | 'MATCHED' | 'CLOSED';
+  status: RecommendationSessionStatus;
   createdAt?: string;
   itemCount: number;
   /** Titles in this pick the viewer has answered. */
