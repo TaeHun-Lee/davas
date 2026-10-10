@@ -484,16 +484,6 @@ a {
   margin-right: 2px;
   font-size: 18px;
 }
-.wide-cta-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-.wide-cta-icon {
-  width: 21px;
-  height: 21px;
-  flex: none;
-}
 .home-recommendations {
   margin-top: 28px;
 }
@@ -6829,11 +6819,5 @@ label:has(> input.sr-only:focus-visible) {
   }
   .home-recommendation-row {
     scroll-behavior: auto;
-  }
-}
-
-@layer components {
-  .card-surface {
-    @apply bg-white shadow-[0_10px_26px_rgba(31,65,114,0.075)] ring-1 ring-[#edf1f7]/80;
   }
 }

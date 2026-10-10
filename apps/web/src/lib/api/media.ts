@@ -23,26 +23,6 @@ export type MediaSearchResponse = {
   items: MediaSearchResult[];
 };
 
-export type PersonSearchResult = {
-  id: string;
-  name: string;
-  profileUrl: string | null;
-  knownForDepartment: string | null;
-  knownFor: MediaSearchResult[];
-};
-
-export type PersonSearchResponse = {
-  query: string;
-  page: number;
-  totalPages: number;
-  items: PersonSearchResult[];
-};
-
-export type PersonCreditsResponse = {
-  personId: string;
-  items: MediaSearchResult[];
-};
-
 export type SelectedMedia = MediaSearchResult & {
   id: string;
   genres?: string[];
@@ -106,52 +86,6 @@ export async function searchMedia({
 
   return (await response.json()) as MediaSearchResponse;
 }
-export async function searchPeople({
-  query,
-  page = 1,
-  language = 'ko-KR',
-}: {
-  query: string;
-  page?: number;
-  language?: string;
-}) {
-  const params = new URLSearchParams();
-  params.set('q', query);
-  params.set('page', String(page));
-  params.set('language', language);
-
-  const response = await fetch(`${getApiBaseUrl()}/media/people/search?${params.toString()}`, {
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    throw new Error('person search failed');
-  }
-
-  return (await response.json()) as PersonSearchResponse;
-}
-
-export async function getPersonCredits(
-  personId: string,
-  { language = 'ko-KR' }: { language?: string } = {},
-) {
-  const params = new URLSearchParams();
-  params.set('language', language);
-
-  const response = await fetch(
-    `${getApiBaseUrl()}/media/people/${personId}/credits?${params.toString()}`,
-    {
-      credentials: 'include',
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error('person credits failed');
-  }
-
-  return (await response.json()) as PersonCreditsResponse;
-}
-
 // Only the provider identity is sent: the API stores titles and images from TMDB itself and
 // rejects any other field (forbidNonWhitelisted), so a title or poster here fails the request.
 function toMediaSelectionPayload(selection: MediaSearchResult): MediaSelectionInput {

@@ -15,7 +15,7 @@ describe('space watch flow', () => {
     assert.match(composer, /OTT: 'OTT'/);
     assert.match(composer, /OTHER: '기타'/);
     assert.match(composer, /placeText: draft!\.placeText\.trim\(\)/);
-    assert.match(rating, /\(index \+ 1\) \/ 2/);
+    assert.match(rating, /step=\{0\.5\}/);
     assert.match(rating, /type="range"/);
     assert.match(rating, /step=\{0\.5\}/);
     assert.match(rating, /별점 슬라이더/);
@@ -62,10 +62,9 @@ describe('space watch flow', () => {
     assert.match(timeline, /comparison\.events\.map/);
   });
 
-  it('routes legacy diary screens through the records components', () => {
-    const compose = source('components/diary/DiaryComposeScreen.tsx');
-    const detail = source('components/diary/DiaryDetailScreen.tsx');
-    assert.match(compose, /<RecordComposer/);
-    assert.match(detail, /<RecordDetailScreen/);
+  it('sends legacy diary links to the records screens with their query', () => {
+    const middleware = source('middleware.ts');
+    assert.ok(middleware.includes("pathname.replace(/^\\/diary/, '/records')"));
+    assert.match(middleware, /target\.search = search/);
   });
 });

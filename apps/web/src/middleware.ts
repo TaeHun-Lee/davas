@@ -12,7 +12,12 @@ export function middleware(request: NextRequest) {
         : pathname.startsWith('/diary/')
           ? pathname.replace(/^\/diary/, '/records')
           : null;
-  if (legacy) return NextResponse.redirect(new URL(legacy, request.url));
+  if (legacy) {
+    // Old links keep their query: /diary/new?mediaId=… opens the composer on that title.
+    const target = new URL(legacy, request.url);
+    target.search = search;
+    return NextResponse.redirect(target);
+  }
   const publicInvite = pathname.startsWith('/friends/invite/');
   const protectedPath =
     pathname === '/' ||

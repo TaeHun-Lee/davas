@@ -74,7 +74,6 @@
   "apps/web/src/app/offline/page.tsx": "7f453b6822adf1e193de23905d4ef25fce42c5cafdf17a955fe39e6163991152",
   "apps/web/src/app/page.tsx": "035f83aaac8136453e0d3c5e0c33e2539bac4af7ba52e01e46a0f36002f72e72",
   "apps/web/src/app/privacy/page.tsx": "01c0551e50721b47a99758376b942d3731e1adaf404c6b836c25cfe0ba3fdfdf",
-  "apps/web/src/app/profile-design.spec.ts": "15bdf95b005f38a5a07b79479d87f1974fc7af76711ab5bbe3f877a9cac0f4be",
   "apps/web/src/app/profile/page.tsx": "8d356cebe6a3f623003c3eeb45bc9c5f01b51b285548344fe772f925fec15dac",
   "apps/web/src/app/records/[id]/edit/page.tsx": "2d6fd9b2ec99a62158c98337d0d66a85395cdf3d6c3827b41dd7c90e238b2dbe",
   "apps/web/src/app/records/[id]/page.tsx": "dadc53c6448f2c1986e666f776c988f875e2ddbd529b9a1309643605b72c3b28",
@@ -161,6 +160,4 @@
   "apps/web/src/lib/api/friends.ts": "30fcb08fa45e25c2b3b9a18cab5877c52baf50badb9c2f10d6bfbc0571f8f578",
   "apps/web/src/lib/api/reactions.ts": "5a5efb3d4dcac1b863646afabf250dff2e55c65585032649e4972f6c11f21b60",
   "apps/web/src/lib/api/spaces.spec.ts": "471ebf04655a58ad104dfb639223f7d2992873b7d8084d331cc9f9486bd143dd",
-  "apps/web/src/lib/api/watchlist.ts": "fab93a340445c99ceebda30a775f5a722e631b01e2a314f60fa37ae41c775561",
-  "apps/web/tailwind.config.ts": "dcbfff5e347bcabe83debc2da4429b35dabf640e93aba57047441fd069466147"
 }

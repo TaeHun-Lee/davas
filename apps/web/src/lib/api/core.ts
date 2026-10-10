@@ -90,11 +90,6 @@ export type RecordCardData = {
   createdAt: string;
   isMine: boolean;
 };
-export type RecordDetailData = RecordCardData & {
-  content: string;
-  updatedAt: string;
-  selectedUserIds?: string[];
-};
 export type CursorPage<T> = { items: T[]; nextCursor: string | null; hasMore: boolean };
 export type RecordFilters = {
   q?: string;
@@ -116,59 +111,6 @@ export function listRecords(scope: 'friends' | 'mine', filters: RecordFilters) {
   return coreFetch<CursorPage<RecordCardData>>(
     `/diaries/${scope === 'friends' ? 'feed' : 'me'}?${query(filters)}`,
   );
-}
-export function getRecord(id: string) {
-  return coreFetch<{ diary: RecordDetailData }>(`/diaries/${encodeURIComponent(id)}`).then(
-    (value) => value.diary,
-  );
-}
-export type RecordWritePayload = {
-  mediaId: string;
-  viewingMethod: ViewingMethod;
-  watchedDate: string;
-  rating: number | null;
-  content: string;
-  hasSpoiler: boolean;
-  visibility: 'FRIENDS' | 'PRIVATE';
-  clientRequestId: string;
-  allowDuplicate?: boolean;
-};
-export function createRecord(payload: RecordWritePayload) {
-  return coreFetch<{ diary: RecordDetailData; deduplicated: boolean }>('/diaries', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-}
-export type RecordUpdatePayload = Partial<
-  Omit<RecordWritePayload, 'clientRequestId' | 'allowDuplicate'>
->;
-const RECORD_UPDATE_FIELDS = [
-  'mediaId',
-  'viewingMethod',
-  'watchedDate',
-  'rating',
-  'content',
-  'hasSpoiler',
-  'visibility',
-] as const;
-// UpdateDiaryDto rejects unknown fields, so only editable fields are ever sent.
-export function toRecordUpdatePayload(payload: RecordUpdatePayload): RecordUpdatePayload {
-  const source = payload as Record<string, unknown>;
-  const projected: Record<string, unknown> = {};
-  for (const key of RECORD_UPDATE_FIELDS)
-    if (source[key] !== undefined) projected[key] = source[key];
-  return projected as RecordUpdatePayload;
-}
-export function updateRecord(id: string, payload: RecordUpdatePayload) {
-  return coreFetch<{ diary: RecordDetailData }>(`/diaries/${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    body: JSON.stringify(toRecordUpdatePayload(payload)),
-  });
-}
-export function deleteRecord(id: string) {
-  return coreFetch<{ id: string; deleted: true }>(`/diaries/${encodeURIComponent(id)}`, {
-    method: 'DELETE',
-  });
 }
 
 export const mediaTypeLabel = (value: MediaType) => (value === 'MOVIE' ? '영화' : '드라마');

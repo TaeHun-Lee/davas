@@ -14,7 +14,7 @@
 | `/community/authors/...`, `/community`, `/feed` | `/` | `middleware.ts`, 각 `page.tsx` |
 | `/watchlist` | `/me` | `middleware.ts` |
 
-`home`, `diary`, `community`, `watchlist`, `profile`, `explore`(예전 탐색 화면, 지금 `/explore`는 `components/core/ExploreScreen.tsx`) 아래 예전 컴포넌트와 API(`watchlist`, `reactions`, `comments`, `community`)는 데이터 호환을 위해 남아 있다. 새 기능의 근거로 쓰지 말고, 지울 때는 데이터 보존 정책을 먼저 정한다.
+예전 화면(`home`, `diary`, `community`, `watchlist`, `profile`, `explore` 컴포넌트와 그 화면만 쓰던 웹 API 함수)은 지웠고, 예전 주소는 위 표대로 새 화면으로 이동만 한다. 이동할 때 주소의 질문 부분(`?mediaId=…`)은 그대로 넘긴다. 예전 API(`watchlist`, `reactions`, `comments`, `community`)는 데이터 호환을 위해 남아 있다. 새 기능의 근거로 쓰지 말고, 지울 때는 데이터 보존 정책을 먼저 정한다.
 
 ### 알려진 문제
 

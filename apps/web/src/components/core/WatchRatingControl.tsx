@@ -1,5 +1,3 @@
-export const WATCH_RATINGS = Array.from({ length: 10 }, (_, index) => (index + 1) / 2);
-
 function RatingStar({ fillPercent }: { fillPercent: number }) {
   return (
     <span className="watch-rating-star" aria-hidden="true">

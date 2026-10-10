@@ -14,7 +14,6 @@ import type {
   WatchSearchResponse,
   WatchSearchScope,
   WatchSourceKind,
-  WatchSourceView,
   WatchTimelineGroup,
   WatchTimelinePage,
 } from '@davas/shared';
@@ -30,7 +29,6 @@ export type {
   WatchSourceKind,
   WatchTimelineGroup,
 };
-export type WatchSource = WatchSourceView;
 export type WatchParticipant = WatchParticipantView;
 export type WatchReaction = WatchReactionView;
 export type WatchEvent = WatchEventView;
