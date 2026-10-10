@@ -825,8 +825,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1791618353.6356933,
-    "ast_hash": "e544f3e954ecc09d232dd0cdd122e132",
+    "mtime": 1791623279.536441,
+    "ast_hash": "202973dcb8af57ddbe5114487af2dee5",
     "semantic_hash": ""
   },
   "packages/shared/package.json": {
@@ -1215,13 +1215,13 @@
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendation.algorithm.spec.ts": {
-    "mtime": 1791339417.4434536,
-    "ast_hash": "dedf8f514a3f675983c5a1ff53971686",
+    "mtime": 1791622988.5957203,
+    "ast_hash": "9e1cd2182b150c43e5b3c28e4e7308f9",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendation.algorithm.ts": {
-    "mtime": 1791617710.0007308,
-    "ast_hash": "1e64e62488e6037bc8d303a78d2d2be6",
+    "mtime": 1791623130.2898595,
+    "ast_hash": "e32d81da08c2e68b0c1cde8814660a04",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendations.controller.ts": {
@@ -1235,13 +1235,13 @@
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendations.service.spec.ts": {
-    "mtime": 1791615257.7342587,
-    "ast_hash": "bdf7b1fcc88263ef144a88b6b2b71397",
+    "mtime": 1791623194.0398276,
+    "ast_hash": "15b8be9b1e768b30522125cade918add",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendations.service.ts": {
-    "mtime": 1791617710.0112448,
-    "ast_hash": "f4e92f41ed266cac4730c22f1a1dd85e",
+    "mtime": 1791623208.7845137,
+    "ast_hash": "83f3f2099cf33e15465e9704a4b82945",
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendations.dto.spec.ts": {
@@ -1310,8 +1310,8 @@
     "semantic_hash": ""
   },
   "docs/product/implementation-coverage.md": {
-    "mtime": 1791616816.0022583,
-    "ast_hash": "ce43955c62b02f8381d3f485ac336698",
+    "mtime": 1791623279.5374417,
+    "ast_hash": "87801e89635b6a8d759b1f47f3feba60",
     "semantic_hash": ""
   },
   "graphify-out/memory/query_20260815_233610_audit_to_be_integration__composition_roots__entiti.md": {
@@ -1660,13 +1660,13 @@
     "semantic_hash": ""
   },
   "docs/development.md": {
-    "mtime": 1791618367.2009938,
-    "ast_hash": "b487b4af9866e08de3fea1633aa75e5a",
+    "mtime": 1791623279.536441,
+    "ast_hash": "823ae4f84764a2b80be710e6f1787f7f",
     "semantic_hash": ""
   },
   "docs/operations.md": {
-    "mtime": 1791445710.8459556,
-    "ast_hash": "f70ae9ba41bb0d89ab54ce648f6c6dc8",
+    "mtime": 1791623292.634368,
+    "ast_hash": "0fccbcb68aa587ae3c0ebbe070117811",
     "semantic_hash": ""
   },
   "apps/web/src/components/spaces/GroupRecommendationPanel.tsx": {
@@ -2145,8 +2145,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/recommendations/group-recommendation-pool.ts": {
-    "mtime": 1791617980.509115,
-    "ast_hash": "a451314ebaafaf28bfeaf0aa64769850",
+    "mtime": 1791622953.7757137,
+    "ast_hash": "b4a71f06b4657818308135305390b5e7",
     "semantic_hash": ""
   },
   "apps/api/src/users/dto/update-me.dto.ts": {
@@ -2182,6 +2182,31 @@
   "packages/shared/src/dates.ts": {
     "mtime": 1791617931.6428523,
     "ast_hash": "7704219ad2bf09194077e5474eec2f18",
+    "semantic_hash": ""
+  },
+  "apps/api/src/recommendations/taste-backtest.spec.ts": {
+    "mtime": 1791623210.7569253,
+    "ast_hash": "e5a208bde976d6a3f79437b9015b5461",
+    "semantic_hash": ""
+  },
+  "apps/api/src/recommendations/taste-backtest.ts": {
+    "mtime": 1791623099.4095242,
+    "ast_hash": "0d0a9201e5f4eb7dc9bc582c80b1be8e",
+    "semantic_hash": ""
+  },
+  "apps/api/src/recommendations/taste-profile.spec.ts": {
+    "mtime": 1791623164.4047859,
+    "ast_hash": "a93bda7b4637d5448043569a432c41c3",
+    "semantic_hash": ""
+  },
+  "apps/api/src/recommendations/taste-profile.ts": {
+    "mtime": 1791623048.74185,
+    "ast_hash": "b97b9bc3f2b4a04dd93c2bbc6be20e8c",
+    "semantic_hash": ""
+  },
+  "scripts/recommendation-backtest.mts": {
+    "mtime": 1791622700.9949312,
+    "ast_hash": "7181c915fd325eb0f4e809efdbba4173",
     "semantic_hash": ""
   }
 }

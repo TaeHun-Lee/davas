@@ -5,8 +5,8 @@
     "semantic_hash": ""
   },
   "apps/api/package.json": {
-    "mtime": 1791277720.2799883,
-    "ast_hash": "4daffd7ebb2bc0154e73860c51d684dc",
+    "mtime": 1791618332.4827397,
+    "ast_hash": "6c3ba0ab32c015919258d7499de6810c",
     "semantic_hash": ""
   },
   "apps/api/src/app.module.ts": {
@@ -310,8 +310,8 @@
     "semantic_hash": "6d6a2ad508a20c30d5acec6967f77f25"
   },
   "apps/api/src/invites/invites.service.ts": {
-    "mtime": 1791266531.2812624,
-    "ast_hash": "ad4b89171b9e68563f6c7f586584dcae",
+    "mtime": 1791618426.1986866,
+    "ast_hash": "f1fdab800bcbb540e29b0810e8cd424f",
     "semantic_hash": ""
   },
   "apps/api/src/main.ts": {
@@ -515,8 +515,8 @@
     "semantic_hash": ""
   },
   "apps/web/package.json": {
-    "mtime": 1791264715.4472919,
-    "ast_hash": "f2d086ade56ce16d0e4dad5ee949a19a",
+    "mtime": 1791618253.5368412,
+    "ast_hash": "fab04765412618e9cf389902510dc9aa",
     "semantic_hash": ""
   },
   "apps/web/postcss.config.js": {
@@ -825,8 +825,8 @@
     "semantic_hash": ""
   },
   "package.json": {
-    "mtime": 1791295660.037741,
-    "ast_hash": "9b40f48fd0a420cd7485ae84a84cff71",
+    "mtime": 1791618353.6356933,
+    "ast_hash": "e544f3e954ecc09d232dd0cdd122e132",
     "semantic_hash": ""
   },
   "packages/shared/package.json": {
@@ -850,8 +850,8 @@
     "semantic_hash": ""
   },
   "AGENTS.md": {
-    "mtime": 1791295688.05144,
-    "ast_hash": "ff90ccb3ae0a85221bd99635c527f9aa",
+    "mtime": 1791618367.2009938,
+    "ast_hash": "e31a30a9e3f8b2f8bea11ca260c423e7",
     "semantic_hash": ""
   },
   "README.md": {
@@ -860,8 +860,8 @@
     "semantic_hash": ""
   },
   "docker-compose.prod.yml": {
-    "mtime": 1791266531.3143413,
-    "ast_hash": "49b502ceadce468a17c4780bfa1a4e2a",
+    "mtime": 1791618426.1986866,
+    "ast_hash": "f41ad4b1a1e01bfa867ffb7402a4994b",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -1530,8 +1530,8 @@
     "semantic_hash": ""
   },
   "apps/api/src/invites/invites.service.spec.ts": {
-    "mtime": 1791266531.2812624,
-    "ast_hash": "1babefab7637f940c6fc2d9bed867292",
+    "mtime": 1791618426.1986866,
+    "ast_hash": "f035bb8e12b5dfbe0eaf29a7ecc21413",
     "semantic_hash": ""
   },
   "apps/api/src/users/file-cleanup.service.spec.ts": {
@@ -1584,11 +1584,6 @@
     "ast_hash": "61f9ab233ebf43283290dac95e9558a2",
     "semantic_hash": ""
   },
-  "scripts/browser-runtime-journey.cjs": {
-    "mtime": 1791266531.3261883,
-    "ast_hash": "6558d6e82ffa7f6e6d3d1c87f5494871",
-    "semantic_hash": ""
-  },
   "scripts/fetch-when-ready.mjs": {
     "mtime": 1791266531.3271885,
     "ast_hash": "03c627e327506501a28f6eb02d598e4c",
@@ -1605,7 +1600,7 @@
     "semantic_hash": ""
   },
   "scripts/prettier-baseline.json": {
-    "mtime": 1791618162.1117542,
+    "mtime": 1791618452.3672335,
     "ast_hash": "57ff5e654aa9ff141ea64c63209287f2",
     "semantic_hash": ""
   },
@@ -1665,8 +1660,8 @@
     "semantic_hash": ""
   },
   "docs/development.md": {
-    "mtime": 1791616695.6121056,
-    "ast_hash": "d29ad0c01325585cdc38554198095ccc",
+    "mtime": 1791618367.2009938,
+    "ast_hash": "b487b4af9866e08de3fea1633aa75e5a",
     "semantic_hash": ""
   },
   "docs/operations.md": {
