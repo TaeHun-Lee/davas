@@ -231,7 +231,7 @@ export function WishesScreen() {
                     : `${item.media.title} 나도 보고 싶어요`
                 }
               >
-                {item.wantedByMe ? '담음' : '나도'}
+                {item.wantedByMe ? '담기 취소' : '나도'}
               </button>
             </li>
           ))}

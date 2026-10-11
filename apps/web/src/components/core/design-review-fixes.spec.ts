@@ -43,7 +43,7 @@ describe('design review fixes', () => {
     assert.match(css, /\.search-field:focus-within \{\n  border-color: var\(--blue\);/);
     assert.match(
       css,
-      /\.home-recommendation-tabs button \{\n  min-width: 76px;\n  min-height: 44px;/,
+      /\.home-recommendation-tabs button \{\n  min-width: 64px;\n  min-height: 44px;/,
     );
     assert.match(css, /\.watch-rating-star-fill \{[^}]*color: #f2a516;/);
     assert.match(css, /\.my-review-prompt \.review-avatar/);
