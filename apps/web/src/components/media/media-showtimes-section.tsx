@@ -10,7 +10,7 @@ const card =
   'rounded-[20px] bg-white p-4 shadow-[0_10px_24px_rgba(31,65,114,0.07)] ring-1 ring-[#edf2f8]';
 const title = 'text-[15px] font-black leading-[20px] tracking-[-0.025em] text-[var(--heading)]';
 const chip = (on: boolean) =>
-  `shrink-0 rounded-full px-3 py-1.5 text-[12px] font-extrabold ${on ? 'bg-[#216bd8] text-white' : 'bg-[#f1f5fb] text-[#3c4a5e]'}`;
+  `min-h-11 shrink-0 rounded-full px-3.5 text-[12px] font-extrabold ${on ? 'bg-[#216bd8] text-white' : 'bg-[#f1f5fb] text-[#3c4a5e]'}`;
 // A theater list long enough to need scrolling folds after this many.
 const FOLDED = 5;
 
@@ -111,7 +111,7 @@ export function TheaterShowtimesCard({ mediaId, enabled }: { mediaId: string; en
                 {theater.name}
               </strong>
               {theater.visits > 0 ? (
-                <span className="shrink-0 rounded-full bg-[#eaf1ff] px-2 py-0.5 text-[11px] font-extrabold text-[#1c5ab5]">
+                <span className="shrink-0 rounded-full bg-[#eaf1ff] px-2 py-0.5 text-[12px] font-extrabold text-[#1c5ab5]">
                   자주 가는 곳
                 </span>
               ) : null}
@@ -127,16 +127,16 @@ export function TheaterShowtimesCard({ mediaId, enabled }: { mediaId: string; en
                 </a>
               ) : null}
             </div>
-            <p className="mt-0.5 text-[11px] font-semibold text-[var(--muted)]">
+            <p className="mt-0.5 text-[12px] font-semibold text-[var(--muted)]">
               {theater.region} {theater.area}
             </p>
             <div className="mt-2 space-y-1.5">
               {theater.screenings.map((screening) => (
                 <div key={`${screening.screen}-${screening.format}`} className="flex gap-2">
-                  <span className="w-[86px] shrink-0 truncate pt-1 text-[11px] font-bold text-[#5f6b7a]">
+                  <span className="w-[92px] shrink-0 truncate pt-1 text-[12px] font-bold text-[#5f6b7a]">
                     {screening.screen}
                     {screening.format ? (
-                      <span className="ml-1 rounded bg-[#1f2b3d] px-1 py-px text-[10px] font-black text-white">
+                      <span className="ml-1 rounded bg-[#1f2b3d] px-1 py-px text-[11px] font-black text-white">
                         {THEATER_FORMAT_LABELS[screening.format]}
                       </span>
                     ) : null}
@@ -160,7 +160,7 @@ export function TheaterShowtimesCard({ mediaId, enabled }: { mediaId: string; en
       {theaters.length > FOLDED ? (
         <button
           type="button"
-          className="mt-2 w-full rounded-[14px] bg-[#f1f5fb] py-2 text-[12px] font-extrabold text-[#2f4d73]"
+          className="mt-2 min-h-11 w-full rounded-[14px] bg-[#f1f5fb] text-[12px] font-extrabold text-[#2f4d73]"
           aria-expanded={unfolded}
           onClick={() => setUnfolded((value) => !value)}
         >

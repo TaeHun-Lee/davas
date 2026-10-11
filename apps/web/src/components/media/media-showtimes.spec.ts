@@ -32,6 +32,11 @@ describe('theater showtimes in the title sheet', () => {
     assert.match(card, /target="_blank"\s+rel="noopener noreferrer"/);
     // Nothing shows for a film no theater plays.
     assert.match(card, /if \(!enabled \|\| !showtimes\?\.dates\.length\) return null;/);
+    // Day and region chips and the fold button are 44px touch targets, as on the boards;
+    // text is 12px except the small format badge.
+    assert.match(card, /const chip = \(on: boolean\) =>\s*`min-h-11 /);
+    assert.match(card, /min-h-11 w-full rounded-\[14px\]/);
+    assert.equal(card.match(/text-\[1[01]px\]/g)?.length, 1);
   });
 
   it('puts films playing in theaters first on home and in 탐색', () => {
